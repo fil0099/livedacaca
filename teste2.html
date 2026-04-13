@@ -13,11 +13,274 @@
 	height:178px;
 	z-index:1;
 }
+#Layer2 {
+	position:absolute;
+	left:43px;
+	top:36px;
+	width:241px;
+	height:650px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:549px;
+	top:42px;
+	width:361px;
+	height:178px;
+	z-index:2;
+}
+#Layer4 {
+	position:absolute;
+	left:195px;
+	top:49px;
+	width:272px;
+	height:166px;
+	z-index:1;
+}
+#Layer5 {
+	position:absolute;
+	left:84px;
+	top:47px;
+	width:156px;
+	height:136px;
+	z-index:1;
+}
+#Layer6 {
+	position:absolute;
+	left:1006px;
+	top:80px;
+	width:235px;
+	height:147px;
+	z-index:1;
+}
+#Layer7 {
+	position:absolute;
+	left:80px;
+	top:36px;
+	width:262px;
+	height:228px;
+	z-index:1;
+}
+#Layer8 {
+	position:absolute;
+	left:103px;
+	top:33px;
+	width:142px;
+	height:79px;
+	z-index:1;
+}
+#Layer9 {
+	position:absolute;
+	left:84px;
+	top:49px;
+	width:80px;
+	height:41px;
+	z-index:1;
+}
+#Layer10 {
+	position:absolute;
+	left:109px;
+	top:41px;
+	width:219px;
+	height:138px;
+	z-index:1;
+}
 -->
 </style>
 </head>
 
 <body>
-<div id="Layer1"><div id="Layer23"><img src="https://drive.google.com/uc?export=view&id=1spwojOQ0q2h4Xjd4zlXc3QadUgmmFJFk" width="300" onerror="alert('erro ao carregar imagem')"></div></div>
+<div id="Layer10"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Bíblia Online</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #f4f4f4;
+}
+
+header {
+  background: #111;
+  color: white;
+  padding: 15px;
+  text-align: center;
+}
+
+.container {
+  max-width: 800px;
+  margin: auto;
+  padding: 15px;
+}
+
+input, select, button {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+  font-size: 16px;
+}
+
+button {
+  background: #111;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+#texto {
+  background: white;
+  padding: 15px;
+  min-height: 250px;
+  white-space: pre-line;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<header>?? Bíblia Online (Carregador JSON)</header>
+
+<div class="container">
+
+<!-- ?? LINK DO JSON -->
+<input id="jsonUrl" placeholder="https://fil0099.github.io/livedacaca/biblia.json" />
+
+<button onclick="carregarJSON()">Carregar Bíblia</button>
+
+<hr>
+
+<!-- ?? LIVROS -->
+<select id="livros" onchange="atualizarCapitulos()"></select>
+
+<!-- ?? CAPÍTULOS -->
+<select id="capitulos"></select>
+
+<button onclick="ler()">Ler capítulo</button>
+
+<div id="texto">Aguardando carregamento...</div>
+
+</div>
+
+<script>
+
+let bible = null;
+
+// ?? CARREGA JSON
+async function carregarJSON() {
+  const url = document.getElementById("jsonUrl").value;
+
+  if (!url) {
+    alert("Cole o link do JSON");
+    return;
+  }
+
+  try {
+    const res = await fetch(url);
+    bible = await res.json();
+
+    preencherLivros();
+
+    document.getElementById("texto").innerText =
+      "Bíblia carregada com sucesso!";
+  } catch (e) {
+    document.getElementById("texto").innerText =
+      "Erro ao carregar JSON. Verifique o link.";
+  }
+}
+
+// ?? PREENCHE LIVROS
+function preencherLivros() {
+  const livrosSelect = document.getElementById("livros");
+  livrosSelect.innerHTML = "";
+
+  bible.livros.forEach((l, i) => {
+    let opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = l.nome;
+    livrosSelect.appendChild(opt);
+  });
+
+  atualizarCapitulos();
+}
+
+// ?? ATUALIZA CAPÍTULOS
+function atualizarCapitulos() {
+  const livro = bible.livros[document.getElementById("livros").value];
+
+  const capSelect = document.getElementById("capitulos");
+  capSelect.innerHTML = "";
+
+  for (let i = 0; i < livro.capitulos.length; i++) {
+    let opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = "Capítulo " + (i + 1);
+    capSelect.appendChild(opt);
+  }
+}
+
+// ?? LER BÍBLIA
+function ler() {
+  const l = document.getElementById("livros").value;
+  const c = document.getElementById("capitulos").value;
+
+  const capitulo = bible.livros[l].capitulos[c];
+
+  document.getElementById("texto").innerText =
+    capitulo.join("\n\n");
+}
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer8"><!DOCTYPE html>
+<html lang="pt-br">
+</body>
+</html></div>
+<div id="Layer7"><!DOCTYPE html>
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer6"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+</body>
+</html></div>
+<div id="Layer5"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>TV</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+iframe {
+  width: 60vw;
+  height: 60vh;
+  border: none;
+}
+</style>
+</head>
+<body>
+
+
+
+</body>
+</html></div>
+</body>
+
+</html></div>
 </body>
 </html>
