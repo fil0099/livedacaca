@@ -1,0 +1,292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:23px;
+	top:19px;
+	width:154px;
+	height:108px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:29px;
+	top:15px;
+	width:256px;
+	height:182px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer2"><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reflexo Extremo</title>
+
+<style>
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body {
+    font-family: Arial;
+    background:#070a12;
+    color:white;
+    height:100vh;
+    overflow:hidden;
+}
+
+/* CENTRALIZA TUDO PERFEITO */
+.screen {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    text-align:center;
+}
+
+/* esconder telas */
+.hidden { display:none; }
+
+/* HUD */
+.hud {
+    position:fixed;
+    top:20px;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:30px;
+    font-size:20px;
+    z-index:10;
+}
+
+/* área do jogo */
+.game-area {
+    position:fixed;
+    width:100vw;
+    height:100vh;
+}
+
+/* alvo */
+.target {
+    position:absolute;
+    width:110px;
+    height:110px;
+    border-radius:18px;
+    background-size:cover;
+    background-position:center;
+    border:3px solid rgba(255,255,255,0.3);
+    box-shadow:0 0 25px rgba(0,255,120,0.6);
+    cursor:pointer;
+}
+
+/* inputs e botão */
+input {
+    padding:12px;
+    font-size:18px;
+    text-align:center;
+    border-radius:8px;
+    border:none;
+    margin-top:10px;
+}
+
+button {
+    padding:14px 30px;
+    border:none;
+    border-radius:10px;
+    background:#2563eb;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+    margin-top:15px;
+}
+
+button:hover {
+    transform:scale(1.05);
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- MENU (CENTRALIZADO REAL) -->
+<div class="screen" id="menu">
+    <h1>Reflexo Extremo</h1>
+    <p>Clique rápido no alvo antes que ele suma</p>
+
+    <input id="name" placeholder="Digite seu nome">
+
+    <button onclick="start()">Jogar</button>
+</div>
+
+<!-- JOGO -->
+<div class="screen hidden" id="game">
+    <div class="hud">
+        Pontos: <span id="score">0</span> |
+        Fase: <span id="level">1</span> |
+        Tempo: <span id="time">30</span>
+    </div>
+
+    <div class="game-area" id="area"></div>
+</div>
+
+<!-- FINAL -->
+<div class="screen hidden" id="end">
+    <h1>Fim de Jogo</h1>
+    <p>Pontuação: <span id="final"></span></p>
+
+    <h3>Melhores jogadores</h3>
+    <div id="rank"></div>
+
+    <button onclick="location.reload()">Jogar novamente</button>
+</div>
+
+<script>
+
+const images = [
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/66.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/04043.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/4004.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/00404.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp'
+];
+
+let score = 0;
+let level = 1;
+let time = 30;
+let player = "";
+let target = null;
+let timer = null;
+let spawn = null;
+
+/* INÍCIO COM NOME OBRIGATÓRIO */
+function start(){
+    player = document.getElementById("name").value.trim();
+
+    if(player === ""){
+        alert("Digite seu nome para jogar");
+        return;
+    }
+
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
+
+    initGame();
+}
+
+/* INICIAR JOGO */
+function initGame(){
+    score = 0;
+    level = 1;
+    time = 30;
+
+    updateUI();
+
+    timer = setInterval(()=>{
+        time--;
+        updateUI();
+
+        if(time <= 0){
+            endGame();
+        }
+    },1000);
+
+    spawnTarget();
+}
+
+/* SPAWN DO ALVO */
+function spawnTarget(){
+
+    if(target) target.remove();
+
+    target = document.createElement("div");
+    target.className = "target";
+
+    let img = images[Math.floor(Math.random()*images.length)];
+    target.style.backgroundImage = `url(${img})`;
+
+    let size = Math.max(60, 110 - level * 4);
+    target.style.width = size + "px";
+    target.style.height = size + "px";
+
+    let x = Math.random() * (window.innerWidth - size);
+    let y = Math.random() * (window.innerHeight - size);
+
+    target.style.left = x + "px";
+    target.style.top = y + "px";
+
+    target.onclick = ()=>{
+        score += 10 * level;
+        level++;
+        updateUI();
+        spawnTarget();
+    };
+
+    document.getElementById("area").appendChild(target);
+
+    clearTimeout(spawn);
+
+    let life = Math.max(500, 1200 - level * 70);
+
+    spawn = setTimeout(()=>{
+        spawnTarget();
+    }, life);
+}
+
+/* UI */
+function updateUI(){
+    document.getElementById("score").innerText = score;
+    document.getElementById("level").innerText = level;
+    document.getElementById("time").innerText = time;
+}
+
+/* FINAL */
+function endGame(){
+
+    clearInterval(timer);
+    clearTimeout(spawn);
+
+    document.getElementById("game").classList.add("hidden");
+    document.getElementById("end").classList.remove("hidden");
+
+    document.getElementById("final").innerText = score;
+
+    let rank = JSON.parse(localStorage.getItem("rank4") || "[]");
+
+    rank.push({name:player,score});
+    rank.sort((a,b)=>b.score-a.score);
+    rank = rank.slice(0,5);
+
+    localStorage.setItem("rank4", JSON.stringify(rank));
+
+    document.getElementById("rank").innerHTML =
+        rank.map(r=>`${r.name} - ${r.score}`).join("<br>");
+}
+
+</script>
+
+</body>
+</html></div>
+<div id="Layer1"><!DOCTYPE html>
+</body>
+</html></div>
+</body>
+</html>

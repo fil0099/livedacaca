@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:4px;
+	top:9px;
+	width:176px;
+	height:123px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:1430px;
+	top:759px;
+	width:62px;
+	height:57px;
+	z-index:2;
+}
+#Layer3 {
+	position:absolute;
+	left:190px;
+	top:-16px;
+	width:189px;
+	height:85px;
+	z-index:3;
+}
+#Layer4 {
+	position:absolute;
+	left:621px;
+	top:31px;
+	width:179px;
+	height:58px;
+	z-index:4;
+}
+#Layer5 {
+	position:absolute;
+	left:5px;
+	top:8px;
+	width:118px;
+	height:66px;
+	z-index:4;
+}
+#Layer6 {
+	position:absolute;
+	left:394px;
+	top:21px;
+	width:163px;
+	height:82px;
+	z-index:4;
+}
+.style1 {
+	color: #0000FF;
+	font-size: 18px;
+}
+#Layer7 {
+	position:absolute;
+	left:18px;
+	top:4px;
+	width:138px;
+	height:74px;
+	z-index:5;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer1"><img src="logo2.png" width="1519" height="850" /></div>
+<div id="Layer2"><img src="fundologo2.png" width="67" height="72" /></div>
+<div id="Layer3">
+  <div id="Layer18"><div class="botoes">
+
+    <button class="botao-azul" onclick="abrirWordwall()">
+        Veja sua sorte
+    </button>
+
+</div>
+
+
+<!-- Modal -->
+<div id="modalWordwall" class="modal">
+    <div class="modal-conteudo" onclick="event.stopPropagation()">
+
+        <div class="fechar" onclick="fecharWordwall()">?</div>
+
+        <div id="areaJogo"></div>
+
+    </div>
+</div>
+
+
+<style>
+
+/* botão */
+
+.botoes {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.botao-azul {
+    background: #4db8ff;
+    color: white;
+    border: none;
+    padding: 14px 30px;
+    border-radius: 12px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.botao-azul:hover {
+    background: #2da8ff;
+    transform: scale(1.05);
+}
+
+
+/* modal */
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+/* conteúdo */
+
+.modal-conteudo {
+    width: 95%;
+    max-width: 1300px;
+    position: relative;
+}
+
+/* fechar */
+
+.fechar {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+}
+
+/* iframe */
+
+.wordwall-frame {
+    width: 100%;
+    height: 85vh;
+    border: none;
+    border-radius: 15px;
+    background: white;
+}
+
+</style>
+
+
+<script>
+
+function abrirWordwall() {
+
+    document.getElementById("modalWordwall").style.display = "flex";
+
+    document.getElementById("areaJogo").innerHTML = `
+        <iframe 
+        class="wordwall-frame"
+        src="https://wordwall.net/embed/f1fc27884b8348bfb1fee73e4faa5b83?themeId=1&templateId=8&fontStackId=0"
+        allowfullscreen>
+        </iframe>
+    `;
+}
+
+
+function fecharWordwall() {
+
+    document.getElementById("modalWordwall").style.display = "none";
+    document.getElementById("areaJogo").innerHTML = "";
+
+}
+
+
+/* clicar fora fecha */
+
+document.getElementById("modalWordwall").onclick = function() {
+    fecharWordwall();
+}
+
+</script></div></div>
+<div id="Layer6"><a href="jogos2.html" class="style1">Outros Jogos</a></div>
+<div id="Layer7"><div id="Layer5"><a href="index.html" class="botao-voltar">Voltar</a>
+
+<style>
+.botao-voltar {
+    position:absolute;
+    top:20px;
+    left:20px;
+    background:#4db8ff;
+    color:white;
+    padding:10px 18px;
+    border-radius:8px;
+    text-decoration:none;
+    font-family:Arial;
+    font-weight:bold;
+    z-index:9999;
+}
+
+.botao-voltar:hover {
+    background:#2ea6ff;
+}
+</style></div></div>
+<div id="Layer4"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Menu de Jogos</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#0f172a;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+/* CONTAINER CENTRAL */
+.container{
+    background:#1e293b;
+    padding:20px;
+    border-radius:12px;
+    width:300px;
+}
+
+/* BOTÕES */
+a{
+    text-decoration:none;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    margin:6px 0;
+    border:none;
+    background:#22c55e;
+    color:white;
+    cursor:pointer;
+    border-radius:8px;
+    font-size:14px;
+}
+
+button:hover{
+    background:#16a34a;
+}
+</style>
+
+</head>
+
+<body>
+
+
+
+</body>
+</html></div>
+</body>
+</html>

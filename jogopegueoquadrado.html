@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:62px;
+	top:80px;
+	width:137px;
+	height:120px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer1"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Jogo 3 - Pegue o Quadrado</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html, body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Arial;
+}
+
+/* TELA */
+#game{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:#111;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:white;
+}
+
+/* HUD */
+#hud{
+    position:absolute;
+    top:20px;
+    left:20px;
+    font-size:18px;
+}
+
+/* INSTRUÇÃO */
+#instrucao{
+    text-align:center;
+    margin-bottom:20px;
+    opacity:0.8;
+}
+
+/* BOTÃO */
+#start{
+    padding:15px 30px;
+    font-size:20px;
+    border:none;
+    border-radius:10px;
+    background:#00c3ff;
+    color:white;
+    cursor:pointer;
+}
+
+/* QUADRADO */
+#quadrado{
+    width:70px;
+    height:70px;
+    background:#00c3ff;
+    position:absolute;
+    display:none;
+    cursor:pointer;
+    border-radius:8px;
+    box-shadow:0 0 15px rgba(0,195,255,0.7);
+}
+</style>
+
+</head>
+
+<body>
+
+<div id="game">
+
+    <div id="hud">
+        Pontos: <span id="pontos">0</span>
+    </div>
+
+    <div id="instrucao">
+        Passe o mouse sobre o quadrado para pegá-lo.<br>
+        Ele vai fugir cada vez mais rápido!
+    </div>
+
+    <button id="start">Começar</button>
+
+    <div id="quadrado"></div>
+
+</div>
+
+<script>
+
+let pontos = 0;
+let velocidade = 1000;
+let rodando = false;
+
+const quadrado = document.getElementById("quadrado");
+const pontosEl = document.getElementById("pontos");
+const startBtn = document.getElementById("start");
+
+// ==========================
+// POSIÇÃO SEGURA
+// ==========================
+function mover(){
+    let maxX = window.innerWidth - 80;
+    let maxY = window.innerHeight - 80;
+
+    let x = Math.random() * maxX;
+    let y = Math.random() * maxY;
+
+    quadrado.style.left = x + "px";
+    quadrado.style.top = y + "px";
+}
+
+// ==========================
+// FUGIR AUTOMÁTICO
+// ==========================
+function loop(){
+    if(!rodando) return;
+
+    mover();
+
+    setTimeout(loop, velocidade);
+}
+
+// ==========================
+// PEGAR O QUADRADO
+// ==========================
+quadrado.onmouseover = ()=>{
+    if(!rodando) return;
+
+    pontos++;
+    pontosEl.innerText = pontos;
+
+    // aumenta dificuldade
+    if(velocidade > 300){
+        velocidade -= 50;
+    }
+
+    mover();
+}
+
+// ==========================
+// INICIAR
+// ==========================
+startBtn.onclick = ()=>{
+
+    pontos = 0;
+    velocidade = 1000;
+    rodando = true;
+
+    pontosEl.innerText = pontos;
+
+    startBtn.style.display = "none";
+    quadrado.style.display = "block";
+
+    mover();
+    loop();
+}
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html>

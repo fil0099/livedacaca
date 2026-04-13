@@ -1,0 +1,475 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Jogo 1 - Caçador de Imagens</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:57px;
+	top:61px;
+	width:244px;
+	height:187px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:124px;
+	top:37px;
+	width:213px;
+	height:130px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:321px;
+	top:328px;
+	width:134px;
+	height:36px;
+	z-index:1;
+}
+-->
+</style>
+<meta charset="UTF-8" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    font-family:Arial;
+    background:linear-gradient(135deg,#0a0a0a,#1a1a1a);
+    color:white;
+}
+
+/* HUD */
+#hud{
+    position:fixed;
+    top:15px;
+    left:20px;
+    font-size:18px;
+    z-index:10;
+}
+
+/* RANKING */
+#ranking{
+    position:fixed;
+    top:15px;
+    right:20px;
+    text-align:right;
+    font-size:14px;
+}
+
+/* CENTRO */
+#inicio{
+    position:absolute;
+    top:129px;
+    left:475px;
+    transform:translate(-50%,-50%);
+    text-align:center;
+    max-width:400px;
+}
+
+/* BOTÃO */
+button{
+    margin-top:20px;
+    padding:14px 28px;
+    font-size:18px;
+    border:none;
+    border-radius:8px;
+    background:#00c3ff;
+    color:white;
+    cursor:pointer;
+}
+
+/* ALVOS */
+.alvo{
+    position:absolute;
+    width:80px;
+    height:80px;
+    object-fit:cover;
+    border-radius:10px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+.alvo:hover{
+    transform:scale(1.1);
+}
+#Layer4 {
+	position:absolute;
+	left:41px;
+	top:14px;
+	width:161px;
+	height:151px;
+	z-index:1;
+}
+#Layer5 {
+	position:absolute;
+	left:49px;
+	top:56px;
+	width:252px;
+	height:177px;
+	z-index:1;
+}
+#Layer6 {
+	position:absolute;
+	left:105px;
+	top:39px;
+	width:243px;
+	height:162px;
+	z-index:1;
+}
+#Layer7 {
+	position:absolute;
+	left:91px;
+	top:103px;
+	width:160px;
+	height:100px;
+	z-index:1;
+}
+#Layer8 {
+	position:absolute;
+	left:140px;
+	top:37px;
+	width:250px;
+	height:172px;
+	z-index:1;
+}
+#Layer9 {
+	position:absolute;
+	left:175px;
+	top:41px;
+	width:242px;
+	height:157px;
+	z-index:1;
+}
+#Layer10 {
+	position:absolute;
+	left:133px;
+	top:47px;
+	width:304px;
+	height:184px;
+	z-index:1;
+}
+#Layer11 {
+	position:absolute;
+	left:67px;
+	top:36px;
+	width:257px;
+	height:239px;
+	z-index:1;
+}
+#Layer12 {
+	position:absolute;
+	left:105px;
+	top:56px;
+	width:273px;
+	height:220px;
+	z-index:1;
+}
+#Layer13 {
+	position:absolute;
+	left:20px;
+	top:22px;
+	width:182px;
+	height:130px;
+	z-index:1;
+}
+#Layer14 {
+	position:absolute;
+	left:71px;
+	top:33px;
+	width:191px;
+	height:144px;
+	z-index:1;
+}
+#Layer15 {
+	position:absolute;
+	left:60px;
+	top:37px;
+	width:288px;
+	height:236px;
+	z-index:1;
+}
+#Layer16 {
+	position:absolute;
+	left:45px;
+	top:20px;
+	width:268px;
+	height:260px;
+	z-index:1;
+}
+#Layer17 {
+	position:absolute;
+	left:23px;
+	top:61px;
+	width:216px;
+	height:225px;
+	z-index:1;
+}
+</style>
+</head>
+
+<body>
+<div id="Layer17"><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Caça Imagens</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+    font-family:Arial;
+    height:100vh;
+    overflow:hidden;
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+}
+
+/* TELAS */
+.screen{
+    position:fixed;
+    width:100vw;
+    height:100vh;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+}
+.screen.active{display:flex;}
+
+/* BOTÕES */
+button{
+    margin:10px;
+    padding:14px 30px;
+    font-size:18px;
+    border:none;
+    border-radius:10px;
+    background:#38bdf8;
+    color:white;
+    cursor:pointer;
+}
+
+/* INPUT */
+input{
+    padding:12px;
+    font-size:18px;
+    border-radius:8px;
+    border:none;
+    text-align:center;
+}
+
+/* HUD */
+#hud{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:30px;
+    background:rgba(0,0,0,0.7);
+    padding:12px 25px;
+    border-radius:12px;
+    z-index:1000;
+}
+
+/* GAME AREA (TELA TODA) */
+#gameArea{
+    position:fixed;
+    width:100vw;
+    height:100vh;
+    top:0;
+    left:0;
+}
+
+/* TARGET */
+.target{
+    position:absolute;
+    width:90px;
+    height:90px;
+    border-radius:12px;
+    background-size:cover;
+    cursor:pointer;
+    transition:0.2s;
+}
+.target:hover{transform:scale(1.1);}
+
+/* RANKING */
+#ranking{
+    margin-top:20px;
+    text-align:center;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- MENU -->
+<div class="screen active" id="menu">
+    <h1>Caça Imagens</h1>
+
+    <p style="margin:20px;text-align:center;max-width:400px">
+        Clique nas imagens o mais rápido possível.<br>
+        Cada clique soma pontos.<br>
+        Você tem tempo limitado.
+    </p>
+
+    <button onclick="goToName()">Começar</button>
+
+    <div id="ranking"></div>
+</div>
+
+<!-- NOME -->
+<div class="screen" id="name">
+    <h2>Digite seu nome</h2>
+    <input id="playerName" placeholder="Seu nome">
+    <button onclick="startGame()">Iniciar</button>
+</div>
+
+<!-- JOGO -->
+<div class="screen" id="game">
+
+    <div id="hud">
+        <div>Pontos: <span id="score">0</span></div>
+        <div>Tempo: <span id="time">30</span></div>
+    </div>
+
+    <div id="gameArea"></div>
+
+</div>
+
+<script>
+
+// ================= VARIÁVEIS =================
+let score = 0;
+let time = 30;
+let timer;
+let active = false;
+let player = "";
+
+// ================= IMAGENS =================
+const images = [
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/66.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/04043.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/4004.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/00404.webp'
+];
+
+// ================= TELAS =================
+function showScreen(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function goToName(){
+    showScreen("name");
+}
+
+// ================= INICIAR =================
+function startGame(){
+
+    player = document.getElementById("playerName").value || "Jogador";
+
+    showScreen("game");
+
+    score = 0;
+    time = 30;
+    active = true;
+
+    updateHUD();
+
+    spawnTarget();
+
+    timer = setInterval(()=>{
+        time--;
+        updateHUD();
+
+        if(time <= 0){
+            endGame();
+        }
+
+    },1000);
+}
+
+// ================= HUD =================
+function updateHUD(){
+    document.getElementById("score").innerText = score;
+    document.getElementById("time").innerText = time;
+}
+
+// ================= ALVO =================
+function spawnTarget(){
+
+    if(!active) return;
+
+    const area = document.getElementById("gameArea");
+    area.innerHTML = "";
+
+    const target = document.createElement("div");
+    target.className = "target";
+
+    target.style.left = (Math.random() * (window.innerWidth - 100)) + "px";
+    target.style.top = (Math.random() * (window.innerHeight - 100)) + "px";
+
+    target.style.backgroundImage = `url(${images[Math.floor(Math.random()*images.length)]})`;
+
+    target.onclick = function(){
+        score += 10;
+        updateHUD();
+        spawnTarget();
+    };
+
+    area.appendChild(target);
+}
+
+// ================= FIM =================
+function endGame(){
+    active = false;
+    clearInterval(timer);
+
+    saveScore();
+
+    alert("Fim de jogo! Pontos: " + score);
+
+    showRanking();
+    showScreen("menu");
+}
+
+// ================= RANKING =================
+function saveScore(){
+    let list = JSON.parse(localStorage.getItem("ranking") || "[]");
+
+    list.push({name: player, score: score});
+    list.sort((a,b)=>b.score-a.score);
+    list = list.slice(0,5);
+
+    localStorage.setItem("ranking", JSON.stringify(list));
+}
+
+function showRanking(){
+    let list = JSON.parse(localStorage.getItem("ranking") || "[]");
+
+    document.getElementById("ranking").innerHTML =
+        "<h3>Melhores Pontuações</h3>" +
+        list.map(p=>`<div>${p.name} - ${p.score}</div>`).join("");
+}
+
+// carregar ranking
+showRanking();
+
+</script>
+
+</body>
+</html></div>
+<div class="screen" id="name"></div>
+
+</body>
+</html></div>
+</body>
+</html></div>

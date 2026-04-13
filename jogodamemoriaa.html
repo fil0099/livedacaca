@@ -1,0 +1,393 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:33px;
+	top:26px;
+	width:163px;
+	height:83px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:40px;
+	top:39px;
+	width:193px;
+	height:160px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:27px;
+	top:27px;
+	width:163px;
+	height:191px;
+	z-index:1;
+}
+#Layer4 {
+	position:absolute;
+	left:24px;
+	top:31px;
+	width:168px;
+	height:144px;
+	z-index:1;
+}
+#Layer5 {
+	position:absolute;
+	left:48px;
+	top:38px;
+	width:200px;
+	height:262px;
+	z-index:1;
+}
+#Layer6 {
+	position:absolute;
+	left:22px;
+	top:26px;
+	width:210px;
+	height:171px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer6"><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogo da Memória 6</title>
+
+<style>
+html, body {
+width:100%;
+height:100%;
+margin:0;
+padding:0;
+overflow:hidden;
+}
+
+body{
+display:flex;
+justify-content:center;
+align-items:center;
+background:radial-gradient(circle at center,#0b1020,#05060c);
+font-family:Arial;
+color:white;
+}
+
+/* APP ocupa TUDO */
+#app{
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+/* TELAS CENTRALIZADAS */
+.screen{
+position:absolute;
+width:100%;
+height:100%;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+text-align:center;
+}
+
+/* painel menu */
+.panel{
+background:rgba(0,0,0,0.75);
+padding:30px;
+border-radius:20px;
+backdrop-filter:blur(10px);
+}
+
+/* BOTÕES */
+button{
+padding:12px 25px;
+margin-top:15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#4f7cff;
+color:white;
+}
+
+/* INPUT */
+input{
+padding:10px;
+border-radius:10px;
+border:none;
+text-align:center;
+}
+
+/* JOGO ocupa tela inteira e centraliza conteúdo */
+#game{
+display:none;
+position:absolute;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+}
+
+/* HUD centralizado no topo */
+.hud{
+position:absolute;
+top:15px;
+left:50%;
+transform:translateX(-50%);
+display:flex;
+gap:20px;
+background:rgba(0,0,0,0.6);
+padding:10px 20px;
+border-radius:15px;
+}
+
+/* BOARD CENTRALIZADO DE VERDADE */
+.board{
+display:grid;
+gap:10px;
+justify-content:center;
+align-content:center;
+place-items:center;
+}
+
+/* CARTAS */
+.card{
+width:90px;
+height:90px;
+border-radius:10px;
+position:relative;
+cursor:pointer;
+transform-style:preserve-3d;
+transition:0.5s;
+}
+
+.card.flip{
+transform:rotateY(180deg);
+}
+
+.front,.back{
+position:absolute;
+width:100%;
+height:100%;
+border-radius:10px;
+backface-visibility:hidden;
+}
+
+.front{
+background:#111827;
+}
+
+.back{
+transform:rotateY(180deg);
+background-size:cover;
+background-position:center;
+}
+
+/* esconder telas */
+.hidden{display:none;}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+
+<!-- MENU -->
+<div class="screen" id="menu">
+<div class="panel">
+<h2>Jogo da Memória</h2>
+<p>Encontre os pares iguais virando as cartas.</p>
+<button onclick="showName()">Jogar</button>
+</div>
+</div>
+
+<!-- NOME -->
+<div class="screen hidden" id="nameScreen">
+<div class="panel">
+<h3>Digite seu nome</h3>
+<input id="playerName">
+<br>
+<button onclick="startGame()">Iniciar</button>
+</div>
+</div>
+
+<!-- JOGO -->
+<div id="game">
+
+<div class="hud">
+<span>Jogador: <b id="pName"></b></span>
+<span>Pares: <b id="pairs"></b></span>
+<span>Fase: <b id="level"></b></span>
+</div>
+
+<div class="board" id="board"></div>
+
+</div>
+
+</div>
+
+<script>
+
+const images=[
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/00404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0043434.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/004434.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0121313.webp"
+];
+
+let player="";
+let first=null;
+let second=null;
+let lock=false;
+let pairs=0;
+let level=1;
+let boardSize=4;
+
+function showName(){
+document.getElementById("menu").classList.add("hidden");
+document.getElementById("nameScreen").classList.remove("hidden");
+}
+
+function startGame(){
+player=document.getElementById("playerName").value||"Jogador";
+
+document.getElementById("nameScreen").classList.add("hidden");
+document.getElementById("game").style.display="flex";
+
+document.getElementById("pName").innerText=player;
+
+level=1;
+boardSize=4;
+
+startLevel();
+}
+
+function startLevel(){
+
+pairs=0;
+first=null;
+second=null;
+lock=false;
+
+document.getElementById("pairs").innerText=pairs;
+document.getElementById("level").innerText=level;
+
+let board=document.getElementById("board");
+board.innerHTML="";
+
+let total=(boardSize*boardSize)/2;
+
+let chosen=[...images].sort(()=>Math.random()-0.5).slice(0,total);
+let deck=[...chosen,...chosen].sort(()=>Math.random()-0.5);
+
+/* CENTRALIZA GRID NA TELA */
+board.style.gridTemplateColumns=`repeat(${boardSize},90px)`;
+
+deck.forEach(img=>{
+let card=document.createElement("div");
+card.className="card";
+
+card.innerHTML=`
+<div class="front"></div>
+<div class="back" style="background-image:url(${img})"></div>
+`;
+
+card.dataset.img=img;
+
+card.onclick=()=>flip(card);
+
+board.appendChild(card);
+});
+}
+
+function flip(card){
+if(lock || card.classList.contains("flip")) return;
+
+card.classList.add("flip");
+
+if(!first){
+first=card;
+return;
+}
+
+second=card;
+lock=true;
+
+setTimeout(check,600);
+}
+
+function check(){
+if(first.dataset.img===second.dataset.img){
+pairs++;
+document.getElementById("pairs").innerText=pairs;
+
+first=null;
+second=null;
+lock=false;
+
+if(pairs===boardSize*boardSize/2){
+levelUp();
+}
+}else{
+first.classList.remove("flip");
+second.classList.remove("flip");
+
+first=null;
+second=null;
+lock=false;
+}
+}
+
+function levelUp(){
+level++;
+
+if(level===2) boardSize=6;
+if(level===3) boardSize=8;
+if(level>3){
+alert("Fim do jogo!");
+location.reload();
+return;
+}
+
+setTimeout(startLevel,800);
+}
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html>

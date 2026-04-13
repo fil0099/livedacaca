@@ -1,0 +1,341 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>História Maluca Avançada</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:14px;
+	top:14px;
+	width:190px;
+	height:109px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:80px;
+	top:36px;
+	width:223px;
+	height:138px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:-206px;
+	top:27px;
+	width:180px;
+	height:108px;
+	z-index:1;
+}
+#Layer4 {
+	position:absolute;
+	left:392px;
+	top:120px;
+	width:180px;
+	height:66px;
+	z-index:1;
+}
+-->
+</style>
+<meta charset="UTF-8" />
+<style>
+body{
+    margin:0;
+    font-family: Arial;
+    background:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.box{
+    width:460px;
+    border:1px solid #ccc;
+    border-radius:10px;
+    padding:20px;
+}
+
+input{
+    width:100%;
+    padding:8px;
+    margin:5px 0;
+    box-sizing:border-box;
+}
+
+button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    cursor:pointer;
+}
+
+#saida{
+    margin-top:15px;
+    font-size:14px;
+    text-align:left;
+    line-height:1.5;
+    max-height:250px;
+    overflow:auto;
+}
+#Layer5 {
+	position:absolute;
+	left:39px;
+	top:44px;
+	width:117px;
+	height:97px;
+	z-index:2;
+}
+#Layer6 {
+	position:absolute;
+	left:948px;
+	top:82px;
+	width:157px;
+	height:145px;
+	z-index:2;
+}
+.box1 {    width:460px;
+    border:1px solid #ccc;
+    border-radius:10px;
+    padding:20px;
+}
+#Layer7 {
+	position:absolute;
+	left:611px;
+	top:413px;
+	width:157px;
+	height:84px;
+	z-index:3;
+}
+#Layer8 {
+	position:absolute;
+	left:18px;
+	top:20px;
+	width:230px;
+	height:111px;
+	z-index:1;
+}
+#Layer9 {
+	position:absolute;
+	left:36px;
+	top:37px;
+	width:238px;
+	height:169px;
+	z-index:1;
+}
+#Layer10 {
+	position:absolute;
+	left:20px;
+	top:28px;
+	width:290px;
+	height:201px;
+	z-index:1;
+}
+</style>
+</head>
+
+<body>
+<div id="Layer10"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>História Maluca Expandida</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: black;
+}
+
+/* FUNDO */
+#bg {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.bg-img {
+    position: absolute;
+    width: 160px;
+    opacity: 0.10;
+    animation: floatSpin linear infinite;
+    filter: brightness(0.8);
+}
+
+@keyframes floatSpin {
+    0% { transform: rotate(0deg) translateY(0px); }
+    50% { transform: rotate(180deg) translateY(-60px); }
+    100% { transform: rotate(360deg) translateY(0px); }
+}
+
+/* CENTRALIZAÇÃO FORTE */
+.wrapper {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+/* JOGO */
+#game {
+    width: 520px;
+    max-width: 90vw;
+    background: rgba(255,255,255,0.96);
+    padding: 22px;
+    border-radius: 14px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+}
+
+input {
+    width: 92%;
+    padding: 9px;
+    margin: 5px 0;
+}
+
+button {
+    width: 95%;
+    padding: 10px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+#story {
+    margin-top: 15px;
+    text-align: left;
+    font-size: 14px;
+    line-height: 1.4;
+}
+</style>
+</head>
+
+<body>
+
+<div id="bg"></div>
+
+<div class="wrapper">
+<div id="game">
+
+    <h2>História Maluca</h2>
+
+    <input id="n1" placeholder="Nome 1">
+    <input id="n2" placeholder="Nome 2 (opcional)">
+    <input id="n3" placeholder="Nome 3 (opcional)">
+    <input id="obj" placeholder="Objeto">
+    <input id="loc" placeholder="Lugar">
+    <input id="acao" placeholder="Ação (descobriu, perdeu, criou...)">
+
+    <button onclick="gerarHistoria()">Gerar História</button>
+
+    <div id="story"></div>
+
+</div>
+</div>
+
+<script>
+
+// IMAGENS DO FUNDO
+const imagens = [
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/00404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/004434.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/012225.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0234343.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/043737.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/1760709672537.jpg",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/1760709676621.jpg"
+];
+
+// FUNDO DINÂMICO
+function criarFundo() {
+    const bg = document.getElementById("bg");
+
+    for (let i = 0; i < 20; i++) {
+        let img = document.createElement("img");
+        img.src = imagens[Math.floor(Math.random() * imagens.length)];
+        img.className = "bg-img";
+
+        img.style.top = Math.random() * 100 + "%";
+        img.style.left = Math.random() * 100 + "%";
+        img.style.width = (120 + Math.random() * 120) + "px";
+        img.style.animationDuration = (12 + Math.random() * 25) + "s";
+        img.style.transform = `rotate(${Math.random() * 360}deg)`;
+
+        bg.appendChild(img);
+    }
+}
+
+criarFundo();
+
+// HISTÓRIAS MUITO MAIS VARIADAS
+function gerarHistoria() {
+
+    const n1 = document.getElementById("n1").value || "Alguém misterioso";
+    const n2 = document.getElementById("n2").value;
+    const n3 = document.getElementById("n3").value;
+    const obj = document.getElementById("obj").value || "um objeto estranho";
+    const loc = document.getElementById("loc").value || "um lugar esquecido";
+    const acao = document.getElementById("acao").value || "encontrou";
+
+    const extras = [n2, n3].filter(v => v && v.trim() !== "");
+    const pessoas = [n1, ...extras];
+
+    const estilos = [
+
+        `Tudo começou em ${loc}, quando ${pessoas.join(", ")} inesperadamente ${acao} ${obj}. O que parecia algo comum se transformou em um evento que mudou completamente a realidade ao redor deles. Ruas desapareceram, o tempo parecia dobrar sobre si mesmo, e ninguém conseguia explicar o que estava acontecendo.`,
+
+        `Durante uma tarde comum em ${loc}, ${n1} percebeu algo estranho: ${obj} estava pulsando como se estivesse vivo. Ao ${acao}, uma sequência de eventos impossíveis começou a se desenrolar, envolvendo ${extras.length ? extras.join(" e ") : "forças desconhecidas"}.`,
+
+        `${pessoas.join(" e ")} decidiram explorar ${loc}, mas ao ${acao} ${obj}, abriram uma espécie de portal que conectava diferentes versões do próprio mundo. Cada passo parecia alterar a realidade de forma irreversível.`,
+
+        `Em ${loc}, uma lenda esquecida voltou à tona quando ${n1} ${acao} ${obj}. O objeto parecia reagir às emoções dos envolvidos, criando fenômenos inexplicáveis e distorcendo memórias antigas.`,
+
+        `Ninguém esperava que em ${loc} algo tão simples como ${obj} pudesse causar tanto caos. Mas quando ${pessoas.join(", ")} entraram em contato após ${acao}, tudo começou a se fragmentar em diferentes linhas do tempo.`,
+
+        `O dia parecia normal até que ${n1}, junto de ${extras.length ? extras.join(" e ") : "ninguém mais"}, ${acao} ${obj} em ${loc}. A partir desse instante, cada decisão deles criou uma nova versão da realidade, como se o mundo estivesse sendo reescrito continuamente.`,
+
+        `Em um evento inexplicável em ${loc}, ${pessoas.join(", ")} testemunharam ${obj} mudar de forma após ser ${acao}. Isso desencadeou uma cadeia de acontecimentos que misturava sonho, memória e realidade de maneira impossível de separar.`
+		
+
+    ];
+
+    const historia = estilos[Math.floor(Math.random() * estilos.length)];
+
+    document.getElementById("story").innerHTML =
+        "<b>História gerada:</b><br><br>" + historia;
+}
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer8"><!DOCTYPE html>
+<html lang="pt-br">
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer2"><!DOCTYPE html>
+</body>
+</html></div>
+<div id="Layer1"><!DOCTYPE html>
+</body>
+</html></div>
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Jogo de Corrida 10</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:23px;
+	top:23px;
+	width:186px;
+	height:125px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:61px;
+	top:42px;
+	width:169px;
+	height:87px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:375px;
+	top:48px;
+	width:230px;
+	height:162px;
+	z-index:1;
+}
+#Layer4 {
+	position:absolute;
+	left:298px;
+	top:148px;
+	width:156px;
+	height:96px;
+	z-index:1;
+}
+-->
+</style>
+<meta charset="UTF-8" />
+<style>
+html,body{
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  background:#ffffff;
+  font-family: Arial;
+}
+
+#startScreen{
+  position:fixed;
+  width:100%;
+  height:100%;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  z-index:10;
+}
+
+button{
+  padding:15px 30px;
+  font-size:18px;
+  cursor:pointer;
+}
+
+canvas{
+  display:block;
+  margin:auto;
+  background:#f7f7f7;
+}
+
+#ui{
+  position:fixed;
+  top:10px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:20px;
+  font-size:16px;
+}
+</style>
+</head>
+
+<body>
+<div id="Layer4">
+  <div id="Layer3">
+    <!DOCTYPE html>
+  </div>
+  <div id="startScreen">
+    <h2>Corrida 10</h2>
+    <p>Use as setas para desviar dos carros e pegar bônus.</p>
+    <button onclick="startGame()">Iniciar</button>
+  </div>
+  <div id="ui">
+    <div>Pontos: <span id="score">0</span></div>
+    <div>Velocidade: <span id="speed">1</span></div>
+  </div>
+  <canvas id="game" width="500" height="600"></canvas>
+</div>
+<script>
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let player, cars, bonuses, score, speed, loop;
+
+const playerImg = new Image();
+playerImg.src = "https://w7.pngwing.com/pngs/486/496/png-transparent-top-view-plan-view-top-view-plan-view-overlook.png";
+
+const enemyImgs = [
+"https://w7.pngwing.com/pngs/66/222/png-transparent-red-car-illustration-car-bird-s-eye-view-icon-top-view-plan-view-transport-top-view-search-engine.png",
+"https://w7.pngwing.com/pngs/877/948/png-transparent-top-view-plan-view-top-view-plan-view-overlook.png"
+];
+
+const bonusImgs = [
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp"
+];
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowLeft") player.x-=20;
+  if(e.key==="ArrowRight") player.x+=20;
+});
+
+function startGame(){
+  document.getElementById("startScreen").style.display="none";
+
+  player={x:220,y:500,w:60,h:80};
+
+  cars=[];
+  bonuses=[];
+
+  score=0;
+  speed=2;
+
+  clearInterval(loop);
+  loop=setInterval(update,20);
+}
+
+function spawnCar(){
+  cars.push({
+    x:Math.random()*450,
+    y:-100,
+    img:enemyImgs[Math.floor(Math.random()*enemyImgs.length)]
+  });
+}
+
+function spawnBonus(){
+  bonuses.push({
+    x:Math.random()*450,
+    y:-100,
+    img:bonusImgs[Math.floor(Math.random()*bonusImgs.length)]
+  });
+}
+
+function update(){
+
+  ctx.clearRect(0,0,500,600);
+
+  // player
+  ctx.drawImage(playerImg,player.x,player.y,60,80);
+
+  // spawn control
+  if(Math.random()<0.03) spawnCar();
+  if(Math.random()<0.01) spawnBonus();
+
+  // cars
+  for(let i=0;i<cars.length;i++){
+    let c=cars[i];
+    c.y+=speed+2;
+
+    let img=new Image();
+    img.src=c.img;
+    ctx.drawImage(img,c.x,c.y,60,80);
+
+    if(col(player,c)){
+      return gameOver();
+    }
+  }
+
+  // bonuses
+  for(let i=0;i<bonuses.length;i++){
+    let b=bonuses[i];
+    b.y+=speed;
+
+    let img=new Image();
+    img.src=b.img;
+    ctx.drawImage(img,b.x,b.y,40,40);
+
+    if(col(player,b)){
+      score+=5;
+      bonuses.splice(i,1);
+      speed+=0.1;
+      document.getElementById("score").innerText=score;
+    }
+  }
+
+  if(score%20===0 && score>0){
+    speed+=0.02;
+  }
+}
+
+function col(a,b){
+  return a.x<b.x+50 && a.x+60>b.x && a.y<b.y+70 && a.y+80>b.y;
+}
+
+function gameOver(){
+  clearInterval(loop);
+
+  let name=prompt("Seu nome:");
+  let rank=JSON.parse(localStorage.getItem("race")||"[]");
+
+  rank.push({name:name||"Jogador",score});
+  rank.sort((a,b)=>b.score-a.score);
+  rank=rank.slice(0,5);
+
+  localStorage.setItem("race",JSON.stringify(rank));
+
+  document.getElementById("startScreen").style.display="flex";
+}
+
+</script>
+
+</body>
+</html></div>
+<div id="Layer2"><!DOCTYPE html>
+<html lang="pt-br">
+<script>
+
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+
+let player, cars, bonuses, score, speed, loop;
+
+const playerImg = new Image();
+playerImg.src = "https://w7.pngwing.com/pngs/486/496/png-transparent-top-view-plan-view-top-view-plan-view-overlook.png";
+
+const enemyImgs = [
+"https://w7.pngwing.com/pngs/66/222/png-transparent-red-car-illustration-car-bird-s-eye-view-icon-top-view-plan-view-transport-top-view-search-engine.png",
+"https://w7.pngwing.com/pngs/877/948/png-transparent-top-view-plan-view-top-view-plan-view-overlook.png"
+];
+
+const bonusImgs = [
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp"
+];
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowLeft") player.x-=20;
+  if(e.key==="ArrowRight") player.x+=20;
+});
+
+function startGame(){
+  document.getElementById("startScreen").style.display="none";
+
+  player={x:220,y:500,w:60,h:80};
+
+  cars=[];
+  bonuses=[];
+
+  score=0;
+  speed=2;
+
+  clearInterval(loop);
+  loop=setInterval(update,20);
+}
+
+function spawnCar(){
+  cars.push({
+    x:Math.random()*450,
+    y:-100,
+    img:enemyImgs[Math.floor(Math.random()*enemyImgs.length)]
+  });
+}
+
+function spawnBonus(){
+  bonuses.push({
+    x:Math.random()*450,
+    y:-100,
+    img:bonusImgs[Math.floor(Math.random()*bonusImgs.length)]
+  });
+}
+
+function update(){
+
+  ctx.clearRect(0,0,500,600);
+
+  // player
+  ctx.drawImage(playerImg,player.x,player.y,60,80);
+
+  // spawn control
+  if(Math.random()<0.03) spawnCar();
+  if(Math.random()<0.01) spawnBonus();
+
+  // cars
+  for(let i=0;i<cars.length;i++){
+    let c=cars[i];
+    c.y+=speed+2;
+
+    let img=new Image();
+    img.src=c.img;
+    ctx.drawImage(img,c.x,c.y,60,80);
+
+    if(col(player,c)){
+      return gameOver();
+    }
+  }
+
+  // bonuses
+  for(let i=0;i<bonuses.length;i++){
+    let b=bonuses[i];
+    b.y+=speed;
+
+    let img=new Image();
+    img.src=b.img;
+    ctx.drawImage(img,b.x,b.y,40,40);
+
+    if(col(player,b)){
+      score+=5;
+      bonuses.splice(i,1);
+      speed+=0.1;
+      document.getElementById("score").innerText=score;
+    }
+  }
+
+  if(score%20===0 && score>0){
+    speed+=0.02;
+  }
+}
+
+function col(a,b){
+  return a.x<b.x+50 && a.x+60>b.x && a.y<b.y+70 && a.y+80>b.y;
+}
+
+function gameOver(){
+  clearInterval(loop);
+
+  let name=prompt("Seu nome:");
+  let rank=JSON.parse(localStorage.getItem("race")||"[]");
+
+  rank.push({name:name||"Jogador",score});
+  rank.sort((a,b)=>b.score-a.score);
+  rank=rank.slice(0,5);
+
+  localStorage.setItem("race",JSON.stringify(rank));
+
+  document.getElementById("startScreen").style.display="flex";
+}
+
+</script>
+
+</body>
+</html></div>
+<div id="Layer1"><!DOCTYPE html>
+<script>const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const box = 20;
+let snake, dir, food, score, shield, shieldEnd, loop;
+
+const imgs = [
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp"
+];
+
+let img = new Image();
+
+document.addEventListener("keydown", e=>{
+  if(e.key==="ArrowUp" && dir!=="DOWN") dir="UP";
+  if(e.key==="ArrowDown" && dir!=="UP") dir="DOWN";
+  if(e.key==="ArrowLeft" && dir!=="RIGHT") dir="LEFT";
+  if(e.key==="ArrowRight" && dir!=="LEFT") dir="RIGHT";
+});
+
+function startGame(){
+  document.getElementById("startScreen").style.display="none";
+
+  snake=[{x:10*box,y:10*box}];
+  dir="RIGHT";
+  score=0;
+  shield=false;
+
+  spawnFood();
+
+  clearInterval(loop);
+  loop=setInterval(update,100);
+}
+
+function spawnFood(){
+  food={
+    x:Math.floor(Math.random()*25)*box,
+    y:Math.floor(Math.random()*25)*box,
+    img:imgs[Math.floor(Math.random()*imgs.length)]
+  };
+  img.src=food.img;
+}
+
+function activateShield(){
+  shield=true;
+  shieldEnd=Date.now()+4000;
+  document.getElementById("shield").innerText="ON";
+}
+
+function update(){
+
+  ctx.clearRect(0,0,500,500);
+
+  ctx.drawImage(img, food.x, food.y, box, box);
+
+  for(let i=0;i<snake.length;i++){
+    ctx.fillStyle = shield ? "#66ccff" : (i===0?"green":"#2ecc71");
+    ctx.fillRect(snake[i].x, snake[i].y, box, box);
+  }
+
+  let head={x:snake[0].x,y:snake[0].y};
+
+  if(dir==="UP") head.y-=box;
+  if(dir==="DOWN") head.y+=box;
+  if(dir==="LEFT") head.x-=box;
+  if(dir==="RIGHT") head.x+=box;
+
+  // colisão parede
+  if(!shield && (head.x<0||head.y<0||head.x>=500||head.y>=500)){
+    return gameOver();
+  }
+
+  // colisão corpo
+  for(let i=0;i<snake.length;i++){
+    if(!shield && head.x===snake[i].x && head.y===snake[i].y){
+      return gameOver();
+    }
+  }
+
+  snake.unshift(head);
+
+  if(head.x===food.x && head.y===food.y){
+    score++;
+    document.getElementById("score").innerText=score;
+
+    spawnFood();
+
+    if(score%5===0) activateShield();
+
+  } else {
+    snake.pop();
+  }
+
+  if(shield && Date.now()>shieldEnd){
+    shield=false;
+    document.getElementById("shield").innerText="OFF";
+  }
+}
+
+function gameOver(){
+  clearInterval(loop);
+
+  let name=prompt("Seu nome:");
+  let rank=JSON.parse(localStorage.getItem("rank")||"[]");
+
+  rank.push({name:name||"Jogador",score});
+  rank.sort((a,b)=>b.score-a.score);
+  rank=rank.slice(0,5);
+
+  localStorage.setItem("rank",JSON.stringify(rank));
+
+  document.getElementById("startScreen").style.display="flex";
+}
+</script>
+
+</body>
+</html></div>
+</body>
+</html>

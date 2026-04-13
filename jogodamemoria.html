@@ -1,0 +1,328 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:34px;
+	top:20px;
+	width:250px;
+	height:244px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:27px;
+	top:28px;
+	width:212px;
+	height:158px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer2"><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Memória Visual</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+    height:100vh;
+    font-family:Arial;
+    background:linear-gradient(135deg,#020617,#0f172a);
+    color:white;
+    overflow:hidden;
+}
+
+/* TELAS */
+.screen{
+    position:fixed;
+    width:100vw;
+    height:100vh;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+}
+.screen.active{display:flex;}
+
+/* GRID */
+#grid{
+    display:grid;
+    grid-template-columns:repeat(3, 120px);
+    gap:20px;
+}
+
+/* BLOCOS */
+.tile{
+    width:120px;
+    height:120px;
+    border-radius:12px;
+    background-size:cover;
+    cursor:pointer;
+    opacity:0.6;
+    transition:0.2s;
+}
+
+.tile.active{
+    opacity:1;
+    transform:scale(1.1);
+    box-shadow:0 0 20px white;
+}
+
+/* HUD */
+#hud{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.7);
+    padding:10px 25px;
+    border-radius:10px;
+    display:flex;
+    gap:30px;
+}
+
+/* BOTÃO */
+button{
+    padding:12px 25px;
+    border:none;
+    border-radius:8px;
+    background:#38bdf8;
+    color:white;
+    cursor:pointer;
+    margin-top:20px;
+}
+
+/* INPUT */
+input{
+    padding:10px;
+    border:none;
+    border-radius:6px;
+    text-align:center;
+}
+
+/* RANKING */
+#ranking{
+    margin-top:20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- MENU -->
+<div class="screen active" id="menu">
+    <h1>Memória Visual</h1>
+
+    <p style="max-width:400px;text-align:center;margin:20px">
+        Observe a sequência que o jogo mostra.<br>
+        Depois clique nas imagens na mesma ordem.<br>
+        A cada fase a sequência aumenta.
+    </p>
+
+    <button onclick="goName()">Começar</button>
+
+    <div id="ranking"></div>
+</div>
+
+<!-- NOME -->
+<div class="screen" id="name">
+    <h2>Digite seu nome</h2>
+    <input id="playerName">
+    <button onclick="startGame()">Iniciar</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+
+    <div id="hud">
+        <div>Fase: <span id="level">1</span></div>
+        <div>Pontos: <span id="score">0</span></div>
+    </div>
+
+    <div id="grid"></div>
+
+</div>
+
+<script>
+
+// ================= IMAGENS =================
+const images = [
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/04043.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/4004.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/00404.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/66.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/34340.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/373120.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/737313.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/8997976.webp'
+];
+
+// ================= VAR =================
+let sequence = [];
+let playerSeq = [];
+let level = 1;
+let score = 0;
+let player = "";
+let canClick = false;
+
+// ================= TELAS =================
+function show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function goName(){
+    show("name");
+}
+
+// ================= INICIAR =================
+function startGame(){
+
+    player = document.getElementById("playerName").value || "Jogador";
+
+    level = 1;
+    score = 0;
+    sequence = [];
+    playerSeq = [];
+
+    show("game");
+
+    createGrid();
+    nextRound();
+}
+
+// ================= GRID =================
+function createGrid(){
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    for(let i=0;i<9;i++){
+        const div = document.createElement("div");
+        div.className = "tile";
+        div.style.backgroundImage = `url(${images[i]})`;
+
+        div.onclick = ()=>handleClick(i);
+
+        grid.appendChild(div);
+    }
+}
+
+// ================= RODADA =================
+function nextRound(){
+
+    playerSeq = [];
+    sequence.push(Math.floor(Math.random()*9));
+
+    updateHUD();
+
+    showSequence();
+}
+
+// ================= MOSTRAR SEQUÊNCIA =================
+function showSequence(){
+
+    canClick = false;
+
+    let i = 0;
+
+    const interval = setInterval(()=>{
+
+        const tiles = document.querySelectorAll(".tile");
+        const index = sequence[i];
+
+        tiles[index].classList.add("active");
+
+        setTimeout(()=>{
+            tiles[index].classList.remove("active");
+        },400);
+
+        i++;
+
+        if(i >= sequence.length){
+            clearInterval(interval);
+            canClick = true;
+        }
+
+    },700);
+}
+
+// ================= CLIQUE =================
+function handleClick(i){
+
+    if(!canClick) return;
+
+    playerSeq.push(i);
+
+    if(playerSeq[playerSeq.length-1] !== sequence[playerSeq.length-1]){
+        endGame();
+        return;
+    }
+
+    if(playerSeq.length === sequence.length){
+        score += 50 * level;
+        level++;
+        setTimeout(nextRound,800);
+    }
+}
+
+// ================= HUD =================
+function updateHUD(){
+    document.getElementById("level").innerText = level;
+    document.getElementById("score").innerText = score;
+}
+
+// ================= FIM =================
+function endGame(){
+
+    saveScore();
+
+    alert("Fim de jogo. Pontos: " + score);
+
+    showRanking();
+    show("menu");
+}
+
+// ================= RANKING =================
+function saveScore(){
+
+    let list = JSON.parse(localStorage.getItem("memoriaRanking") || "[]");
+
+    list.push({name: player, score: score});
+    list.sort((a,b)=>b.score-a.score);
+    list = list.slice(0,5);
+
+    localStorage.setItem("memoriaRanking", JSON.stringify(list));
+}
+
+function showRanking(){
+
+    let list = JSON.parse(localStorage.getItem("memoriaRanking") || "[]");
+
+    document.getElementById("ranking").innerHTML =
+        "<h3>Melhores Pontuações</h3>" +
+        list.map(p=>`<div>${p.name} - ${p.score}</div>`).join("");
+}
+
+showRanking();
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html>

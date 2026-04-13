@@ -1,0 +1,371 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:30px;
+	top:50px;
+	width:261px;
+	height:157px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:14px;
+	top:21px;
+	width:160px;
+	height:135px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:64px;
+	top:37px;
+	width:220px;
+	height:154px;
+	z-index:1;
+}
+#Layer4 {
+	position:absolute;
+	left:41px;
+	top:23px;
+	width:164px;
+	height:152px;
+	z-index:1;
+}
+#Layer5 {
+	position:absolute;
+	left:30px;
+	top:16px;
+	width:130px;
+	height:151px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer5"><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Desvio Total</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+    height:100vh;
+    overflow:hidden;
+    font-family:Arial;
+    background:linear-gradient(135deg,#020617,#0f172a);
+    color:white;
+}
+
+/* TELAS */
+.screen{
+    position:fixed;
+    width:100vw;
+    height:100vh;
+    display:none;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+}
+.screen.active{display:flex;}
+
+/* GAME */
+#gameArea{
+    position:fixed;
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+}
+
+/* PLAYER */
+#player{
+    position:absolute;
+    width:80px;
+    height:80px;
+    bottom:30px;
+    left:50%;
+    transform:translateX(-50%);
+    background-size:cover;
+}
+
+/* OBSTÁCULOS */
+.obstacle{
+    position:absolute;
+    width:70px;
+    height:70px;
+    background-size:cover;
+}
+
+/* HUD */
+#hud{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.7);
+    padding:10px 25px;
+    border-radius:10px;
+    display:flex;
+    gap:25px;
+}
+
+/* BOTÃO */
+button{
+    padding:12px 25px;
+    border:none;
+    border-radius:8px;
+    background:#38bdf8;
+    color:white;
+    cursor:pointer;
+    margin-top:15px;
+}
+
+/* INPUT */
+input{
+    padding:10px;
+    border:none;
+    border-radius:6px;
+    text-align:center;
+}
+
+/* RANKING */
+#ranking{
+    margin-top:20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- MENU -->
+<div class="screen active" id="menu">
+    <h1>Desvie dos Objetos</h1>
+
+    <p style="max-width:400px;text-align:center;margin:20px">
+        Use o mouse ou toque para mover.<br>
+        Desvie dos objetos que caem.<br>
+        Sobreviva o máximo possível.
+    </p>
+
+    <button onclick="goName()">Começar</button>
+
+    <div id="ranking"></div>
+</div>
+
+<!-- NOME -->
+<div class="screen" id="name">
+    <h2>Digite seu nome</h2>
+    <input id="playerName">
+    <button onclick="startGame()">Iniciar</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+
+    <div id="hud">
+        <div>Pontos: <span id="score">0</span></div>
+        <div>Nível: <span id="level">1</span></div>
+    </div>
+
+    <div id="gameArea">
+        <div id="player"></div>
+    </div>
+
+</div>
+
+<script>
+
+// ================= IMAGENS =================
+const images = [
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/66.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/04043.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/4004.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/00404.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/34340.webp',
+'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/737313.webp'
+];
+
+// ================= VAR =================
+let playerName = "";
+let score = 0;
+let level = 1;
+let gameLoop;
+let spawnLoop;
+let speed = 3;
+let active = false;
+
+// ================= TELAS =================
+function show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function goName(){
+    show("name");
+}
+
+// ================= INICIAR =================
+function startGame(){
+
+    playerName = document.getElementById("playerName").value || "Jogador";
+
+    score = 0;
+    level = 1;
+    speed = 3;
+    active = true;
+
+    show("game");
+
+    const player = document.getElementById("player");
+    player.style.backgroundImage = `url(${images[0]})`;
+
+    document.getElementById("gameArea").innerHTML = "";
+    document.getElementById("gameArea").appendChild(player);
+
+    updateHUD();
+
+    gameLoop = setInterval(updateGame, 20);
+    spawnLoop = setInterval(spawnObstacle, 900);
+}
+
+// ================= PLAYER =================
+document.addEventListener("mousemove", e=>{
+    if(!active) return;
+    const player = document.getElementById("player");
+    player.style.left = (e.clientX - 40) + "px";
+});
+
+document.addEventListener("touchmove", e=>{
+    if(!active) return;
+    const x = e.touches[0].clientX;
+    document.getElementById("player").style.left = (x - 40) + "px";
+});
+
+// ================= OBSTÁCULOS =================
+function spawnObstacle(){
+
+    if(!active) return;
+
+    const obs = document.createElement("div");
+    obs.className = "obstacle";
+
+    obs.style.left = Math.random() * (window.innerWidth - 70) + "px";
+    obs.style.top = "-80px";
+
+    obs.style.backgroundImage = `url(${images[Math.floor(Math.random()*images.length)]})`;
+
+    document.getElementById("gameArea").appendChild(obs);
+}
+
+// ================= LOOP =================
+function updateGame(){
+
+    if(!active) return;
+
+    const obstacles = document.querySelectorAll(".obstacle");
+    const player = document.getElementById("player");
+
+    obstacles.forEach(o=>{
+        let top = parseFloat(o.style.top);
+        o.style.top = (top + speed) + "px";
+
+        // colisão
+        const pRect = player.getBoundingClientRect();
+        const oRect = o.getBoundingClientRect();
+
+        if(
+            pRect.left < oRect.right &&
+            pRect.right > oRect.left &&
+            pRect.top < oRect.bottom &&
+            pRect.bottom > oRect.top
+        ){
+            endGame();
+        }
+
+        // saiu da tela
+        if(top > window.innerHeight){
+            o.remove();
+            score += 10;
+        }
+    });
+
+    // subir nível
+    if(score % 200 === 0 && score !== 0){
+        level++;
+        speed += 0.5;
+        updateHUD();
+    }
+
+    updateHUD();
+}
+
+// ================= HUD =================
+function updateHUD(){
+    document.getElementById("score").innerText = score;
+    document.getElementById("level").innerText = level;
+}
+
+// ================= FIM =================
+function endGame(){
+
+    active = false;
+
+    clearInterval(gameLoop);
+    clearInterval(spawnLoop);
+
+    saveScore();
+
+    alert("Fim de jogo. Pontos: " + score);
+
+    showRanking();
+    show("menu");
+}
+
+// ================= RANKING =================
+function saveScore(){
+
+    let list = JSON.parse(localStorage.getItem("desvioRanking") || "[]");
+
+    list.push({name: playerName, score: score});
+    list.sort((a,b)=>b.score-a.score);
+    list = list.slice(0,5);
+
+    localStorage.setItem("desvioRanking", JSON.stringify(list));
+}
+
+function showRanking(){
+
+    let list = JSON.parse(localStorage.getItem("desvioRanking") || "[]");
+
+    document.getElementById("ranking").innerHTML =
+        "<h3>Melhores Pontuações</h3>" +
+        list.map(p=>`<div>${p.name} - ${p.score}</div>`).join("");
+}
+
+showRanking();
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html>

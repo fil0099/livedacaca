@@ -1,0 +1,506 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:9px;
+	top:19px;
+	width:212px;
+	height:131px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:20px;
+	top:15px;
+	width:271px;
+	height:231px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:50px;
+	top:28px;
+	width:187px;
+	height:131px;
+	z-index:1;
+}
+#Layer4 {
+	position:absolute;
+	left:29px;
+	top:25px;
+	width:148px;
+	height:97px;
+	z-index:1;
+}
+#Layer5 {
+	position:absolute;
+	left:9px;
+	top:23px;
+	width:197px;
+	height:149px;
+	z-index:1;
+}
+#Layer6 {
+	position:absolute;
+	left:43px;
+	top:29px;
+	width:143px;
+	height:68px;
+	z-index:1;
+}
+#Layer7 {
+	position:absolute;
+	left:45px;
+	top:38px;
+	width:136px;
+	height:136px;
+	z-index:1;
+}
+#Layer8 {
+	position:absolute;
+	left:42px;
+	top:41px;
+	width:142px;
+	height:102px;
+	z-index:1;
+}
+#Layer9 {
+	position:absolute;
+	left:23px;
+	top:24px;
+	width:145px;
+	height:115px;
+	z-index:1;
+}
+#Layer10 {
+	position:absolute;
+	left:31px;
+	top:30px;
+	width:155px;
+	height:122px;
+	z-index:1;
+}
+#Layer11 {
+	position:absolute;
+	left:38px;
+	top:27px;
+	width:150px;
+	height:118px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer11"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>UNO Completo</title>
+
+<style>
+body{
+    margin:0;
+    background:#0f172a;
+    font-family:Arial;
+    color:white;
+}
+
+/* TELAS CENTRALIZADAS */
+.screen{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
+    background:#0f172a;
+    text-align:center;
+    z-index:10;
+}
+
+button{
+    padding:10px 20px;
+    margin-top:15px;
+    border:none;
+    background:#22c55e;
+    color:white;
+    cursor:pointer;
+}
+
+/* MESA */
+#table{
+    width:100vw;
+    height:100vh;
+    position:relative;
+    display:none;
+    background:#1e293b;
+}
+
+/* CENTRO */
+#center{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+}
+
+/* CARTAS */
+.card{
+    width:70px;
+    height:100px;
+    border-radius:10px;
+    background-size:cover;
+    margin:4px;
+    display:inline-block;
+    position:relative;
+}
+
+.card:hover{
+    transform:scale(1.1);
+    cursor:pointer;
+}
+
+.card::after{
+    content:attr(data-text);
+    position:absolute;
+    top:5px;
+    left:6px;
+    font-weight:bold;
+}
+
+.back{ background:#111; }
+
+.player{ position:absolute; text-align:center; }
+
+#p1{ bottom:60px; width:100%; }
+#p2{ top:10px; width:100%; }
+#p3{ left:10px; top:50%; transform:translateY(-50%); }
+#p4{ right:10px; top:50%; transform:translateY(-50%); }
+
+.side .card{
+    transform:rotate(90deg);
+    display:block;
+    margin:1px 0;
+}
+
+.info{ font-size:14px; margin-bottom:5px; }
+
+.dot{
+    display:inline-block;
+    width:8px;
+    height:8px;
+    background:#22c55e;
+    border-radius:50%;
+    margin-left:6px;
+}
+
+#turnText{
+    position:absolute;
+    bottom:170px;
+    width:100%;
+    text-align:center;
+    font-size:22px;
+    color:#22c55e;
+    display:none;
+}
+
+.pile{
+    width:70px;
+    height:100px;
+    border-radius:10px;
+    display:inline-block;
+    margin:10px;
+}
+
+#drawPile{ background:#000; }
+
+</style>
+</head>
+
+<body>
+
+<!-- INÍCIO -->
+<div id="startScreen" class="screen">
+    <h1>cartas</h1>
+    <p><b>Como jogar:</b><br><br>
+    Combine cor ou número.<br>
+    +2 faz o próximo comprar 2 cartas.<br>
+    +4 faz o próximo comprar 4 cartas.<br>
+    Se não puder jogar, compre carta.<br>
+    Vence quem acabar com as cartas.</p>
+    <button onclick="startGame()">Começar Jogo</button>
+</div>
+
+<!-- FINAL -->
+<div id="endScreen" class="screen" style="display:none;">
+    <h1 id="winnerText"></h1>
+    <button onclick="restartGame()">Jogar novamente</button>
+</div>
+
+<!-- JOGO -->
+<div id="table">
+
+<div id="center">
+    <div id="drawPile" class="pile"></div>
+    <div id="discardPile" class="pile"></div>
+    <br>
+    <button onclick="drawCard()">Comprar</button>
+</div>
+
+<div id="turnText">SUA VEZ</div>
+
+<div id="p1" class="player"></div>
+<div id="p2" class="player"></div>
+<div id="p3" class="player side"></div>
+<div id="p4" class="player side"></div>
+
+</div>
+
+<script>
+
+const imgs=[
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp"
+];
+
+const colors=["red","blue","green","yellow"];
+
+let deck=[], players=[[],[],[],[]];
+let topCard, turn=0, penalty=0;
+
+/* START */
+function startGame(){
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("table").style.display="block";
+    init();
+}
+
+function restartGame(){
+    document.getElementById("endScreen").style.display="none";
+    document.getElementById("table").style.display="block";
+    init();
+}
+
+/* BARALHO */
+function drawFromDeck(){
+    if(deck.length === 0){
+        for(let i=0;i<50;i++) deck.push(createCard());
+    }
+    return deck.pop();
+}
+
+/* CARTA */
+function createCard(){
+    let r=Math.random();
+    let special=null;
+    if(r<0.15) special="+2";
+    else if(r<0.25) special="+4";
+
+    return{
+        color:colors[Math.floor(Math.random()*4)],
+        value:special?special:Math.floor(Math.random()*9),
+        img:imgs[Math.floor(Math.random()*imgs.length)]
+    };
+}
+
+/* INIT */
+function init(){
+    deck=[]; players=[[],[],[],[]]; penalty=0; turn=0;
+
+    for(let i=0;i<100;i++) deck.push(createCard());
+
+    for(let p=0;p<4;p++){
+        for(let i=0;i<6;i++){
+            players[p].push(drawFromDeck());
+        }
+    }
+
+    topCard=drawFromDeck();
+    render();
+}
+
+/* HTML */
+function cardHTML(c,click=false,i=0){
+    return `<div class="card"
+    onclick="${click?'playCard('+i+')':''}"
+    style="border:3px solid ${c.color}; background-image:url(${c.img})"
+    data-text="${c.value}"></div>`;
+}
+
+function backCard(){ return `<div class="card back"></div>`; }
+
+/* RENDER */
+function render(){
+
+    document.getElementById("discardPile").innerHTML=cardHTML(topCard);
+
+    let p1=`<div class="info">Jogador 1 (Você) - ${players[0].length}</div>`;
+    players[0].forEach((c,i)=> p1+=cardHTML(c,true,i));
+    document.getElementById("p1").innerHTML=p1;
+
+    document.getElementById("p2").innerHTML=
+        `<div class="info">Jogador 2 - ${players[1].length} ${turn===1?'<span class="dot"></span>':''}</div>` +
+        players[1].map(()=>backCard()).join("");
+
+    document.getElementById("p3").innerHTML=
+        `<div class="info">Jogador 3 - ${players[2].length} ${turn===2?'<span class="dot"></span>':''}</div>` +
+        players[2].map(()=>backCard()).join("");
+
+    document.getElementById("p4").innerHTML=
+        `<div class="info">Jogador 4 - ${players[3].length} ${turn===3?'<span class="dot"></span>':''}</div>` +
+        players[3].map(()=>backCard()).join("");
+
+    document.getElementById("turnText").style.display =
+        turn===0 ? "block":"none";
+}
+
+/* REGRA */
+function valid(c){
+
+    if(c.value === "+4") return true;
+
+    if(c.value === "+2"){
+        return c.color === topCard.color || topCard.value === "+2";
+    }
+
+    return c.color === topCard.color || c.value === topCard.value;
+}
+
+/* JOGAR */
+function playCard(i){
+    if(turn!==0) return;
+
+    let c=players[0][i];
+
+    if(valid(c)){
+        applyCard(c);
+        players[0].splice(i,1);
+        nextTurn();
+    }
+}
+
+/* EFEITOS */
+function applyCard(c){
+    topCard=c;
+    if(c.value==="+2") penalty+=2;
+    if(c.value==="+4") penalty+=4;
+}
+
+/* COMPRAR */
+function drawCard(){
+    if(turn!==0) return;
+
+    if(penalty>0){
+        for(let i=0;i<penalty;i++) players[0].push(drawFromDeck());
+        penalty=0;
+        nextTurn();
+        return;
+    }
+
+    players[0].push(drawFromDeck());
+    nextTurn();
+}
+
+/* BOT */
+function botTurn(){
+    setTimeout(()=>{
+
+        let hand=players[turn];
+
+        if(penalty>0){
+            for(let i=0;i<penalty;i++) hand.push(drawFromDeck());
+            penalty=0;
+            nextTurn();
+            return;
+        }
+
+        let idx=hand.findIndex(c=>valid(c));
+
+        if(idx!==-1){
+            let c=hand[idx];
+            applyCard(c);
+            hand.splice(idx,1);
+        }else{
+            hand.push(drawFromDeck());
+        }
+
+        nextTurn();
+
+    },2000 + Math.random()*1000);
+}
+
+/* TURNOS */
+function nextTurn(){
+
+    if(checkWin()) return;
+
+    turn++;
+    if(turn>=4) turn=0;
+
+    render();
+
+    if(turn!==0) botTurn();
+}
+
+/* WIN */
+function checkWin(){
+    for(let i=0;i<4;i++){
+        if(players[i].length===0){
+
+            document.getElementById("table").style.display="none";
+            document.getElementById("endScreen").style.display="flex";
+
+            document.getElementById("winnerText").innerText =
+                i===0 ? "Você venceu!" : "Bot venceu!";
+
+            return true;
+        }
+    }
+    return false;
+}
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer7"><!DOCTYPE html>
+<html lang="pt-br">
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer5"><!DOCTYPE html>
+<html lang="pt-br">
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer2"><!DOCTYPE html>
+<html lang="pt-br">
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html>

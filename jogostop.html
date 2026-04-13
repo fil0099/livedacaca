@@ -1,0 +1,235 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Adedanha Online</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:16px;
+	top:27px;
+	width:152px;
+	height:127px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:486px;
+	top:99px;
+	width:388px;
+	height:21px;
+	z-index:1;
+}
+-->
+</style>
+<meta charset="UTF-8" />
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#111;
+    color:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+}
+
+.game{
+    width:95%;
+    max-width:700px;
+    background:#1a1a1a;
+    padding:20px;
+    border-radius:15px;
+    text-align:center;
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+.letra{
+    font-size:50px;
+    margin:10px 0;
+}
+
+input{
+    width:90%;
+    padding:8px;
+    margin:5px 0;
+    border:none;
+    border-radius:5px;
+}
+
+button{
+    padding:10px 20px;
+    margin-top:10px;
+    cursor:pointer;
+}
+
+.timer{
+    margin-top:10px;
+    font-size:18px;
+}
+
+.ranking{
+    margin-top:20px;
+    text-align:left;
+}
+#Layer3 {
+	position:absolute;
+	left:96px;
+	top:126px;
+	width:111px;
+	height:86px;
+	z-index:2;
+}
+#Layer4 {
+	position:absolute;
+	left:57px;
+	top:129px;
+	width:149px;
+	height:93px;
+	z-index:2;
+}
+</style>
+</head>
+
+<body>
+<div id="Layer2">
+  <div id="Layer1">
+    <!DOCTYPE html>
+  </div>
+  <div class="game">
+    <h1>Stop<br />
+    Evite zuar seu amigo Fill para n&atilde;o levar ban </h1>
+    <div class="letra" id="letra">?</div>
+    <button onclick="iniciar()">Iniciar</button>
+    <div class="timer"> Tempo: <span id="tempo">0</span>s </div>
+    <div id="inputs" style="display:none">
+      <input name="Input" id="nome" placeholder="Nome" />
+      <input name="Input2" id="animal" placeholder="Animal" />
+      <input name="Input2" id="fruta" placeholder="Fruta" />
+      <input name="Input2" id="cep" placeholder="Cidade / Estado / País" />
+      <input name="Input2" id="objeto" placeholder="Objeto" />
+      <input name="Input2" id="cor" placeholder="Cor" />
+      <input name="Input2" id="profissao" placeholder="Profissão" />
+      <input name="Input2" id="marca" placeholder="Marca" />
+      <input name="Input2" id="comida" placeholder="Comida" />
+      <input name="Input2" id="filme" placeholder="Filme / Série" />
+      <br />
+      <button onclick="finalizar()">STOP</button>
+    </div>
+    <div id="resultado"></div>
+    <div class="ranking">
+      <h3>Ranking</h3>
+      <ul id="ranking">
+      </ul>
+    </div>
+  </div>
+</div>
+<div class="game"><div class="ranking"></div>
+
+</div>
+
+<script>
+
+const letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+let letraAtual = "";
+let tempo = 0;
+let intervalo;
+
+/* INICIAR */
+function iniciar(){
+
+    letraAtual = letras[Math.floor(Math.random()*letras.length)];
+    document.getElementById("letra").innerText = letraAtual;
+
+    document.getElementById("inputs").style.display = "block";
+
+    document.querySelectorAll("input").forEach(i=>i.value="");
+
+    tempo = 0;
+    document.getElementById("tempo").innerText = tempo;
+
+    clearInterval(intervalo);
+
+    intervalo = setInterval(()=>{
+        tempo++;
+        document.getElementById("tempo").innerText = tempo;
+    },1000);
+}
+
+/* FINALIZAR */
+function finalizar(){
+
+    clearInterval(intervalo);
+
+    let pontos = 0;
+
+    function validar(valor){
+        if(!valor) return 0;
+        return valor.trim().toUpperCase().startsWith(letraAtual) ? 10 : 0;
+    }
+
+    pontos += validar(nome.value);
+    pontos += validar(animal.value);
+    pontos += validar(fruta.value);
+    pontos += validar(cep.value);
+    pontos += validar(objeto.value);
+    pontos += validar(cor.value);
+    pontos += validar(profissao.value);
+    pontos += validar(marca.value);
+    pontos += validar(comida.value);
+    pontos += validar(filme.value);
+
+    document.getElementById("resultado").innerHTML =
+        "Pontuação: " + pontos + "<br>Tempo: " + tempo + "s";
+
+    salvarRanking(pontos, tempo);
+}
+
+/* RANKING */
+function salvarRanking(pontos, tempo){
+
+    let ranking = JSON.parse(localStorage.getItem("rankingStop")) || [];
+
+    ranking.push({pontos, tempo});
+
+    ranking.sort((a,b)=>{
+        if(b.pontos === a.pontos){
+            return a.tempo - b.tempo;
+        }
+        return b.pontos - a.pontos;
+    });
+
+    ranking = ranking.slice(0,5);
+
+    localStorage.setItem("rankingStop", JSON.stringify(ranking));
+
+    mostrarRanking();
+}
+
+function mostrarRanking(){
+
+    let ranking = JSON.parse(localStorage.getItem("rankingStop")) || [];
+
+    const ul = document.getElementById("ranking");
+    ul.innerHTML = "";
+
+    ranking.forEach((r,i)=>{
+        const li = document.createElement("li");
+        li.innerText = `${i+1}º - ${r.pontos} pontos - ${r.tempo}s`;
+        ul.appendChild(li);
+    });
+}
+
+mostrarRanking();
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html>
