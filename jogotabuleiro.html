@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:34px;
+	top:35px;
+	width:157px;
+	height:114px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:32px;
+	top:26px;
+	width:175px;
+	height:118px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer2"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Ludo Melhorado</title>
+
+<style>
+body{
+    margin:0;
+    background:#0f172a;
+    color:#fff;
+    font-family:Arial;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+}
+
+/* TABULEIRO */
+#board{
+    position:relative;
+    width:600px;
+    height:600px;
+    background:#1e293b;
+    border-radius:20px;
+}
+
+/* CAMINHO */
+.cell{
+    position:absolute;
+    width:40px;
+    height:40px;
+    background:#334155;
+    border-radius:8px;
+}
+
+/* PEÇAS */
+.player{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    position:absolute;
+    background-size:cover;
+    transition:0.3s;
+}
+
+/* HUD */
+#hud{
+    text-align:center;
+    margin-bottom:10px;
+}
+
+button{
+    padding:10px 20px;
+    border:none;
+    border-radius:6px;
+    background:#22c55e;
+    color:#fff;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="hud">
+    <h2>Ludo</h2>
+    <button onclick="rollDice()">Jogar Dado</button>
+    <p id="dice">Dado: -</p>
+    <p id="turn">Turno: Você</p>
+</div>
+
+<div id="board"></div>
+
+<script>
+
+/* IMAGENS */
+const imagens = [
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp"
+];
+
+/* CAMINHO DESENHADO (TRILHA) */
+const path = [
+[50,300],[100,300],[150,300],[200,300],[250,300],[300,300],
+[300,250],[300,200],[300,150],[300,100],[300,50],
+[350,50],[400,50],[450,50],[500,50],
+[500,100],[500,150],[500,200],[500,250],[500,300],
+[450,300],[400,300],[350,300],
+[350,350],[350,400],[350,450],[350,500],
+[300,500],[250,500],[200,500],[150,500],[100,500],
+[100,450],[100,400],[100,350],
+[150,350],[200,350],[250,350]
+];
+
+/* ESTADO */
+let players = [];
+let turn = 0;
+let gameOver = false;
+
+/* CRIAR TABULEIRO */
+function createBoard(){
+    const board = document.getElementById("board");
+    board.innerHTML = "";
+
+    path.forEach((pos,i)=>{
+        const cell = document.createElement("div");
+        cell.className="cell";
+        cell.style.left=pos[0]+"px";
+        cell.style.top=pos[1]+"px";
+        cell.id="cell-"+i;
+        board.appendChild(cell);
+    });
+}
+
+/* CRIAR JOGADORES */
+function createPlayers(){
+    players=[];
+
+    for(let i=0;i<4;i++){
+        players.push({
+            pos:-1,
+            img: imagens[i],
+            name: i===0?"Você":"Bot "+i
+        });
+    }
+
+    render();
+}
+
+/* RENDER */
+function render(){
+    document.querySelectorAll(".player").forEach(p=>p.remove());
+
+    players.forEach((p,i)=>{
+        if(p.pos<0) return;
+
+        const el=document.createElement("div");
+        el.className="player";
+        el.style.backgroundImage=`url(${p.img})`;
+
+        const base = path[p.pos];
+        el.style.left=(base[0]+i*5)+"px";
+        el.style.top=(base[1]+i*5)+"px";
+
+        document.getElementById("board").appendChild(el);
+    });
+}
+
+/* DADO */
+function rollDice(){
+    if(gameOver) return;
+
+    const dice=Math.floor(Math.random()*6)+1;
+    document.getElementById("dice").innerText="Dado: "+dice;
+
+    play(turn,dice);
+}
+
+/* JOGADA */
+function play(i,dice){
+    let p = players[i];
+
+    if(p.pos === -1){
+        if(dice === 6){
+            p.pos = 0;
+        } else {
+            nextTurn();
+            return;
+        }
+    } else {
+        p.pos += dice;
+    }
+
+    if(p.pos >= path.length){
+        win(p);
+        return;
+    }
+
+    /* CAPTURA */
+    players.forEach((o,j)=>{
+        if(i!==j && o.pos === p.pos){
+            o.pos = -1;
+        }
+    });
+
+    render();
+
+    if(dice !== 6){
+        nextTurn();
+    } else {
+        if(i !== 0){
+            setTimeout(rollDice,600);
+        }
+    }
+}
+
+/* TURNOS */
+function nextTurn(){
+    turn++;
+    if(turn>=4) turn=0;
+
+    document.getElementById("turn").innerText="Turno: "+players[turn].name;
+
+    if(turn !== 0){
+        setTimeout(rollDice,800);
+    }
+}
+
+/* VITÓRIA */
+function win(p){
+    gameOver=true;
+    alert(p.name+" venceu!");
+}
+
+/* START */
+createBoard();
+createPlayers();
+
+</script>
+
+</body>
+</html></div>
+</body>
+</html></div>
+</body>
+</html>

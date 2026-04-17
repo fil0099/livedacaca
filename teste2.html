@@ -7,82 +7,74 @@
 <!--
 #Layer1 {
 	position:absolute;
-	left:22px;
-	top:28px;
-	width:170px;
-	height:178px;
+	left:17px;
+	top:22px;
+	width:121px;
+	height:90px;
 	z-index:1;
 }
 #Layer2 {
 	position:absolute;
-	left:43px;
-	top:36px;
-	width:241px;
-	height:650px;
+	left:38px;
+	top:52px;
+	width:109px;
+	height:90px;
 	z-index:1;
 }
 #Layer3 {
 	position:absolute;
-	left:549px;
-	top:42px;
-	width:361px;
-	height:178px;
+	left:206px;
+	top:84px;
+	width:107px;
+	height:84px;
 	z-index:2;
 }
 #Layer4 {
 	position:absolute;
-	left:195px;
-	top:49px;
-	width:272px;
-	height:166px;
-	z-index:1;
+	left:1131px;
+	top:64px;
+	width:115px;
+	height:111px;
+	z-index:2;
 }
 #Layer5 {
 	position:absolute;
-	left:84px;
-	top:47px;
-	width:156px;
-	height:136px;
-	z-index:1;
+	left:623px;
+	top:52px;
+	width:217px;
+	height:118px;
+	z-index:2;
 }
 #Layer6 {
 	position:absolute;
-	left:1006px;
-	top:80px;
-	width:235px;
-	height:147px;
-	z-index:1;
+	left:10px;
+	top:37px;
+	width:114px;
+	height:85px;
+	z-index:2;
 }
 #Layer7 {
 	position:absolute;
-	left:80px;
-	top:36px;
-	width:262px;
-	height:228px;
-	z-index:1;
+	left:313px;
+	top:26px;
+	width:305px;
+	height:143px;
+	z-index:3;
 }
 #Layer8 {
 	position:absolute;
-	left:103px;
-	top:33px;
-	width:142px;
-	height:79px;
-	z-index:1;
+	left:301px;
+	top:39px;
+	width:205px;
+	height:148px;
+	z-index:3;
 }
 #Layer9 {
 	position:absolute;
-	left:84px;
-	top:49px;
-	width:80px;
-	height:41px;
-	z-index:1;
-}
-#Layer10 {
-	position:absolute;
-	left:109px;
-	top:41px;
-	width:219px;
-	height:138px;
+	left:27px;
+	top:26px;
+	width:225px;
+	height:151px;
 	z-index:1;
 }
 -->
@@ -90,147 +82,342 @@
 </head>
 
 <body>
-<div id="Layer10"><!DOCTYPE html>
-<html lang="pt-br">
+<div id="Layer9"><!DOCTYPE html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Bíblia Online</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogo da Memória</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #f4f4f4;
+
+html, body {
+width:100%;
+height:100%;
+margin:0;
+padding:0;
+overflow:hidden;
 }
 
-header {
-  background: #111;
-  color: white;
-  padding: 15px;
-  text-align: center;
+body{
+display:flex;
+justify-content:center;
+align-items:center;
+background:radial-gradient(circle at center,#0b1020,#05060c);
+font-family:Arial;
+color:white;
 }
 
-.container {
-  max-width: 800px;
-  margin: auto;
-  padding: 15px;
+/* CENTRALIZA TUDO */
+#app{
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
-input, select, button {
-  width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-  font-size: 16px;
+/* TELAS */
+.screen{
+position:absolute;
+width:100%;
+height:100%;
+display:flex;
+justify-content:center;
+align-items:center;
+flex-direction:column;
 }
 
-button {
-  background: #111;
-  color: white;
-  border: none;
-  cursor: pointer;
+/* painel */
+.panel{
+background:rgba(0,0,0,0.75);
+padding:30px;
+border-radius:20px;
 }
 
-#texto {
-  background: white;
-  padding: 15px;
-  min-height: 250px;
-  white-space: pre-line;
-  margin-top: 10px;
+/* BOTÕES */
+button{
+padding:12px 25px;
+margin-top:15px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#4f7cff;
+color:white;
 }
+
+/* INPUT */
+input{
+padding:10px;
+border-radius:10px;
+border:none;
+text-align:center;
+}
+
+/* JOGO CENTRAL */
+#game{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100vw;
+height:100vh;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+}
+
+/* HUD */
+.hud{
+position:absolute;
+top:15px;
+left:50%;
+transform:translateX(-50%);
+display:flex;
+gap:20px;
+background:rgba(0,0,0,0.6);
+padding:10px 20px;
+border-radius:15px;
+}
+
+/* TABULEIRO CENTRAL */
+.board{
+display:grid;
+gap:10px;
+justify-content:center;
+align-content:center;
+}
+
+/* CARTAS */
+.card{
+width:90px;
+height:90px;
+border-radius:10px;
+position:relative;
+cursor:pointer;
+transform-style:preserve-3d;
+transition:0.5s;
+}
+
+.card.flip{
+transform:rotateY(180deg);
+}
+
+.front,.back{
+position:absolute;
+width:100%;
+height:100%;
+border-radius:10px;
+backface-visibility:hidden;
+}
+
+.front{
+background:#111827;
+}
+
+.back{
+transform:rotateY(180deg);
+background-size:cover;
+background-position:center;
+}
+
+.hidden{display:none;}
+
 </style>
 </head>
 
 <body>
 
-<header>?? Bíblia Online (Carregador JSON)</header>
+<div id="app">
 
-<div class="container">
+<!-- MENU -->
+<div class="screen" id="menu">
+<div class="panel">
+<h2>Jogo da Memória</h2>
+<button onclick="showName()">Jogar</button>
+</div>
+</div>
 
-<!-- ?? LINK DO JSON -->
-<input id="jsonUrl" placeholder="https://fil0099.github.io/livedacaca/biblia.json" />
+<!-- NOME -->
+<div class="screen hidden" id="nameScreen">
+<div class="panel">
+<h3>Digite seu nome</h3>
+<input id="playerName">
+<br>
+<button onclick="startGame()">Iniciar</button>
+</div>
+</div>
 
-<button onclick="carregarJSON()">Carregar Bíblia</button>
+<!-- JOGO -->
+<div id="game">
 
-<hr>
+<div class="hud">
+<span>Jogador: <b id="pName"></b></span>
+<span>Fase: <b id="level"></b></span>
+<span>Tempo: <b id="time"></b></span>
+</div>
 
-<!-- ?? LIVROS -->
-<select id="livros" onchange="atualizarCapitulos()"></select>
+<div class="board" id="board"></div>
 
-<!-- ?? CAPÍTULOS -->
-<select id="capitulos"></select>
-
-<button onclick="ler()">Ler capítulo</button>
-
-<div id="texto">Aguardando carregamento...</div>
+</div>
 
 </div>
 
 <script>
 
-let bible = null;
+localStorage.removeItem("ranking");
 
-// ?? CARREGA JSON
-async function carregarJSON() {
-  const url = document.getElementById("jsonUrl").value;
+const images=[
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/00404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0043434.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/004434.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0121313.webp"
+];
 
-  if (!url) {
-    alert("Cole o link do JSON");
-    return;
-  }
+let player="";
+let first=null;
+let second=null;
+let lock=false;
+let pairs=0;
+let level=1;
+let boardSize=4;
+let timer;
+let time=60;
 
-  try {
-    const res = await fetch(url);
-    bible = await res.json();
+/* DIFICULDADE (10 FASES) */
+const sizes=[4,4,4,6,6,6,8,8,10,10];
 
-    preencherLivros();
-
-    document.getElementById("texto").innerText =
-      "Bíblia carregada com sucesso!";
-  } catch (e) {
-    document.getElementById("texto").innerText =
-      "Erro ao carregar JSON. Verifique o link.";
-  }
+function showName(){
+menu.classList.add("hidden");
+nameScreen.classList.remove("hidden");
 }
 
-// ?? PREENCHE LIVROS
-function preencherLivros() {
-  const livrosSelect = document.getElementById("livros");
-  livrosSelect.innerHTML = "";
+function startGame(){
+player=document.getElementById("playerName").value||"Jogador";
 
-  bible.livros.forEach((l, i) => {
-    let opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = l.nome;
-    livrosSelect.appendChild(opt);
-  });
+document.getElementById("nameScreen").classList.add("hidden");
+document.getElementById("game").style.display="flex";
 
-  atualizarCapitulos();
+document.getElementById("pName").innerText=player;
+
+level=1;
+startLevel();
 }
 
-// ?? ATUALIZA CAPÍTULOS
-function atualizarCapitulos() {
-  const livro = bible.livros[document.getElementById("livros").value];
+function startLevel(){
 
-  const capSelect = document.getElementById("capitulos");
-  capSelect.innerHTML = "";
+clearInterval(timer);
 
-  for (let i = 0; i < livro.capitulos.length; i++) {
-    let opt = document.createElement("option");
-    opt.value = i;
-    opt.textContent = "Capítulo " + (i + 1);
-    capSelect.appendChild(opt);
-  }
+/* TEMPO REGRESSIVO */
+time = 60 - (level * 3);
+if(time < 10) time = 10;
+
+boardSize=sizes[level-1];
+
+document.getElementById("level").innerText=level;
+document.getElementById("time").innerText=time+"s";
+
+pairs=0;
+first=null;
+second=null;
+lock=false;
+
+let board=document.getElementById("board");
+board.innerHTML="";
+
+let total=(boardSize*boardSize)/2;
+
+let chosen=[...images].sort(()=>Math.random()-0.5).slice(0,total);
+let deck=[...chosen,...chosen].sort(()=>Math.random()-0.5);
+
+board.style.gridTemplateColumns=`repeat(${boardSize},90px)`;
+
+deck.forEach(img=>{
+let card=document.createElement("div");
+card.className="card";
+
+card.innerHTML=`
+<div class="front"></div>
+<div class="back" style="background-image:url(${img})"></div>
+`;
+
+card.dataset.img=img;
+card.onclick=()=>flip(card);
+
+board.appendChild(card);
+});
+
+/* CONTADOR REGRESSIVO */
+timer=setInterval(()=>{
+time--;
+document.getElementById("time").innerText=time+"s";
+
+if(time <= 0){
+clearInterval(timer);
+alert("Tempo acabou! Você perdeu ??");
+location.reload();
 }
 
-// ?? LER BÍBLIA
-function ler() {
-  const l = document.getElementById("livros").value;
-  const c = document.getElementById("capitulos").value;
+},1000);
+}
 
-  const capitulo = bible.livros[l].capitulos[c];
+function flip(card){
+if(lock || card.classList.contains("flip")) return;
 
-  document.getElementById("texto").innerText =
-    capitulo.join("\n\n");
+card.classList.add("flip");
+
+if(!first){
+first=card;
+return;
+}
+
+second=card;
+lock=true;
+
+setTimeout(check,600);
+}
+
+function check(){
+if(first.dataset.img===second.dataset.img){
+pairs++;
+
+first=null;
+second=null;
+lock=false;
+
+if(pairs===boardSize*boardSize/2){
+levelUp();
+}
+
+}else{
+first.classList.remove("flip");
+second.classList.remove("flip");
+
+first=null;
+second=null;
+lock=false;
+}
+}
+
+function levelUp(){
+clearInterval(timer);
+
+level++;
+
+if(level>10){
+alert("Parabéns! Você venceu ??");
+location.reload();
+return;
+}
+
+setTimeout(startLevel,800);
 }
 
 </script>
@@ -239,48 +426,91 @@ function ler() {
 </html></div>
 </body>
 </html></div>
-<div id="Layer8"><!DOCTYPE html>
-<html lang="pt-br">
 </body>
 </html></div>
-<div id="Layer7"><!DOCTYPE html>
+<h2>&nbsp;</h2>
+
+<!-- ?? BOLINHA 1 -->
 </body>
 </html></div>
-</body>
-</html></div>
-<div id="Layer6"><!DOCTYPE html>
-<html lang="pt-br">
-<head>
-</body>
-</html></div>
-<div id="Layer5"><!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<title>TV</title>
-<style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden;
+<div id="Layer3"><!DOCTYPE html>
+<!-- ?? ÁUDIO -->
+<audio id="audio">
+  <source src="https://fil0099.github.io/livedacaca/gil.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ?? IMAGEM (começa na imagem 1) -->
+<script>
+
+let estado = 0;
+
+const img = document.getElementById("img");
+const audio = document.getElementById("audio");
+
+/* ?? duas imagens */
+const img1 = "https://www.brindesdemais.com.br/fotos/produtos/originais/3102/Bolinha-Anti-Stress-com-Caroco-PRETO-8174-1534602295.jpg";
+const img2 = "https://www.brindesdemais.com.br/fotos/produtos/originais/3102/Bolinha-Anti-Stress-com-Caroco-LARANJA-8173-1534602295.jpg";
+// ?? coloque aqui a segunda imagem depois
+
+function toggle() {
+
+  // ?? toca áudio sempre
+  audio.currentTime = 0;
+  audio.play();
+
+  // ?? troca imagem
+  if (estado === 0) {
+    img.src = img2;
+    estado = 1;
+  } else {
+    img.src = img1;
+    estado = 0;
+  }
 }
 
-iframe {
-  width: 60vw;
-  height: 60vh;
-  border: none;
-}
-</style>
-</head>
-<body>
-
-
+</script>
 
 </body>
 </html></div>
-</body>
+<h2>&nbsp;</h2>
 
+<!-- ?? ÁUDIO -->
+<audio id="audio">
+  <source src="https://fil0099.github.io/livedacaca/gil.mp3" type="audio/mpeg">
+</audio>
+
+<!-- ?? IMAGEM (começa na imagem 1) -->
+<script>
+
+let estado = 0;
+
+const img = document.getElementById("img");
+const audio = document.getElementById("audio");
+
+/* ?? duas imagens */
+const img1 = "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp";
+const img2 = "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp"; 
+// ?? coloque aqui a segunda imagem depois
+
+function toggle() {
+
+  // ?? toca áudio sempre
+  audio.currentTime = 0;
+  audio.play();
+
+  // ?? troca imagem
+  if (estado === 0) {
+    img.src = img2;
+    estado = 1;
+  } else {
+    img.src = img1;
+    estado = 0;
+  }
+}
+
+</script>
+
+</body>
 </html></div>
 </body>
 </html>

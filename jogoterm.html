@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:18px;
+	top:17px;
+	width:115px;
+	height:112px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:31px;
+	top:28px;
+	width:176px;
+	height:189px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer2"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Termo - Jogo da Palavra</title>
+
+<style>
+html, body {
+    margin: 0;
+    height: 100%;
+    font-family: Arial;
+    background: #111;
+    overflow: hidden;
+}
+
+/* fundo com imagens suaves */
+#bg {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    opacity: 0.12;
+    background-size: cover;
+    background-position: center;
+    filter: blur(3px);
+}
+
+#container {
+    position: relative;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#game {
+    background: rgba(0,0,0,0.75);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    color: white;
+    width: 320px;
+}
+
+.row {
+    display: flex;
+    justify-content: center;
+    margin: 5px 0;
+}
+
+.cell {
+    width: 45px;
+    height: 45px;
+    border: 2px solid #555;
+    margin: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.correct { background: #2ecc71; }
+.present { background: #f1c40f; }
+.wrong { background: #444; }
+
+input {
+    margin-top: 10px;
+    padding: 10px;
+    width: 80%;
+    font-size: 16px;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+#msg {
+    margin-top: 10px;
+    min-height: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="bg"></div>
+
+<div id="container">
+    <div id="game">
+        <h2>TERMO</h2>
+
+        <div id="board"></div>
+
+        <input id="input" maxlength="5" autocomplete="off">
+        <br>
+        <button onclick="check()">Tentar</button>
+        <button onclick="start()">Reiniciar</button>
+
+        <div id="msg"></div>
+    </div>
+</div>
+
+<script>
+
+// suas imagens (fundo aleatório)
+const imagens = [
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/00404.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0121313.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0234343.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/04237.webp"
+];
+
+// palavras (todas 5 letras)
+const palavras = [
+"CARRO","CASAL","LIVRO","PEDRA","MUNDO",
+"TEMPO","GATOS","PRATO","BRAVO","FOLHA",
+"FLOR","PLANO","ROCHA","FESTA","LUZES"
+];
+
+let palavra = "";
+let tentativas = 0;
+const max = 5;
+
+function fundo(){
+    document.getElementById("bg").style.backgroundImage =
+    `url('${imagens[Math.floor(Math.random()*imagens.length)]}')`;
+}
+
+function start(){
+    palavra = palavras[Math.floor(Math.random()*palavras.length)];
+    tentativas = 0;
+
+    document.getElementById("board").innerHTML = "";
+    document.getElementById("msg").innerText = "";
+    document.getElementById("input").value = "";
+    document.getElementById("input").disabled = false;
+
+    fundo();
+
+    console.log("Palavra secreta:", palavra); // debug
+}
+
+function criarLinha(palavraInput, resultado){
+    const row = document.createElement("div");
+    row.className = "row";
+
+    for(let i=0;i<5;i++){
+        const cell = document.createElement("div");
+        cell.className = "cell " + resultado[i];
+        cell.innerText = palavraInput[i];
+        row.appendChild(cell);
+    }
+
+    document.getElementById("board").appendChild(row);
+}
+
+function avaliar(palavraInput){
+    let res = [];
+
+    for(let i=0;i<5;i++){
+        if(palavraInput[i] === palavra[i]){
+            res.push("correct");
+        }
+        else if(palavra.includes(palavraInput[i])){
+            res.push("present");
+        }
+        else {
+            res.push("wrong");
+        }
+    }
+
+    return res;
+}
+
+function check(){
+    let input = document.getElementById("input");
+    let val = input.value.toUpperCase();
+
+    if(val.length !== 5) return;
+
+    let result = avaliar(val);
+    criarLinha(val, result);
+
+    tentativas++;
+    input.value = "";
+
+    if(val === palavra){
+        document.getElementById("msg").innerText = "Você acertou!";
+        input.disabled = true;
+        return;
+    }
+
+    if(tentativas >= max){
+        document.getElementById("msg").innerText = "Fim! Palavra era: " + palavra;
+        input.disabled = true;
+    }
+}
+
+start();
+
+</script>
+
+</body>
+</html></div>
+<div id="Layer1"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+</body>
+</html></div>
+</body>
+</html>

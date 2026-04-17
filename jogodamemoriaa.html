@@ -53,19 +53,28 @@
 	height:171px;
 	z-index:1;
 }
+#Layer7 {
+	position:absolute;
+	left:28px;
+	top:14px;
+	width:135px;
+	height:112px;
+	z-index:1;
+}
 -->
 </style>
 </head>
 
 <body>
-<div id="Layer6"><!DOCTYPE html>
+<div id="Layer7"><!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Jogo da Memória 6</title>
+<title>Jogo da Memória</title>
 
 <style>
+
 html, body {
 width:100%;
 height:100%;
@@ -83,7 +92,7 @@ font-family:Arial;
 color:white;
 }
 
-/* APP ocupa TUDO */
+/* CENTRALIZA TUDO */
 #app{
 position:fixed;
 top:0;
@@ -95,7 +104,7 @@ justify-content:center;
 align-items:center;
 }
 
-/* TELAS CENTRALIZADAS */
+/* TELAS */
 .screen{
 position:absolute;
 width:100%;
@@ -104,15 +113,13 @@ display:flex;
 justify-content:center;
 align-items:center;
 flex-direction:column;
-text-align:center;
 }
 
-/* painel menu */
+/* painel */
 .panel{
 background:rgba(0,0,0,0.75);
 padding:30px;
 border-radius:20px;
-backdrop-filter:blur(10px);
 }
 
 /* BOTÕES */
@@ -134,10 +141,10 @@ border:none;
 text-align:center;
 }
 
-/* JOGO ocupa tela inteira e centraliza conteúdo */
+/* JOGO CENTRAL */
 #game{
 display:none;
-position:absolute;
+position:fixed;
 top:0;
 left:0;
 width:100vw;
@@ -147,7 +154,7 @@ justify-content:center;
 align-items:center;
 }
 
-/* HUD centralizado no topo */
+/* HUD */
 .hud{
 position:absolute;
 top:15px;
@@ -160,13 +167,12 @@ padding:10px 20px;
 border-radius:15px;
 }
 
-/* BOARD CENTRALIZADO DE VERDADE */
+/* TABULEIRO CENTRAL */
 .board{
 display:grid;
 gap:10px;
 justify-content:center;
 align-content:center;
-place-items:center;
 }
 
 /* CARTAS */
@@ -202,8 +208,8 @@ background-size:cover;
 background-position:center;
 }
 
-/* esconder telas */
 .hidden{display:none;}
+
 </style>
 </head>
 
@@ -215,7 +221,6 @@ background-position:center;
 <div class="screen" id="menu">
 <div class="panel">
 <h2>Jogo da Memória</h2>
-<p>Encontre os pares iguais virando as cartas.</p>
 <button onclick="showName()">Jogar</button>
 </div>
 </div>
@@ -235,8 +240,8 @@ background-position:center;
 
 <div class="hud">
 <span>Jogador: <b id="pName"></b></span>
-<span>Pares: <b id="pairs"></b></span>
 <span>Fase: <b id="level"></b></span>
+<span>Tempo: <b id="time"></b></span>
 </div>
 
 <div class="board" id="board"></div>
@@ -246,6 +251,8 @@ background-position:center;
 </div>
 
 <script>
+
+localStorage.removeItem("ranking");
 
 const images=[
 "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
@@ -265,10 +272,15 @@ let lock=false;
 let pairs=0;
 let level=1;
 let boardSize=4;
+let timer;
+let time=60;
+
+/* DIFICULDADE (10 FASES) */
+const sizes=[4,4,4,6,6,6,8,8,10,10];
 
 function showName(){
-document.getElementById("menu").classList.add("hidden");
-document.getElementById("nameScreen").classList.remove("hidden");
+menu.classList.add("hidden");
+nameScreen.classList.remove("hidden");
 }
 
 function startGame(){
@@ -280,20 +292,26 @@ document.getElementById("game").style.display="flex";
 document.getElementById("pName").innerText=player;
 
 level=1;
-boardSize=4;
-
 startLevel();
 }
 
 function startLevel(){
 
+clearInterval(timer);
+
+/* TEMPO REGRESSIVO */
+time = 100 - (level * 10);
+if(time < 10) time = 10;
+
+boardSize=sizes[level-1];
+
+document.getElementById("level").innerText=level;
+document.getElementById("time").innerText=time+"s";
+
 pairs=0;
 first=null;
 second=null;
 lock=false;
-
-document.getElementById("pairs").innerText=pairs;
-document.getElementById("level").innerText=level;
 
 let board=document.getElementById("board");
 board.innerHTML="";
@@ -303,7 +321,6 @@ let total=(boardSize*boardSize)/2;
 let chosen=[...images].sort(()=>Math.random()-0.5).slice(0,total);
 let deck=[...chosen,...chosen].sort(()=>Math.random()-0.5);
 
-/* CENTRALIZA GRID NA TELA */
 board.style.gridTemplateColumns=`repeat(${boardSize},90px)`;
 
 deck.forEach(img=>{
@@ -316,11 +333,23 @@ card.innerHTML=`
 `;
 
 card.dataset.img=img;
-
 card.onclick=()=>flip(card);
 
 board.appendChild(card);
 });
+
+/* CONTADOR REGRESSIVO */
+timer=setInterval(()=>{
+time--;
+document.getElementById("time").innerText=time+"s";
+
+if(time <= 0){
+clearInterval(timer);
+alert("Tempo acabou! Você perdeu ");
+location.reload();
+}
+
+},1000);
 }
 
 function flip(card){
@@ -342,7 +371,6 @@ setTimeout(check,600);
 function check(){
 if(first.dataset.img===second.dataset.img){
 pairs++;
-document.getElementById("pairs").innerText=pairs;
 
 first=null;
 second=null;
@@ -351,6 +379,7 @@ lock=false;
 if(pairs===boardSize*boardSize/2){
 levelUp();
 }
+
 }else{
 first.classList.remove("flip");
 second.classList.remove("flip");
@@ -362,12 +391,12 @@ lock=false;
 }
 
 function levelUp(){
+clearInterval(timer);
+
 level++;
 
-if(level===2) boardSize=6;
-if(level===3) boardSize=8;
-if(level>3){
-alert("Fim do jogo!");
+if(level>10){
+alert("Parabéns! Você venceu ??");
 location.reload();
 return;
 }
@@ -377,6 +406,8 @@ setTimeout(startLevel,800);
 
 </script>
 
+</body>
+</html></div>
 </body>
 </html></div>
 </body>

@@ -1,0 +1,1617 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Untitled Document</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:30px;
+	top:21px;
+	width:95px;
+	height:127px;
+	z-index:1;
+}
+-->
+</style>
+</head>
+
+<body>
+<div id="Layer1"><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Filipinos Bank Game</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --card:#ffffff;
+      --soft:#f9fafb;
+      --accent:#111827;
+      --accent2:#2563eb;
+      --good:#15803d;
+      --warn:#b45309;
+      --bad:#b91c1c;
+      --shadow:0 8px 30px rgba(0,0,0,.06);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      flex-direction:column;
+    }
+    header{
+      position:sticky;
+      top:0;
+      z-index:20;
+      background:rgba(255,255,255,.95);
+      backdrop-filter: blur(8px);
+      border-bottom:1px solid var(--line);
+      padding:14px 18px;
+    }
+    .wrap{width:100%;margin:0 auto;padding:18px;flex:1}
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .9fr;
+      gap:16px;
+      align-items:start;
+      width:100%;
+      max-width:1600px;
+      margin:0 auto;
+    }
+    @media (max-width:1100px){
+      .grid{grid-template-columns:1fr}
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+    }
+    .card h2,.card h3{margin:0 0 10px 0}
+    .muted{color:var(--muted);font-size:14px;line-height:1.5}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    input, select, button, textarea{
+      font:inherit;
+      border-radius:12px;
+      border:1px solid var(--line);
+      padding:10px 12px;
+      background:#fff;
+    }
+    textarea{width:100%;min-height:90px;resize:vertical}
+    button{
+      cursor:pointer;
+      background:#111827;
+      color:#fff;
+      border-color:#111827;
+      transition:.15s transform ease, .15s opacity ease;
+    }
+    button:hover{transform:translateY(-1px);opacity:.95}
+    button.secondary{background:#fff;color:#111827}
+    button.blue{background:var(--accent2);border-color:var(--accent2)}
+    button.green{background:var(--good);border-color:var(--good)}
+    button.warn{background:var(--warn);border-color:var(--warn)}
+    button.bad{background:var(--bad);border-color:var(--bad)}
+    button.ghost{background:#f3f4f6;color:#111827;border-color:#e5e7eb}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;background:#f3f4f6;border:1px solid #e5e7eb;font-size:13px}
+    .hero{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:14px;
+      align-items:center;
+    }
+    @media (max-width:700px){.hero{grid-template-columns:1fr}}
+    .hero img.bank{width:170px;max-width:100%;object-fit:contain}
+    .login-avatars{display:grid;grid-template-columns:repeat(auto-fit,minmax(74px,1fr));gap:10px;margin-top:10px}
+    .avatarChoice{
+      border:2px solid transparent;
+      border-radius:16px;
+      padding:8px;
+      text-align:center;
+      cursor:pointer;
+      background:var(--soft);
+      transition:.15s ease;
+    }
+    .avatarChoice.active{border-color:#111827;background:#fff}
+    .avatarChoice img{width:54px;height:54px;object-fit:contain;display:block;margin:0 auto 6px auto}
+    .sections{display:grid;gap:16px}
+    .tabbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .tabbar button{padding:9px 12px}
+    .tabbar button.active{background:var(--accent2);border-color:var(--accent2)}
+    .list{display:grid;gap:10px}
+    .item{
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+    }
+    .item .meta{display:grid;grid-template-columns: 72px 1fr auto;gap:10px;align-items:center}
+    .item img{width:72px;height:72px;object-fit:contain;background:var(--soft);border-radius:14px;padding:6px;border:1px solid #eee}
+    .small{font-size:12px;color:var(--muted)}
+    .kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    @media (max-width:900px){.kpi{grid-template-columns:repeat(2,1fr)}}
+    .kpi .box{background:var(--soft);border:1px solid #eee;border-radius:16px;padding:12px}
+    .kpi .box strong{display:block;font-size:18px;margin-top:4px}
+    .avatarLine{display:flex;align-items:center;gap:10px}
+    .avatarLine img{width:42px;height:42px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid #eee;padding:3px}
+    .moneyLine{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .moneyLine img{width:22px;height:22px;object-fit:contain}
+    .modalBackdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:center;justify-content:center;z-index:50;padding:18px;
+    }
+    .modal{
+      width:min(900px,100%);
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;border-radius:22px;border:1px solid var(--line);box-shadow:var(--shadow);padding:16px;
+    }
+    .modalBackdrop.show{display:flex}
+    .divider{height:1px;background:var(--line);margin:14px 0}
+    .tag{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#f3f4f6;font-size:12px;border:1px solid #e5e7eb}
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:14px}
+    .notice{background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:12px;color:#334155}
+    .danger{color:var(--bad)}
+    .success{color:var(--good)}
+    .right{text-align:right}
+    .flex1{flex:1}
+    .hide{display:none !important}
+  </style>
+</head>
+<body>
+<header>
+  <div class="top wrap" style="padding:0 18px;">
+    <div class="brand">
+      <img src="https://cdn.pixabay.com/photo/2015/10/14/18/43/bank-988164_1280.png" alt="Banco" />
+      <div>
+        <div>Filipinos Bank Game</div>
+        <div class="muted" style="font-size:12px">Jogo econômico com banco, imóveis, carros, moedas e diamante</div>
+      </div>
+    </div>
+    <div class="row" id="headerStatus"></div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="loginScreen" class="card">
+    <div class="hero">
+      <div>
+        <h2>Entrar no jogo</h2>
+        <p class="muted">Digite seu nome e escolha um avatar. Seu progresso fica salvo neste navegador e sincroniza entre abas abertas no mesmo navegador.</p>
+        <div class="row" style="margin-top:10px">
+          <input id="playerNameInput" placeholder="Seu nome" style="min-width:240px;flex:1" />
+          <button class="blue" id="joinBtn">Entrar / Continuar</button>
+        </div>
+        <div class="divider"></div>
+        <h3>Escolha seu avatar</h3>
+        <div id="avatarGrid" class="login-avatars"></div>
+      </div>
+      <img class="bank" src="https://cdn.pixabay.com/photo/2015/10/14/18/43/bank-988164_1280.png" alt="Banco Filipinos" />
+    </div>
+  </div>
+
+  <div id="gameScreen" class="grid hide" style="margin-top:16px;">
+    <div class="sections">
+      <div class="card">
+        <div class="between">
+          <div>
+            <div class="avatarLine">
+              <img id="meAvatar" src="" alt="Avatar" />
+              <div>
+                <h2 id="meName" style="margin:0"></h2>
+                <div class="muted" id="meRole"></div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <button class="ghost" id="btnPlayers">Ver jogadores</button>
+            <button class="ghost" id="btnMarket">Mercado</button>
+            <button class="ghost" id="btnOffers">Ofertas</button>
+            <button class="ghost" id="btnBank">Banco</button>
+            <button class="ghost" id="btnHow">Como jogar</button>
+            <button class="bad" id="btnResetMe">Sair</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="kpi">
+          <div class="box">
+            <div class="muted">Dinheiro</div>
+            <strong class="moneyLine"><img src="https://cdn.pixabay.com/photo/2017/09/05/20/20/dollar-2719007_1280.png" alt="moeda" /><span id="meMoney">0</span></strong>
+          </div>
+          <div class="box">
+            <div class="muted">Patrimônio</div>
+            <strong id="meNetWorth">0</strong>
+          </div>
+          <div class="box">
+            <div class="muted">Vitórias</div>
+            <strong id="meWins">0</strong>
+          </div>
+          <div class="box">
+            <div class="muted">Status</div>
+            <strong id="meStatus">Ativo</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="between">
+          <div>
+            <h3 style="margin:0">Seus bens</h3>
+            <div class="muted">Tudo o que você comprou, com opções de vender ou oferecer para alguém.</div>
+          </div>
+          <div class="row">
+            <button class="secondary" id="btnSortHoldings">Ordenar por valor</button>
+          </div>
+        </div>
+        <div id="myHoldings" class="list" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <div class="between">
+          <div>
+            <h3 style="margin:0">Mural de vencedores</h3>
+            <div class="muted">Quem compra o diamante entra aqui. Com 10 vitórias vira Ganhador Supremo.</div>
+          </div>
+          <div class="tag">Diamante: 10.000.000 filipinos</div>
+        </div>
+        <div id="winnersBoard" class="list" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="sections">
+      <div class="card" id="panelMain">
+        <h3>Resumo do jogo</h3>
+        <div id="summaryBox" class="notice"></div>
+      </div>
+
+      <div class="card" id="bankPanel" style="display:none">
+        <div class="between">
+          <div>
+            <h3 style="margin:0">Banco Filipinos</h3>
+            <div class="muted">Somente o administrador acessa este painel.</div>
+          </div>
+          <div class="tag">Senha: 123a9950</div>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <button class="green" id="btnMint">Criar 1.000.000</button>
+          <button class="secondary" id="btnEditRates">Definir juros</button>
+          <button class="secondary" id="btnEditInvest">Editar investimento</button>
+        </div>
+        <div class="divider"></div>
+        <div id="bankStats" class="notice"></div>
+      </div>
+
+      <div class="card" id="feedPanel">
+        <div class="between">
+          <div>
+            <h3 style="margin:0">Atividade</h3>
+            <div class="muted">Entradas, compras, ofertas, empréstimos e vitórias.</div>
+          </div>
+          <button class="secondary" id="btnRefresh">Atualizar</button>
+        </div>
+        <div id="feedList" class="list" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modalBackdrop" id="modalBackdrop">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+(() => {
+  const STORAGE_KEY = 'filipinos_bank_game_state_v2';
+  const CURRENT_KEY = 'filipinos_bank_current_player_v2';
+  const ADMIN_PASS = '123a9950';
+  const BANK_IMAGE = 'https://cdn.pixabay.com/photo/2015/10/14/18/43/bank-988164_1280.png';
+  const MONEY_IMAGE = 'https://cdn.pixabay.com/photo/2017/09/05/20/20/dollar-2719007_1280.png';
+  const DIAMOND_IMAGE = 'https://cdn.pixabay.com/photo/2013/07/13/11/35/diamond-158431_1280.png';
+  const DEFAULT_AVATARS = [
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursoa.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursob.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursoc.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursod.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursoe.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursof.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursog.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursoh.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursoi.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursoj.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursol.png',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/ursom.png'
+  ];
+
+  const avatarGrid = document.getElementById('avatarGrid');
+  const loginScreen = document.getElementById('loginScreen');
+  const gameScreen = document.getElementById('gameScreen');
+  const modalBackdrop = document.getElementById('modalBackdrop');
+  const modalBox = document.getElementById('modalBox');
+  const headerStatus = document.getElementById('headerStatus');
+  const bankPanel = document.getElementById('bankPanel');
+  const btnMint = document.getElementById('btnMint');
+  const btnEditRates = document.getElementById('btnEditRates');
+  const btnEditInvest = document.getElementById('btnEditInvest');
+  const btnPlayers = document.getElementById('btnPlayers');
+  const btnMarket = document.getElementById('btnMarket');
+  const btnOffers = document.getElementById('btnOffers');
+  const btnBank = document.getElementById('btnBank');
+  const btnHow = document.getElementById('btnHow');
+  const btnResetMe = document.getElementById('btnResetMe');
+  const btnRefresh = document.getElementById('btnRefresh');
+  const btnSortHoldings = document.getElementById('btnSortHoldings');
+  const joinBtn = document.getElementById('joinBtn');
+  const playerNameInput = document.getElementById('playerNameInput');
+
+  const state = loadState();
+  let currentPlayerId = localStorage.getItem(CURRENT_KEY) || '';
+  let selectedAvatar = DEFAULT_AVATARS[0];
+  let sortHoldingsByValue = false;
+
+  const channel = ('BroadcastChannel' in window) ? new BroadcastChannel('filipinos_bank_game_sync') : null;
+  if (channel) {
+    channel.onmessage = (e) => {
+      if (e.data && e.data.type === 'sync') {
+        render();
+      }
+    };
+  }
+  window.addEventListener('storage', (e) => {
+    if (e.key === STORAGE_KEY) render();
+    if (e.key === CURRENT_KEY) {
+      currentPlayerId = localStorage.getItem(CURRENT_KEY) || '';
+      render();
+    }
+  });
+
+  function now(){ return Date.now(); }
+  function fmtMoney(n){
+    return Number(n || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function fmtShort(n){
+    return Number(n || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+  }
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+  function uid(prefix='id'){ return prefix + '_' + Math.random().toString(36).slice(2, 10) + '_' + Date.now().toString(36); }
+  function safeText(s){ return String(s ?? '').replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m])); }
+
+  function createAssets(){
+    const a = [];
+    const carImgs = [
+      ['Carro 1','https://cdn.pixabay.com/photo/2012/04/12/23/47/car-30984_1280.png',100000],
+      ['Carro 2','https://cdn.pixabay.com/photo/2012/04/12/23/47/car-30984_1280.png',80000],
+      ['Carro 3','https://cdn.pixabay.com/photo/2013/07/13/01/07/ford-mustang-155132_1280.png',70000],
+      ['Carro 4','https://cdn.pixabay.com/photo/2012/04/24/14/21/car-40241_1280.png',60000],
+      ['Carro 5','https://cdn.pixabay.com/photo/2012/04/12/23/48/car-30990_1280.png',50000],
+      ['Carro 6','https://cdn.pixabay.com/photo/2013/07/12/12/45/car-146185_1280.png',40000],
+      ['Carro 7','https://cdn.pixabay.com/photo/2013/07/13/13/22/car-160895_1280.png',30000],
+      ['Carro 8','https://cdn.pixabay.com/photo/2013/07/13/11/50/car-158795_1280.png',40000],
+      ['Carro 9','https://cdn.pixabay.com/photo/2012/04/15/20/44/car-35263_1280.png',45000],
+      ['Carro 10','https://cdn.pixabay.com/photo/2013/07/12/12/56/ford-mustang-146580_1280.png',200000],
+      ['Carro 11','https://cdn.pixabay.com/photo/2013/07/13/11/48/bmw-158703_1280.png',500000],
+      ['Carro 12','https://cdn.pixabay.com/photo/2012/04/13/20/37/car-33556_1280.png',25000],
+      ['Carro 13','https://cdn.pixabay.com/photo/2012/04/13/21/05/car-33633_1280.png',5000],
+    ];
+    const houseImgs = [
+      ['Casa 1','https://cdn.pixabay.com/photo/2019/05/05/17/00/house-4181057_1280.png',5000],
+      ['Casa 2','https://cdn.pixabay.com/photo/2014/03/25/16/57/house-297700_1280.png',7000],
+      ['Casa 3','https://cdn.pixabay.com/photo/2013/07/12/14/14/house-148033_1280.png',3000],
+      ['Casa 4','https://cdn.pixabay.com/photo/2024/09/14/21/29/house-9048040_1280.png',15000],
+      ['Casa 5','https://cdn.pixabay.com/photo/2017/06/26/20/57/dog-house-2445200_1280.png',9000],
+      ['Casa 6','https://cdn.pixabay.com/photo/2023/11/29/03/41/home-8418603_1280.png',20000],
+      ['Casa 7','https://cdn.pixabay.com/photo/2014/04/02/14/08/house-306287_1280.png',21000],
+      ['Casa 8','https://cdn.pixabay.com/photo/2012/04/11/13/04/igloo-28130_1280.png',10000],
+      ['Casa 9','https://cdn.pixabay.com/photo/2024/09/16/12/38/french-fries-9051396_1280.png',11000],
+      ['Casa 10','https://cdn.pixabay.com/photo/2022/07/15/09/47/house-7322800_1280.png',14000],
+      ['Casa 11','https://cdn.pixabay.com/photo/2024/09/16/12/35/castle-9051366_1280.png',80000],
+      ['Casa 12','https://cdn.pixabay.com/photo/2024/09/16/12/35/castle-9051365_1280.png',80000],
+      ['Casa 13','https://cdn.pixabay.com/photo/2013/07/13/12/49/mansion-160425_1280.png',200000],
+      ['Casa 14','https://cdn.pixabay.com/photo/2020/10/21/19/29/mansion-5674126_1280.png',70000],
+    ];
+    const coinImgs = [
+      ['Moeda 1','https://cdn.pixabay.com/photo/2013/07/13/01/21/euro-155597_1280.png',1],
+      ['Moeda 2','https://cdn.pixabay.com/photo/2016/03/31/21/41/cash-1296585_1280.png',2],
+      ['Moeda 3','https://cdn.pixabay.com/photo/2016/03/31/20/12/cent-1295582_1280.png',5000],
+      ['Moeda 4','https://cdn.pixabay.com/photo/2023/03/13/22/42/button-7850924_1280.png',8000],
+      ['Moeda 5','https://cdn.pixabay.com/photo/2023/03/13/22/42/button-7850924_1280.png',12000],
+      ['Moeda 6','https://cdn.pixabay.com/photo/2023/03/13/22/42/button-7850924_1280.png',20000],
+      ['Moeda 7','https://cdn.pixabay.com/photo/2023/03/13/20/13/button-7850704_1280.png',1000000],
+    ];
+    carImgs.forEach(([name,image,price], i) => a.push({ id:'car_'+(i+1), name, category:'Carros', image, basePrice:price, stock:10, incomePctPerHour:0, fixedPerHour:-1000/24, appreciationPctPerDay:300/price, note:'Perca 1.000 e valorize 300 por dia' }));
+    houseImgs.forEach(([name,image,price], i) => a.push({ id:'house_'+(i+1), name, category:'Casas', image, basePrice:price, stock:10, incomePctPerHour:0.10, fixedPerHour:0, appreciationPctPerDay:0.01*24, note:'Lucro de 10% ao valor atual por hora e valorização de 1% por hora' }));
+    coinImgs.forEach(([name,image,price], i) => a.push({ id:'coin_'+(i+1), name, category:'Moedas', image, basePrice:price, stock:50000, incomePctPerHour:[0.03,0.03,0.04,0.05,0.06,0.07,0.12][i], fixedPerHour:0, appreciationPctPerDay:[0.005,0.005,0.007,0.007,0.007,0.008,0.01][i] * 24, note:'Gera lucro e valoriza com o tempo' }));
+    a.push({ id:'diamond', name:'Diamante Supremo', category:'Especial', image:DIAMOND_IMAGE, basePrice:10000000, stock:1, incomePctPerHour:0, fixedPerHour:0, appreciationPctPerDay:0, note:'Quem comprar primeiro vence a partida' });
+    return a;
+  }
+
+  function defaultState(){
+    const assets = createAssets();
+    const stock = {};
+    assets.forEach(a => stock[a.id] = a.stock);
+    return {
+      version: 2,
+      game: {
+        assets,
+        stock,
+        winners: [],
+        logs: [],
+        currentChampion: null,
+        round: 1,
+      },
+      bank: {
+        patrimony: 0,
+      balanceCreated: 0,
+      loanInterest: 0.08,
+        investmentRate: 0.12,
+        investmentHours: 24,
+        adminLastName: '',
+      },
+      players: {},
+      offers: [],
+      loans: [],
+      loanRequests: [],
+      investments: [],
+      marketListings: []
+    };
+  }
+
+  function loadState(){
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultState();
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed.version) return defaultState();
+      return parsed;
+    } catch (e) {
+      console.warn('Erro ao ler estado, reiniciando', e);
+      return defaultState();
+    }
+  }
+
+  function saveState(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (channel) channel.postMessage({ type: 'sync' });
+  }
+
+  function log(msg){
+    state.game.logs.unshift({ id: uid('log'), at: now(), msg });
+    state.game.logs = state.game.logs.slice(0, 60);
+    saveState();
+  }
+
+  function ensurePlayer(id, name, avatar){
+    if (!state.players[id]){
+      state.players[id] = {
+        id,
+        name,
+        avatar,
+        money: 10000,
+        wins: 0,
+        supreme: false,
+        holdings: [],
+        lastTick: now(),
+        isAdmin: false,
+        bio: 'Novo jogador',
+      };
+      log(`${name} entrou no jogo com 10.000 filipinos.`);
+      saveState();
+    } else {
+      state.players[id].name = name || state.players[id].name;
+      state.players[id].avatar = avatar || state.players[id].avatar;
+      saveState();
+    }
+    return state.players[id];
+  }
+
+  function getAsset(assetId){ return state.game.assets.find(a => a.id === assetId); }
+  function getPlayer(id){ return state.players[id]; }
+  function currentPlayer(){ return getPlayer(currentPlayerId); }
+
+  function playerItemCount(player, assetId){
+    return player.holdings.filter(h => h.assetId === assetId).length;
+  }
+
+  function itemMarketValue(item, atTime = now()){
+    const asset = getAsset(item.assetId);
+    const hours = Math.max(0, (atTime - item.acquiredAt) / 36e5);
+    let value = item.buyPrice;
+    if (asset.category === 'Casas') {
+      value = item.buyPrice * Math.pow(1.01, hours);
+    } else if (asset.category === 'Carros') {
+      const days = hours / 24;
+      value = item.buyPrice + (300 * days) - (1000 * days);
+      value = Math.max(0, value);
+    } else if (asset.category === 'Moedas') {
+      const pct = asset.appreciationPctPerDay || 0;
+      value = item.buyPrice * Math.pow(1 + pct, hours/24);
+    } else if (asset.id === 'diamond') {
+      value = 10000000;
+    }
+    return value;
+  }
+
+  function totalNetWorth(player){
+    const holdingsValue = player.holdings.reduce((sum, h) => sum + itemMarketValue(h), 0);
+    return player.money + holdingsValue;
+  }
+
+  function applyEarningsAndDebt(){
+    const t = now();
+    let changed = false;
+    Object.values(state.players).forEach(p => {
+      const last = p.lastTick || t;
+      const hours = Math.max(0, (t - last) / 36e5);
+      if (hours < 0.01) return;
+      let delta = 0;
+      p.holdings.forEach(h => {
+        const a = getAsset(h.assetId);
+        if (!a) return;
+        const base = h.buyPrice;
+        if (a.category === 'Casas') {
+          delta += base * 0.10 * hours;
+        } else if (a.category === 'Carros') {
+          delta += (-1000/24) * hours;
+          delta += (300/24) * hours;
+        } else if (a.category === 'Moedas') {
+          delta += base * (a.incomePctPerHour || 0) * hours;
+        }
+      });
+      if (delta !== 0){
+        p.money += delta;
+        changed = true;
+      }
+      p.lastTick = t;
+    });
+
+    // Investimentos vencidos
+    state.investments.forEach(inv => {
+      if (!inv.paid && t >= inv.maturesAt){
+        const p = state.players[inv.playerId];
+        if (p){
+          const amount = inv.amount * (1 + inv.rate);
+          p.money += amount;
+          inv.paid = true;
+          log(`Investimento de ${p.name} venceu e pagou ${fmtMoney(amount)} filipinos.`);
+          changed = true;
+        }
+      }
+    });
+
+    // Empréstimos vencidos: banco cobra, e se não der, toma patrimônio
+    state.loans.forEach(loan => {
+      if (loan.settled) return;
+      const p = state.players[loan.playerId];
+      if (!p) return;
+      if (t >= loan.dueAt){
+        const due = loan.amount * (1 + loan.rate);
+        let remaining = due;
+        if (p.money > 0){
+          const pay = Math.min(p.money, remaining);
+          p.money -= pay;
+          remaining -= pay;
+        }
+        if (remaining > 0 && p.holdings.length){
+          p.holdings.sort((a,b) => itemMarketValue(b) - itemMarketValue(a));
+          while (remaining > 0 && p.holdings.length){
+            const item = p.holdings.shift();
+            remaining -= itemMarketValue(item);
+          }
+        }
+        loan.settled = true;
+        log(`Dívida de ${p.name} foi cobrada pelo banco. ${remaining > 0 ? 'Ainda faltou parte e o banco tomou patrimônio.' : 'Pagamento concluído.'}`);
+        changed = true;
+      }
+    });
+
+    if (changed) saveState();
+  }
+
+  function resetRound(nextChampionId){
+    const champ = state.players[nextChampionId];
+    state.game.currentChampion = champ ? { playerId: champ.id, name: champ.name, avatar: champ.avatar } : null;
+    state.game.winners.unshift({
+      id: uid('winner'),
+      playerId: nextChampionId,
+      name: champ.name,
+      avatar: champ.avatar,
+      at: now(),
+      round: state.game.round
+    });
+    champ.wins += 1;
+    if (champ.wins >= 10) champ.supreme = true;
+
+    // Reinicia o mundo, mas mantém mural e contadores pessoais
+    const assets = createAssets();
+    state.game.assets = assets;
+    state.game.stock = {};
+    assets.forEach(a => state.game.stock[a.id] = a.stock);
+    state.game.round += 1;
+    state.offers = [];
+    state.loans = [];
+    state.investments = [];
+    state.marketListings = [];
+    Object.values(state.players).forEach(p => {
+      p.money = 10000;
+      p.holdings = [];
+      p.lastTick = now();
+    });
+    state.players[nextChampionId].money = 10000;
+    log(`${champ.name} venceu a rodada e agora soma ${champ.wins} vitória(s).`);
+    if (champ.supreme){
+      log(`${champ.name} virou Ganhador Supremo!`);
+    }
+    saveState();
+  }
+
+  function buyFromMarket(playerId, assetId){
+    const p = getPlayer(playerId);
+    const asset = getAsset(assetId);
+    if (!p || !asset) return alert('Jogador ou item inválido.');
+    if (state.game.stock[assetId] <= 0) return alert('Este item não está mais disponível no mercado. Só comprando de outro jogador.');
+    const price = asset.basePrice;
+    if (p.money < price) return alert('Dinheiro insuficiente.');
+    if (asset.id === 'diamond'){
+      p.money -= price;
+      p.holdings.push({ itemId: uid('item'), assetId, buyPrice: price, acquiredAt: now(), ownerId: p.id });
+      state.game.stock[assetId] -= 1;
+      log(`${p.name} comprou o Diamante e venceu a partida!`);
+      saveState();
+      setTimeout(() => {
+        resetRound(p.id);
+        render();
+      }, 100);
+      return;
+    }
+    p.money -= price;
+    p.holdings.push({ itemId: uid('item'), assetId, buyPrice: price, acquiredAt: now(), ownerId: p.id });
+    state.game.stock[assetId] -= 1;
+    log(`${p.name} comprou ${asset.name} por ${fmtMoney(price)} filipinos.`);
+    saveState();
+  }
+
+  function transferItem(itemId, fromPlayerId, toPlayerId, price){
+    const from = getPlayer(fromPlayerId);
+    const to = getPlayer(toPlayerId);
+    if (!from || !to) return false;
+    const idx = from.holdings.findIndex(h => h.itemId === itemId);
+    if (idx < 0) return false;
+    const item = from.holdings[idx];
+    if (to.money < price) return false;
+    to.money -= price;
+    from.money += price;
+    from.holdings.splice(idx, 1);
+    item.ownerId = to.id;
+    item.acquiredAt = now();
+    item.buyPrice = Math.max(item.buyPrice, price);
+    to.holdings.push(item);
+    saveState();
+    return true;
+  }
+
+  function buyFromPlayer(buyerId, sellerId, itemId, price){
+    const seller = getPlayer(sellerId);
+    const buyer = getPlayer(buyerId);
+    if (!seller || !buyer) return alert('Jogadores inválidos.');
+    const item = seller.holdings.find(h => h.itemId === itemId);
+    if (!item) return alert('Item não encontrado.');
+    if (buyer.money < price) return alert('Dinheiro insuficiente.');
+    buyer.money -= price;
+    seller.money += price;
+    seller.holdings = seller.holdings.filter(h => h.itemId !== itemId);
+    item.ownerId = buyer.id;
+    item.acquiredAt = now();
+    item.buyPrice = price;
+    buyer.holdings.push(item);
+    log(`${buyer.name} comprou ${getAsset(item.assetId).name} de ${seller.name} por ${fmtMoney(price)} filipinos.`);
+    saveState();
+  }
+
+  function makeOffer({ fromPlayerId, toType, toId, itemId, price, message }){
+    const from = getPlayer(fromPlayerId);
+    if (!from) return;
+    const item = from.holdings.find(h => h.itemId === itemId);
+    if (!item) return alert('Você precisa possuir esse item para ofertar.');
+    state.offers.unshift({
+      id: uid('offer'),
+      fromPlayerId,
+      fromName: from.name,
+      toType,
+      toId,
+      itemId,
+      assetId: item.assetId,
+      price: Number(price),
+      message: message || '',
+      status: 'pending',
+      counterPrice: null,
+      createdAt: now(),
+      updatedAt: now()
+    });
+    log(`${from.name} enviou oferta de venda de ${getAsset(item.assetId).name} por ${fmtMoney(price)}.`);
+    saveState();
+  }
+
+  function acceptOffer(offerId, receiverId){
+    const offer = state.offers.find(o => o.id === offerId);
+    if (!offer || offer.status !== 'pending') return;
+    const seller = getPlayer(offer.fromPlayerId);
+    const receiver = offer.toType === 'bank' ? { id:'bank', name:'Banco' } : getPlayer(receiverId || offer.toId);
+    const item = seller?.holdings.find(h => h.itemId === offer.itemId);
+    if (!seller || !receiver || !item) return alert('Oferta inválida.');
+
+    const price = offer.counterPrice != null ? offer.counterPrice : offer.price;
+    if (offer.toType === 'player') {
+      const buyer = getPlayer(offer.toId);
+      if (!buyer || buyer.money < price) return alert('O comprador não tem saldo suficiente.');
+      buyer.money -= price;
+      seller.money += price;
+      seller.holdings = seller.holdings.filter(h => h.itemId !== item.itemId);
+      item.ownerId = buyer.id;
+      item.acquiredAt = now();
+      buyer.holdings.push(item);
+      offer.status = 'accepted';
+      offer.updatedAt = now();
+      log(`${buyer.name} aceitou a oferta de ${seller.name}.`);
+    } else {
+      // banco compra e paga do próprio infinito
+      seller.money += price;
+      seller.holdings = seller.holdings.filter(h => h.itemId !== item.itemId);
+      offer.status = 'accepted';
+      offer.updatedAt = now();
+      log(`O banco aceitou comprar ${getAsset(item.assetId).name} de ${seller.name} por ${fmtMoney(price)}.`);
+    }
+    saveState();
+  }
+
+  function rejectOffer(offerId){
+    const offer = state.offers.find(o => o.id === offerId);
+    if (!offer) return;
+    offer.status = 'rejected';
+    offer.updatedAt = now();
+    log(`Oferta recusada.`);
+    saveState();
+  }
+
+  function counterOffer(offerId, newPrice){
+    const offer = state.offers.find(o => o.id === offerId);
+    if (!offer) return;
+    offer.counterPrice = Number(newPrice);
+    offer.status = 'countered';
+    offer.updatedAt = now();
+    log(`Contraproposta enviada: ${fmtMoney(newPrice)}.`);
+    saveState();
+  }
+
+  function requestLoan(playerId, amount){
+    const p = getPlayer(playerId);
+    if (!p) return;
+    amount = Number(amount);
+    if (!(amount > 0)) return alert('Valor inválido.');
+    const rate = Number(state.bank.loanInterest || 0.08);
+    state.bank.loanRequests.unshift({
+      id: uid('loanreq'),
+      playerId,
+      amount,
+      rate,
+      createdAt: now(),
+      status: 'pending'
+    });
+    log(`${p.name} solicitou empréstimo de ${fmtMoney(amount)} filipinos.`);
+    saveState();
+    alert('Pedido enviado ao banco. Aguarde a aprovação do administrador.');
+  }
+
+  function approveLoan(requestId){
+    const req = state.bank.loanRequests.find(r => r.id === requestId);
+    if (!req || req.status !== 'pending') return;
+    const p = getPlayer(req.playerId);
+    if (!p) return;
+    p.money += req.amount;
+    state.loans.unshift({
+      id: uid('loan'),
+      playerId: p.id,
+      amount: req.amount,
+      rate: req.rate,
+      borrowedAt: now(),
+      dueAt: now() + 24 * 36e5,
+      settled: false
+    });
+    req.status = 'approved';
+    req.updatedAt = now();
+    log(`O banco aprovou o empréstimo de ${p.name} no valor de ${fmtMoney(req.amount)}.`);
+    saveState();
+  }
+
+  function rejectLoan(requestId){
+    const req = state.bank.loanRequests.find(r => r.id === requestId);
+    if (!req || req.status !== 'pending') return;
+    const p = getPlayer(req.playerId);
+    req.status = 'rejected';
+    req.updatedAt = now();
+    log(`O banco recusou o empréstimo solicitado por ${p ? p.name : 'um jogador'}.`);
+    saveState();
+  }
+
+  function createInvestment(playerId, amount){
+    const p = getPlayer(playerId);
+    if (!p) return;
+    amount = Number(amount);
+    if (!(amount > 0) || p.money < amount) return alert('Valor inválido ou saldo insuficiente.');
+    p.money -= amount;
+    state.investments.unshift({
+      id: uid('inv'), playerId, amount,
+      rate: Number(state.bank.investmentRate || 0.12),
+      maturesAt: now() + Number(state.bank.investmentHours || 24) * 36e5,
+      paid: false
+    });
+    log(`${p.name} fez investimento de ${fmtMoney(amount)}.`);
+    saveState();
+  }
+
+  function createMoneyForBank(){
+    state.bank.patrimony = Number(state.bank.patrimony || 0) + 1000000;
+    log(`O banco criou 1.000.000 de filipinos para o seu patrimônio.`);
+    saveState();
+  }
+
+  function openModal(html){
+    modalBox.innerHTML = html;
+    modalBackdrop.classList.add('show');
+    modalBox.querySelectorAll('[data-close]').forEach(el => el.addEventListener('click', closeModal));
+    bindModalActions();
+  }
+  function closeModal(){
+    modalBackdrop.classList.remove('show');
+    modalBox.innerHTML = '';
+  }
+  modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) closeModal(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+  function bindModalActions(){
+    modalBox.querySelectorAll('[data-buy-market]').forEach(btn => btn.addEventListener('click', () => buyFromMarket(currentPlayerId, btn.dataset.buyMarket)));
+    modalBox.querySelectorAll('[data-open-player]').forEach(btn => btn.addEventListener('click', () => openPlayerModal(btn.dataset.openPlayer)));
+    modalBox.querySelectorAll('[data-buy-player-item]').forEach(btn => btn.addEventListener('click', () => {
+      buyFromPlayer(currentPlayerId, btn.dataset.seller, btn.dataset.item, Number(btn.dataset.price));
+      render();
+    }));
+    modalBox.querySelectorAll('[data-accept-offer]').forEach(btn => btn.addEventListener('click', () => { acceptOffer(btn.dataset.offer, btn.dataset.receiver || currentPlayerId); render(); }));
+    modalBox.querySelectorAll('[data-reject-offer]').forEach(btn => btn.addEventListener('click', () => { rejectOffer(btn.dataset.offer); render(); }));
+    modalBox.querySelectorAll('[data-counter-offer]').forEach(btn => btn.addEventListener('click', () => {
+      const input = modalBox.querySelector(`input[data-counter-input="${btn.dataset.offer}"]`);
+      if (!input) return;
+      counterOffer(btn.dataset.offer, input.value);
+      render();
+    }));
+    modalBox.querySelectorAll('[data-request-loan]').forEach(btn => btn.addEventListener('click', () => {
+      const input = modalBox.querySelector('input[name="loanAmount"]');
+      requestLoan(currentPlayerId, input.value);
+      render();
+    }));
+    modalBox.querySelectorAll('[data-create-invest]').forEach(btn => btn.addEventListener('click', () => {
+      const input = modalBox.querySelector('input[name="investAmount"]');
+      createInvestment(currentPlayerId, input.value);
+      render();
+    }));
+    modalBox.querySelectorAll('[data-submit-sale]').forEach(btn => btn.addEventListener('click', () => {
+      const itemId = btn.dataset.item;
+      const price = Number(modalBox.querySelector(`input[data-price="${itemId}"]`).value);
+      const targetType = modalBox.querySelector(`select[data-target-type="${itemId}"]`).value;
+      const targetId = modalBox.querySelector(`select[data-target-id="${itemId}"]`).value;
+      const msg = modalBox.querySelector(`textarea[data-msg="${itemId}"]`).value;
+      makeOffer({ fromPlayerId: currentPlayerId, toType: targetType, toId: targetId, itemId, price, message: msg });
+      render();
+      closeModal();
+    }));
+    modalBox.querySelectorAll('[data-delete-item]').forEach(btn => btn.addEventListener('click', () => {
+      const p = getPlayer(currentPlayerId);
+      const idx = p.holdings.findIndex(h => h.itemId === btn.dataset.deleteItem);
+      if (idx >= 0){
+        const item = p.holdings[idx];
+        p.holdings.splice(idx, 1);
+        state.game.stock[item.assetId] = (state.game.stock[item.assetId] || 0) + 1;
+        log(`${p.name} devolveu ${getAsset(item.assetId).name} ao mercado.`);
+        saveState();
+        render();
+        openHoldingsModal();
+      }
+    }));
+    modalBox.querySelectorAll('[data-buy-from-player]').forEach(btn => btn.addEventListener('click', () => {
+      const seller = btn.dataset.seller;
+      const item = btn.dataset.item;
+      const price = Number(btn.dataset.price);
+      buyFromPlayer(currentPlayerId, seller, item, price);
+      render();
+    }));
+  }
+
+  function openLoanRequestModal(){
+    openModal(`
+      <div class="between">
+        <div>
+          <h2 style="margin:0">Pedir empréstimo</h2>
+          <div class="muted">Seu pedido vai para o painel do administrador.</div>
+        </div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <input type="number" name="loanAmount" placeholder="Valor desejado" style="min-width:220px;flex:1" />
+        <button class="blue" data-request-loan="1">Enviar pedido</button>
+      </div>
+      <div class="divider"></div>
+      <div class="notice">
+        O banco decide se aprova ou recusa. Os dados internos do banco ficam visíveis só para o administrador.
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <button class="secondary" id="openAdminFromLoan">Sou ADM</button>
+      </div>
+    `);
+    setTimeout(() => {
+      const btn = document.querySelector('[data-request-loan]');
+      if (btn) btn.addEventListener('click', () => {
+        const input = document.querySelector('input[name="loanAmount"]');
+        requestLoan(currentPlayerId, input.value);
+        closeModal();
+        render();
+      });
+      const adm = document.getElementById('openAdminFromLoan');
+      if (adm) adm.addEventListener('click', () => {
+        closeModal();
+        openAdminLogin();
+      });
+    }, 0);
+  }
+
+  function openHowModal(){
+    openModal(`
+      <div class="between">
+        <div>
+          <h2 style="margin:0">Como jogar</h2>
+          <div class="muted">Texto pronto para o seu site.</div>
+        </div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      <div class="notice">
+        <p><b>1.</b> Cada jogador entra com um nome e escolhe um avatar.</p>
+        <p><b>2.</b> Todo mundo participa do mesmo jogo, com o mesmo mercado e as mesmas regras.</p>
+        <p><b>3.</b> Cada jogador começa com 10.000 filipinos.</p>
+        <p><b>4.</b> Compre casas, carros e moedas para ganhar ou perder dinheiro com o tempo.</p>
+        <p><b>5.</b> Você pode vender seus bens para outros jogadores ou para o banco.</p>
+        <p><b>6.</b> O banco pode emprestar dinheiro com juros e também oferecer investimentos.</p>
+        <p><b>7.</b> Se a dívida não for paga, o banco pode tomar patrimônio.</p>
+        <p><b>8.</b> O primeiro a comprar o diamante vence a partida.</p>
+        <p><b>9.</b> Ao vencer 10 vezes, o jogador se torna Ganhador Supremo.</p>
+      </div>
+    `);
+  }
+
+  function openPlayersModal(){
+    const players = Object.values(state.players).sort((a,b) => totalNetWorth(b) - totalNetWorth(a));
+    openModal(`
+      <div class="between">
+        <div><h2 style="margin:0">Jogadores</h2><div class="muted">Clique para ver detalhes e negociar bens.</div></div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      <div class="list">
+        ${players.length ? players.map(p => {
+          const isMe = p.id === currentPlayerId;
+          return `
+            <div class="item">
+              <div class="between">
+                <div class="avatarLine">
+                  <img src="${p.avatar}" alt="${safeText(p.name)}" />
+                  <div>
+                    <b>${safeText(p.name)} ${isMe ? '(você)' : ''}</b>
+                    <div class="small">${p.supreme ? 'Ganhador Supremo' : 'Jogador'}</div>
+                  </div>
+                </div>
+                <div class="row">
+                  <span class="pill"><img src="${MONEY_IMAGE}" style="width:18px;height:18px;object-fit:contain" alt="moeda" /> ${fmtMoney(p.money)}</span>
+                  <span class="pill">Patrimônio: ${fmtMoney(totalNetWorth(p))}</span>
+                  <button class="secondary" data-open-player="${p.id}">Ver bens</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('') : '<div class="muted">Nenhum jogador ainda.</div>'}
+      </div>
+    `);
+  }
+
+  function openMarketModal(){
+    const assets = state.game.assets;
+    openModal(`
+      <div class="between">
+        <div>
+          <h2 style="margin:0">Mercado</h2>
+          <div class="muted">Itens à venda pelo jogo. Se o estoque acabar, só comprando de outro jogador.</div>
+        </div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      <div class="list">
+        ${assets.map(a => {
+          const stock = state.game.stock[a.id] ?? 0;
+          const soldOut = stock <= 0;
+          return `
+            <div class="item">
+              <div class="meta">
+                <img src="${a.image}" alt="${safeText(a.name)}" />
+                <div>
+                  <div class="between">
+                    <div><b>${safeText(a.name)}</b> <span class="tag">${safeText(a.category)}</span></div>
+                    <div class="small">Estoque: <b>${stock}</b></div>
+                  </div>
+                  <div class="small">Preço: ${fmtMoney(a.basePrice)} filipinos</div>
+                  <div class="small">${safeText(a.note || '')}</div>
+                </div>
+                <div>
+                  <button class="${soldOut ? 'ghost' : 'blue'}" data-buy-market="${a.id}" ${soldOut ? 'disabled' : ''}>${a.id === 'diamond' ? 'Comprar para vencer' : 'Comprar'}</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `);
+  }
+
+  function openHoldingsModal(){
+    const p = currentPlayer();
+    if (!p) return;
+    const holdings = [...p.holdings];
+    if (sortHoldingsByValue) holdings.sort((a,b) => itemMarketValue(b) - itemMarketValue(a));
+    const players = Object.values(state.players).filter(x => x.id !== p.id);
+    openModal(`
+      <div class="between">
+        <div>
+          <h2 style="margin:0">Seus bens</h2>
+          <div class="muted">Veja o que você tem, coloque à venda ou ofereça para outro jogador ou para o banco.</div>
+        </div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      ${holdings.length ? holdings.map(h => {
+        const a = getAsset(h.assetId);
+        const market = itemMarketValue(h);
+        return `
+          <div class="item" style="margin-bottom:10px">
+            <div class="meta">
+              <img src="${a.image}" alt="${safeText(a.name)}" />
+              <div>
+                <div><b>${safeText(a.name)}</b> <span class="tag">${safeText(a.category)}</span></div>
+                <div class="small">Preço pago: ${fmtMoney(h.buyPrice)}</div>
+                <div class="small">Valor atual estimado: ${fmtMoney(market)}</div>
+                <div class="small">ID do item: ${h.itemId}</div>
+              </div>
+              <div class="row" style="justify-content:flex-end">
+                <button class="secondary" data-delete-item="${h.itemId}">Devolver ao mercado</button>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="row">
+              <input type="number" min="0" step="0.01" data-price="${h.itemId}" placeholder="Preço da venda" style="min-width:160px" />
+              <select data-target-type="${h.itemId}">
+                <option value="player">Vender para jogador</option>
+                <option value="bank">Vender para banco</option>
+              </select>
+              <select data-target-id="${h.itemId}">
+                <option value="bank">Banco</option>
+                ${players.map(x => `<option value="${x.id}">${safeText(x.name)}</option>`).join('')}
+              </select>
+              <button class="blue" data-submit-sale="1" data-item="${h.itemId}">Enviar oferta</button>
+            </div>
+            <div style="margin-top:10px">
+              <textarea placeholder="Mensagem opcional" data-msg="${h.itemId}"></textarea>
+            </div>
+          </div>
+        `;
+      }).join('') : '<div class="muted">Você ainda não possui bens.</div>'}
+    `);
+  }
+
+  function openPlayerModal(playerId){
+    const p = getPlayer(playerId);
+    if (!p) return;
+    const ownerName = safeText(p.name);
+    const holdings = p.holdings.map(h => {
+      const a = getAsset(h.assetId);
+      return {
+        ...h,
+        asset: a,
+        market: itemMarketValue(h)
+      };
+    }).sort((a,b) => b.market - a.market);
+    openModal(`
+      <div class="between">
+        <div class="avatarLine">
+          <img src="${p.avatar}" alt="${ownerName}" />
+          <div>
+            <h2 style="margin:0">${ownerName}</h2>
+            <div class="muted">${p.supreme ? 'Ganhador Supremo' : 'Jogador'}</div>
+          </div>
+        </div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <span class="pill"><img src="${MONEY_IMAGE}" style="width:18px;height:18px;object-fit:contain" alt="moeda" /> ${fmtMoney(p.money)}</span>
+        <span class="pill">Patrimônio: ${fmtMoney(totalNetWorth(p))}</span>
+        <span class="pill">Vitórias: ${p.wins}</span>
+      </div>
+      <div class="divider"></div>
+      <h3>Bens</h3>
+      <div class="list">
+        ${holdings.length ? holdings.map(h => `
+          <div class="item">
+            <div class="between">
+              <div class="avatarLine">
+                <img src="${h.asset.image}" alt="${safeText(h.asset.name)}" />
+                <div>
+                  <b>${safeText(h.asset.name)}</b>
+                  <div class="small">${safeText(h.asset.category)} • Atual: ${fmtMoney(h.market)}</div>
+                </div>
+              </div>
+              <div class="row">
+                ${p.id !== currentPlayerId ? `<button class="blue" data-buy-from-player="1" data-seller="${p.id}" data-item="${h.itemId}" data-price="${Math.ceil(h.market)}">Comprar por ${fmtShort(Math.ceil(h.market))}</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('') : '<div class="muted">Sem bens.</div>'}
+      </div>
+    `);
+  }
+
+  function openOffersModal(){
+    const me = currentPlayer();
+    const incoming = state.offers.filter(o => o.status === 'pending' && ((o.toType === 'player' && o.toId === currentPlayerId) || (o.toType === 'bank' && me?.isAdmin)));
+    const outgoing = state.offers.filter(o => o.fromPlayerId === currentPlayerId);
+    const holdings = me ? me.holdings : [];
+    const players = Object.values(state.players).filter(x => x.id !== currentPlayerId);
+    openModal(`
+      <div class="between">
+        <div><h2 style="margin:0">Ofertas</h2><div class="muted">Aceite, recuse, faça contraproposta ou coloque seus bens à venda.</div></div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      <h3>Colocar bem à venda</h3>
+      <div class="row">
+        <select id="offerItemSelect" style="min-width:220px;flex:1">
+          ${holdings.length ? holdings.map(h => {
+            const a = getAsset(h.assetId);
+            return `<option value="${h.itemId}">${safeText(a?.name || '')} • ${safeText(a?.category || '')}</option>`;
+          }).join('') : '<option value="">Você não possui bens</option>'}
+        </select>
+        <input id="offerPriceInput" type="number" step="0.01" placeholder="Preço desejado" style="min-width:160px" />
+        <select id="offerTargetType">
+          <option value="player">Oferecer para jogador</option>
+          <option value="bank">Oferecer para banco</option>
+        </select>
+        <select id="offerTargetPlayer">
+          <option value="bank">Banco</option>
+          ${players.map(x => `<option value="${x.id}">${safeText(x.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-top:10px">
+        <textarea id="offerMessage" placeholder="Mensagem opcional"></textarea>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="blue" id="sendOfferBtn">Enviar oferta</button>
+      </div>
+      <div class="divider"></div>
+      <h3>Recebidas</h3>
+      <div class="list">
+        ${incoming.length ? incoming.map(o => {
+          const asset = getAsset(o.assetId);
+          const seller = getPlayer(o.fromPlayerId);
+          return `
+            <div class="item">
+              <div class="between">
+                <div>
+                  <b>${safeText(seller?.name || 'Desconhecido')}</b> quer vender <b>${safeText(asset?.name || '')}</b>
+                  <div class="small">Preço pedido: ${fmtMoney(o.price)}</div>
+                  <div class="small">Mensagem: ${safeText(o.message || '-')}</div>
+                </div>
+                <div class="row">
+                  <button class="green" data-accept-offer="${o.id}" data-receiver="${currentPlayerId}">Aceitar</button>
+                  <button class="bad" data-reject-offer="${o.id}">Recusar</button>
+                  <input type="number" step="0.01" placeholder="Contra" data-counter-input="${o.id}" style="width:130px" />
+                  <button class="secondary" data-counter-offer="${o.id}">Contrapropor</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('') : '<div class="muted">Nenhuma oferta recebida.</div>'}
+      </div>
+      <div class="divider"></div>
+      <h3>Enviadas</h3>
+      <div class="list">
+        ${outgoing.length ? outgoing.map(o => {
+          const asset = getAsset(o.assetId);
+          return `
+            <div class="item">
+              <div class="between">
+                <div>
+                  <b>${safeText(asset?.name || '')}</b>
+                  <div class="small">Destino: ${o.toType === 'bank' ? 'Banco' : safeText(getPlayer(o.toId)?.name || 'Jogador')}</div>
+                  <div class="small">Preço: ${fmtMoney(o.price)}${o.counterPrice != null ? ` • Contraproposta: ${fmtMoney(o.counterPrice)}` : ''}</div>
+                  <div class="small">Status: ${safeText(o.status)}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('') : '<div class="muted">Nenhuma oferta enviada.</div>'}
+      </div>
+    `);
+    setTimeout(() => {
+      const sendBtn = document.getElementById('sendOfferBtn');
+      if (sendBtn) {
+        sendBtn.addEventListener('click', () => {
+          const itemId = document.getElementById('offerItemSelect').value;
+          const price = Number(document.getElementById('offerPriceInput').value);
+          const toType = document.getElementById('offerTargetType').value;
+          const toId = document.getElementById('offerTargetPlayer').value;
+          const message = document.getElementById('offerMessage').value;
+          if (!itemId) return alert('Selecione um bem.');
+          if (!(price > 0)) return alert('Digite um preço válido.');
+          makeOffer({ fromPlayerId: currentPlayerId, toType, toId, itemId, price, message });
+          render();
+          closeModal();
+        });
+      }
+    }, 0);
+  }
+
+  function openBankModal(){
+    const loanRatePct = (Number(state.bank.loanInterest || 0.08) * 100).toFixed(2);
+    const invRatePct = (Number(state.bank.investmentRate || 0.12) * 100).toFixed(2);
+    const invHours = Number(state.bank.investmentHours || 24);
+    const activeLoans = state.loans.filter(x => !x.settled);
+    const activeInvs = state.investments.filter(x => !x.paid);
+    const pendingRequests = state.bank.loanRequests.filter(x => x.status === 'pending');
+    openModal(`
+      <div class="between">
+        <div>
+          <h2 style="margin:0">Banco Filipinos</h2>
+          <div class="muted">Painel exclusivo do administrador.</div>
+        </div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <span class="pill">Patrimônio do banco: ${fmtMoney(state.bank.patrimony || 0)}</span>
+        <span class="pill">Juros do empréstimo: ${loanRatePct}%</span>
+        <span class="pill">Investimento: ${invRatePct}%</span>
+        <span class="pill">Resgate em: ${invHours}h</span>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <button class="green" id="btnAdminMint">Criar 1.000.000</button>
+        <button class="secondary" id="btnAdminRates">Definir juros</button>
+        <button class="secondary" id="btnAdminInvest">Editar investimento</button>
+      </div>
+      <div class="divider"></div>
+      <h3>Pedidos de empréstimo</h3>
+      <div class="list">
+        ${pendingRequests.length ? pendingRequests.map(r => {
+          const p = getPlayer(r.playerId);
+          return `
+            <div class="item">
+              <div class="between">
+                <div>
+                  <b>${safeText(p?.name || 'Jogador')}</b>
+                  <div class="small">Valor pedido: ${fmtMoney(r.amount)} • Juros: ${(r.rate*100).toFixed(2)}%</div>
+                </div>
+                <div class="row">
+                  <button class="green" data-approve-loan="${r.id}">Aprovar</button>
+                  <button class="bad" data-reject-loan="${r.id}">Recusar</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('') : '<div class="muted">Nenhum pedido pendente.</div>'}
+      </div>
+      <div class="divider"></div>
+      <h3>Empréstimos ativos</h3>
+      <div class="list">
+        ${activeLoans.length ? activeLoans.map(l => {
+          const p = getPlayer(l.playerId);
+          return `<div class="item"><b>${safeText(p?.name || '')}</b><div class="small">Valor: ${fmtMoney(l.amount)} • Juros: ${(l.rate*100).toFixed(2)}% • Vencimento: ${new Date(l.dueAt).toLocaleString('pt-BR')}</div></div>`;
+        }).join('') : '<div class="muted">Sem empréstimos ativos.</div>'}
+      </div>
+      <div class="divider"></div>
+      <h3>Investimentos ativos</h3>
+      <div class="list">
+        ${activeInvs.length ? activeInvs.map(i => {
+          const p = getPlayer(i.playerId);
+          return `<div class="item"><b>${safeText(p?.name || '')}</b><div class="small">Valor: ${fmtMoney(i.amount)} • Retorno: ${(i.rate*100).toFixed(2)}% • Vence: ${new Date(i.maturesAt).toLocaleString('pt-BR')}</div></div>`;
+        }).join('') : '<div class="muted">Sem investimentos ativos.</div>'}
+      </div>
+      <div class="divider"></div>
+      <h3>Resumo do banco</h3>
+      <div class="notice">Somente o administrador pode ver esta área, inclusive patrimônio, juros, empréstimos e investimentos.</div>
+    `);
+    setTimeout(() => {
+      const adminMint = document.getElementById('btnAdminMint');
+      if (adminMint) adminMint.addEventListener('click', createMoneyForBank);
+      const adminRates = document.getElementById('btnAdminRates');
+      if (adminRates) adminRates.addEventListener('click', openRatesEditor);
+      const adminInvest = document.getElementById('btnAdminInvest');
+      if (adminInvest) adminInvest.addEventListener('click', openRatesEditor);
+      modalBox.querySelectorAll('[data-approve-loan]').forEach(btn => btn.addEventListener('click', () => { approveLoan(btn.dataset.approveLoan); render(); openBankModal(); }));
+      modalBox.querySelectorAll('[data-reject-loan]').forEach(btn => btn.addEventListener('click', () => { rejectLoan(btn.dataset.rejectLoan); render(); openBankModal(); }));
+    }, 0);
+  }
+
+  function openAdminLogin(){
+    const pass = prompt('Senha ADM do Filipinos Bank:');
+    if (pass !== ADMIN_PASS) {
+      alert('Senha incorreta.');
+      return;
+    }
+    const me = currentPlayer();
+    if (me) {
+      me.isAdmin = true;
+      state.bank.adminLastName = me.name;
+      saveState();
+      render();
+      bankPanel.style.display = 'block';
+      log(`${me.name} entrou como administrador do banco.`);
+      alert('Acesso liberado ao painel do banco.');
+    }
+  }
+
+  function openRatesEditor(){
+    const loan = Number(state.bank.loanInterest || 0.08) * 100;
+    const inv = Number(state.bank.investmentRate || 0.12) * 100;
+    const hrs = Number(state.bank.investmentHours || 24);
+    openModal(`
+      <div class="between">
+        <div><h2 style="margin:0">Definir juros</h2><div class="muted">Só o ADM altera isso.</div></div>
+        <button class="ghost" data-close>Fechar</button>
+      </div>
+      <div class="divider"></div>
+      <div class="row">
+        <input id="loanRateInput" type="number" step="0.01" value="${loan}" placeholder="Juros do empréstimo %" />
+        <input id="invRateInput" type="number" step="0.01" value="${inv}" placeholder="Juros do investimento %" />
+        <input id="invHrsInput" type="number" step="1" value="${hrs}" placeholder="Horas para resgatar" />
+        <button class="blue" id="saveRatesBtn">Salvar</button>
+      </div>
+    `);
+    setTimeout(() => {
+      const saveBtn = document.getElementById('saveRatesBtn');
+      if (!saveBtn) return;
+      saveBtn.addEventListener('click', () => {
+        const loanRate = Number(document.getElementById('loanRateInput').value) / 100;
+        const invRate = Number(document.getElementById('invRateInput').value) / 100;
+        const invHours = Number(document.getElementById('invHrsInput').value);
+        if (!(loanRate >= 0 && invRate >= 0 && invHours > 0)) return alert('Valores inválidos.');
+        state.bank.loanInterest = loanRate;
+        state.bank.investmentRate = invRate;
+        state.bank.investmentHours = invHours;
+        saveState();
+        log('O banco atualizou os juros e investimentos.');
+        closeModal();
+        render();
+      });
+    }, 0);
+  }
+
+  function openInvestEditor(){
+    openRatesEditor();
+  }
+
+  function openWinnerIfAny(){
+    const winners = state.game.winners.slice(0, 8);
+    const currentChampion = state.game.currentChampion;
+    return `
+      <div class="notice">
+        <b>Rodada ${state.game.round}</b><br>
+        ${currentChampion ? `Último vencedor: <b>${safeText(currentChampion.name)}</b>` : 'Ainda não houve vencedor nesta rodada.'}
+      </div>
+      <div class="divider"></div>
+      <div class="list">
+        ${winners.length ? winners.map(w => {
+          const p = getPlayer(w.playerId);
+          return `
+            <div class="item">
+              <div class="avatarLine">
+                <img src="${w.avatar}" alt="${safeText(w.name)}" />
+                <div>
+                  <b>${safeText(w.name)}</b>
+                  <div class="small">Rodada ${w.round} • ${new Date(w.at).toLocaleString('pt-BR')}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('') : '<div class="muted">Nenhum vencedor ainda.</div>'}
+      </div>
+    `;
+  }
+
+  function openSummary(){
+    const p = currentPlayer();
+    const playersCount = Object.keys(state.players).length;
+    const totalItems = Object.values(state.players).reduce((sum, x) => sum + x.holdings.length, 0);
+    document.getElementById('summaryBox').innerHTML = `
+      <b>Resumo atual</b><br><br>
+      Jogadores ativos: <b>${playersCount}</b><br>
+      Itens em circulação: <b>${totalItems}</b><br>
+      Estoque do diamante: <b>${state.game.stock.diamond ?? 0}</b><br>
+      Seu status: <b>${p ? (p.supreme ? 'Ganhador Supremo' : 'Jogador') : 'sem jogador ativo'}</b><br>
+      Banco pode criar dinheiro e emprestar com juros.
+    `;
+  }
+
+  function render(){
+    applyEarningsAndDebt();
+    const me = currentPlayer();
+
+    if (!me){
+      loginScreen.classList.remove('hide');
+      gameScreen.classList.add('hide');
+      headerStatus.innerHTML = '';
+      return;
+    }
+
+    loginScreen.classList.add('hide');
+    gameScreen.classList.remove('hide');
+
+    document.getElementById('meAvatar').src = me.avatar;
+    document.getElementById('meName').textContent = me.name;
+    document.getElementById('meRole').textContent = me.supreme ? 'Ganhador Supremo' : (me.isAdmin ? 'Administrador do Banco' : 'Jogador');
+    document.getElementById('meMoney').textContent = fmtMoney(me.money);
+    document.getElementById('meNetWorth').textContent = fmtMoney(totalNetWorth(me));
+    document.getElementById('meWins').textContent = me.wins;
+    document.getElementById('meStatus').textContent = me.isAdmin ? 'ADM' : 'Ativo';
+
+    headerStatus.innerHTML = `
+      <span class="pill"><img src="${MONEY_IMAGE}" style="width:18px;height:18px;object-fit:contain" alt="moeda" /> ${fmtMoney(me.money)}</span>
+      <span class="pill">Rodada ${state.game.round}</span>
+      <span class="pill">${me.supreme ? 'Supremo' : 'Normal'}</span>
+    `;
+
+    bankPanel.style.display = me.isAdmin ? 'block' : 'none';
+    document.getElementById('bankStats').innerHTML = `
+      <b>Configuração atual</b><br>
+      Empréstimo: ${(state.bank.loanInterest*100).toFixed(2)}%<br>
+      Investimento: ${(state.bank.investmentRate*100).toFixed(2)}%<br>
+      Resgate: ${state.bank.investmentHours} hora(s)<br>
+      Dinheiro criado pelo banco: ${fmtMoney(state.bank.balanceCreated)}<br>
+      Último ADM: ${safeText(state.bank.adminLastName || '-')}<br>
+      O banco não tem limite de caixa neste jogo.
+    `;
+
+    document.getElementById('myHoldings').innerHTML = me.holdings.length ? me.holdings.map(h => {
+      const a = getAsset(h.assetId);
+      const mv = itemMarketValue(h);
+      return `
+        <div class="item">
+          <div class="between">
+            <div class="avatarLine">
+              <img src="${a.image}" alt="${safeText(a.name)}" />
+              <div>
+                <b>${safeText(a.name)}</b>
+                <div class="small">${safeText(a.category)} • Valor atual: ${fmtMoney(mv)}</div>
+              </div>
+            </div>
+            <div class="row">
+              <span class="pill">Pago: ${fmtMoney(h.buyPrice)}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('') : '<div class="muted">Você ainda não comprou nenhum item.</div>';
+
+    document.getElementById('winnersBoard').innerHTML = openWinnerIfAny();
+    document.getElementById('feedList').innerHTML = (state.game.logs.length ? state.game.logs : [{msg:'Sem atividade ainda.', at:now()}]).map(l => `
+      <div class="item">
+        <div class="small">${new Date(l.at).toLocaleString('pt-BR')}</div>
+        <div>${safeText(l.msg)}</div>
+      </div>
+    `).join('');
+
+    openSummary();
+    saveState();
+  }
+
+  function buildAvatarChoices(){
+    avatarGrid.innerHTML = DEFAULT_AVATARS.map((src, idx) => `
+      <div class="avatarChoice ${idx === 0 ? 'active' : ''}" data-avatar="${src}">
+        <img src="${src}" alt="avatar ${idx+1}" />
+        <div class="small">Avatar ${idx + 1}</div>
+      </div>
+    `).join('');
+    avatarGrid.querySelectorAll('.avatarChoice').forEach(el => {
+      el.addEventListener('click', () => {
+        avatarGrid.querySelectorAll('.avatarChoice').forEach(x => x.classList.remove('active'));
+        el.classList.add('active');
+        selectedAvatar = el.dataset.avatar;
+      });
+    });
+  }
+
+  function joinGame(){
+    const name = playerNameInput.value.trim();
+    if (!name) return alert('Digite seu nome.');
+    const existing = Object.values(state.players).find(p => p.name.toLowerCase() === name.toLowerCase());
+    const id = existing ? existing.id : uid('player');
+    const player = ensurePlayer(id, name, selectedAvatar);
+    player.name = name;
+    player.avatar = selectedAvatar;
+    localStorage.setItem(CURRENT_KEY, id);
+    currentPlayerId = id;
+    saveState();
+    render();
+  }
+
+  // Eventos
+  joinBtn.addEventListener('click', joinGame);
+  playerNameInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame(); });
+  btnPlayers.addEventListener('click', openPlayersModal);
+  btnMarket.addEventListener('click', openMarketModal);
+  btnOffers.addEventListener('click', openOffersModal);
+  btnBank.addEventListener('click', () => {
+    if (currentPlayer()?.isAdmin) {
+      openBankModal();
+    } else {
+      openLoanRequestModal();
+    }
+  });
+  btnHow.addEventListener('click', openHowModal);
+  btnResetMe.addEventListener('click', () => {
+    localStorage.removeItem(CURRENT_KEY);
+    currentPlayerId = '';
+    render();
+  });
+  btnRefresh.addEventListener('click', render);
+  btnSortHoldings.addEventListener('click', () => {
+    sortHoldingsByValue = !sortHoldingsByValue;
+    render();
+  });
+  btnMint.addEventListener('click', createMoneyForBank);
+  btnEditRates.addEventListener('click', openRatesEditor);
+  btnEditInvest.addEventListener('click', openInvestEditor);
+
+  buildAvatarChoices();
+  if (currentPlayerId && state.players[currentPlayerId]){
+    render();
+  } else {
+    loginScreen.classList.remove('hide');
+    gameScreen.classList.add('hide');
+  }
+
+  // Atualiza automaticamente
+  setInterval(() => {
+    if (currentPlayerId && state.players[currentPlayerId]) {
+      applyEarningsAndDebt();
+      render();
+    }
+  }, 5000);
+
+  // Expõe para debug local, sem usar console no jogo normal
+  window.__filipinosBankGame = { state, render, openMarketModal, openPlayersModal, openOffersModal };
+})();
+</script>
+</body>
+</html>
+</div>
+</body>
+</html>
