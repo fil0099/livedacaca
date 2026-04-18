@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Desafio Matemático</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:20px;
+	top:17px;
+	width:297px;
+	height:167px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:276px;
+	top:25px;
+	width:253px;
+	height:177px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:507px;
+	top:39px;
+	width:401px;
+	height:85px;
+	z-index:1;
+}
+-->
+</style>
+<style>
+*{
+    box-sizing:border-box;
+}
+
+html, body {
+    margin:0;
+    padding:0;
+    min-height:100%;
+}
+
+body {
+    font-family:Arial;
+    background:#000;
+    color:#fff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100svh;
+    overflow-x:hidden;
+    overflow-y:auto;
+    padding:16px;
+}
+
+/* FUNDO */
+.bg {
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+    pointer-events:none;
+}
+
+.bg img {
+    position:absolute;
+    width:min(200px, 38vw);
+    opacity:0.12;
+    animation:float linear infinite;
+    user-select:none;
+    -webkit-user-drag:none;
+}
+
+@keyframes float {
+    from {transform:translateY(100vh) rotate(0deg);}
+    to {transform:translateY(-100vh) rotate(360deg);}
+}
+
+/* GAME */
+.game {
+    text-align:center;
+    background:rgba(0,0,0,0.75);
+    padding:25px;
+    border-radius:15px;
+    width:min(450px, 92vw);
+    max-width:450px;
+    margin:0 auto;
+}
+
+/* INPUT */
+input {
+    padding:10px;
+    font-size:20px;
+    width:min(120px, 100%);
+    text-align:center;
+    max-width:100%;
+}
+
+/* BOTÕES */
+button {
+    padding:10px 20px;
+    margin-top:10px;
+    cursor:pointer;
+}
+
+/* TIMER */
+.timerBar {
+    width:100%;
+    height:10px;
+    background:#333;
+    margin-top:15px;
+    border-radius:5px;
+    overflow:hidden;
+}
+
+.timerFill {
+    height:100%;
+    width:100%;
+    background:#4caf50;
+}
+
+/* SCORE */
+.score {
+    margin-top:10px;
+}
+
+.ranking {
+    margin-top:20px;
+    text-align:left;
+    word-break:break-word;
+}
+
+.ranking ul{
+    padding-left:20px;
+    margin:8px 0 0;
+}
+
+@media (max-width: 768px) {
+    body{
+        align-items:flex-start;
+        padding:12px;
+    }
+
+    .game{
+        width:100%;
+        padding:20px 16px;
+        border-radius:12px;
+    }
+
+    h1{
+        font-size:1.8rem;
+        line-height:1.15;
+    }
+
+    h2{
+        font-size:1.2rem;
+    }
+
+    input{
+        width:100%;
+        max-width:260px;
+        font-size:18px;
+    }
+
+    button{
+        width:100%;
+        max-width:260px;
+    }
+}
+
+@media (max-width: 480px) {
+    .game{
+        padding:16px 12px;
+    }
+
+    h1{
+        font-size:1.5rem;
+    }
+
+    p{
+        font-size:0.98rem;
+        line-height:1.35;
+    }
+
+    input, button{
+        width:100%;
+        max-width:none;
+    }
+
+    .ranking{
+        font-size:0.95rem;
+    }
+}
+</style>
+</head>
+
+<body>
+  <div class="bg" id="bg"></div>
+
+  <div class="game">
+    <h2>Desafio Matemático</h2>
+    <p> Responda antes do tempo acabar.<br />
+      A cada fase as contas ficam mais difíceis. </p>
+    <h1 id="conta">Clique em iniciar</h1>
+    <input name="number" type="number" id="resposta" />
+    <br />
+    <button onclick="responder()">Responder</button>
+    <br />
+    <button onclick="iniciar()">Iniciar</button>
+    <div class="timerBar">
+      <div class="timerFill" id="timer"></div>
+    </div>
+    <div class="score"> Pontos: <span id="pontos">0</span><br />
+      Fase: <span id="fase">1</span> </div>
+    <div class="ranking">
+      <h3>Melhores Pontuações</h3>
+      <ul id="ranking"></ul>
+    </div>
+  </div>
+
+  <script>
+
+/* IMAGENS */
+const imagens = [
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0043434.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0424343.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/123004.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/343455.webp",
+"https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/6769.webp"
+];
+
+/* FUNDO */
+function criarFundo(){
+    const bg = document.getElementById("bg");
+    for(let i=0;i<20;i++){
+        const img = document.createElement("img");
+        img.src = imagens[Math.floor(Math.random()*imagens.length)];
+        img.style.left = Math.random()*100+"%";
+        img.style.animationDuration = (10 + Math.random()*20)+"s";
+        bg.appendChild(img);
+    }
+}
+criarFundo();
+
+/* GAME */
+let num1, num2, resultado;
+let pontos = 0;
+let fase = 1;
+let tempo = 15000;
+let intervalo;
+
+function novaConta(){
+
+    let max = 10 + (fase * 5);
+
+    num1 = Math.floor(Math.random()*max);
+    num2 = Math.floor(Math.random()*max)+1;
+
+    const ops = ["+","-","*","/"];
+    let op = ops[Math.floor(Math.random()*ops.length)];
+
+    switch(op){
+        case "+": resultado = num1 + num2; break;
+        case "-": resultado = num1 - num2; break;
+        case "*": resultado = num1 * num2; break;
+        case "/":
+            resultado = Math.floor(num1);
+            num1 = resultado * num2;
+            break;
+    }
+
+    document.getElementById("conta").innerText = num1 + " " + op + " " + num2;
+
+    iniciarTempo();
+}
+
+function iniciar(){
+    pontos = 0;
+    fase = 1;
+    atualizar();
+    novaConta();
+}
+
+/* TIMER */
+function iniciarTempo(){
+    clearInterval(intervalo);
+
+    let tempoAtual = tempo - (fase * 300);
+    if(tempoAtual < 1500) tempoAtual = 1500;
+
+    let restante = tempoAtual;
+    const barra = document.getElementById("timer");
+
+    intervalo = setInterval(()=>{
+        restante -= 50;
+
+        barra.style.width = (restante/tempoAtual)*100 + "%";
+
+        if(restante <= 0){
+            clearInterval(intervalo);
+            perdeu();
+        }
+
+    },50);
+}
+
+/* RESPOSTA */
+function responder(){
+    const resp = Number(document.getElementById("resposta").value);
+
+    if(resp === resultado){
+        pontos++;
+        if(pontos % 5 === 0) fase++;
+        novaConta();
+    } else {
+        perdeu();
+    }
+
+    document.getElementById("resposta").value = "";
+    atualizar();
+}
+
+/* PERDEU */
+function perdeu(){
+    clearInterval(intervalo);
+    salvarRanking(pontos);
+    alert("Fim de jogo. Pontos: " + pontos);
+    iniciar();
+}
+
+/* UI */
+function atualizar(){
+    document.getElementById("pontos").innerText = pontos;
+    document.getElementById("fase").innerText = fase;
+}
+
+/* RANKING */
+function salvarRanking(score){
+    let r = JSON.parse(localStorage.getItem("rankMath")) || [];
+    r.push(score);
+    r.sort((a,b)=>b-a);
+    r = r.slice(0,5);
+    localStorage.setItem("rankMath", JSON.stringify(r));
+    mostrarRanking();
+}
+
+function mostrarRanking(){
+    let r = JSON.parse(localStorage.getItem("rankMath")) || [];
+    const ul = document.getElementById("ranking");
+    ul.innerHTML = "";
+
+    r.forEach((p,i)=>{
+        const li = document.createElement("li");
+        li.innerText = (i+1)+"º - "+p;
+        ul.appendChild(li);
+    });
+}
+mostrarRanking();
+
+  </script>
+</body>
+</html>
