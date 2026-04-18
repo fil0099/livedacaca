@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Untitled Document</title>
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    overflow-x: hidden;
+    background: white;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    position: relative;
+    min-height: 100vh;
+}
+
+/* container principal */
+.page {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 16px 32px;
+    box-sizing: border-box;
+}
+
+.content-wrap {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+iframe {
+    width: 100%;
+    height: 90vh;
+    border: none;
+    border-radius: 10px;
+    display: block;
+    background: white;
+}
+
+/* voltar */
+.botao-voltar {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    background: #4db8ff;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    z-index: 9999;
+}
+
+.botao-voltar:hover {
+    background: #2ea6ff;
+}
+
+/* postar */
+.postar-wrap {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 9999;
+}
+
+.postar-wrap button {
+    background: #4db8ff;
+    color: #fff;
+    border: 0;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-family: Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.postar-wrap button:hover {
+    background: #2ea6ff;
+}
+
+/* fundo decorativo */
+.fundo {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.imgfundo {
+    position: absolute;
+    width: 70px;
+    opacity: 0.10;
+    transform-origin: center;
+}
+
+.i1 { top:3%; left:5%; transform:rotate(15deg); }
+.i2 { top:12%; left:40%; transform:rotate(-25deg); }
+.i3 { top:20%; left:75%; transform:rotate(40deg); }
+.i4 { top:28%; left:15%; transform:rotate(-10deg); }
+.i5 { top:35%; left:60%; transform:rotate(30deg); }
+.i6 { top:45%; left:8%; transform:rotate(-35deg); }
+.i7 { top:50%; left:35%; transform:rotate(20deg); }
+.i8 { top:55%; left:80%; transform:rotate(-15deg); }
+.i9 { top:65%; left:20%; transform:rotate(50deg); }
+.i10 { top:70%; left:55%; transform:rotate(-40deg); }
+.i11 { top:78%; left:5%; transform:rotate(10deg); }
+.i12 { top:82%; left:75%; transform:rotate(-30deg); }
+.i13 { top:90%; left:40%; transform:rotate(25deg); }
+.i14 { top:8%; left:25%; transform:rotate(60deg); }
+.i15 { top:18%; left:55%; transform:rotate(-50deg); }
+.i16 { top:30%; left:85%; transform:rotate(35deg); }
+.i17 { top:42%; left:25%; transform:rotate(-20deg); }
+.i18 { top:58%; left:65%; transform:rotate(45deg); }
+.i19 { top:73%; left:30%; transform:rotate(-15deg); }
+.i20 { top:88%; left:60%; transform:rotate(30deg); }
+
+/* tablet */
+@media (max-width: 1024px) {
+    .page {
+        padding-top: 72px;
+    }
+
+    iframe {
+        height: 85vh;
+    }
+
+    .imgfundo {
+        width: 56px;
+    }
+}
+
+/* celular */
+@media (max-width: 768px) {
+    .page {
+        padding: 68px 12px 20px;
+        align-items: flex-start;
+    }
+
+    iframe {
+        height: 82vh;
+        border-radius: 8px;
+    }
+
+    .botao-voltar,
+    .postar-wrap button {
+        padding: 9px 14px;
+        font-size: 14px;
+    }
+
+    .botao-voltar {
+        top: 12px;
+        left: 12px;
+    }
+
+    .postar-wrap {
+        top: 12px;
+        right: 12px;
+    }
+
+    .imgfundo {
+        width: 42px;
+        opacity: 0.08;
+    }
+}
+
+/* celulares pequenos */
+@media (max-width: 480px) {
+    .page {
+        padding-top: 62px;
+    }
+
+    iframe {
+        height: 78vh;
+    }
+
+    .imgfundo {
+        width: 34px;
+        opacity: 0.06;
+    }
+}
+</style>
+</head>
+<body>
+
+<a href="index_responsivo.html" class="botao-voltar">Voltar</a>
+
+<div class="postar-wrap">
+    <a href="https://www.blogger.com/blog/posts/1493742476845323884" target="_blank" rel="noopener noreferrer">
+        <button>Postar no blog</button>
+    </a>
+</div>
+
+<div class="fundo" aria-hidden="true">
+    <img src="https://cdn.pixabay.com/photo/2022/08/31/19/10/ukraine-7424066_1280.png" class="imgfundo i1" alt="">
+    <img src="https://cdn.pixabay.com/photo/2023/02/15/11/34/thought-bubble-7791595_1280.png" class="imgfundo i2" alt="">
+    <img src="https://cdn.pixabay.com/photo/2012/04/05/01/39/balloon-25734_1280.png" class="imgfundo i3" alt="">
+    <img src="https://cdn.pixabay.com/photo/2012/04/05/01/41/balloon-25739_1280.png" class="imgfundo i4" alt="">
+    <img src="https://cdn.pixabay.com/photo/2016/01/30/14/12/flowers-1169667_1280.png" class="imgfundo i5" alt="">
+    <img src="https://cdn.pixabay.com/photo/2022/08/31/19/10/ukraine-7424066_1280.png" class="imgfundo i6" alt="">
+    <img src="https://cdn.pixabay.com/photo/2023/02/15/11/34/thought-bubble-7791595_1280.png" class="imgfundo i7" alt="">
+    <img src="https://cdn.pixabay.com/photo/2012/04/05/01/39/balloon-25734_1280.png" class="imgfundo i8" alt="">
+    <img src="https://cdn.pixabay.com/photo/2012/04/05/01/41/balloon-25739_1280.png" class="imgfundo i9" alt="">
+    <img src="https://cdn.pixabay.com/photo/2016/01/30/14/12/flowers-1169667_1280.png" class="imgfundo i10" alt="">
+    <img src="https://cdn.pixabay.com/photo/2022/08/31/19/10/ukraine-7424066_1280.png" class="imgfundo i11" alt="">
+    <img src="https://cdn.pixabay.com/photo/2023/02/15/11/34/thought-bubble-7791595_1280.png" class="imgfundo i12" alt="">
+    <img src="https://cdn.pixabay.com/photo/2012/04/05/01/39/balloon-25734_1280.png" class="imgfundo i13" alt="">
+    <img src="https://cdn.pixabay.com/photo/2012/04/05/01/41/balloon-25739_1280.png" class="imgfundo i14" alt="">
+    <img src="https://cdn.pixabay.com/photo/2016/01/30/14/12/flowers-1169667_1280.png" class="imgfundo i15" alt="">
+    <img src="https://cdn.pixabay.com/photo/2022/08/31/19/10/ukraine-7424066_1280.png" class="imgfundo i16" alt="">
+    <img src="https://cdn.pixabay.com/photo/2023/02/15/11/34/thought-bubble-7791595_1280.png" class="imgfundo i17" alt="">
+    <img src="https://cdn.pixabay.com/photo/2012/04/05/01/39/balloon-25734_1280.png" class="imgfundo i18" alt="">
+    <img src="https://cdn.pixabay.com/photo/2012/04/05/01/41/balloon-25739_1280.png" class="imgfundo i19" alt="">
+    <img src="https://cdn.pixabay.com/photo/2016/01/30/14/12/flowers-1169667_1280.png" class="imgfundo i20" alt="">
+</div>
+
+<div class="page">
+    <div class="content-wrap">
+        <iframe src="https://noticiasdacaca.blogspot.com" title="Blog"></iframe>
+    </div>
+</div>
+
+</body>
+</html>
