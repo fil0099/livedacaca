@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live da Caca</title>
+  <style>
+    :root{
+      --bg: #f5f7fb;
+      --card: rgba(255,255,255,.92);
+      --text: #111;
+      --muted: #4a4a4a;
+      --accent1: #8fd3ff;
+      --accent2: #4db8ff;
+      --shadow: 0 12px 30px rgba(0,0,0,.12);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(143,211,255,.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(255,204,112,.16), transparent 28%),
+        var(--bg);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    a { color: inherit; }
+
+    .page {
+      width: min(1400px, calc(100% - 24px));
+      margin: 0 auto;
+      padding: 16px 0 28px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .top-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card);
+      border-radius: 999px;
+      padding: 10px 16px;
+      box-shadow: var(--shadow);
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .live-badge img {
+      width: 54px;
+      height: auto;
+      display: block;
+    }
+
+    .intro {
+      background: var(--card);
+      padding: 14px 18px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      font-size: 18px;
+      line-height: 1.35;
+      margin: 0;
+      flex: 1 1 300px;
+      min-width: 260px;
+      text-align: left;
+    }
+
+    .botoes {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      margin: 14px 0 18px;
+    }
+
+    .botao-azul {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      padding: 13px 20px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #fff;
+      text-decoration: none;
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+      box-shadow: 0 8px 20px rgba(0,0,0,.18);
+      white-space: nowrap;
+    }
+
+    .botao-azul:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.03);
+      box-shadow: 0 12px 26px rgba(0,0,0,.22);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(320px, .95fr);
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 420px;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .hero-bg {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 18px;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 18px;
+      display: grid;
+      grid-template-columns: minmax(250px, 340px) 1fr;
+      gap: 18px;
+      align-items: center;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.08));
+      border-radius: 18px;
+      pointer-events: none;
+    }
+
+    .main-photo {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 16px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.15);
+      pointer-events: auto;
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 6px 4px;
+      min-width: 0;
+    }
+
+    .hero-copy h1 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 42px);
+      line-height: 1.05;
+      color: #0f172a;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      font-size: clamp(16px, 1.35vw, 20px);
+      line-height: 1.5;
+      color: var(--muted);
+      max-width: 34rem;
+    }
+
+    .sidebar {
+      display: grid;
+      gap: 18px;
+    }
+
+    #contadorBox {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #ffcc70, #ff6b6b);
+      padding: 24px;
+      border-radius: 20px;
+      color: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    #contadorBox h2 {
+      margin: 0 0 8px;
+      font-size: clamp(18px, 2vw, 24px);
+    }
+
+    .contador {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .tempo {
+      background: rgba(255,255,255,0.2);
+      padding: 14px 10px;
+      border-radius: 12px;
+      min-width: 0;
+    }
+
+    .tempo span {
+      display: block;
+      font-size: clamp(18px, 2.4vw, 28px);
+      font-weight: bold;
+      line-height: 1;
+    }
+
+    .tempo p {
+      margin: 6px 0 0;
+      font-size: 12px;
+    }
+
+    .side-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 18px;
+    }
+
+    .bottom-row {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: minmax(220px, .75fr) minmax(0, 1fr) minmax(280px, .9fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .flower-card,
+    .social-card,
+    .soon-card {
+      background: var(--card);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .flower-card {
+      display: grid;
+      place-items: center;
+      padding: 10px;
+    }
+
+    .flower-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-width: 320px;
+    }
+
+    .social-card {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .social-icons img {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .copyright {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.45;
+    }
+
+    .soon-card {
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      min-height: 140px;
+    }
+
+    .soon-card p {
+      margin: 0;
+      font-size: clamp(18px, 1.8vw, 20px);
+      line-height: 1.45;
+      color: #334155;
+    }
+
+    /* chuva de girassol */
+    #chuvaGirassol {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999999;
+      overflow: hidden;
+    }
+
+    .flor {
+      position: absolute;
+      top: -40px;
+      width: 20px;
+      height: 20px;
+      animation: cair linear forwards;
+      user-select: none;
+    }
+
+    @keyframes cair {
+      from {
+        transform: translateY(-40px);
+        opacity: 1;
+      }
+      to {
+        transform: translateY(110vh);
+        opacity: 0.85;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .layout,
+      .bottom-row {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: auto;
+      }
+
+      .hero-overlay {
+        position: static;
+        inset: auto;
+        padding: 0;
+        background: none;
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        padding: 18px;
+      }
+
+      .hero-bg {
+        margin-bottom: 8px;
+      }
+
+      .hero-copy {
+        padding: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: min(100% - 16px, 1400px);
+        padding-top: 10px;
+      }
+
+      .top-strip {
+        gap: 12px;
+      }
+
+      .live-badge,
+      .intro {
+        width: 100%;
+      }
+
+      .botao-azul {
+        width: calc(50% - 6px);
+        text-align: center;
+      }
+
+      .contador {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .social-icons img {
+        width: 64px;
+        height: 64px;
+      }
+
+      .soon-card {
+        min-height: unset;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .botao-azul {
+        width: 100%;
+      }
+
+      .contador {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="chuvaGirassol"></div>
+
+  <main class="page">
+    <div class="top-strip">
+      <div class="live-badge">
+        <img src="live.gif" alt="Ao vivo" />
+      </div>
+      <p class="intro">Acompanhe ao vivo no aplicativo Alii<br />id: 10684157</p>
+    </div>
+
+    <div class="botoes">
+      <a href="index.html" class="botao-azul">Chuva de girassol</a>
+      <a href="chataovivo.html" class="botao-azul">chat ao vivo</a>
+      <a href="mural.html" class="botao-azul">mural</a>
+      <a href="jogo.html" class="botao-azul">jogos</a>
+      <a href="blog.html" class="botao-azul">Blog</a>
+      <a href="index.html" class="botao-azul">.</a>
+    </div>
+
+    <section class="layout">
+      <div class="card hero">
+        <img class="hero-bg" src="logolive.png" alt="Banner da live" />
+        <div class="hero-overlay">
+          <img class="main-photo" src="cacafotohome.png" alt="Foto principal" />
+          <div class="hero-copy">
+            <p>Acompanhe ao vivo no aplicativo Alii<br />id: 10684157</p>
+          </div>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div id="contadorBox">
+          <h2>Contagem para o meu Aniversario</h2>
+          <div class="contador">
+            <div class="tempo">
+              <span id="dias">0</span>
+              <p>Dias</p>
+            </div>
+            <div class="tempo">
+              <span id="horas">0</span>
+              <p>Horas</p>
+            </div>
+            <div class="tempo">
+              <span id="minutos">0</span>
+              <p>Minutos</p>
+            </div>
+            <div class="tempo">
+              <span id="segundos">0</span>
+              <p>Segundos</p>
+            </div>
+          </div>
+        </div>
+
+        <img class="side-image" src="imagemcinzagrande.png" alt="Imagem cinza grande" />
+        <img class="side-image" src="imagemcinza.png" alt="Imagem cinza" />
+      </aside>
+    </section>
+
+    <section class="bottom-row">
+      <div class="flower-card">
+        <img src="girassol.png" alt="Girassol" />
+      </div>
+
+      <div class="social-card">
+        <div class="social-icons">
+          <a href="https://www.instagram.com/cacarolinii">
+            <img src="insta.png" alt="Instagram" />
+          </a>
+          <a href="https://www.tiktok.com/@cacalivesc">
+            <img src="tiktok.png" alt="TikTok" />
+          </a>
+        </div>
+        <p class="copyright">2026 - by <a href="https://www.instagram.com/eu.fill_/">@fill</a></p>
+      </div>
+
+      <div class="soon-card">
+        <p>Em breve aqui você vai encontrar um acervo de mais de 4 anos de live.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const hoje = new Date();
+    const dia = hoje.getDate();
+    const mes = hoje.getMonth() + 1;
+
+    if (dia === 21 && mes === 6) {
+      document.write('<script src="https://app.embed.im/confetti.js"><\/script>');
+      document.write('<script src="https://app.embed.im/balloons.js"><\/script>');
+    }
+
+    function atualizarContador() {
+      const agora = new Date();
+      const diaAniversario = 21;
+      const mesAniversario = 6;
+
+      let aniversario = new Date(
+        agora.getFullYear(),
+        mesAniversario - 1,
+        diaAniversario,
+        23, 59, 59
+      );
+
+      if (agora > aniversario) {
+        aniversario = new Date(
+          agora.getFullYear() + 1,
+          mesAniversario - 1,
+          diaAniversario,
+          23, 59, 59
+        );
+      }
+
+      const diferenca = aniversario - agora;
+      const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
+      const horas = Math.floor((diferenca / (1000 * 60 * 60)) % 24);
+      const minutos = Math.floor((diferenca / (1000 * 60)) % 60);
+      const segundos = Math.floor((diferenca / 1000) % 60);
+
+      document.getElementById("dias").innerText = dias;
+      document.getElementById("horas").innerText = horas;
+      document.getElementById("minutos").innerText = minutos;
+      document.getElementById("segundos").innerText = segundos;
+    }
+
+    setInterval(atualizarContador, 1000);
+    atualizarContador();
+
+    let tempoChuva = 0;
+    const container = document.getElementById("chuvaGirassol");
+
+    function criarFlor() {
+      const img = document.createElement("img");
+      img.src = "https://cdn-icons-png.flaticon.com/512/1497/1497177.png";
+      img.className = "flor";
+      img.alt = "";
+      img.style.left = Math.random() * window.innerWidth + "px";
+      img.style.animationDuration = (Math.random() * 3 + 2) + "s";
+      container.appendChild(img);
+
+      setTimeout(() => {
+        img.remove();
+      }, 5000);
+    }
+
+    const intervalo = setInterval(() => {
+      criarFlor();
+      tempoChuva++;
+      if (tempoChuva > 80) {
+        clearInterval(intervalo);
+      }
+    }, 100);
+  </script>
+</body>
+</html>
