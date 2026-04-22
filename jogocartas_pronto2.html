@@ -2997,6 +2997,7 @@
   });
 
   const fb = window.__firebaseReady;
+  window.firebaseBridge = window.firebaseBridge || {};
   const clone = (value) => {
     try { return JSON.parse(JSON.stringify(value)); } catch (e) { return value; }
   };
@@ -3250,6 +3251,13 @@
   }
 
   function roomGameStatePayload() {
+    const playersBySeat = Array.isArray(window.state.players)
+      ? Object.fromEntries(window.state.players.map((seatCards, seat) => [
+          String(seat),
+          clone(Array.isArray(seatCards) ? seatCards : [])
+        ]))
+      : {};
+
     return {
       schemaVersion: 2,
       roomId: String(window.state.roomId || ""),
@@ -3257,7 +3265,7 @@
       roomMode: !!window.state.roomMode,
       roomMembers: Array.isArray(window.state.roomMembers) ? clone(window.state.roomMembers) : [],
       mySeat: Number.isInteger(window.state.mySeat) ? window.state.mySeat : 0,
-      players: clone(window.state.players),
+      playersBySeat,
       topCard: clone(window.state.topCard),
       turn: window.state.turn,
       penalty: window.state.penalty,
@@ -3275,7 +3283,17 @@
     if (typeof data.turn === "number") window.state.turn = data.turn;
     if (typeof data.penalty === "number") window.state.penalty = data.penalty;
     if (typeof data.gameRunning === "boolean") window.state.gameRunning = data.gameRunning;
-    if (Array.isArray(data.players) && data.players.length === 4) window.state.players = data.players;
+
+    const incomingPlayers = Array.isArray(data.players)
+      ? data.players
+      : (data.playersBySeat && typeof data.playersBySeat === "object"
+          ? [0, 1, 2, 3].map((seat) => Array.isArray(data.playersBySeat[String(seat)]) ? data.playersBySeat[String(seat)] : [])
+          : null);
+
+    if (Array.isArray(incomingPlayers) && incomingPlayers.length === 4) {
+      window.state.players = incomingPlayers.map((seatCards) => Array.isArray(seatCards) ? seatCards : []);
+    }
+
     if (data.topCard !== undefined) window.state.topCard = data.topCard;
     if (Array.isArray(data.roomMembers)) window.state.roomMembers = data.roomMembers;
     if (typeof data.mySeat === "number") window.state.mySeat = data.mySeat;
@@ -3782,6 +3800,7 @@
     clearPeerConnections();
   });
 
+  window.firebaseBridge = window.firebaseBridge || {};
   window.firebaseBridge.start = async function() {
     if (firebaseState.started) return;
     firebaseState.started = true;
