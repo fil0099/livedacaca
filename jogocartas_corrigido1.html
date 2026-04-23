@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartass</title>
+  <title>Cartass - Multiplayer em Tempo Real</title>
   <style>
     :root{
       --bg1:#eef2ff;
@@ -574,429 +574,6 @@
       color:var(--text);
       outline:none;
     }
-    .music-admin-box{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .music-admin-box textarea{
-      width:100%;
-      min-height:120px;
-      resize:vertical;
-      padding:12px 14px;
-      border-radius:16px;
-      border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      color:var(--text);
-      outline:none;
-      font-size:.95rem;
-      line-height:1.45;
-    }
-    .chat-actions{
-      display:flex;
-      gap:6px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:flex-end;
-    }
-    .chat-action-btn{
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:.72rem;
-      line-height:1;
-    }
-    .chat-msg-head{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:8px;
-    }
-    #gameScreen{ display:none; }
-    #gameScreen{ display:none; }
-    #endScreen{ display:none; }
-
-    #table{
-      position:fixed; inset:0; display:none; overflow:hidden;
-      background:
-        radial-gradient(circle at 50% 45%, var(--board-glow-2), transparent 30%),
-        radial-gradient(circle at 50% 45%, var(--board-glow), transparent 42%);
-    }
-    .table-shell{
-      position:relative; width:100%; height:100%;
-      padding:16px;
-      display:grid;
-      grid-template-rows:auto 1fr;
-      gap:12px;
-    }
-    .hud{
-      display:flex; justify-content:space-between; align-items:center; gap:12px;
-      padding:14px 16px;
-    }
-    .hud .title{ display:flex; flex-direction:column; gap:4px; }
-    .hud .title strong{ font-size:1.02rem; letter-spacing:.02em; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    .hud .title small{ color:var(--muted); font-size:.9rem; }
-
-    .header-inline{
-      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-    }
-
-    .music-player{
-      display:flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:18px;
-    }
-    .music-row{ display:flex; align-items:center; gap:6px; }
-    .music-btn{
-      width:28px; height:28px; padding:0; border-radius:10px; font-size:.9rem; line-height:1;
-    }
-    .music-disc{
-      width:34px; height:34px; border-radius:50%; object-fit:cover; cursor:pointer;
-      box-shadow:0 8px 18px rgba(0,0,0,.14);
-    }
-    .music-disc.playing{ animation: spin 4s linear infinite; }
-    @keyframes spin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
-    .music-controls{ display:flex; flex-direction:column; gap:4px; align-items:stretch; min-width:120px; }
-    .music-volume{
-      width:120px;
-      accent-color: var(--accent-2);
-      height: 16px;
-    }
-    .music-note{ display:none; }
-
-    .hud-right{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
-    }
-    .turn-badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 14px; border-radius:999px;
-      background:rgba(34,197,94,.14);
-      border:1px solid rgba(34,197,94,.25);
-      font-weight:800;
-      white-space:nowrap;
-    }
-    .turn-dot{ width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(34,197,94,.14); }
-
-    .theme-switch{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:8px 10px; border-radius:999px;
-      background:var(--panel-strong); border:1px solid var(--stroke);
-      font-size:.84rem; font-weight:800;
-      white-space:nowrap;
-    }
-    .switch{ position:relative; width:46px; height:26px; display:inline-block; }
-    .switch input{ opacity:0; width:0; height:0; }
-    .slider{
-      position:absolute; inset:0; cursor:pointer; background:#cbd5e1; transition:.2s; border-radius:999px;
-    }
-    .slider:before{
-      position:absolute; content:""; height:20px; width:20px; left:3px; top:3px; background:white; transition:.2s; border-radius:50%;
-    }
-    .switch input:checked + .slider{ background:#22c55e; }
-    .switch input:checked + .slider:before{ transform:translateX(20px); }
-
-    .voice-group{
-      display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
-    }
-    .mini-toggle{
-      min-width:98px; padding:8px 11px; font-size:.84rem; border-radius:999px;
-    }
-    .tiny-control{
-      display:flex; align-items:center; gap:6px; padding:6px 8px;
-      border:1px solid var(--stroke); border-radius:999px; background:var(--panel-strong);
-      color:var(--text);
-    }
-    .tiny-control span{ font-size:.73rem; font-weight:800; color:var(--muted); }
-    .tiny-control input[type="range"]{ width:64px; accent-color: var(--accent-2); }
-
-    .board{
-      position:relative; width:100%; height:100%;
-      display:grid; grid-template-columns: 1fr 1.2fr 1fr;
-      grid-template-rows: 1fr 1.1fr 1fr;
-      gap:12px;
-      min-height:0;
-    }
-
-    .hand{
-      min-width:0;
-      display:flex; flex-direction:column; gap:8px;
-      padding:10px;
-      overflow:hidden;
-    }
-    .hand .info{
-      display:flex; align-items:center; gap:8px;
-      font-size:.88rem; font-weight:800;
-      color:var(--text);
-    }
-    .hand .info small{ color:var(--muted); font-weight:700; }
-    .cards{ display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start; }
-
-    .player-top{ grid-column:1 / 4; grid-row:1; align-self:start; }
-    .player-left{ grid-column:1; grid-row:2; align-self:center; }
-    .player-right{ grid-column:3; grid-row:2; align-self:center; }
-    .center-area{
-      grid-column:2; grid-row:2;
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
-      min-height:0;
-    }
-    .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; }
-
-    .center-card-row{ display:flex; align-items:center; gap:14px; justify-content:center; }
-    .pile{
-      width:var(--card-w); height:var(--card-h); border-radius:16px; border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      box-shadow: var(--shadow);
-    }
-    .pile.draw{ background: linear-gradient(135deg, rgba(15,23,42,.92), rgba(30,41,59,.92)); }
-    .pile.discard{ position:relative; overflow:hidden; }
-    .pile.discard .card{ margin:0; }
-
-    .board-note{
-      padding:10px 14px; text-align:center; font-size:.9rem; color:var(--muted);
-      max-width: 340px;
-    }
-    #turnText{
-      display:none;
-      position:absolute;
-      left:50%; top:12px;
-      transform:translateX(-50%);
-      padding:10px 16px; border-radius:999px;
-      background:rgba(34,197,94,.14);
-      color:var(--text); border:1px solid rgba(34,197,94,.26);
-      font-weight:900; letter-spacing:.08em; z-index:2;
-    }
-
-    .card{
-      width:var(--card-w);
-      height:var(--card-h);
-      border-radius:16px;
-      position:relative;
-      border:2px solid rgba(255,255,255,.25);
-      background-size:cover;
-      background-position:center;
-      box-shadow:0 10px 22px rgba(15,23,42,.18);
-      transform:translateY(0) scale(1);
-      transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
-      overflow:hidden;
-      user-select:none;
-    }
-    .card::after{
-      content: attr(data-value);
-      position:absolute;
-      top:6px; left:6px;
-      padding:4px 6px;
-      border-radius:999px;
-      font-size:.72rem;
-      font-weight:900;
-      color:white;
-      background:rgba(15,23,42,.64);
-      backdrop-filter: blur(4px);
-      min-width: 20px;
-      text-align:center;
-    }
-    .card::before{
-      content:"";
-      position:absolute; inset:0;
-      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 55%);
-      pointer-events:none;
-    }
-    .card:hover{ transform:translateY(-4px) scale(1.02); cursor:pointer; }
-    .card.playable{ transform: translateY(-8px) scale(1.04); box-shadow:0 18px 34px rgba(15,23,42,.26); }
-    .card.back{
-      background: linear-gradient(135deg, #0f172a, #334155);
-      border:2px solid rgba(255,255,255,.12);
-      cursor:default;
-    }
-    .card.back::after{ content:""; }
-    .card.small{
-      width:var(--card-small-w);
-      height:var(--card-small-h);
-      border-radius:12px;
-      box-shadow:0 8px 18px rgba(15,23,42,.14);
-    }
-    .side .card{ margin:0 0 3px 0; }
-
-    #p1 .cards, #p2 .cards{
-      justify-content:center;
-    }
-    #p1 .info, #p2 .info{
-      justify-content:center;
-    }
-    #p2 .cards, #p3 .cards, #p4 .cards{ max-height: calc(var(--card-h) * 2.4); overflow:hidden; }
-    #p3 .cards, #p4 .cards{ display:flex; flex-direction:column; align-items:flex-start; }
-
-    .chat-panel{
-      position:fixed;
-      right:16px; bottom:16px;
-      width:min(320px, calc(100vw - 32px));
-      max-height: 38vh;
-      display:flex; flex-direction:column; gap:10px;
-      padding:14px;
-      z-index:15;
-    }
-    .chat-panel.collapsed{
-      width:180px;
-      max-height:none;
-    }
-    .chat-panel.collapsed .chat-messages,
-    .chat-panel.collapsed .chat-form{
-      display:none;
-    }
-    .chat-header{ display:flex; flex-direction:column; gap:3px; }
-    .chat-header strong{ font-size:.98rem; }
-    .chat-header small{ color:var(--muted); font-size:.82rem; }
-    .chat-messages{ flex:1; min-height:120px; overflow:auto; display:flex; flex-direction:column; gap:8px; padding-right:2px; }
-    .chat-msg{ display:flex; flex-direction:column; gap:2px; padding:8px 10px; border-radius:14px; background:rgba(255,255,255,.30); border:1px solid var(--stroke); font-size:.88rem; line-height:1.35; }
-    body[data-theme="dark"] .chat-msg{ background:rgba(255,255,255,.04); }
-    .chat-msg strong{ font-size:.78rem; letter-spacing:.03em; text-transform:uppercase; color:var(--accent-2); }
-    .chat-form{ display:flex; gap:8px; }
-    .chat-form input{
-      flex:1; min-width:0; padding:11px 12px; border-radius:14px; border:1px solid var(--stroke);
-      background:var(--panel-strong); color:var(--text); outline:none;
-    }
-    .chat-send{ padding:10px 14px; border-radius:14px; }
-
-    .chat-topline{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-    }
-    .chat-toggle-btn{
-      width:30px; height:30px; padding:0; border-radius:10px; font-size:1rem; line-height:1;
-    }
-    .room-presence{
-      display:flex; gap:6px; align-items:center; flex-wrap:wrap;
-      margin: 2px 0 8px;
-    }
-    .presence-dot{
-      width:12px; height:12px; border-radius:50%;
-      box-shadow:0 0 0 3px rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.25);
-      cursor:help;
-    }
-    .presence-dot:nth-child(1){ background:#ef4444; }
-    .presence-dot:nth-child(2){ background:#3b82f6; }
-    .presence-dot:nth-child(3){ background:#22c55e; }
-    .presence-dot:nth-child(4){ background:#eab308; }
-    .presence-dot:nth-child(5){ background:#a855f7; }
-
-    .room-wait{
-      display:none;
-      position:absolute;
-      inset:0;
-      align-items:center;
-      justify-content:center;
-      z-index:5;
-      pointer-events:auto;
-      background:rgba(15,23,42,.08);
-      backdrop-filter: blur(1px);
-    }
-    .room-wait-card{
-      width:min(360px, 92%);
-      padding:18px;
-      border-radius:22px;
-      background:var(--panel-strong);
-      border:1px solid var(--stroke);
-      box-shadow:var(--shadow);
-      text-align:center;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .room-wait-time{
-      font-size:clamp(2rem, 5vw, 3.5rem);
-      font-weight:900;
-      letter-spacing:-0.05em;
-    }
-    .room-wait-actions{
-      display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
-    }
-    .room-wait-note{ color:var(--muted); font-size:.92rem; line-height:1.4; }
-
-    body.room-waiting .board .hand,
-    body.room-waiting .draw,
-    body.room-waiting .discard,
-    body.room-waiting .center-card-row,
-    body.room-waiting .board-note,
-    body.room-waiting #turnText{
-      opacity:.25;
-      pointer-events:none;
-      filter: blur(.2px);
-    }
-
-    .end-card{ max-width:560px; }
-
-    .lobby-topbar{
-      display:flex;
-      justify-content:flex-end;
-      margin-bottom:12px;
-    }
-    .admin-btn{ padding:10px 14px; }
-    .modal{
-      position:fixed; inset:0; display:none;
-      align-items:center; justify-content:center;
-      padding:24px;
-      z-index:40;
-      background:rgba(15,23,42,.44);
-      backdrop-filter: blur(10px);
-    }
-    .modal-card{
-      width:min(720px, 100%);
-      border:1px solid var(--stroke);
-      background:var(--panel);
-      box-shadow:var(--shadow);
-      border-radius:24px;
-      padding:22px;
-      backdrop-filter: blur(12px);
-    }
-    #adminModal .modal-card{
-      max-height: calc(100vh - 48px);
-      overflow-y: auto;
-    }
-    .modal-card h3{ margin:0; font-size:1.2rem; }
-    .modal-row{ display:flex; gap:10px; flex-wrap:wrap; }
-    .modal-row .field{
-      flex:1;
-      min-width:0;
-      padding:12px 14px;
-      border-radius:16px;
-      border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      color:var(--text);
-      outline:none;
-      font-size:1rem;
-    }
-    .modal-section{
-      padding:14px;
-      border-radius:18px;
-      background:rgba(255,255,255,.10);
-      border:1px solid var(--stroke);
-    }
-    .modal-list{ display:flex; flex-direction:column; gap:10px; max-height:52vh; overflow:auto; padding-right:2px; }
-    .admin-room-item{
-      display:grid;
-      grid-template-columns: 1fr auto;
-      gap:10px;
-      align-items:center;
-      padding:12px;
-      border-radius:16px;
-      background:rgba(255,255,255,.10);
-      border:1px solid var(--stroke);
-    }
-    .admin-room-item small{ color:var(--muted); }
-    .room-password-row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:8px;
-    }
-    .room-password-row input{
-      flex:1;
-      min-width:160px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      color:var(--text);
-      outline:none;
-    }
     .room-lock-pill{
       display:inline-flex;
       align-items:center;
@@ -1156,7 +733,7 @@
             <input id="playerName" type="text" placeholder="Digite seu nome" maxlength="18" />
             <button class="btn" onclick="joinRobots()">Jogar com robôs</button>
           </div>
-          <div class="mini-note">Entre sozinho contra robôs ou siga para uma sala multiplayer. A integração com Firebase pode entrar depois.</div>
+          <div class="mini-note">Entre sozinho contra robôs ou siga para uma sala multiplayer.</div>
         </div>
 
         <div class="lobby-card" style="padding:22px; text-align:left;">
@@ -1190,9 +767,9 @@
             <strong>Cartas</strong>
             <div id="musicPlayer" class="music-player" aria-label="Player de música">
               <div class="music-row">
-                <button class="btn secondary music-btn" type="button" onclick="prevTrack()" aria-label="Música anterior">&lt;</button>
+                <button class="btn secondary music-btn" type="button" onclick="prevTrack()">&lt;</button>
                 <img id="musicDisc" class="music-disc" src="https://raw.githubusercontent.com/fil0099/livedacaca/main/vini2.png" alt="Play e pause da música" onclick="toggleMusic()" />
-                <button class="btn secondary music-btn" type="button" onclick="nextTrack()" aria-label="Próxima música">&gt;</button>
+                <button class="btn secondary music-btn" type="button" onclick="nextTrack()">&gt;</button>
               </div>
               <div class="music-controls">
                 <input id="musicVolume" class="music-volume" type="range" min="0" max="100" value="70" oninput="setMusicVolume(this.value)" />
@@ -1573,8 +1150,6 @@
         try{
           app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
        db = firebase.firestore();
-
-// FORÇA fallback sem QUIC (corrige chat em tempo real)
 db.settings({
   experimentalForceLongPolling: true,
   useFetchStreams: false
@@ -2340,12 +1915,7 @@ db.settings({
       state.myId = identity.id;
       state.roomMode = true;
       state.roomWaiting = false;
-      state.roomMembers = [
-        { name: "Jogador 2", id: randomId4(), color: "#3b82f6" },
-        { name: "Jogador 3", id: randomId4(), color: "#22c55e" },
-        { name: "Jogador 4", id: randomId4(), color: "#eab308" }
-      ];
-      state.roomMembers.forEach(member => upsertKnownUser(member));
+      state.roomMembers = [];
       showGame();
       firebaseBridge.listenChat(chatFirebaseKey());
       initGame();
@@ -2447,12 +2017,6 @@ db.settings({
       state.roomName = "Robôs";
       state.roomMembers = [];
       startGame();
-    }
-
-    function joinRoom(roomNumber){
-      const rooms = getRooms();
-      const room = rooms[roomNumber - 1];
-      if (room) return joinRoomById(room.id);
     }
 
     function startGame(){
@@ -2688,7 +2252,6 @@ db.settings({
       if (state.roomMode && state.roomName) return LS_CHAT_PREFIX + state.roomName;
       return "cartas.chat.robots.v3";
     }
-
     function chatFirebaseKey(){
       if (state.roomMode && state.roomId) return String(state.roomId);
       if (state.roomMode && state.roomName) return String(state.roomName);
@@ -2844,7 +2407,8 @@ db.settings({
           state.micSource = state.micAudioContext.createMediaStreamSource(state.micStream);
           state.micGain = state.micAudioContext.createGain();
           state.micMonitor = state.micAudioContext.createGain();
-          state.micSource.connect(state.micGain).connect(state.micMonitor).connect(state.micAudioContext.destination);
+          state.micSource.connect(state.micGain);
+          // micMonitor não conectado ao destination para evitar eco local
           applyVolumes();
         }catch(err){
           state.micEnabled = false;
@@ -2941,6 +2505,11 @@ db.settings({
       if (state.musicPlaying) playMusic();
     }
 
+    function setMusicVolume(value){
+      state.musicVolumeValue = Number(value) / 100;
+      if (state.musicAudio) state.musicAudio.volume = state.musicVolumeValue * state.masterVolumeValue;
+    }
+
     function loadPrefs(){
       const savedTheme = localStorage.getItem("cartas-theme") || "light";
       document.body.setAttribute("data-theme", savedTheme);
@@ -2979,8 +2548,6 @@ db.settings({
       renderLobbyRooms();
       renderAdminAccessState();
       document.getElementById("chatPanel").style.display = "none";
-      // Autoplay pode ser bloqueado pelo navegador, mas tentamos iniciar ao carregar.
-      playMusic();
     });
   </script>
 
@@ -3282,9 +2849,7 @@ db.settings({
 
   function roomGameStatePayload() {
     const players = Array.isArray(window.state.players)
-      ? window.state.players.map((seatCards) =>
-          JSON.stringify(Array.isArray(seatCards) ? seatCards : [])
-        )
+      ? window.state.players.map((seatCards) => JSON.stringify(Array.isArray(seatCards) ? seatCards : []))
       : ["[]","[]","[]","[]"];
 
     return {
@@ -3313,7 +2878,6 @@ db.settings({
     if (typeof data.penalty === "number") window.state.penalty = data.penalty;
     if (typeof data.gameRunning === "boolean") window.state.gameRunning = data.gameRunning;
 
-    // Suporte a players serializado como array de strings JSON (fix nested arrays)
     const rawPlayers = data.players;
     const incomingPlayers = Array.isArray(rawPlayers)
       ? rawPlayers.map((p) => {
@@ -3527,6 +3091,10 @@ db.settings({
   };
 
   window.initGame = function() {
+    if (window.state.roomMode && window.state.roomId && firebaseState.roomLoaded) {
+      // Já existe estado remoto, não reinicializar
+      return;
+    }
     const result = original.initGame ? original.initGame() : undefined;
     if (window.state.roomMode) {
       window.state.roomStateLoaded = true;
@@ -3607,7 +3175,9 @@ db.settings({
       }
       for (const m of normalized) {
         if (m.uid && m.uid !== uid) {
-          await createPeerConnection(roomId, m);
+          if (!firebaseState.peerConnections.has(m.uid)) {
+            await createPeerConnection(roomId, m);
+          }
         }
       }
 
@@ -3617,8 +3187,9 @@ db.settings({
 
     firebaseState.stateUnsub = fb.onSnapshot(roomStateRef(roomId), async (snap) => {
       if (!snap.exists()) {
-        if (!firebaseState.roomLoaded) {
+        if (!firebaseState.roomLoaded && window.state.roomMembers.length === 1) {
           window.initGame();
+          await syncRoomState();
         }
         return;
       }
@@ -3650,11 +3221,9 @@ db.settings({
   };
 
   window.backToLobby = function() {
-    try { firebaseState.roomUnsub?.(); } catch (e) {}
     try { firebaseState.membersUnsub?.(); } catch (e) {}
     try { firebaseState.stateUnsub?.(); } catch (e) {}
     try { firebaseState.signalsUnsub?.(); } catch (e) {}
-    firebaseState.roomUnsub = null;
     firebaseState.membersUnsub = null;
     firebaseState.stateUnsub = null;
     firebaseState.signalsUnsub = null;
@@ -3681,24 +3250,22 @@ db.settings({
     localStorage.setItem("cartas-mic", window.state.micEnabled ? "on" : "off");
     if (window.state.micEnabled) {
       try {
-        window.state.micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        window.state.micAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-        window.state.micSource = window.state.micAudioContext.createMediaStreamSource(window.state.micStream);
-        window.state.micGain = window.state.micAudioContext.createGain();
-        window.state.micMonitor = window.state.micAudioContext.createGain();
-        window.state.micSource.connect(window.state.micGain);
-        // Não conectar ao destination para evitar eco local
-        firebaseState.localStream = window.state.micStream;
-        if (window.state.roomMode && window.state.roomId) {
-          for (const peer of window.state.roomMembers || []) {
-            if (peer?.uid && peer.uid !== ensureCurrentUid()) {
-              const pc = await createPeerConnection(String(window.state.roomId), peer);
-              if (pc) {
-                window.state.micStream.getTracks().forEach((track) => {
-                  try { pc.addTrack(track, window.state.micStream); } catch (e) {}
-                });
-              }
+        if (!firebaseState.localStream) {
+          firebaseState.localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        }
+        const stream = firebaseState.localStream;
+        // Adicionar tracks a todas as conexões existentes
+        for (const [peerUid, pc] of firebaseState.peerConnections.entries()) {
+          stream.getTracks().forEach((track) => {
+            if (!pc.getSenders().some(s => s.track === track)) {
+              try { pc.addTrack(track, stream); } catch(e) {}
             }
+          });
+        }
+        // Criar conexões com membros que ainda não têm
+        for (const member of window.state.roomMembers || []) {
+          if (member.uid && member.uid !== ensureCurrentUid() && !firebaseState.peerConnections.has(member.uid)) {
+            await createPeerConnection(window.state.roomId, member);
           }
         }
         if (window.state.micAudioContext?.resume) await window.state.micAudioContext.resume().catch(() => {});
@@ -3709,14 +3276,18 @@ db.settings({
         alert("Não foi possível ativar o microfone. Verifique a permissão do navegador.");
       }
     } else {
-      try { window.state.micStream?.getTracks()?.forEach((t) => t.stop()); } catch (e) {}
-      try { window.state.micAudioContext?.close?.(); } catch (e) {}
-      window.state.micStream = null;
-      window.state.micAudioContext = null;
-      window.state.micSource = null;
-      window.state.micGain = null;
-      window.state.micMonitor = null;
-      firebaseState.localStream = null;
+      // Desligar microfone: remover tracks de todas as conexões
+      if (firebaseState.localStream) {
+        firebaseState.localStream.getTracks().forEach(t => t.stop());
+        for (const pc of firebaseState.peerConnections.values()) {
+          pc.getSenders().forEach(sender => {
+            if (sender.track && sender.track.kind === "audio") {
+              try { pc.removeTrack(sender); } catch(e) {}
+            }
+          });
+        }
+        firebaseState.localStream = null;
+      }
     }
     if (typeof window.updateMicButton === "function") window.updateMicButton();
     if (window.state.roomMode && window.state.roomId) {
@@ -3737,227 +3308,4 @@ db.settings({
   }
 
   function makeDiagBanner() {
-    if (document.getElementById("firebaseDiagnosticBanner")) return;
-
-    const banner = document.createElement("div");
-    banner.id = "firebaseDiagnosticBanner";
-    banner.style.cssText = [
-      "position:fixed",
-      "left:16px",
-      "bottom:16px",
-      "z-index:70",
-      "width:min(420px,calc(100vw - 32px))",
-      "padding:14px",
-      "border-radius:18px",
-      "border:1px solid rgba(15,23,42,.12)",
-      "background:rgba(255,255,255,.92)",
-      "box-shadow:0 20px 60px rgba(15,23,42,.18)",
-      "backdrop-filter:blur(12px)",
-      "color:#0f172a",
-      "font-family:Inter, system-ui, sans-serif"
-    ].join(";");
-    banner.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
-        <strong style="font-size:.95rem;">Firebase diagnostics / Diagnóstico</strong>
-        <button id="firebaseDiagHideBtn" type="button" style="border:none;background:#e2e8f0;color:#0f172a;border-radius:999px;width:28px;height:28px;cursor:pointer;font-weight:900;">×</button>
-      </div>
-      <div id="firebaseDiagnosticOutput" style="font-size:.84rem;line-height:1.45;white-space:pre-wrap;color:#334155;max-height:140px;overflow:auto;">Pronto para testar Firestore e WebRTC.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-        <button id="firebaseDiagBtn" type="button" style="appearance:none;border:none;cursor:pointer;padding:10px 12px;border-radius:999px;font-weight:800;color:white;background:linear-gradient(135deg,#22c55e,#0ea5e9);">Testar Firestore / Test Firestore</button>
-        <button id="webrtcDiagBtn" type="button" style="appearance:none;border:none;cursor:pointer;padding:10px 12px;border-radius:999px;font-weight:800;color:#0f172a;background:#e2e8f0;border:1px solid rgba(15,23,42,.10);">Testar WebRTC / Test WebRTC</button>
-      </div>
-    `;
-    document.body.appendChild(banner);
-
-    const hideBtn = banner.querySelector("#firebaseDiagHideBtn");
-    hideBtn?.addEventListener("click", () => {
-      banner.remove();
-    });
-
-    banner.querySelector("#firebaseDiagBtn")?.addEventListener("click", () => {
-      window.runFirebaseDiagnostics?.().catch((err) => diagOutput("Erro no teste do Firestore: " + (err?.message || err)));
-    });
-    banner.querySelector("#webrtcDiagBtn")?.addEventListener("click", () => {
-      window.runWebRTCDiagnostics?.().catch((err) => diagOutput("Erro no teste WebRTC: " + (err?.message || err)));
-    });
-  }
-
-  window.runFirebaseDiagnostics = async function() {
-    makeDiagBanner();
-    const lines = [];
-    lines.push(`Projeto / Project: ${firebaseConfig.projectId}`);
-    lines.push(`Auth UID: ${ensureCurrentUid()}`);
-    lines.push(`Contexto seguro / Secure context: ${window.isSecureContext ? "OK" : "NÃO / NO"}`);
-    try {
-      await fb.setDoc(fb.doc(fb.db, FIREBASE_DIAG_COLLECTION, FIREBASE_DIAG_DOC), {
-        ok: true,
-        projectId: firebaseConfig.projectId,
-        uid: ensureCurrentUid(),
-        href: location.href,
-        userAgent: navigator.userAgent,
-        updatedAt: Date.now(),
-        source: "manual-diagnostic"
-      }, { merge: true });
-
-      const snap = await fb.getDoc(fb.doc(fb.db, FIREBASE_DIAG_COLLECTION, FIREBASE_DIAG_DOC));
-      if (!snap.exists()) throw new Error("Documento de diagnóstico não foi lido de volta.");
-      const data = snap.data() || {};
-      lines.push("Firestore write/read: OK");
-      lines.push(`Doc: ${FIREBASE_DIAG_COLLECTION}/${FIREBASE_DIAG_DOC}`);
-      lines.push(`updatedAt: ${data.updatedAt || "n/a"}`);
-      diagOutput(lines.join("\n"));
-      return { ok: true, data };
-    } catch (err) {
-      lines.push("Firestore write/read: FALHOU / FAILED");
-      lines.push(String(err?.message || err));
-      diagOutput(lines.join("\n"));
-      throw err;
-    }
-  };
-
-  window.runWebRTCDiagnostics = async function() {
-    makeDiagBanner();
-    const lines = [];
-    const support = {
-      getUserMedia: !!navigator.mediaDevices?.getUserMedia,
-      RTCPeerConnection: typeof RTCPeerConnection !== "undefined",
-      secureContext: !!window.isSecureContext,
-    };
-    lines.push("WebRTC support:");
-    lines.push(JSON.stringify(support, null, 2));
-
-    if (!support.getUserMedia) {
-      lines.push("getUserMedia não disponível / not available.");
-      diagOutput(lines.join("\n"));
-      return { ok: false, support };
-    }
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      const tracks = stream.getAudioTracks();
-      lines.push(`Microfone: liberado (${tracks.length} track(s))`);
-      stream.getTracks().forEach((t) => t.stop());
-      diagOutput(lines.join("\n"));
-      return { ok: true, support };
-    } catch (err) {
-      lines.push("Microfone: bloqueado ou sem permissão.");
-      lines.push(String(err?.message || err));
-      diagOutput(lines.join("\n"));
-      return { ok: false, support, error: err };
-    }
-  };
-
-  window.addEventListener("beforeunload", () => {
-    try {
-      if (window.state.roomMode && window.state.roomId) {
-        fb.deleteDoc(memberDoc(window.state.roomId, ensureCurrentUid())).catch(() => {});
-      }
-    } catch (e) {}
-    clearPeerConnections();
-  });
-
-  window.firebaseBridge = window.firebaseBridge || {};
-  window.firebaseBridge.start = async function() {
-    if (firebaseState.started) return;
-    firebaseState.started = true;
-    try {
-      const pub = await fb.getDoc(publicRef());
-      if (!pub.exists()) await fb.setDoc(publicRef(), seedPublicState(), { merge: true }).catch(() => {});
-      const priv = await fb.getDoc(privateRef());
-      if (!priv.exists()) await fb.setDoc(privateRef(), seedPrivateState(), { merge: true }).catch(() => {});
-    } catch (e) {}
-    firebaseState.publicUnsub = fb.onSnapshot(publicRef(), (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data() || {};
-      if (Array.isArray(data.rooms)) safeSetJSON("cartas.rooms.v3", data.rooms);
-      if (Array.isArray(data.roomPlaylist)) safeSetJSON("cartas.roomPlaylist.v1", data.roomPlaylist);
-      if (typeof data.roomMusicAutoPlay === "boolean") safeSet("cartas.roomAutoplay.v1", data.roomMusicAutoPlay ? "on" : "off");
-      if (Array.isArray(data.userRegistry)) safeSetJSON("cartas.userRegistry.v1", data.userRegistry);
-      if (typeof window.renderLobbyRooms === "function") window.renderLobbyRooms();
-      if (typeof window.renderAdminRooms === "function") window.renderAdminRooms();
-      if (typeof window.renderAdminPlayersList === "function") window.renderAdminPlayersList();
-      if (typeof window.syncRoomMusicAdminUI === "function") window.syncRoomMusicAdminUI();
-      if (typeof window.renderAdminAccessState === "function") window.renderAdminAccessState();
-    });
-    firebaseState.privateUnsub = fb.onSnapshot(privateRef(), (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data() || {};
-      if (Array.isArray(data.adminDelegations)) safeSetJSON("cartas.adminDelegations.v1", data.adminDelegations);
-      if (typeof data.adminPassword === "string" && data.adminPassword.trim()) safeSet("cartas.adminPassword.v1", data.adminPassword.trim());
-      if (typeof window.renderAdminAccessState === "function") window.renderAdminAccessState();
-    });
-  };
-
-  window.firebaseBridge.syncPublic = async function(patch) {
-    await fb.setDoc(publicRef(), { ...patch, updatedAt: Date.now(), schemaVersion: 2 }, { merge: true }).catch(() => {});
-  };
-  window.firebaseBridge.syncPrivate = async function(patch) {
-    await fb.setDoc(privateRef(), { ...patch, updatedAt: Date.now(), schemaVersion: 2 }, { merge: true }).catch(() => {});
-  };
-  window.firebaseBridge.syncChat = async function(roomKey, messages) {
-    const key = String(roomKey || "lobby");
-    const payload = {
-      messages: Array.isArray(messages) ? messages : [],
-      updatedAt: Date.now(),
-      schemaVersion: 3
-    };
-    safeSetJSON(LS_CHAT_PREFIX + key, payload.messages);
-    await fb.setDoc(chatRef(key), payload, { merge: true }).catch(() => {});
-    if (typeof window.renderChat === "function") window.renderChat();
-  };
-  window.firebaseBridge.listenChat = function(roomKey) {
-    try { firebaseState.chatUnsub?.(); } catch (e) {}
-    const key = String(roomKey || "lobby");
-    const cacheKey = LS_CHAT_PREFIX + key;
-    firebaseState.chatUnsub = fb.onSnapshot(chatRef(key), (snap) => {
-      if (!snap.exists()) return;
-      const data = snap.data() || {};
-      if (Array.isArray(data.messages)) {
-        safeSetJSON(cacheKey, data.messages);
-        if (typeof window.renderChat === "function") window.renderChat();
-      }
-    });
-  };
-  window.firebaseBridge.leaveChat = function() {
-    try { firebaseState.chatUnsub?.(); } catch (e) {}
-    firebaseState.chatUnsub = null;
-  };
-  window.firebaseBridge.syncCacheFromRemote = function(roomKey, messages) {
-    safeSetJSON(LS_CHAT_PREFIX + String(roomKey || "lobby"), Array.isArray(messages) ? messages : []);
-  };
-  window.firebaseBridge.listenRoom = async function(roomId) {
-    if (!roomId) return;
-    await syncPresence(roomId);
-    return roomId;
-  };
-  window.firebaseBridge.syncRoomState = async function() {
-    await syncRoomState();
-  };
-  window.firebaseBridge.leaveRoom = async function(roomId) {
-    if (!roomId) return;
-    await fb.deleteDoc(memberDoc(roomId, ensureCurrentUid())).catch(() => {});
-  };
-  window.firebaseBridge.sendSignal = async function(roomId, payload) {
-    await fb.addDoc(roomSignalsCol(roomId), { ...payload, createdAt: Date.now() }).catch(() => {});
-  };
-  window.firebaseBridge.setRemoteAudioVolume = setRemoteAudioVolume;
-  window.firebaseBridge.getCurrentUid = ensureCurrentUid;
-  window.firebaseBridge.getCurrentSeat = localSeatIndex;
-  window.firebaseBridge.setPresenceColor = (color) => { firebaseState.memberColor = color || firebaseState.memberColor; };
-
-  window.addEventListener("DOMContentLoaded", async () => {
-    makeDiagBanner();
-    try { await window.firebaseBridge.start(); } catch (e) {}
-    try {
-      if (!localStorage.getItem(FIREBASE_DIAG_AUTORUN_FLAG)) {
-        localStorage.setItem(FIREBASE_DIAG_AUTORUN_FLAG, "1");
-        await window.runFirebaseDiagnostics();
-      }
-    } catch (e) {
-      diagOutput("Diagnóstico automático falhou: " + (e?.message || e));
-    }
-  });
-</script>
-
-</body>
-</html>
+   
