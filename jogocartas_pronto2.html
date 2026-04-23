@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartass</title>
+  <title>Cartas</title>
   <style>
     :root{
       --bg1:#eef2ff;
@@ -3872,28 +3872,35 @@
     await fb.setDoc(privateRef(), { ...patch, updatedAt: Date.now(), schemaVersion: 2 }, { merge: true }).catch(() => {});
   };
   window.firebaseBridge.syncChat = async function(roomKey, messages) {
-    await fb.setDoc(chatRef(roomKey), { messages: Array.isArray(messages) ? messages : [], updatedAt: Date.now(), schemaVersion: 2 }, { merge: true }).catch(() => {});
+    const key = String(roomKey || "lobby");
+    const payload = {
+      messages: Array.isArray(messages) ? messages : [],
+      updatedAt: Date.now(),
+      schemaVersion: 3
+    };
+    safeSetJSON(LS_CHAT_PREFIX + key, payload.messages);
+    await fb.setDoc(chatRef(key), payload, { merge: true }).catch(() => {});
+    if (typeof window.renderChat === "function") window.renderChat();
   };
   window.firebaseBridge.listenChat = function(roomKey) {
     try { firebaseState.chatUnsub?.(); } catch (e) {}
-    const keys = [String(roomKey || "lobby")];
-    firebaseState.chatUnsub = fb.onSnapshot(chatRef(roomKey), (snap) => {
+    const key = String(roomKey || "lobby");
+    const cacheKey = LS_CHAT_PREFIX + key;
+    firebaseState.chatUnsub = fb.onSnapshot(chatRef(key), (snap) => {
       if (!snap.exists()) return;
       const data = snap.data() || {};
       if (Array.isArray(data.messages)) {
-        for (const key of keys) safeSetJSON(key, data.messages);
+        safeSetJSON(cacheKey, data.messages);
         if (typeof window.renderChat === "function") window.renderChat();
       }
     });
-    const current = safeGetJSON(String(roomKey || "lobby"), []);
-    fb.setDoc(chatRef(roomKey), { messages: current, updatedAt: Date.now(), schemaVersion: 3 }, { merge: true }).catch(() => {});
   };
   window.firebaseBridge.leaveChat = function() {
     try { firebaseState.chatUnsub?.(); } catch (e) {}
     firebaseState.chatUnsub = null;
   };
   window.firebaseBridge.syncCacheFromRemote = function(roomKey, messages) {
-    safeSetJSON(String(roomKey || "lobby"), Array.isArray(messages) ? messages : []);
+    safeSetJSON(LS_CHAT_PREFIX + String(roomKey || "lobby"), Array.isArray(messages) ? messages : []);
   };
   window.firebaseBridge.listenRoom = async function(roomId) {
     if (!roomId) return;
