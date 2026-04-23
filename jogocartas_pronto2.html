@@ -2483,10 +2483,6 @@
     }
 
     function drawFromDeck(){
-      if (!Array.isArray(state.deck)) state.deck = [];
-      while (state.deck.length && (!state.deck[state.deck.length - 1] || typeof state.deck[state.deck.length - 1] !== "object")) {
-        state.deck.pop();
-      }
       if (state.deck.length === 0){
         for (let i = 0; i < 60; i++) state.deck.push(createCard());
       }
@@ -2687,19 +2683,36 @@
       return "cartas.chat.robots.v3";
     }
 
+    function chatStorageKeys(){
+      const keys = [];
+      const primary = chatStorageKey();
+      if (primary) keys.push(primary);
+      if (state.roomMode && state.roomId) keys.push(LS_CHAT_PREFIX + state.roomId);
+      if (state.roomMode && state.roomName) keys.push(LS_CHAT_PREFIX + state.roomName);
+      if (!state.roomMode) keys.push("cartas.chat.robots.v3");
+      return [...new Set(keys.filter(Boolean))];
+    }
+
     function loadChatMessages(){
       try{
-        const raw = localStorage.getItem(chatStorageKey());
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
+        for (const key of chatStorageKeys()){
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) return parsed;
+        }
+        return [];
       }catch(e){
         return [];
       }
     }
 
     function saveChatMessages(messages){
-      try{ localStorage.setItem(chatStorageKey(), JSON.stringify(messages)); }catch(e){}
-      firebaseBridge.syncChat(chatStorageKey(), messages);
+      const payload = Array.isArray(messages) ? messages : [];
+      try{
+        for (const key of chatStorageKeys()) localStorage.setItem(key, JSON.stringify(payload));
+      }catch(e){}
+      firebaseBridge.syncChat(chatStorageKey(), payload);
     }
 
     function renderChat(){
@@ -3029,7 +3042,6 @@
     signalsUnsub: null,
     roomRevision: 0,
     roomLoaded: false,
-    allowRoomSync: false,
     memberColor: "#3b82f6",
     peerConnections: new Map(),
     remoteAudioEls: new Map(),
@@ -3256,27 +3268,23 @@
   }
 
   function roomGameStatePayload() {
-    const playersBySeat = Array.isArray(window.state.players)
-      ? Object.fromEntries(window.state.players.map((seatCards, seat) => [
-          String(seat),
-          clone(Array.isArray(seatCards) ? seatCards : [])
-        ]))
-      : {};
+    const players = Array.isArray(window.state.players)
+      ? window.state.players.map((seatCards) => clone(Array.isArray(seatCards) ? seatCards : []))
+      : [[], [], [], []];
 
     return {
-      schemaVersion: 2,
+      schemaVersion: 3,
       roomId: String(window.state.roomId || ""),
       roomName: String(window.state.roomName || ""),
       roomMode: !!window.state.roomMode,
       roomMembers: Array.isArray(window.state.roomMembers) ? clone(window.state.roomMembers) : [],
       mySeat: Number.isInteger(window.state.mySeat) ? window.state.mySeat : 0,
-      playersBySeat,
+      players,
       topCard: clone(window.state.topCard),
       turn: window.state.turn,
       penalty: window.state.penalty,
       gameRunning: window.state.gameRunning,
       deck: clone(Array.isArray(window.state.deck) ? window.state.deck : []),
-      deckCount: Array.isArray(window.state.deck) ? window.state.deck.length : 0,
       revision: (firebaseState.roomRevision || 0) + 1,
       updatedAt: Date.now(),
       updatedByUid: ensureCurrentUid(),
@@ -3300,33 +3308,15 @@
       window.state.players = incomingPlayers.map((seatCards) => Array.isArray(seatCards) ? seatCards : []);
     }
 
+    if (Array.isArray(data.deck)) {
+      window.state.deck = clone(data.deck);
+    } else if (typeof data.deckCount === "number" && !Array.isArray(window.state.deck)) {
+      window.state.deck = new Array(Math.max(0, data.deckCount)).fill(null);
+    }
+
     if (data.topCard !== undefined) window.state.topCard = data.topCard;
     if (Array.isArray(data.roomMembers)) window.state.roomMembers = data.roomMembers;
     if (data.roomName) window.state.roomName = data.roomName;
-
-    const incomingDeck = Array.isArray(data.deck) ? data.deck : null;
-    const localDeckLooksValid = Array.isArray(window.state.deck) && window.state.deck.every((card) => card && typeof card === "object" && typeof card.color === "string" && typeof card.value === "string");
-    if (incomingDeck && incomingDeck.length) {
-      window.state.deck = incomingDeck
-        .filter((card) => card && typeof card === "object" && typeof card.color === "string" && typeof card.value === "string")
-        .map((card) => clone(card));
-      firebaseState.allowRoomSync = true;
-    } else if (typeof data.deckCount === "number") {
-      const desiredCount = Math.max(0, Number(data.deckCount) || 0);
-      if (localDeckLooksValid) {
-        if (window.state.deck.length > desiredCount) {
-          window.state.deck = window.state.deck.slice(0, desiredCount);
-        } else if (window.state.deck.length < desiredCount) {
-          for (let i = window.state.deck.length; i < desiredCount; i++) window.state.deck.push(createCard());
-        }
-        firebaseState.allowRoomSync = true;
-      } else {
-        firebaseState.allowRoomSync = false;
-      }
-    } else {
-      firebaseState.allowRoomSync = localDeckLooksValid;
-    }
-
     if (typeof data.revision === "number") firebaseState.roomRevision = data.revision;
     firebaseState.roomLoaded = true;
     if (typeof window.render === "function") window.render();
@@ -3336,7 +3326,6 @@
 
   async function syncRoomState() {
     if (!window.state.roomMode || !window.state.roomId) return;
-    if (!firebaseState.allowRoomSync) return;
     const payload = roomGameStatePayload();
     firebaseState.roomRevision = payload.revision;
     await fb.setDoc(roomStateRef(window.state.roomId), payload, { merge: true }).catch(() => {});
@@ -3519,7 +3508,6 @@
     const result = original.initGame ? original.initGame() : undefined;
     if (window.state.roomMode) {
       window.state.roomStateLoaded = true;
-      firebaseState.allowRoomSync = Array.isArray(window.state.deck) && window.state.deck.every((card) => card && typeof card === "object" && typeof card.color === "string" && typeof card.value === "string");
       window.render();
       syncRoomState();
     }
@@ -3544,6 +3532,7 @@
     firebaseState.memberColor = `#${Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, "0")}`;
     firebaseState.roomLoaded = false;
     firebaseState.roomRevision = 0;
+    firebaseState.processedSignals.clear();
     clearPeerConnections();
     try { firebaseState.chatUnsub?.(); } catch (e) {}
     try { firebaseState.membersUnsub?.(); } catch (e) {}
@@ -3593,13 +3582,13 @@
       window.state.mySeat = selfIndex >= 0 ? normalized[selfIndex].seat : 0;
       if (window.state.mySeat !== previousSeat) {
         await syncPresence(roomId).catch(() => {});
-        await syncRoomState().catch(() => {});
       }
       for (const m of normalized) {
         if (m.uid && m.uid !== uid) {
           await createPeerConnection(roomId, m);
         }
       }
+
       window.renderRoomPresence();
       window.render();
     });
@@ -3612,7 +3601,7 @@
         return;
       }
       const data = snap.data() || {};
-      if (typeof data.revision === "number" && data.revision <= firebaseState.roomRevision && data.updatedByUid === uid) return;
+      if (typeof data.revision === "number" && data.revision < firebaseState.roomRevision) return;
       applyRoomGameState(data);
       firebaseState.roomRevision = Number(data.revision || firebaseState.roomRevision || 0);
     });
@@ -3887,16 +3876,17 @@
   };
   window.firebaseBridge.listenChat = function(roomKey) {
     try { firebaseState.chatUnsub?.(); } catch (e) {}
+    const keys = [String(roomKey || "lobby")];
     firebaseState.chatUnsub = fb.onSnapshot(chatRef(roomKey), (snap) => {
       if (!snap.exists()) return;
       const data = snap.data() || {};
       if (Array.isArray(data.messages)) {
-        safeSetJSON(String(roomKey || "lobby"), data.messages);
+        for (const key of keys) safeSetJSON(key, data.messages);
         if (typeof window.renderChat === "function") window.renderChat();
       }
     });
     const current = safeGetJSON(String(roomKey || "lobby"), []);
-    fb.setDoc(chatRef(roomKey), { messages: current, updatedAt: Date.now(), schemaVersion: 2 }, { merge: true }).catch(() => {});
+    fb.setDoc(chatRef(roomKey), { messages: current, updatedAt: Date.now(), schemaVersion: 3 }, { merge: true }).catch(() => {});
   };
   window.firebaseBridge.leaveChat = function() {
     try { firebaseState.chatUnsub?.(); } catch (e) {}
