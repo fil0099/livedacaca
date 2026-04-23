@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartas</title>
+  <title>Cartass</title>
   <style>
     :root{
       --bg1:#eef2ff;
@@ -1572,7 +1572,13 @@
         started = true;
         try{
           app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
-          db = firebase.firestore();
+       db = firebase.firestore();
+
+// FORÇA fallback sem QUIC (corrige chat em tempo real)
+db.settings({
+  experimentalForceLongPolling: true,
+  useFetchStreams: false
+});
         }catch(err){
           started = false;
           return;
