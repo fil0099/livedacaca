@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartaz - Multiplayer em Tempo Real</title>
+  <title>Cartax - Multiplayer em Tempo Real</title>
   <style>
     /* ========== SEU CSS ORIGINAL COMPLETO (NÃO ALTERADO) ========== */
     :root{
@@ -1080,7 +1080,7 @@
   </script>
 
   <script type="module">
-    // ==================== MÓDULO DE MULTIPLAYER (Firestore) ====================
+    // ==================== MÓDULO DE MULTIPLAYER (Firestore) CORRIGIDO ====================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
     import { getFirestore, doc, collection, getDocs, setDoc, deleteDoc, addDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
@@ -1100,23 +1100,34 @@
     let currentUser = null;
     onAuthStateChanged(auth, (user) => { currentUser = user; });
 
+    // Função auxiliar para acessar escapeHtml global
+    const globalEscapeHtml = (text) => {
+      if (window.escapeHtml) return window.escapeHtml(text);
+      return String(text).replace(/[&<>"]|'/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    };
+    const globalEscapeAttr = (text) => globalEscapeHtml(text).replace(/'/g, "&#39;");
+
     // ==================== SUBSTITUI AS FUNÇÕES DE SALA PELO FIRESTORE ====================
     window.getRooms = async function() {
-      const snapshot = await getDocs(collection(db, "global_rooms"));
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      try {
+        const snapshot = await getDocs(collection(db, "global_rooms"));
+        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch(e) { console.error(e); return []; }
     };
     window.saveRooms = async function(rooms) { /* não usado, mantido para compatibilidade */ };
     window.renderLobbyRooms = async function() {
       const container = document.getElementById("roomsList");
       if (!container) return;
-      const rooms = await window.getRooms();
-      if (rooms.length === 0) { container.innerHTML = "<div class='mini-note'>Nenhuma sala criada. Use o botão Adm para criar.</div>"; return; }
-      container.innerHTML = rooms.map(room => `
-        <div class="room-card">
-          <div class="room-head"><strong>${escapeHtml(room.name)}</strong><span class="room-tag">${room.locked ? "🔒" : "🔓"}</span></div>
-          <div class="room-actions"><button class="btn secondary" type="button" onclick="joinRoomById('${room.id}')">Entrar</button></div>
-        </div>
-      `).join('');
+      try {
+        const rooms = await window.getRooms();
+        if (rooms.length === 0) { container.innerHTML = "<div class='mini-note'>Nenhuma sala criada. Use o botão Adm para criar.</div>"; return; }
+        container.innerHTML = rooms.map(room => `
+          <div class="room-card">
+            <div class="room-head"><strong>${globalEscapeHtml(room.name)}</strong><span class="room-tag">${room.locked ? "🔒" : "🔓"}</span></div>
+            <div class="room-actions"><button class="btn secondary" type="button" onclick="joinRoomById('${room.id}')">Entrar</button></div>
+          </div>
+        `).join('');
+      } catch(e) { console.error(e); }
     };
     window.createRoom = async function() {
       const name = document.getElementById("newRoomName").value.trim();
@@ -1141,210 +1152,222 @@
     window.renderAdminRooms = async function() {
       const area = document.getElementById("adminRooms");
       if (!area) return;
-      const rooms = await window.getRooms();
-      area.innerHTML = "";
-      for (const room of rooms) {
-        const item = document.createElement("div");
-        item.className = "admin-room-item";
-        item.innerHTML = `
-          <div>
-            <strong>${escapeHtml(room.name)}</strong>
-            <small>${room.locked ? "Trancada" : "Aberta"}</small>
-            <div class="room-password-row">
-              <input id="roomPassInput-${room.id}" type="password" value="${escapeAttr(room.password || "")}" placeholder="Senha da sala" />
+      try {
+        const rooms = await window.getRooms();
+        area.innerHTML = "";
+        for (const room of rooms) {
+          const item = document.createElement("div");
+          item.className = "admin-room-item";
+          item.innerHTML = `
+            <div>
+              <strong>${globalEscapeHtml(room.name)}</strong>
+              <small>${room.locked ? "Trancada" : "Aberta"}</small>
+              <div class="room-password-row">
+                <input id="roomPassInput-${room.id}" type="password" value="${globalEscapeAttr(room.password || "")}" placeholder="Senha da sala" />
+              </div>
             </div>
-          </div>
-          <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
-            <button class="btn small" type="button" onclick="saveRoomSettings('${room.id}')">Salvar</button>
-            <button class="btn danger small" type="button" onclick="deleteRoom('${room.id}')">Excluir</button>
-          </div>`;
-        area.appendChild(item);
-      }
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
+              <button class="btn small" type="button" onclick="saveRoomSettings('${room.id}')">Salvar</button>
+              <button class="btn danger small" type="button" onclick="deleteRoom('${room.id}')">Excluir</button>
+            </div>`;
+          area.appendChild(item);
+        }
+      } catch(e) { console.error(e); }
     };
 
-    // ==================== ENTRADA NA SALA (SUBSTITUI enterRoomDirectly) ====================
+    // ==================== ENTRADA NA SALA (SUBSTITUI enterRoomDirectly) CORRIGIDA ====================
     window.enterRoomDirectly = async function(room, enteredName) {
-      const identity = window.ensureCurrentUserIdentity(enteredName);
-      window.state.myName = identity.name;
-      window.state.myId = identity.id;
-      window.state.roomMode = true;
-      window.state.roomId = room.id;
-      window.state.roomName = room.name;
-      window.showGame();
-      window.setupMusic();
-      if (window.state.roomMusicAutoPlay) window.playMusic(); else window.pauseMusic();
-      window.addChatMessage(window.state.myName, `Entrou em ${room.name}`);
-      window.renderRoomPresence();
-
-      // Limpar conexões anteriores
-      if (window.state.peerConnections) {
-        for (let pc of window.state.peerConnections.values()) pc.close();
-        window.state.peerConnections.clear();
-        for (let el of window.state.remoteAudioElements.values()) el.remove();
-        window.state.remoteAudioElements.clear();
-      }
-      window.state.peerConnections = new Map();
-      window.state.remoteAudioElements = new Map();
-      window.state.processedSignals = new Set();
-
-      const uid = currentUser?.uid || window.state.myId;
-      const memberRef = doc(db, `room_members/${room.id}/members`, uid);
-      await setDoc(memberRef, {
-        uid, userId: window.state.myId, name: window.state.myName, seat: -1,
-        color: `#${Math.floor(Math.random()*16777215).toString(16)}`, lastSeen: Date.now()
-      });
-
-      // Listener de membros
-      onSnapshot(collection(db, `room_members/${room.id}/members`), (snap) => {
-        let members = []; snap.forEach(d => members.push(d.data()));
-        members.sort((a,b)=>a.lastSeen - b.lastSeen);
-        for(let i=0;i<members.length && i<4;i++) members[i].seat = i;
-        window.state.roomMembers = members;
-        const me = members.find(m=>m.uid === uid);
-        if(me) window.state.mySeat = me.seat;
-        window.render();
+      try {
+        const identity = window.ensureCurrentUserIdentity(enteredName);
+        window.state.myName = identity.name;
+        window.state.myId = identity.id;
+        window.state.roomMode = true;
+        window.state.roomId = room.id;
+        window.state.roomName = room.name;
+        window.showGame();
+        window.setupMusic();
+        if (window.state.roomMusicAutoPlay) window.playMusic(); else window.pauseMusic();
+        window.addChatMessage(window.state.myName, `Entrou em ${room.name}`);
         window.renderRoomPresence();
-      });
 
-      // Listener do estado do jogo
-      onSnapshot(doc(db, "game_states", room.id), (snap) => {
-        if(!snap.exists()) {
-          window.initGame();
-          window.syncGameState();
-        } else {
-          const data = snap.data();
-          window.state.players = data.players || [[],[],[],[]];
-          window.state.topCard = data.topCard || null;
-          window.state.turn = data.turn || 0;
-          window.state.penalty = data.penalty || 0;
-          window.state.gameRunning = data.gameRunning !== false;
-          window.state.deck = data.deck || [];
+        // Limpar conexões anteriores
+        if (window.state.peerConnections) {
+          for (let pc of window.state.peerConnections.values()) pc.close();
+          window.state.peerConnections.clear();
+          for (let el of window.state.remoteAudioElements.values()) el.remove();
+          window.state.remoteAudioElements.clear();
+        }
+        window.state.peerConnections = new Map();
+        window.state.remoteAudioElements = new Map();
+        window.state.processedSignals = new Set();
+
+        const uid = currentUser?.uid || window.state.myId;
+        const memberRef = doc(db, `room_members/${room.id}/members`, uid);
+        await setDoc(memberRef, {
+          uid, userId: window.state.myId, name: window.state.myName, seat: -1,
+          color: `#${Math.floor(Math.random()*16777215).toString(16)}`, lastSeen: Date.now()
+        });
+
+        // Listener de membros
+        onSnapshot(collection(db, `room_members/${room.id}/members`), (snap) => {
+          let members = []; snap.forEach(d => members.push(d.data()));
+          members.sort((a,b)=>a.lastSeen - b.lastSeen);
+          for(let i=0;i<members.length && i<4;i++) members[i].seat = i;
+          window.state.roomMembers = members;
+          const me = members.find(m=>m.uid === uid);
+          if(me) window.state.mySeat = me.seat;
           window.render();
-        }
-      });
+          window.renderRoomPresence();
+        });
 
-      window.syncGameState = async function() {
-        if(!window.state.roomId) return;
-        await setDoc(doc(db, "game_states", window.state.roomId), {
-          players: window.state.players,
-          topCard: window.state.topCard,
-          turn: window.state.turn,
-          penalty: window.state.penalty,
-          gameRunning: window.state.gameRunning,
-          deck: window.state.deck,
-          updatedAt: Date.now()
-        }, { merge: true });
-      };
+        // Listener do estado do jogo
+        onSnapshot(doc(db, "game_states", room.id), (snap) => {
+          if(!snap.exists()) {
+            window.initGame();
+            window.syncGameState();
+          } else {
+            const data = snap.data();
+            window.state.players = data.players || [[],[],[],[]];
+            window.state.topCard = data.topCard || null;
+            window.state.turn = data.turn || 0;
+            window.state.penalty = data.penalty || 0;
+            window.state.gameRunning = data.gameRunning !== false;
+            window.state.deck = data.deck || [];
+            window.render();
+          }
+        });
 
-      // Listener do chat (substitui o original)
-      onSnapshot(doc(db, "chats", room.id), (snap) => {
-        if(snap.exists()) {
-          const msgs = snap.data().messages || [];
-          const container = document.getElementById("chatMessages");
-          if(container) container.innerHTML = msgs.map(m => `<div class="chat-msg"><strong>${escapeHtml(m.author)}</strong>: ${escapeHtml(m.message)}</div>`).join('');
-        }
-      });
-
-      // Envio de mensagens
-      window.sendChatMessage = async function(text) {
-        if(!text.trim()) return;
-        await updateDoc(doc(db, "chats", window.state.roomId), {
-          messages: arrayUnion({ author: window.state.myName, authorId: window.state.myId, message: text.trim(), timestamp: Date.now() })
-        }).catch(()=>setDoc(doc(db, "chats", window.state.roomId), { messages: [{ author: window.state.myName, authorId: window.state.myId, message: text.trim(), timestamp: Date.now() }] }));
-      };
-      const originalAddChatMessage = window.addChatMessage;
-      window.addChatMessage = function(author, message) {
-        if(window.state.roomMode && window.state.roomId) {
-          window.sendChatMessage(message);
-        } else {
-          originalAddChatMessage(author, message);
-        }
-      };
-      document.getElementById("chatForm").addEventListener("submit", (e) => {
-        e.preventDefault();
-        const input = document.getElementById("chatInput");
-        const msg = input.value.trim();
-        if (!msg) return;
-        if(window.state.roomMode && window.state.roomId) window.sendChatMessage(msg);
-        else originalAddChatMessage(window.state.myName, msg);
-        input.value = "";
-      });
-
-      // ==================== WEBRTC (ÁUDIO) ====================
-      const SIGNAL_STUN = [{ urls: "stun:stun.l.google.com:19302" }];
-      async function createPeerConnection(peerUid) {
-        if(peerUid === uid) return null;
-        if(window.state.peerConnections.has(peerUid)) return window.state.peerConnections.get(peerUid);
-        const pc = new RTCPeerConnection({ iceServers: SIGNAL_STUN });
-        window.state.peerConnections.set(peerUid, pc);
-        if(window.state.localStream) {
-          window.state.localStream.getTracks().forEach(t => pc.addTrack(t, window.state.localStream));
-        }
-        pc.onicecandidate = (e) => {
-          if(e.candidate) addDoc(collection(db, `signals/${room.id}/messages`), { to: peerUid, from: uid, type: "ice-candidate", candidate: e.candidate, createdAt: Date.now() });
+        window.syncGameState = async function() {
+          if(!window.state.roomId) return;
+          await setDoc(doc(db, "game_states", window.state.roomId), {
+            players: window.state.players,
+            topCard: window.state.topCard,
+            turn: window.state.turn,
+            penalty: window.state.penalty,
+            gameRunning: window.state.gameRunning,
+            deck: window.state.deck,
+            updatedAt: Date.now()
+          }, { merge: true });
         };
-        pc.ontrack = (e) => {
-          let audio = window.state.remoteAudioElements.get(peerUid);
-          if(!audio) { audio = new Audio(); audio.autoplay = true; audio.hidden = true; document.body.appendChild(audio); window.state.remoteAudioElements.set(peerUid, audio); }
-          audio.srcObject = e.streams[0];
-          audio.volume = window.state.audioEnabled ? 1 : 0;
+
+        // Listener do chat (substitui o original)
+        onSnapshot(doc(db, "chats", room.id), (snap) => {
+          if(snap.exists()) {
+            const msgs = snap.data().messages || [];
+            const container = document.getElementById("chatMessages");
+            if(container) container.innerHTML = msgs.map(m => `<div class="chat-msg"><strong>${globalEscapeHtml(m.author)}</strong>: ${globalEscapeHtml(m.message)}</div>`).join('');
+          }
+        });
+
+        // Envio de mensagens
+        window.sendChatMessage = async function(text) {
+          if(!text.trim()) return;
+          await updateDoc(doc(db, "chats", window.state.roomId), {
+            messages: arrayUnion({ author: window.state.myName, authorId: window.state.myId, message: text.trim(), timestamp: Date.now() })
+          }).catch(()=>setDoc(doc(db, "chats", window.state.roomId), { messages: [{ author: window.state.myName, authorId: window.state.myId, message: text.trim(), timestamp: Date.now() }] }));
         };
-        if(uid < peerUid) {
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          await addDoc(collection(db, `signals/${room.id}/messages`), { to: peerUid, from: uid, type: "offer", sdp: pc.localDescription, createdAt: Date.now() });
+        const originalAddChatMessage = window.addChatMessage;
+        window.addChatMessage = function(author, message) {
+          if(window.state.roomMode && window.state.roomId) {
+            window.sendChatMessage(message);
+          } else {
+            originalAddChatMessage(author, message);
+          }
+        };
+        // Remover listener anterior do chatForm para evitar duplicação
+        const oldForm = document.getElementById("chatForm");
+        const newForm = oldForm.cloneNode(true);
+        oldForm.parentNode.replaceChild(newForm, oldForm);
+        newForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          const input = document.getElementById("chatInput");
+          const msg = input.value.trim();
+          if (!msg) return;
+          if(window.state.roomMode && window.state.roomId) window.sendChatMessage(msg);
+          else originalAddChatMessage(window.state.myName, msg);
+          input.value = "";
+        });
+
+        // ==================== WEBRTC (ÁUDIO) ====================
+        const SIGNAL_STUN = [{ urls: "stun:stun.l.google.com:19302" }];
+        async function createPeerConnection(peerUid) {
+          if(peerUid === uid) return null;
+          if(window.state.peerConnections.has(peerUid)) return window.state.peerConnections.get(peerUid);
+          const pc = new RTCPeerConnection({ iceServers: SIGNAL_STUN });
+          window.state.peerConnections.set(peerUid, pc);
+          if(window.state.localStream) {
+            window.state.localStream.getTracks().forEach(t => pc.addTrack(t, window.state.localStream));
+          }
+          pc.onicecandidate = (e) => {
+            if(e.candidate) addDoc(collection(db, `signals/${room.id}/messages`), { to: peerUid, from: uid, type: "ice-candidate", candidate: e.candidate, createdAt: Date.now() });
+          };
+          pc.ontrack = (e) => {
+            let audio = window.state.remoteAudioElements.get(peerUid);
+            if(!audio) { audio = new Audio(); audio.autoplay = true; audio.hidden = true; document.body.appendChild(audio); window.state.remoteAudioElements.set(peerUid, audio); }
+            audio.srcObject = e.streams[0];
+            audio.volume = window.state.audioEnabled ? 1 : 0;
+          };
+          if(uid < peerUid) {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await addDoc(collection(db, `signals/${room.id}/messages`), { to: peerUid, from: uid, type: "offer", sdp: pc.localDescription, createdAt: Date.now() });
+          }
+          return pc;
         }
-        return pc;
+
+        onSnapshot(collection(db, `signals/${room.id}/messages`), async (snap) => {
+          for(const docSnap of snap.docs) {
+            const sig = docSnap.data();
+            if(sig.to !== uid) continue;
+            if(window.state.processedSignals.has(docSnap.id)) continue;
+            window.state.processedSignals.add(docSnap.id);
+            let pc = window.state.peerConnections.get(sig.from);
+            if(!pc && sig.type !== "ice-candidate") pc = await createPeerConnection(sig.from);
+            if(!pc) continue;
+            if(sig.type === "offer") {
+              await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+              const ans = await pc.createAnswer();
+              await pc.setLocalDescription(ans);
+              await addDoc(collection(db, `signals/${room.id}/messages`), { to: sig.from, from: uid, type: "answer", sdp: pc.localDescription, createdAt: Date.now() });
+            } else if(sig.type === "answer") {
+              await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+            } else if(sig.type === "ice-candidate" && sig.candidate) {
+              try { await pc.addIceCandidate(new RTCIceCandidate(sig.candidate)); } catch(e) {}
+            }
+          }
+        });
+
+        // Atualiza toggleMic para usar WebRTC
+        const originalToggleMic = window.toggleMic;
+        window.toggleMic = async function() {
+          window.state.micEnabled = !window.state.micEnabled;
+          localStorage.setItem("cartas-mic", window.state.micEnabled ? "on" : "off");
+          window.updateMicButton();
+          if(window.state.micEnabled) {
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+              window.state.localStream = stream;
+              for(const [uid, pc] of window.state.peerConnections.entries()) {
+                stream.getTracks().forEach(t => pc.addTrack(t, stream));
+              }
+              for(const m of window.state.roomMembers) {
+                if(m.uid !== uid && !window.state.peerConnections.has(m.uid)) await createPeerConnection(m.uid);
+              }
+            } catch(err) {
+              window.state.micEnabled = false;
+              window.updateMicButton();
+              alert("Microfone não permitido");
+            }
+          } else {
+            if(window.state.localStream) window.state.localStream.getTracks().forEach(t => t.stop());
+            window.state.localStream = null;
+          }
+        };
+      } catch(error) {
+        console.error("Erro ao entrar na sala:", error);
+        alert("Erro ao entrar na sala: " + error.message);
+        window.backToLobby();
       }
-
-      onSnapshot(collection(db, `signals/${room.id}/messages`), async (snap) => {
-        for(const docSnap of snap.docs) {
-          const sig = docSnap.data();
-          if(sig.to !== uid) continue;
-          if(window.state.processedSignals.has(docSnap.id)) continue;
-          window.state.processedSignals.add(docSnap.id);
-          let pc = window.state.peerConnections.get(sig.from);
-          if(!pc && sig.type !== "ice-candidate") pc = await createPeerConnection(sig.from);
-          if(!pc) continue;
-          if(sig.type === "offer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
-            const ans = await pc.createAnswer();
-            await pc.setLocalDescription(ans);
-            await addDoc(collection(db, `signals/${room.id}/messages`), { to: sig.from, from: uid, type: "answer", sdp: pc.localDescription, createdAt: Date.now() });
-          } else if(sig.type === "answer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
-          } else if(sig.type === "ice-candidate" && sig.candidate) {
-            try { await pc.addIceCandidate(new RTCIceCandidate(sig.candidate)); } catch(e) {}
-          }
-        }
-      });
-
-      // Atualiza toggleMic para usar WebRTC
-      const originalToggleMic = window.toggleMic;
-      window.toggleMic = async function() {
-        window.state.micEnabled = !window.state.micEnabled;
-        localStorage.setItem("cartas-mic", window.state.micEnabled ? "on" : "off");
-        window.updateMicButton();
-        if(window.state.micEnabled) {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            window.state.localStream = stream;
-            for(const [uid, pc] of window.state.peerConnections.entries()) {
-              stream.getTracks().forEach(t => pc.addTrack(t, stream));
-            }
-            for(const m of window.state.roomMembers) {
-              if(m.uid !== uid && !window.state.peerConnections.has(m.uid)) await createPeerConnection(m.uid);
-            }
-          } catch(err) {
-            window.state.micEnabled = false;
-            window.updateMicButton();
-            alert("Microfone não permitido");
-          }
-        } else {
-          if(window.state.localStream) window.state.localStream.getTracks().forEach(t => t.stop());
-          window.state.localStream = null;
-        }
-      };
     };
 
     // Atualiza funções de áudio para usar os volumes
