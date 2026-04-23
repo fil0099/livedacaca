@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartas</title>
+  <title>Cartasss</title>
   <style>
     :root{
       --bg1:#eef2ff;
@@ -1422,7 +1423,7 @@
       penalty: 0,
       gameRunning: false,
       botTimer: null,
-      audioEnabled: false,
+      audioEnabled: true,
       micEnabled: false,
       micStream: null,
       micAudioContext: null,
@@ -1723,7 +1724,6 @@ db.settings({
       upsertKnownUser({ id: currentId, name: currentName });
       return { id: currentId, name: currentName };
     }
-    window.ensureCurrentUserIdentity = ensureCurrentUserIdentity;
 
     function loadAdminDelegations(){
       try{
@@ -1924,7 +1924,6 @@ db.settings({
       const toggle = document.getElementById("roomAutoPlayToggle");
       if (toggle) toggle.checked = !!state.roomMusicAutoPlay;
     }
-    window.syncRoomMusicAdminUI = syncRoomMusicAdminUI;
 
     function renderLobbyRooms(){
       const list = document.getElementById("roomsList");
@@ -1947,7 +1946,6 @@ db.settings({
         list.appendChild(card);
       });
     }
-    window.renderLobbyRooms = renderLobbyRooms;
 
     function openAdminModal(){
       document.getElementById("adminModal").style.display = "flex";
@@ -2006,7 +2004,6 @@ db.settings({
         area.appendChild(item);
       });
     }
-    window.renderAdminRooms = renderAdminRooms;
 
 
     function renderAdminFunctionToggles(){
@@ -2177,7 +2174,6 @@ db.settings({
         area.appendChild(item);
       });
     }
-    window.renderAdminPlayersList = renderAdminPlayersList;
 
     function deleteAdminDelegation(userId){
       const uid = String(userId || "").slice(0,4).toUpperCase();
@@ -2234,7 +2230,6 @@ db.settings({
       renderAdminDelegatedList();
       renderAdminPlayersList();
     }
-    window.renderAdminAccessState = renderAdminAccessState;
 
     function updateAdminSectionsVisibility(){
       const roomsSection = document.getElementById("adminRoomsSection");
@@ -2346,15 +2341,19 @@ db.settings({
       state.myId = identity.id;
       state.roomMode = true;
       state.roomWaiting = false;
-      // Não inicializa membros fictícios: o Firebase vai preencher via onSnapshot
-      state.roomMembers = [];
+      state.roomMembers = [
+        { name: "Jogador 2", id: randomId4(), color: "#3b82f6" },
+        { name: "Jogador 3", id: randomId4(), color: "#22c55e" },
+        { name: "Jogador 4", id: randomId4(), color: "#eab308" }
+      ];
+      state.roomMembers.forEach(member => upsertKnownUser(member));
       showGame();
-      // Inicia escuta do chat usando o roomId como chave do Firestore
-      firebaseBridge.listenChat(room.id || room.name);
-      // Não chama initGame() aqui: o módulo Firebase fará isso ao entrar na sala
+      firebaseBridge.listenChat(chatFirebaseKey());
+      initGame();
       setupMusic();
       if (state.roomMusicAutoPlay) playMusic();
       else pauseMusic();
+      addChatMessage(state.myName, `Entrou em ${room.name}`);
       renderRoomPresence();
       renderChat();
     }
@@ -2368,7 +2367,6 @@ db.settings({
       }
       return `Robô ${index}`;
     }
-    window.getPlayerName = getPlayerName;
 
     function showGame(){
       document.getElementById("lobbyScreen").style.display = "none";
@@ -2376,7 +2374,6 @@ db.settings({
       document.getElementById("table").style.display = "block";
       document.getElementById("chatPanel").style.display = "flex";
     }
-    window.showGame = showGame;
 
     function startRoomWaiting(){
       const room = getRooms().find(r => r.name === state.roomName || r.id === state.roomId);
@@ -2438,7 +2435,6 @@ db.settings({
       renderRoomPresence();
       renderChat();
     }
-    window.backToLobby = backToLobby;
 
     function getEnteredName(){
       const main = (document.getElementById("playerName").value || "").trim();
@@ -2465,7 +2461,7 @@ db.settings({
       document.getElementById("lobbyScreen").style.display = "none";
       document.getElementById("endScreen").style.display = "none";
       showGame();
-      if (state.roomMode) firebaseBridge.listenChat(chatStorageKey());
+      if (state.roomMode) firebaseBridge.listenChat(chatFirebaseKey());
       initGame();
       setupMusic();
       playMusic();
@@ -2499,7 +2495,6 @@ db.settings({
       }
       return state.deck.pop();
     }
-    window.drawFromDeck = drawFromDeck;
 
     function createCard(){
       const r = Math.random();
@@ -2532,7 +2527,6 @@ db.settings({
       renderRoomPresence();
       if (!state.roomMode) scheduleBotTurn();
     }
-    window.initGame = initGame;
 
     function cardHTML(c, interactive=false, index=0){
       const playClass = interactive && canPlay(c) ? ' playable' : '';
@@ -2540,12 +2534,10 @@ db.settings({
       const onClick = interactive && canPlay(c) ? ` onclick="playCard(${index})"` : '';
       return `<div class="card${playClass}"${onClick} data-value="${c.value}" style="border-color:${border}; background-image:url('${c.img}')"></div>`;
     }
-    window.cardHTML = cardHTML;
 
     function backCard(){
       return `<div class="card small back"></div>`;
     }
-    window.backCard = backCard;
 
     function canPlay(c){
       if (!state.topCard) return true;
@@ -2553,7 +2545,6 @@ db.settings({
       if (c.value === "+2") return c.color === state.topCard.color || state.topCard.value === "+2";
       return c.color === state.topCard.color || c.value === state.topCard.value;
     }
-    window.canPlay = canPlay;
 
     function render(){
       const topPile = document.getElementById("discardPile");
@@ -2578,7 +2569,6 @@ db.settings({
       p4.querySelector('.cards').innerHTML = state.players[3].map(() => backCard()).join('');
 
     }
-    window.render = render;
 
     function renderRoomPresence(){
       const box = document.getElementById("roomPresence");
@@ -2595,14 +2585,12 @@ db.settings({
         box.appendChild(dot);
       });
     }
-    window.renderRoomPresence = renderRoomPresence;
 
     function applyCard(c){
       state.topCard = c;
       if (c.value === "+2") state.penalty += 2;
       if (c.value === "+4") state.penalty += 4;
     }
-    window.applyCard = applyCard;
 
     function checkWin(){
       for (let i = 0; i < 4; i++){
@@ -2617,7 +2605,6 @@ db.settings({
       }
       return false;
     }
-    window.checkWin = checkWin;
 
     function nextTurn(){
       if (checkWin()) return;
@@ -2628,7 +2615,6 @@ db.settings({
         state.botTimer = setTimeout(resolveTurn, 220);
       }
     }
-    window.nextTurn = nextTurn;
 
     function resolveTurn(){
       if (!state.gameRunning) return;
@@ -2648,7 +2634,6 @@ db.settings({
         document.getElementById("statusNote").textContent = `${getPlayerName(state.turn)} aguarda jogada nesta sala.`;
       }
     }
-    window.resolveTurn = resolveTurn;
 
     function playCard(i){
       if (!state.gameRunning || state.turn !== 0 || state.penalty > 0) return;
@@ -2659,7 +2644,6 @@ db.settings({
       render();
       nextTurn();
     }
-    window.playCard = playCard;
 
     function drawCard(){
       if (!state.gameRunning || state.turn !== 0 || state.penalty > 0) return;
@@ -2667,7 +2651,6 @@ db.settings({
       render();
       nextTurn();
     }
-    window.drawCard = drawCard;
 
     function botTurn(){
       clearTimeout(state.botTimer);
@@ -2707,6 +2690,12 @@ db.settings({
       return "cartas.chat.robots.v3";
     }
 
+    function chatFirebaseKey(){
+      if (state.roomMode && state.roomId) return String(state.roomId);
+      if (state.roomMode && state.roomName) return String(state.roomName);
+      return "lobby";
+    }
+
     function chatStorageKeys(){
       const keys = [];
       const primary = chatStorageKey();
@@ -2719,14 +2708,6 @@ db.settings({
 
     function loadChatMessages(){
       try{
-        // Em modo sala, prioriza a chave baseada no roomId (mesma usada pelo Firestore)
-        if (state.roomMode && state.roomId) {
-          const raw = localStorage.getItem(LS_CHAT_PREFIX + state.roomId);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (Array.isArray(parsed)) return parsed;
-          }
-        }
         for (const key of chatStorageKeys()){
           const raw = localStorage.getItem(key);
           if (!raw) continue;
@@ -2744,9 +2725,7 @@ db.settings({
       try{
         for (const key of chatStorageKeys()) localStorage.setItem(key, JSON.stringify(payload));
       }catch(e){}
-      // Usa sempre o roomId como chave do Firestore para garantir consistência entre clientes
-      const firestoreKey = (state.roomMode && state.roomId) ? state.roomId : chatStorageKey();
-      firebaseBridge.syncChat(firestoreKey, payload);
+      firebaseBridge.syncChat(chatFirebaseKey(), payload);
     }
 
     function renderChat(){
@@ -2778,7 +2757,6 @@ db.settings({
       });
       box.scrollTop = box.scrollHeight;
     }
-    window.renderChat = renderChat;
 
     function addChatMessage(author, message){
       const messages = loadChatMessages();
@@ -2788,7 +2766,6 @@ db.settings({
       saveChatMessages(messages);
       renderChat();
     }
-    window.addChatMessage = addChatMessage;
 
     function deleteChatMessage(messageId){
       const messages = loadChatMessages().filter(m => m.id !== messageId);
@@ -2836,22 +2813,19 @@ db.settings({
 
     function updateAudioButton(){
       const btn = document.getElementById("audioBtn");
-      if (btn) btn.textContent = state.audioEnabled ? "Áudio: ligado" : "Áudio: desligado";
+      btn.textContent = state.audioEnabled ? "Áudio: ligado" : "Áudio: desligado";
     }
-    window.updateAudioButton = updateAudioButton;
 
     function updateMicButton(){
       const btn = document.getElementById("micBtn");
-      if (btn) btn.textContent = state.micEnabled ? "Mic: ligado" : "Mic: desligado";
+      btn.textContent = state.micEnabled ? "Mic: ligado" : "Mic: desligado";
     }
-    window.updateMicButton = updateMicButton;
 
     function applyVolumes(){
       if (state.musicAudio) state.musicAudio.volume = state.musicVolumeValue * state.masterVolumeValue;
       if (state.micGain) state.micGain.gain.value = state.micVolumeValue;
       if (state.micMonitor) state.micMonitor.gain.value = state.audioEnabled ? state.masterVolumeValue : 0;
     }
-    window.applyVolumes = applyVolumes;
 
     function toggleAudio(){
       state.audioEnabled = !state.audioEnabled;
@@ -2859,9 +2833,6 @@ db.settings({
       updateAudioButton();
       applyVolumes();
     }
-    window.toggleAudio = toggleAudio;
-
-    // toggleMic será sobreposta pelo módulo Firebase (type=module) com suporte WebRTC completo
 
     async function toggleMic(){
       state.micEnabled = !state.micEnabled;
@@ -2886,8 +2857,6 @@ db.settings({
         stopMic();
       }
     }
-    // Exposta como global; será sobreposta pelo módulo Firebase com WebRTC completo
-    window.toggleMic = toggleMic;
 
     function stopMic(){
       try{ if (state.micStream) state.micStream.getTracks().forEach(t => t.stop()); }catch(e){}
@@ -2928,7 +2897,6 @@ db.settings({
       state.musicAudio.volume = state.musicVolumeValue * state.masterVolumeValue;
       document.getElementById("musicDisc").classList.remove("playing");
     }
-    window.setupMusic = setupMusic;
 
     function playMusic(){
       if (!state.musicAudio) setupMusic();
@@ -2944,7 +2912,6 @@ db.settings({
         });
       }
     }
-    window.playMusic = playMusic;
 
     function pauseMusic(){
       if (!state.musicAudio) return;
@@ -2953,7 +2920,6 @@ db.settings({
       const disc = document.getElementById("musicDisc");
       if (disc) disc.classList.remove("playing");
     }
-    window.pauseMusic = pauseMusic;
 
     function toggleMusic(){
       if (state.musicPlaying) pauseMusic();
@@ -2981,7 +2947,8 @@ db.settings({
       document.body.setAttribute("data-theme", savedTheme);
       const toggle = document.getElementById("themeToggle");
       if (toggle) toggle.checked = savedTheme === "dark";
-      state.audioEnabled = localStorage.getItem("cartas-audio") === "on";
+      const savedAudio = localStorage.getItem("cartas-audio");
+      state.audioEnabled = savedAudio === null ? true : savedAudio === "on";
       state.micEnabled = localStorage.getItem("cartas-mic") === "on";
       updateAudioButton();
       updateMicButton();
@@ -3006,8 +2973,7 @@ db.settings({
     }
 
     window.addEventListener("DOMContentLoaded", () => {
-      // Não chama firebaseBridge.start() aqui pois o módulo Firebase moderno (type=module)
-      // irá sobrescrever window.firebaseBridge e chamar start() no seu próprio DOMContentLoaded.
+      firebaseBridge.start();
       loadPrefs();
       updateAudioButton();
       updateMicButton();
@@ -3230,14 +3196,7 @@ db.settings({
     if (!peerUid || peerUid === localUid) return null;
     if (firebaseState.peerConnections.has(peerUid)) return firebaseState.peerConnections.get(peerUid);
 
-    // Usa múltiplos servidores STUN/TURN para melhor conectividade
-    const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" }
-      ]
-    });
+    const pc = new RTCPeerConnection({ iceServers: SIGNAL_STUN });
     firebaseState.peerConnections.set(peerUid, pc);
 
     if (firebaseState.localStream) {
@@ -3258,57 +3217,32 @@ db.settings({
     };
 
     pc.ontrack = (event) => {
-      const streams = event.streams || [];
-      const stream = streams.length > 0 ? streams[0] : new MediaStream([event.track]);
+      const [stream] = event.streams || [];
       const audioEl = ensureRemoteAudioElement(peerUid);
-      audioEl.srcObject = stream;
+      if (stream) audioEl.srcObject = stream;
       audioEl.muted = !window.state.audioEnabled;
       audioEl.volume = window.state.masterVolumeValue || 1;
-      // Tenta reproduzir e trata bloqueio de autoplay
-      const playPromise = audioEl.play();
-      if (playPromise) {
-        playPromise.catch(() => {
-          // Aguarda interação do usuário para reproduzir
-          const resumeOnInteraction = () => {
-            audioEl.play().catch(() => {});
-            document.removeEventListener("click", resumeOnInteraction);
-            document.removeEventListener("keydown", resumeOnInteraction);
-          };
-          document.addEventListener("click", resumeOnInteraction, { once: true });
-          document.addEventListener("keydown", resumeOnInteraction, { once: true });
-        });
-      }
+      audioEl.play?.().catch(() => {});
     };
 
     pc.onconnectionstatechange = () => {
       if (pc.connectionState === "failed" || pc.connectionState === "disconnected" || pc.connectionState === "closed") {
         try { pc.close(); } catch (e) {}
         firebaseState.peerConnections.delete(peerUid);
-        // Tenta reconectar após falha
-        if (pc.connectionState === "failed") {
-          setTimeout(async () => {
-            if (window.state.roomMode && window.state.roomId) {
-              const member = (window.state.roomMembers || []).find(m => m.uid === peerUid);
-              if (member) await createPeerConnection(String(window.state.roomId), member).catch(() => {});
-            }
-          }, 3000);
-        }
       }
     };
 
     const polite = String(localUid) < String(peerUid);
     if (polite) {
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        await fb.addDoc(roomSignalsCol(roomId), {
-          type: "offer",
-          from: localUid,
-          to: peerUid,
-          sdp: JSON.parse(JSON.stringify(pc.localDescription)),
-          createdAt: Date.now()
-        }).catch(() => {});
-      } catch (e) {}
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await fb.addDoc(roomSignalsCol(roomId), {
+        type: "offer",
+        from: localUid,
+        to: peerUid,
+        sdp: JSON.parse(JSON.stringify(pc.localDescription)),
+        createdAt: Date.now()
+      }).catch(() => {});
     }
 
     return pc;
@@ -3327,35 +3261,20 @@ db.settings({
     if (!pc) return;
 
     if (signal.type === "offer" && signal.sdp) {
-      try {
-        // Verifica se já temos uma descrição remota para evitar conflito
-        if (pc.signalingState === "have-local-offer") {
-          // Rollback se necessário (polite peer)
-          await pc.setLocalDescription({ type: "rollback" }).catch(() => {});
-        }
-        await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await fb.addDoc(roomSignalsCol(roomId), {
-          type: "answer",
-          from: localUid,
-          to: peerUid,
-          sdp: JSON.parse(JSON.stringify(pc.localDescription)),
-          createdAt: Date.now()
-        }).catch(() => {});
-      } catch (e) {}
+      await pc.setRemoteDescription(signal.sdp).catch(() => {});
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      await fb.addDoc(roomSignalsCol(roomId), {
+        type: "answer",
+        from: localUid,
+        to: peerUid,
+        sdp: JSON.parse(JSON.stringify(pc.localDescription)),
+        createdAt: Date.now()
+      }).catch(() => {});
     } else if (signal.type === "answer" && signal.sdp) {
-      try {
-        if (pc.signalingState === "have-local-offer") {
-          await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
-        }
-      } catch (e) {}
+      await pc.setRemoteDescription(signal.sdp).catch(() => {});
     } else if (signal.type === "ice-candidate" && signal.candidate) {
-      try {
-        if (pc.remoteDescription) {
-          await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
-        }
-      } catch (e) {}
+      try { await pc.addIceCandidate(signal.candidate); } catch (e) {}
     } else if (signal.type === "bye") {
       try { pc.close(); } catch (e) {}
       firebaseState.peerConnections.delete(peerUid);
@@ -3620,6 +3539,7 @@ db.settings({
     window.showGame();
     window.setupMusic();
     if (window.state.roomMusicAutoPlay) window.playMusic(); else window.pauseMusic();
+    window.addChatMessage(window.state.myName, `Entrou em ${room.name}`);
     window.renderRoomPresence();
     window.renderChat();
 
@@ -3641,11 +3561,6 @@ db.settings({
     const uid = ensureCurrentUid();
     await fb.setDoc(roomDoc(roomId), { roomId, roomName: room.name, updatedAt: Date.now(), schemaVersion: 2 }, { merge: true }).catch(() => {});
     await syncPresence(roomId);
-
-    // Inicia escuta do chat com o roomId como chave do Firestore
-    window.firebaseBridge.listenChat(roomId);
-    // Envia mensagem de entrada após iniciar o listener para que todos vejam
-    window.addChatMessage(window.state.myName, `Entrou em ${room.name}`);
 
     firebaseState.membersUnsub = fb.onSnapshot(roomMembersCol(roomId), async (snap) => {
       const members = [];
@@ -3700,26 +3615,18 @@ db.settings({
         return;
       }
       const data = snap.data() || {};
-      if (typeof data.revision === "number" && data.revision < firebaseState.roomRevision) return;
+      if (typeof data.revision === "number" && firebaseState.roomRevision > 0 && data.revision < firebaseState.roomRevision) return;
       applyRoomGameState(data);
       firebaseState.roomRevision = Number(data.revision || firebaseState.roomRevision || 0);
     });
 
     firebaseState.signalsUnsub = fb.onSnapshot(roomSignalsCol(roomId), async (snap) => {
-      // Processa apenas documentos novos ou modificados para evitar reprocessamento
-      const changes = snap.docChanges ? snap.docChanges() : snap.docs.map(d => ({ type: 'added', doc: d }));
-      for (const change of changes) {
-        if (change.type !== 'added') continue;
-        const docSnap = change.doc;
+      for (const docSnap of snap.docs) {
         const signal = docSnap.data();
         if (!signal || firebaseState.processedSignals.has(docSnap.id)) continue;
         if (signal.to !== uid) continue;
         firebaseState.processedSignals.add(docSnap.id);
         await handleSignal(roomId, signal);
-        // Limpa sinais processados do Firestore após 30s para não acumular
-        setTimeout(() => {
-          fb.deleteDoc(fb.doc(fb.db, "cartas_rooms", roomId, "signals", docSnap.id)).catch(() => {});
-        }, 30000);
       }
     });
 
@@ -3739,12 +3646,10 @@ db.settings({
     try { firebaseState.membersUnsub?.(); } catch (e) {}
     try { firebaseState.stateUnsub?.(); } catch (e) {}
     try { firebaseState.signalsUnsub?.(); } catch (e) {}
-    try { firebaseState.chatUnsub?.(); } catch (e) {}
     firebaseState.roomUnsub = null;
     firebaseState.membersUnsub = null;
     firebaseState.stateUnsub = null;
     firebaseState.signalsUnsub = null;
-    firebaseState.chatUnsub = null;
     clearPeerConnections();
     if (window.state.roomMode && window.state.roomId) {
       fb.deleteDoc(memberDoc(window.state.roomId, ensureCurrentUid())).catch(() => {});
@@ -3776,42 +3681,12 @@ db.settings({
         window.state.micSource.connect(window.state.micGain).connect(window.state.micMonitor).connect(window.state.micAudioContext.destination);
         firebaseState.localStream = window.state.micStream;
         if (window.state.roomMode && window.state.roomId) {
-          const roomId = String(window.state.roomId);
           for (const peer of window.state.roomMembers || []) {
-            if (!peer?.uid || peer.uid === ensureCurrentUid()) continue;
-            let pc = firebaseState.peerConnections.get(peer.uid);
-            if (!pc) {
-              // Cria nova conexão com o stream já disponível
-              pc = await createPeerConnection(roomId, peer);
-            } else {
-              // Adiciona tracks à conexão existente e renegocia
-              const senders = pc.getSenders();
-              const hasSender = senders.some(s => s.track && s.track.kind === 'audio');
-              if (!hasSender) {
+            if (peer?.uid && peer.uid !== ensureCurrentUid()) {
+              const pc = await createPeerConnection(String(window.state.roomId), peer);
+              if (pc) {
                 window.state.micStream.getTracks().forEach((track) => {
                   try { pc.addTrack(track, window.state.micStream); } catch (e) {}
-                });
-                // Renegocia a oferta
-                try {
-                  const offer = await pc.createOffer();
-                  await pc.setLocalDescription(offer);
-                  await fb.addDoc(roomSignalsCol(roomId), {
-                    type: "offer",
-                    from: ensureCurrentUid(),
-                    to: peer.uid,
-                    sdp: JSON.parse(JSON.stringify(pc.localDescription)),
-                    createdAt: Date.now()
-                  }).catch(() => {});
-                } catch (e) {}
-              } else {
-                // Substitui a track existente
-                window.state.micStream.getTracks().forEach((track) => {
-                  const sender = senders.find(s => s.track && s.track.kind === track.kind);
-                  if (sender) {
-                    try { sender.replaceTrack(track); } catch (e) {}
-                  } else {
-                    try { pc.addTrack(track, window.state.micStream); } catch (e) {}
-                  }
                 });
               }
             }
@@ -3822,26 +3697,9 @@ db.settings({
       } catch (err) {
         window.state.micEnabled = false;
         localStorage.setItem("cartas-mic", "off");
-        if (typeof window.updateMicButton === "function") window.updateMicButton();
         alert("Não foi possível ativar o microfone. Verifique a permissão do navegador.");
-        return;
       }
     } else {
-      // Desativa o microfone: para as tracks e notifica peers com sinal 'bye'
-      if (window.state.roomMode && window.state.roomId) {
-        const roomId = String(window.state.roomId);
-        const localUid = ensureCurrentUid();
-        for (const [peerUid, pc] of firebaseState.peerConnections) {
-          try {
-            await fb.addDoc(roomSignalsCol(roomId), {
-              type: "bye",
-              from: localUid,
-              to: peerUid,
-              createdAt: Date.now()
-            }).catch(() => {});
-          } catch (e) {}
-        }
-      }
       try { window.state.micStream?.getTracks()?.forEach((t) => t.stop()); } catch (e) {}
       try { window.state.micAudioContext?.close?.(); } catch (e) {}
       window.state.micStream = null;
@@ -3854,6 +3712,7 @@ db.settings({
     if (typeof window.updateMicButton === "function") window.updateMicButton();
     if (window.state.roomMode && window.state.roomId) {
       await syncPresence(window.state.roomId);
+      await syncRoomState();
     }
   };
 
@@ -4080,9 +3939,6 @@ db.settings({
   window.addEventListener("DOMContentLoaded", async () => {
     makeDiagBanner();
     try { await window.firebaseBridge.start(); } catch (e) {}
-    // Atualiza a UI após o Firebase estar pronto
-    if (typeof window.renderLobbyRooms === "function") window.renderLobbyRooms();
-    if (typeof window.renderAdminAccessState === "function") window.renderAdminAccessState();
     try {
       if (!localStorage.getItem(FIREBASE_DIAG_AUTORUN_FLAG)) {
         localStorage.setItem(FIREBASE_DIAG_AUTORUN_FLAG, "1");
