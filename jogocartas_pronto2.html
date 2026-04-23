@@ -2329,26 +2329,7 @@
     }
 
     function enterRoomDirectly(room, enteredName){
-      const identity = ensureCurrentUserIdentity(enteredName || getEnteredName());
-      state.myName = identity.name;
-      state.myId = identity.id;
-      state.roomMode = true;
-      state.roomWaiting = false;
-      state.roomMembers = [
-        { name: "Jogador 2", id: randomId4(), color: "#3b82f6" },
-        { name: "Jogador 3", id: randomId4(), color: "#22c55e" },
-        { name: "Jogador 4", id: randomId4(), color: "#eab308" }
-      ];
-      state.roomMembers.forEach(member => upsertKnownUser(member));
-      showGame();
-      firebaseBridge.listenChat(chatStorageKey());
-      initGame();
-      setupMusic();
-      if (state.roomMusicAutoPlay) playMusic();
-      else pauseMusic();
-      addChatMessage(state.myName, `Entrou em ${room.name}`);
-      renderRoomPresence();
-      renderChat();
+      return window.enterRoomDirectly(room, enteredName);
     }
 
     function getPlayerName(index){
