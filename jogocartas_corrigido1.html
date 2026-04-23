@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartax - Multiplayer em Tempo Real</title>
+  <title>Cartay - Multiplayer Global</title>
   <style>
     /* ========== ESTILOS COMPLETOS DO SEU ARQUIVO ORIGINAL ========== */
     :root{
@@ -686,11 +686,11 @@
             <input id="playerName" type="text" placeholder="Digite seu nome" maxlength="18" />
             <button class="btn" onclick="joinRobots()">Jogar com robôs</button>
           </div>
-          <div class="mini-note">Entre sozinho contra robôs ou entre em uma sala multiplayer.</div>
+          <div class="mini-note">Modo offline contra robôs</div>
         </div>
         <div class="lobby-card" style="padding:22px; text-align:left;">
-          <strong style="display:block; margin-bottom:10px;">Salas</strong>
-          <small>Digite seu apelido e clique em entrar.</small>
+          <strong style="display:block; margin-bottom:10px;">Salas Multiplayer</strong>
+          <small>Digite seu apelido e entre em uma sala existente ou crie uma nova pelo botão Adm.</small>
           <div class="room-name-row">
             <input id="roomName" type="text" placeholder="Apelido na sala" maxlength="18" />
           </div>
@@ -777,37 +777,24 @@
     </form>
   </div>
 
-  <!-- MODAL ADMIN (Todas funções originais preservadas) -->
+  <!-- MODAL ADMIN -->
   <div id="adminModal" class="modal">
     <div class="modal-card">
-      <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
-        <h3>Administração</h3>
-        <div><button class="btn secondary small" onclick="closeAdminModal()">Fechar</button></div>
-      </div>
-      <div id="adminLoginBox" class="modal-section">
-        <strong>Entrar como Adm</strong>
-        <div class="modal-row" style="margin-top:10px;">
-          <input id="adminCode" class="field" type="password" placeholder="Código de admin" />
-          <button class="btn" type="button" onclick="loginAdmin()">Entrar</button>
-        </div>
-      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:14px;"><h3>Administração</h3><button class="btn secondary" onclick="closeAdminModal()">Fechar</button></div>
+      <div id="adminLoginBox" class="modal-section"><strong>Entrar como Adm</strong><div class="modal-row"><input id="adminCode" class="field" type="password" placeholder="Código" /><button class="btn" onclick="loginAdmin()">Entrar</button></div></div>
       <div id="adminPanel" style="display:none; gap:14px; flex-direction:column;">
-        <div id="adminPasswordSection" class="modal-section"><strong>Alterar senha</strong><div class="modal-row"><input id="newAdminPassword" class="field" type="password" /><button class="btn" onclick="saveAdminPassword()">Salvar</button></div></div>
-        <div id="adminDelegateSection" class="modal-section"><strong>Delegar função</strong><div class="modal-row"><input id="adminUserSearch" class="field" placeholder="Pesquisar usuário" oninput="renderAdminUserSearch()" /><button class="btn secondary" onclick="clearAdminUserSelection()">Limpar</button></div><div id="adminUserSearchResults"></div><div id="adminSelectedUser" style="display:none;"></div><div><strong>Funções</strong><div id="adminFunctionList"></div><button class="btn" onclick="addAdminDelegation()">Adicionar</button></div><div><strong>Usuários com função</strong><div id="adminDelegatedList"></div></div></div>
-        <div id="adminPlayersSection" class="modal-section"><strong>Excluir jogador</strong><div id="adminPlayersList"></div></div>
-        <div id="adminRoomsSection" class="modal-section"><strong>Nova sala</strong><div class="modal-row"><input id="newRoomName" class="field" /><button class="btn" onclick="createRoom()">Criar</button></div></div>
-        <div id="adminExistingRoomsSection" class="modal-section"><strong>Salas existentes</strong><div id="adminRooms" class="modal-list"></div></div>
-        <div id="adminMusicSection" class="modal-section"><strong>Músicas</strong><textarea id="roomMusicList" rows="3" placeholder="URL por linha"></textarea><div class="modal-row"><button class="btn" onclick="saveRoomMusicList()">Salvar</button><button class="btn secondary" onclick="resetRoomMusicList()">Restaurar</button></div><label class="theme-switch"><span>Auto play</span><span class="switch"><input id="roomAutoPlayToggle" type="checkbox" onchange="toggleRoomAutoPlay()" /><span class="slider"></span></span></label></div>
+        <div class="modal-section"><strong>Nova sala</strong><div class="modal-row"><input id="newRoomName" class="field" /><button class="btn" onclick="createRoom()">Criar</button></div></div>
+        <div class="modal-section"><strong>Salas existentes</strong><div id="adminRooms" class="modal-list"></div></div>
+        <div class="modal-section"><strong>Músicas (URL por linha)</strong><textarea id="roomMusicList" rows="3"></textarea><button class="btn" onclick="saveRoomMusicList()">Salvar</button></div>
       </div>
     </div>
   </div>
-  <div id="roomPasswordModal" class="modal"><div class="modal-card"><h3>Senha da sala</h3><input id="roomPasswordInput" type="password" /><div class="modal-row"><button class="btn" onclick="confirmRoomPassword()">Entrar</button><button class="btn secondary" onclick="backToLobby()">Cancelar</button></div></div></div>
 
   <script type="module">
-    // ==================== IMPORTAÇÃO FIREBASE ====================
+    // ==================== FIREBASE ====================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-    import { getFirestore, doc, collection, getDoc, setDoc, deleteDoc, addDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+    import { getFirestore, doc, collection, getDocs, setDoc, deleteDoc, addDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDr5UNy6SCUOQpKQMuqCxQbwJ32bTeN9Ew",
@@ -824,7 +811,7 @@
     let currentUser = null;
     onAuthStateChanged(auth, (user) => { currentUser = user; });
 
-    // ==================== CONSTANTES GLOBAIS ====================
+    // ==================== CONSTANTES ====================
     const ROOM_SEATS = 4;
     const SIGNAL_STUN = [{ urls: "stun:stun.l.google.com:19302" }];
     const colorsList = ["red","blue","green","yellow"];
@@ -835,12 +822,12 @@
       "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
       "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp"
     ];
-    const DEFAULT_ROOM_PLAYLIST = [
+    const DEFAULT_PLAYLIST = [
       "https://raw.githubusercontent.com/fil0099/livedacaca/main/music_for_video-just-relax-11157.mp3",
       "https://raw.githubusercontent.com/fil0099/livedacaca/main/sigmamusicart-jazz-lounge-relaxing-background-music-514554.mp3"
     ];
 
-    // ==================== ESTADO DO JOGO ====================
+    // ==================== ESTADO GLOBAL ====================
     const state = {
       roomId: null, roomMode: false, myName: "Você", myId: "", mySeat: 0,
       roomMembers: [], players: [[],[],[],[]], topCard: null, turn: 0, penalty: 0,
@@ -852,29 +839,60 @@
     };
     window.state = state;
 
-    // ==================== ADMIN (LOCALSTORAGE) ====================
+    // ==================== SALAS GLOBAIS FIRESTORE ====================
+    const roomsCollection = collection(db, "global_rooms");
+    async function loadRooms() {
+      const snapshot = await getDocs(roomsCollection);
+      const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderRoomList(rooms);
+    }
+    function renderRoomList(rooms) {
+      const container = document.getElementById("roomsList");
+      if(!container) return;
+      if(rooms.length === 0) { container.innerHTML = "<div class='mini-note'>Nenhuma sala criada. Use o botão Adm para criar.</div>"; return; }
+      container.innerHTML = rooms.map(room => `
+        <div class="room-card">
+          <div class="room-head"><strong>${escapeHtml(room.name)}</strong><span class="room-tag">${room.locked ? "🔒" : "🔓"}</span></div>
+          <div class="room-actions"><button class="btn secondary" onclick="joinRoom('${room.id}')">Entrar</button></div>
+        </div>
+      `).join('');
+    }
+    async function createRoomFirestore(name) {
+      const newRoomRef = doc(roomsCollection);
+      await setDoc(newRoomRef, { name, locked: false, createdAt: Date.now() });
+      loadRooms();
+    }
+    async function deleteRoomFirestore(roomId) {
+      await deleteDoc(doc(roomsCollection, roomId));
+      loadRooms();
+    }
+    window.createRoom = async () => {
+      const name = document.getElementById("newRoomName").value.trim();
+      if(!name) return alert("Digite um nome");
+      await createRoomFirestore(name);
+      document.getElementById("newRoomName").value = "";
+      if(adminLogged) renderAdminRooms();
+    };
+    window.deleteRoom = async (id) => { if(confirm("Excluir sala?")) await deleteRoomFirestore(id); };
+
+    // ==================== ADMIN (simples) ====================
     let adminLogged = false;
     const ADMIN_PASS = "adm123";
     function openAdminModal() { document.getElementById("adminModal").style.display = "flex"; renderAdminAccessState(); }
     function closeAdminModal() { document.getElementById("adminModal").style.display = "none"; }
     function loginAdmin() { if(document.getElementById("adminCode").value === ADMIN_PASS) { adminLogged=true; renderAdminAccessState(); } else alert("Senha incorreta"); }
     function logoutAdmin() { adminLogged=false; renderAdminAccessState(); }
-    function saveAdminPassword() { alert("Funcionalidade mantida, senha fixa por simplicidade"); }
-    function renderAdminUserSearch() { /* placeholder */ }
-    function clearAdminUserSelection() {}
-    function addAdminDelegation() {}
     function renderAdminAccessState() {
       const loginBox = document.getElementById("adminLoginBox");
       const panel = document.getElementById("adminPanel");
-      if(adminLogged) { loginBox.style.display="none"; panel.style.display="flex"; } else { loginBox.style.display="block"; panel.style.display="none"; }
+      if(adminLogged) { loginBox.style.display="none"; panel.style.display="flex"; renderAdminRooms(); }
+      else { loginBox.style.display="block"; panel.style.display="none"; }
     }
-    function createRoom() {
-      const name = document.getElementById("newRoomName").value.trim();
-      if(!name) return;
-      const rooms = JSON.parse(localStorage.getItem("cartas.rooms.v3") || "[]");
-      rooms.push({ id: "room-"+Date.now(), name, locked:false });
-      localStorage.setItem("cartas.rooms.v3", JSON.stringify(rooms));
-      renderLobbyRooms(); renderAdminRooms();
+    async function renderAdminRooms() {
+      const snapshot = await getDocs(roomsCollection);
+      const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const container = document.getElementById("adminRooms");
+      if(container) container.innerHTML = rooms.map(r => `<div class="admin-room-item"><span>${r.name}</span><button onclick="deleteRoom('${r.id}')">Excluir</button></div>`).join('');
     }
     function saveRoomMusicList() {
       const txt = document.getElementById("roomMusicList").value;
@@ -882,32 +900,17 @@
       localStorage.setItem("cartas.playlist", JSON.stringify(state.playlist));
       setupMusic();
     }
-    function resetRoomMusicList() { state.playlist = DEFAULT_ROOM_PLAYLIST.slice(); saveRoomMusicList(); }
-    function toggleRoomAutoPlay() { localStorage.setItem("musicAuto", document.getElementById("roomAutoPlayToggle").checked?"on":"off"); }
-    function renderAdminRooms() {
-      const rooms = JSON.parse(localStorage.getItem("cartas.rooms.v3") || "[]");
-      const container = document.getElementById("adminRooms");
-      if(container) container.innerHTML = rooms.map(r => `<div class="admin-room-item"><span>${r.name}</span><button onclick="deleteRoom('${r.id}')">Excluir</button></div>`).join('');
-    }
-    window.deleteRoom = (id) => {
-      let rooms = JSON.parse(localStorage.getItem("cartas.rooms.v3") || "[]");
-      rooms = rooms.filter(r=>r.id !== id);
-      localStorage.setItem("cartas.rooms.v3", JSON.stringify(rooms));
-      renderLobbyRooms(); renderAdminRooms();
-    };
-    function renderLobbyRooms() {
-      const rooms = JSON.parse(localStorage.getItem("cartas.rooms.v3") || "[]");
-      const container = document.getElementById("roomsList");
-      if(container) container.innerHTML = rooms.map(r => `<div class="room-card"><div class="room-head"><strong>${r.name}</strong></div><div class="room-actions"><button class="btn secondary" onclick="joinRoom('${r.id}')">Entrar</button></div></div>`).join('');
-    }
-    function renderAdminPlayersList() { /* stub */ }
+    window.openAdminModal = openAdminModal;
+    window.closeAdminModal = closeAdminModal;
+    window.loginAdmin = loginAdmin;
+    window.saveRoomMusicList = saveRoomMusicList;
 
     // ==================== MÚSICA ====================
     function setupMusic() {
       if(!state.musicAudio) state.musicAudio = new Audio();
       let saved = localStorage.getItem("cartas.playlist");
       if(saved) state.playlist = JSON.parse(saved);
-      if(!state.playlist.length) state.playlist = DEFAULT_ROOM_PLAYLIST.slice();
+      if(!state.playlist.length) state.playlist = DEFAULT_PLAYLIST.slice();
       state.musicAudio.src = state.playlist[state.trackIndex % state.playlist.length];
       state.musicAudio.volume = state.musicVolume;
     }
@@ -919,7 +922,7 @@
     function setMusicVolume(v) { state.musicVolume = v/100; if(state.musicAudio) state.musicAudio.volume = state.musicVolume; }
     window.toggleMusic = toggleMusic; window.nextTrack = nextTrack; window.prevTrack = prevTrack; window.setMusicVolume = setMusicVolume;
 
-    // ==================== LÓGICA DO JOGO (CARTAS) ====================
+    // ==================== LÓGICA DO JOGO ====================
     function createCard() {
       let value = Math.floor(Math.random()*10).toString();
       const r = Math.random();
@@ -1008,16 +1011,16 @@
       if(state.roomMode) syncGameState();
     };
 
-    // ==================== FIRESTORE: SALAS, MEMBROS, ESTADO, CHAT, WEBRTC ====================
+    // ==================== MULTPLAYER FIRESTORE ====================
     function getLocalMyName() { return (document.getElementById("roomName").value.trim() || document.getElementById("playerName").value.trim() || "Jogador").slice(0,18); }
-    async function joinRoom(roomId) {
+    window.joinRoom = async (roomId) => {
       const name = getLocalMyName();
       if(!name) { alert("Digite seu nome"); return; }
       state.myName = name;
-      state.myId = currentUser?.uid || Math.random().toString(36).substring(2,8);
+      state.myId = currentUser?.uid || Math.random().toString(36).substring(2,10);
       state.roomId = roomId;
       state.roomMode = true;
-      const memberRef = doc(db, `cartas_rooms/${roomId}/members`, state.myId);
+      const memberRef = doc(db, `room_members/${roomId}`, state.myId);
       await setDoc(memberRef, { uid: state.myId, name: state.myName, seat: -1, color: `#${Math.floor(Math.random()*16777215).toString(16)}`, lastSeen: Date.now() });
       listenRoomMembers(roomId);
       listenGameState(roomId);
@@ -1027,9 +1030,9 @@
       document.getElementById("table").style.display = "block";
       document.getElementById("chatPanel").style.display = "flex";
       setupMusic(); if(localStorage.getItem("musicAuto")!=="off") playMusic();
-    }
+    };
     function listenRoomMembers(roomId) {
-      const col = collection(db, `cartas_rooms/${roomId}/members`);
+      const col = collection(db, `room_members/${roomId}/members`);
       onSnapshot(col, (snap) => {
         let members = []; snap.forEach(d=>members.push(d.data()));
         members.sort((a,b)=>a.lastSeen - b.lastSeen);
@@ -1043,7 +1046,7 @@
       });
     }
     function listenGameState(roomId) {
-      const stateRef = doc(db, `cartas_rooms/${roomId}/gameState`, "current");
+      const stateRef = doc(db, `game_states`, roomId);
       onSnapshot(stateRef, (snap) => {
         if(!snap.exists()) { initGameLocal(); syncGameState(); }
         else {
@@ -1060,7 +1063,7 @@
     }
     async function syncGameState() {
       if(!state.roomId) return;
-      const ref = doc(db, `cartas_rooms/${state.roomId}/gameState`, "current");
+      const ref = doc(db, "game_states", state.roomId);
       await setDoc(ref, {
         players: state.players, topCard: state.topCard, turn: state.turn,
         penalty: state.penalty, gameRunning: state.gameRunning, deck: state.deck,
@@ -1068,14 +1071,14 @@
       }, { merge: true });
     }
     function listenChat(roomId) {
-      const chatRef = doc(db, "cartas_chats", roomId);
+      const chatRef = doc(db, "chats", roomId);
       onSnapshot(chatRef, (snap) => {
         if(snap.exists()) renderChatMessages(snap.data().messages || []);
       });
     }
     async function sendChatMessage(text) {
       if(!text.trim() || !state.roomId) return;
-      const chatRef = doc(db, "cartas_chats", state.roomId);
+      const chatRef = doc(db, "chats", state.roomId);
       const newMsg = { author: state.myName, authorId: state.myId, message: text.trim(), timestamp: Date.now() };
       await updateDoc(chatRef, { messages: arrayUnion(newMsg) }).catch(()=>setDoc(chatRef,{messages:[newMsg]}));
     }
@@ -1091,7 +1094,7 @@
     }
     function escapeHtml(s) { return String(s).replace(/[&<>]/g, m=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-    // ==================== WEBRTC (ÁUDIO) ====================
+    // ==================== WEBRTC ====================
     async function createPeerConnection(peerUid) {
       if(peerUid === state.myId) return null;
       if(state.peerConnections.has(peerUid)) return state.peerConnections.get(peerUid);
@@ -1114,10 +1117,10 @@
     }
     async function sendSignal(to, data) {
       if(!state.roomId) return;
-      await addDoc(collection(db, `cartas_rooms/${state.roomId}/signals`), { to, from: state.myId, ...data, createdAt: Date.now() });
+      await addDoc(collection(db, `signals/${state.roomId}/messages`), { to, from: state.myId, ...data, createdAt: Date.now() });
     }
     function listenSignals(roomId) {
-      const col = collection(db, `cartas_rooms/${roomId}/signals`);
+      const col = collection(db, `signals/${roomId}/messages`);
       onSnapshot(col, async (snap) => {
         for(const docSnap of snap.docs) {
           const sig = docSnap.data();
@@ -1162,8 +1165,10 @@
       for(let el of state.remoteAudioElements.values()) el.volume = state.audioEnabled?1:0;
       document.getElementById("audioBtn").innerHTML = state.audioEnabled ? "Áudio: ligado" : "Áudio: desligado";
     };
-    function setMicVolume(v) { if(state.localStream) { const gain = state.localStream.getAudioTracks()[0]?.applyConstraints; } }
+    function setMicVolume(v) { /* opcional */ }
     function setMasterVolume(v) { for(let el of state.remoteAudioElements.values()) el.volume = (state.audioEnabled?1:0)*(v/100); }
+    window.setMicVolume = setMicVolume;
+    window.setMasterVolume = setMasterVolume;
 
     // ==================== CHAT RETRÁTIL E NAVEGAÇÃO ====================
     window.toggleChat = function() {
@@ -1179,7 +1184,6 @@
       if(input.value.trim()) sendChatMessage(input.value);
       input.value = "";
     });
-    window.joinRoom = joinRoom;
     window.joinRobots = function() {
       const name = document.getElementById("playerName").value.trim() || "Você";
       state.myName = name;
@@ -1202,7 +1206,7 @@
       document.getElementById("lobbyScreen").style.display = "flex";
       document.getElementById("chatPanel").style.display = "none";
       pauseMusic();
-      renderLobbyRooms();
+      loadRooms();
     };
     function toggleTheme() {
       const dark = document.getElementById("themeToggle").checked;
@@ -1215,23 +1219,11 @@
       document.getElementById("themeToggle").checked = saved === "dark";
     }
     window.toggleTheme = toggleTheme;
-    window.openAdminModal = openAdminModal;
-    window.closeAdminModal = closeAdminModal;
-    window.loginAdmin = loginAdmin;
-    window.saveAdminPassword = saveAdminPassword;
-    window.createRoom = createRoom;
-    window.saveRoomMusicList = saveRoomMusicList;
-    window.resetRoomMusicList = resetRoomMusicList;
-    window.toggleRoomAutoPlay = toggleRoomAutoPlay;
-    window.confirmRoomPassword = () => { closeAdminModal(); };
-    window.addEventListener("DOMContentLoaded", () => {
-      loadTheme();
-      renderLobbyRooms();
-      renderAdminRooms();
-      setupMusic();
-      let savedPlaylist = localStorage.getItem("cartas.playlist");
-      if(savedPlaylist) state.playlist = JSON.parse(savedPlaylist);
-    });
+
+    // ==================== INICIALIZAÇÃO ====================
+    loadTheme();
+    loadRooms();
+    setupMusic();
   </script>
 </body>
 </html>
