@@ -3296,7 +3296,6 @@
 
     if (data.topCard !== undefined) window.state.topCard = data.topCard;
     if (Array.isArray(data.roomMembers)) window.state.roomMembers = data.roomMembers;
-    if (typeof data.mySeat === "number") window.state.mySeat = data.mySeat;
     if (data.roomName) window.state.roomName = data.roomName;
     if (typeof data.deckCount === "number") window.state.deck = new Array(Math.max(0, data.deckCount)).fill(null);
     if (typeof data.revision === "number") firebaseState.roomRevision = data.revision;
@@ -3540,17 +3539,31 @@
         const tb = Number(b.joinedAt || b.lastSeen || 0);
         return ta - tb;
       });
-      const normalized = members.slice(0, ROOM_SEATS).map((m, idx) => ({
-        uid: String(m.uid || ""),
-        userId: String(m.userId || "").slice(0, 8),
-        name: String(m.name || "Jogador").slice(0, 18),
-        seat: Number.isFinite(Number(m.seat)) ? Number(m.seat) : idx,
-        color: m.color || "#64748b"
-      }));
+      const takenSeats = new Set();
+      const normalized = members.slice(0, ROOM_SEATS).map((m, idx) => {
+        let seat = Number.isFinite(Number(m.seat)) ? Number(m.seat) : -1;
+        if (seat < 0 || seat >= ROOM_SEATS || takenSeats.has(seat)) {
+          seat = 0;
+          while (seat < ROOM_SEATS && takenSeats.has(seat)) seat++;
+          if (seat >= ROOM_SEATS) seat = idx % ROOM_SEATS;
+        }
+        takenSeats.add(seat);
+        return {
+          uid: String(m.uid || ""),
+          userId: String(m.userId || "").slice(0, 8),
+          name: String(m.name || "Jogador").slice(0, 18),
+          seat,
+          color: m.color || "#64748b"
+        };
+      });
       window.state.roomMembers = normalized;
       const selfIndex = normalized.findIndex((m) => m.uid === uid);
-      window.state.mySeat = selfIndex >= 0 ? Number(normalized[selfIndex].seat) || selfIndex : 0;
-      window.state.roomMembers = normalized.map((m, idx) => ({ ...m, seat: Number.isFinite(Number(m.seat)) ? Number(m.seat) : idx }));
+      const previousSeat = window.state.mySeat;
+      window.state.mySeat = selfIndex >= 0 ? normalized[selfIndex].seat : 0;
+      if (window.state.mySeat !== previousSeat) {
+        await syncPresence(roomId).catch(() => {});
+        await syncRoomState().catch(() => {});
+      }
       for (const m of normalized) {
         if (m.uid && m.uid !== uid) {
           await createPeerConnection(roomId, m);
