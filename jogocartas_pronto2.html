@@ -2329,7 +2329,26 @@
     }
 
     function enterRoomDirectly(room, enteredName){
-      return window.enterRoomDirectly(room, enteredName);
+      const identity = ensureCurrentUserIdentity(enteredName || getEnteredName());
+      state.myName = identity.name;
+      state.myId = identity.id;
+      state.roomMode = true;
+      state.roomWaiting = false;
+      state.roomMembers = [
+        { name: "Jogador 2", id: randomId4(), color: "#3b82f6" },
+        { name: "Jogador 3", id: randomId4(), color: "#22c55e" },
+        { name: "Jogador 4", id: randomId4(), color: "#eab308" }
+      ];
+      state.roomMembers.forEach(member => upsertKnownUser(member));
+      showGame();
+      firebaseBridge.listenChat(chatStorageKey());
+      initGame();
+      setupMusic();
+      if (state.roomMusicAutoPlay) playMusic();
+      else pauseMusic();
+      addChatMessage(state.myName, `Entrou em ${room.name}`);
+      renderRoomPresence();
+      renderChat();
     }
 
     function getPlayerName(index){
@@ -3265,14 +3284,23 @@
     if (typeof data.penalty === "number") window.state.penalty = data.penalty;
     if (typeof data.gameRunning === "boolean") window.state.gameRunning = data.gameRunning;
 
-    const incomingPlayers = Array.isArray(data.players)
-      ? data.players
-      : (data.playersBySeat && typeof data.playersBySeat === "object"
-          ? [0, 1, 2, 3].map((seat) => Array.isArray(data.playersBySeat[String(seat)]) ? data.playersBySeat[String(seat)] : [])
-          : null);
+    let nextPlayers = null;
+    if (data.playersBySeat && typeof data.playersBySeat === "object") {
+      nextPlayers = [0, 1, 2, 3].map((seat) => Array.isArray(data.playersBySeat[String(seat)]) ? data.playersBySeat[String(seat)] : []);
+    } else if (Array.isArray(data.players) && data.players.length === 4) {
+      if (Number.isInteger(data.mySeat)) {
+        nextPlayers = Array.from({ length: ROOM_SEATS }, () => []);
+        data.players.forEach((seatCards, relSeat) => {
+          const absSeat = (Number(data.mySeat) + Number(relSeat)) % ROOM_SEATS;
+          nextPlayers[absSeat] = Array.isArray(seatCards) ? seatCards : [];
+        });
+      } else {
+        nextPlayers = data.players.map((seatCards) => Array.isArray(seatCards) ? seatCards : []);
+      }
+    }
 
-    if (Array.isArray(incomingPlayers) && incomingPlayers.length === 4) {
-      window.state.players = incomingPlayers.map((seatCards) => Array.isArray(seatCards) ? seatCards : []);
+    if (Array.isArray(nextPlayers) && nextPlayers.length === 4) {
+      window.state.players = nextPlayers;
     }
 
     if (data.topCard !== undefined) window.state.topCard = data.topCard;
@@ -3469,6 +3497,16 @@
   window.initGame = function() {
     const result = original.initGame ? original.initGame() : undefined;
     if (window.state.roomMode) {
+      const seat = localSeatIndex();
+      if (Array.isArray(window.state.players) && window.state.players.length === ROOM_SEATS) {
+        const rotated = Array.from({ length: ROOM_SEATS }, () => []);
+        window.state.players.forEach((seatCards, relSeat) => {
+          const absSeat = (seat + Number(relSeat)) % ROOM_SEATS;
+          rotated[absSeat] = Array.isArray(seatCards) ? seatCards : [];
+        });
+        window.state.players = rotated;
+      }
+      window.state.turn = seat;
       window.state.roomStateLoaded = true;
       window.render();
       syncRoomState();
@@ -3484,6 +3522,10 @@
     window.state.roomWaiting = false;
     window.state.roomName = room.name;
     window.state.roomId = room.id;
+    window.state.audioEnabled = true;
+    safeSet("cartas-audio", "on");
+    if (typeof window.updateAudioButton === "function") window.updateAudioButton();
+    if (typeof window.applyVolumes === "function") window.applyVolumes();
     window.showGame();
     window.setupMusic();
     if (window.state.roomMusicAutoPlay) window.playMusic(); else window.pauseMusic();
