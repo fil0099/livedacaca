@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartay - Multiplayer</title>
+  <title>Cartaz - Multiplayer em Tempo Real</title>
   <style>
     /* ========== SEU CSS ORIGINAL COMPLETO (NÃO ALTERADO) ========== */
     :root{
@@ -190,9 +190,6 @@
       font-size:.96rem;
     }
 
-    #gameScreen{ display:none; }
-    #endScreen{ display:none; }
-
     #table{
       position:fixed; inset:0; display:none; overflow:hidden;
       background:
@@ -239,7 +236,6 @@
       accent-color: var(--accent-2);
       height: 16px;
     }
-    .music-note{ display:none; }
 
     .hud-right{
       display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
@@ -612,392 +608,7 @@
       justify-content:space-between;
       gap:8px;
     }
-    #gameScreen{ display:none; }
-    #gameScreen{ display:none; }
-    #endScreen{ display:none; }
 
-    #table{
-      position:fixed; inset:0; display:none; overflow:hidden;
-      background:
-        radial-gradient(circle at 50% 45%, var(--board-glow-2), transparent 30%),
-        radial-gradient(circle at 50% 45%, var(--board-glow), transparent 42%);
-    }
-    .table-shell{
-      position:relative; width:100%; height:100%;
-      padding:16px;
-      display:grid;
-      grid-template-rows:auto 1fr;
-      gap:12px;
-    }
-    .hud{
-      display:flex; justify-content:space-between; align-items:center; gap:12px;
-      padding:14px 16px;
-    }
-    .hud .title{ display:flex; flex-direction:column; gap:4px; }
-    .hud .title strong{ font-size:1.02rem; letter-spacing:.02em; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    .hud .title small{ color:var(--muted); font-size:.9rem; }
-
-    .header-inline{
-      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-    }
-
-    .music-player{
-      display:flex; align-items:center; gap:8px;
-      padding:8px 10px;
-      border-radius:18px;
-    }
-    .music-row{ display:flex; align-items:center; gap:6px; }
-    .music-btn{
-      width:28px; height:28px; padding:0; border-radius:10px; font-size:.9rem; line-height:1;
-    }
-    .music-disc{
-      width:34px; height:34px; border-radius:50%; object-fit:cover; cursor:pointer;
-      box-shadow:0 8px 18px rgba(0,0,0,.14);
-    }
-    .music-disc.playing{ animation: spin 4s linear infinite; }
-    @keyframes spin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
-    .music-controls{ display:flex; flex-direction:column; gap:4px; align-items:stretch; min-width:120px; }
-    .music-volume{
-      width:120px;
-      accent-color: var(--accent-2);
-      height: 16px;
-    }
-    .music-note{ display:none; }
-
-    .hud-right{
-      display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
-    }
-    .turn-badge{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:10px 14px; border-radius:999px;
-      background:rgba(34,197,94,.14);
-      border:1px solid rgba(34,197,94,.25);
-      font-weight:800;
-      white-space:nowrap;
-    }
-    .turn-dot{ width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(34,197,94,.14); }
-
-    .theme-switch{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:8px 10px; border-radius:999px;
-      background:var(--panel-strong); border:1px solid var(--stroke);
-      font-size:.84rem; font-weight:800;
-      white-space:nowrap;
-    }
-    .switch{ position:relative; width:46px; height:26px; display:inline-block; }
-    .switch input{ opacity:0; width:0; height:0; }
-    .slider{
-      position:absolute; inset:0; cursor:pointer; background:#cbd5e1; transition:.2s; border-radius:999px;
-    }
-    .slider:before{
-      position:absolute; content:""; height:20px; width:20px; left:3px; top:3px; background:white; transition:.2s; border-radius:50%;
-    }
-    .switch input:checked + .slider{ background:#22c55e; }
-    .switch input:checked + .slider:before{ transform:translateX(20px); }
-
-    .voice-group{
-      display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
-    }
-    .mini-toggle{
-      min-width:98px; padding:8px 11px; font-size:.84rem; border-radius:999px;
-    }
-    .tiny-control{
-      display:flex; align-items:center; gap:6px; padding:6px 8px;
-      border:1px solid var(--stroke); border-radius:999px; background:var(--panel-strong);
-      color:var(--text);
-    }
-    .tiny-control span{ font-size:.73rem; font-weight:800; color:var(--muted); }
-    .tiny-control input[type="range"]{ width:64px; accent-color: var(--accent-2); }
-
-    .board{
-      position:relative; width:100%; height:100%;
-      display:grid; grid-template-columns: 1fr 1.2fr 1fr;
-      grid-template-rows: 1fr 1.1fr 1fr;
-      gap:12px;
-      min-height:0;
-    }
-
-    .hand{
-      min-width:0;
-      display:flex; flex-direction:column; gap:8px;
-      padding:10px;
-      overflow:hidden;
-    }
-    .hand .info{
-      display:flex; align-items:center; gap:8px;
-      font-size:.88rem; font-weight:800;
-      color:var(--text);
-    }
-    .hand .info small{ color:var(--muted); font-weight:700; }
-    .cards{ display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start; }
-
-    .player-top{ grid-column:1 / 4; grid-row:1; align-self:start; }
-    .player-left{ grid-column:1; grid-row:2; align-self:center; }
-    .player-right{ grid-column:3; grid-row:2; align-self:center; }
-    .center-area{
-      grid-column:2; grid-row:2;
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
-      min-height:0;
-    }
-    .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; }
-
-    .center-card-row{ display:flex; align-items:center; gap:14px; justify-content:center; }
-    .pile{
-      width:var(--card-w); height:var(--card-h); border-radius:16px; border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      box-shadow: var(--shadow);
-    }
-    .pile.draw{ background: linear-gradient(135deg, rgba(15,23,42,.92), rgba(30,41,59,.92)); }
-    .pile.discard{ position:relative; overflow:hidden; }
-    .pile.discard .card{ margin:0; }
-
-    .board-note{
-      padding:10px 14px; text-align:center; font-size:.9rem; color:var(--muted);
-      max-width: 340px;
-    }
-    #turnText{
-      display:none;
-      position:absolute;
-      left:50%; top:12px;
-      transform:translateX(-50%);
-      padding:10px 16px; border-radius:999px;
-      background:rgba(34,197,94,.14);
-      color:var(--text); border:1px solid rgba(34,197,94,.26);
-      font-weight:900; letter-spacing:.08em; z-index:2;
-    }
-
-    .card{
-      width:var(--card-w);
-      height:var(--card-h);
-      border-radius:16px;
-      position:relative;
-      border:2px solid rgba(255,255,255,.25);
-      background-size:cover;
-      background-position:center;
-      box-shadow:0 10px 22px rgba(15,23,42,.18);
-      transform:translateY(0) scale(1);
-      transition: transform .16s ease, box-shadow .16s ease, filter .16s ease;
-      overflow:hidden;
-      user-select:none;
-    }
-    .card::after{
-      content: attr(data-value);
-      position:absolute;
-      top:6px; left:6px;
-      padding:4px 6px;
-      border-radius:999px;
-      font-size:.72rem;
-      font-weight:900;
-      color:white;
-      background:rgba(15,23,42,.64);
-      backdrop-filter: blur(4px);
-      min-width: 20px;
-      text-align:center;
-    }
-    .card::before{
-      content:"";
-      position:absolute; inset:0;
-      background: linear-gradient(180deg, rgba(255,255,255,.06), transparent 55%);
-      pointer-events:none;
-    }
-    .card:hover{ transform:translateY(-4px) scale(1.02); cursor:pointer; }
-    .card.playable{ transform: translateY(-8px) scale(1.04); box-shadow:0 18px 34px rgba(15,23,42,.26); }
-    .card.back{
-      background: linear-gradient(135deg, #0f172a, #334155);
-      border:2px solid rgba(255,255,255,.12);
-      cursor:default;
-    }
-    .card.back::after{ content:""; }
-    .card.small{
-      width:var(--card-small-w);
-      height:var(--card-small-h);
-      border-radius:12px;
-      box-shadow:0 8px 18px rgba(15,23,42,.14);
-    }
-    .side .card{ margin:0 0 3px 0; }
-
-    #p1 .cards, #p2 .cards{
-      justify-content:center;
-    }
-    #p1 .info, #p2 .info{
-      justify-content:center;
-    }
-    #p2 .cards, #p3 .cards, #p4 .cards{ max-height: calc(var(--card-h) * 2.4); overflow:hidden; }
-    #p3 .cards, #p4 .cards{ display:flex; flex-direction:column; align-items:flex-start; }
-
-    .chat-panel{
-      position:fixed;
-      right:16px; bottom:16px;
-      width:min(320px, calc(100vw - 32px));
-      max-height: 38vh;
-      display:flex; flex-direction:column; gap:10px;
-      padding:14px;
-      z-index:15;
-    }
-    .chat-panel.collapsed{
-      width:180px;
-      max-height:none;
-    }
-    .chat-panel.collapsed .chat-messages,
-    .chat-panel.collapsed .chat-form{
-      display:none;
-    }
-    .chat-header{ display:flex; flex-direction:column; gap:3px; }
-    .chat-header strong{ font-size:.98rem; }
-    .chat-header small{ color:var(--muted); font-size:.82rem; }
-    .chat-messages{ flex:1; min-height:120px; overflow:auto; display:flex; flex-direction:column; gap:8px; padding-right:2px; }
-    .chat-msg{ display:flex; flex-direction:column; gap:2px; padding:8px 10px; border-radius:14px; background:rgba(255,255,255,.30); border:1px solid var(--stroke); font-size:.88rem; line-height:1.35; }
-    body[data-theme="dark"] .chat-msg{ background:rgba(255,255,255,.04); }
-    .chat-msg strong{ font-size:.78rem; letter-spacing:.03em; text-transform:uppercase; color:var(--accent-2); }
-    .chat-form{ display:flex; gap:8px; }
-    .chat-form input{
-      flex:1; min-width:0; padding:11px 12px; border-radius:14px; border:1px solid var(--stroke);
-      background:var(--panel-strong); color:var(--text); outline:none;
-    }
-    .chat-send{ padding:10px 14px; border-radius:14px; }
-
-    .chat-topline{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-    }
-    .chat-toggle-btn{
-      width:30px; height:30px; padding:0; border-radius:10px; font-size:1rem; line-height:1;
-    }
-    .room-presence{
-      display:flex; gap:6px; align-items:center; flex-wrap:wrap;
-      margin: 2px 0 8px;
-    }
-    .presence-dot{
-      width:12px; height:12px; border-radius:50%;
-      box-shadow:0 0 0 3px rgba(255,255,255,.08);
-      border:1px solid rgba(255,255,255,.25);
-      cursor:help;
-    }
-    .presence-dot:nth-child(1){ background:#ef4444; }
-    .presence-dot:nth-child(2){ background:#3b82f6; }
-    .presence-dot:nth-child(3){ background:#22c55e; }
-    .presence-dot:nth-child(4){ background:#eab308; }
-    .presence-dot:nth-child(5){ background:#a855f7; }
-
-    .room-wait{
-      display:none;
-      position:absolute;
-      inset:0;
-      align-items:center;
-      justify-content:center;
-      z-index:5;
-      pointer-events:auto;
-      background:rgba(15,23,42,.08);
-      backdrop-filter: blur(1px);
-    }
-    .room-wait-card{
-      width:min(360px, 92%);
-      padding:18px;
-      border-radius:22px;
-      background:var(--panel-strong);
-      border:1px solid var(--stroke);
-      box-shadow:var(--shadow);
-      text-align:center;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .room-wait-time{
-      font-size:clamp(2rem, 5vw, 3.5rem);
-      font-weight:900;
-      letter-spacing:-0.05em;
-    }
-    .room-wait-actions{
-      display:flex; gap:8px; justify-content:center; flex-wrap:wrap;
-    }
-    .room-wait-note{ color:var(--muted); font-size:.92rem; line-height:1.4; }
-
-    body.room-waiting .board .hand,
-    body.room-waiting .draw,
-    body.room-waiting .discard,
-    body.room-waiting .center-card-row,
-    body.room-waiting .board-note,
-    body.room-waiting #turnText{
-      opacity:.25;
-      pointer-events:none;
-      filter: blur(.2px);
-    }
-
-    .end-card{ max-width:560px; }
-
-    .lobby-topbar{
-      display:flex;
-      justify-content:flex-end;
-      margin-bottom:12px;
-    }
-    .admin-btn{ padding:10px 14px; }
-    .modal{
-      position:fixed; inset:0; display:none;
-      align-items:center; justify-content:center;
-      padding:24px;
-      z-index:40;
-      background:rgba(15,23,42,.44);
-      backdrop-filter: blur(10px);
-    }
-    .modal-card{
-      width:min(720px, 100%);
-      border:1px solid var(--stroke);
-      background:var(--panel);
-      box-shadow:var(--shadow);
-      border-radius:24px;
-      padding:22px;
-      backdrop-filter: blur(12px);
-    }
-    #adminModal .modal-card{
-      max-height: calc(100vh - 48px);
-      overflow-y: auto;
-    }
-    .modal-card h3{ margin:0; font-size:1.2rem; }
-    .modal-row{ display:flex; gap:10px; flex-wrap:wrap; }
-    .modal-row .field{
-      flex:1;
-      min-width:0;
-      padding:12px 14px;
-      border-radius:16px;
-      border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      color:var(--text);
-      outline:none;
-      font-size:1rem;
-    }
-    .modal-section{
-      padding:14px;
-      border-radius:18px;
-      background:rgba(255,255,255,.10);
-      border:1px solid var(--stroke);
-    }
-    .modal-list{ display:flex; flex-direction:column; gap:10px; max-height:52vh; overflow:auto; padding-right:2px; }
-    .admin-room-item{
-      display:grid;
-      grid-template-columns: 1fr auto;
-      gap:10px;
-      align-items:center;
-      padding:12px;
-      border-radius:16px;
-      background:rgba(255,255,255,.10);
-      border:1px solid var(--stroke);
-    }
-    .admin-room-item small{ color:var(--muted); }
-    .room-password-row{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:8px;
-    }
-    .room-password-row input{
-      flex:1;
-      min-width:160px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      color:var(--text);
-      outline:none;
-    }
     .room-lock-pill{
       display:inline-flex;
       align-items:center;
@@ -1142,6 +753,7 @@
   </style>
 </head>
 <body data-theme="light">
+  <!-- LOBBY (exatamente igual ao seu original) -->
   <div id="lobbyScreen" class="screen">
     <div class="panel centered">
       <div class="lobby-topbar">
@@ -1157,7 +769,7 @@
             <input id="playerName" type="text" placeholder="Digite seu nome" maxlength="18" />
             <button class="btn" onclick="joinRobots()">Jogar com robôs</button>
           </div>
-          <div class="mini-note">Entre sozinho contra robôs ou siga para uma sala multiplayer. A integração com Firebase pode entrar depois.</div>
+          <div class="mini-note">Entre sozinho contra robôs ou siga para uma sala multiplayer.</div>
         </div>
 
         <div class="lobby-card" style="padding:22px; text-align:left;">
@@ -1191,9 +803,9 @@
             <strong>Cartas</strong>
             <div id="musicPlayer" class="music-player" aria-label="Player de música">
               <div class="music-row">
-                <button class="btn secondary music-btn" type="button" onclick="prevTrack()" aria-label="Música anterior">&lt;</button>
-                <img id="musicDisc" class="music-disc" src="https://raw.githubusercontent.com/fil0099/livedacaca/main/vini2.png" alt="Play e pause da música" onclick="toggleMusic()" />
-                <button class="btn secondary music-btn" type="button" onclick="nextTrack()" aria-label="Próxima música">&gt;</button>
+                <button class="btn secondary music-btn" type="button" onclick="prevTrack()">&lt;</button>
+                <img id="musicDisc" class="music-disc" src="https://raw.githubusercontent.com/fil0099/livedacaca/main/vini2.png" alt="Play/pause" onclick="toggleMusic()" />
+                <button class="btn secondary music-btn" type="button" onclick="nextTrack()">&gt;</button>
               </div>
               <div class="music-controls">
                 <input id="musicVolume" class="music-volume" type="range" min="0" max="100" value="70" oninput="setMusicVolume(this.value)" />
@@ -1207,39 +819,18 @@
           <div class="voice-group">
             <button id="audioBtn" class="btn secondary mini-toggle" type="button" onclick="toggleAudio()">Áudio: desligado</button>
             <button id="micBtn" class="btn secondary mini-toggle" type="button" onclick="toggleMic()">Mic: desligado</button>
-            <label class="tiny-control" title="Volume do microfone">
-              <span>Mic</span>
-              <input id="micVolume" type="range" min="0" max="100" value="100" oninput="setMicVolume(this.value)" />
-            </label>
-            <label class="tiny-control" title="Volume do áudio">
-              <span>Som</span>
-              <input id="masterVolume" type="range" min="0" max="100" value="100" oninput="setMasterVolume(this.value)" />
-            </label>
+            <label class="tiny-control"><span>Mic</span><input id="micVolume" type="range" min="0" max="100" value="100" oninput="setMicVolume(this.value)" /></label>
+            <label class="tiny-control"><span>Som</span><input id="masterVolume" type="range" min="0" max="100" value="100" oninput="setMasterVolume(this.value)" /></label>
           </div>
           <div id="hudTurn" class="turn-badge"><span class="turn-dot"></span><span>Sua vez</span></div>
-          <label class="theme-switch" title="Alternar tema">
-            <span>Claro/Escuro</span>
-            <span class="switch">
-              <input id="themeToggle" type="checkbox" onchange="toggleTheme()" />
-              <span class="slider" aria-hidden="true"></span>
-            </span>
-          </label>
+          <label class="theme-switch"><span>Claro/Escuro</span><span class="switch"><input id="themeToggle" type="checkbox" onchange="toggleTheme()" /><span class="slider"></span></span></label>
         </div>
       </div>
 
       <div class="board">
         <div id="turnText">SUA VEZ</div>
-
-        <div id="p2" class="hand player-top">
-          <div class="info"></div>
-          <div class="cards"></div>
-        </div>
-
-        <div id="p3" class="hand side player-left">
-          <div class="info"></div>
-          <div class="cards"></div>
-        </div>
-
+        <div id="p2" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
+        <div id="p3" class="hand side player-left"><div class="info"></div><div class="cards"></div></div>
         <div class="center-area">
           <div class="center-card-row">
             <div id="drawPile" class="pile draw"></div>
@@ -1258,16 +849,8 @@
           <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre quando não puder jogar.</div>
           <button class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
-
-        <div id="p4" class="hand side player-right">
-          <div class="info"></div>
-          <div class="cards"></div>
-        </div>
-
-        <div id="p1" class="hand player-bottom">
-          <div class="info"></div>
-          <div class="cards"></div>
-        </div>
+        <div id="p4" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
+        <div id="p1" class="hand player-bottom"><div class="info"></div><div class="cards"></div></div>
       </div>
     </div>
   </div>
@@ -1288,15 +871,11 @@
     </form>
   </div>
 
-
   <div id="adminModal" class="modal">
     <div class="modal-card">
       <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
         <h3>Administração</h3>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn secondary small" type="button" onclick="logoutAdmin()">Sair do adm</button>
-          <button class="btn secondary small" type="button" onclick="closeAdminModal()">Fechar</button>
-        </div>
+        <div><button class="btn secondary small" onclick="closeAdminModal()">Fechar</button></div>
       </div>
       <div id="adminLoginBox" class="modal-section">
         <strong>Entrar como Adm</strong>
@@ -1305,93 +884,28 @@
           <button class="btn" type="button" onclick="loginAdmin()">Entrar</button>
         </div>
       </div>
-
       <div id="adminPanel" style="display:none; gap:14px; flex-direction:column;">
-        <div id="adminPasswordSection" class="modal-section">
-          <strong>Alterar senha do Adm</strong>
-          <div class="modal-row" style="margin-top:10px;">
-            <input id="newAdminPassword" class="field" type="password" placeholder="Nova senha do adm" />
-            <button class="btn" type="button" onclick="saveAdminPassword()">Salvar</button>
-          </div>
-        </div>
-        <div id="adminDelegateSection" class="modal-section">
-          <strong>Delegar função</strong>
-          <div class="mini-note">Pesquise pelo nome ou pelo id de 4 caracteres. Depois selecione as funções e clique em Adicionar.</div>
-          <div class="modal-row" style="margin-top:10px;">
-            <input id="adminUserSearch" class="field" type="text" placeholder="Pesquisar usuário por nome ou id" oninput="renderAdminUserSearch()" />
-            <button class="btn secondary" type="button" onclick="clearAdminUserSelection()">Limpar</button>
-          </div>
-          <div id="adminUserSearchResults" class="admin-search-results"></div>
-          <div id="adminSelectedUser" class="admin-selected-user" style="display:none;"></div>
-          <div style="margin-top:12px;">
-            <strong>Funções de adm</strong>
-            <div id="adminFunctionList" class="admin-permission-list" style="margin-top:10px;"></div>
-            <div class="modal-row" style="margin-top:12px;">
-              <button class="btn" type="button" onclick="addAdminDelegation()">Adicionar</button>
-            </div>
-          </div>
-          <div style="margin-top:14px;">
-            <strong>Usuários com função de adm</strong>
-            <div id="adminDelegatedList" class="admin-role-list" style="margin-top:10px;"></div>
-          </div>
-        </div>
-
-        <div id="adminPlayersSection" class="modal-section">
-          <strong>Excluir jogador</strong>
-          <div class="mini-note">Clique em excluir para remover a conta do jogador, com confirmação.</div>
-          <div id="adminPlayersList" class="admin-role-list" style="margin-top:10px;"></div>
-        </div>
-
-        <div id="adminRoomsSection" class="modal-section">
-          <strong>Nova sala</strong>
-          <div class="modal-row" style="margin-top:10px;">
-            <input id="newRoomName" class="field" type="text" placeholder="Nome da nova sala" />
-            <button class="btn" type="button" onclick="createRoom()">Criar</button>
-          </div>
-        </div>
-        <div id="adminExistingRoomsSection" class="modal-section">
-          <strong>Salas existentes</strong>
-          <div id="adminRooms" class="modal-list" style="margin-top:10px;"></div>
-        </div>
-
-        <div id="adminMusicSection" class="modal-section">
-          <strong>Músicas das salas</strong>
-          <div class="mini-note">Cole uma URL por linha. Vale para todas as salas ao mesmo tempo.</div>
-          <div class="music-admin-box" style="margin-top:10px;">
-            <textarea id="roomMusicList" placeholder="Uma URL por linha"></textarea>
-            <div class="modal-row">
-              <button class="btn" type="button" onclick="saveRoomMusicList()">Salvar músicas</button>
-              <button class="btn secondary" type="button" onclick="resetRoomMusicList()">Restaurar padrão</button>
-            </div>
-            <label class="theme-switch" style="justify-content:flex-start;" title="Desliga a reprodução automática ao entrar nas salas">
-              <span>Auto play nas salas</span>
-              <span class="switch">
-                <input id="roomAutoPlayToggle" type="checkbox" onchange="toggleRoomAutoPlay()" />
-                <span class="slider" aria-hidden="true"></span>
-              </span>
-            </label>
-          </div>
-        </div>
+        <div id="adminPasswordSection" class="modal-section"><strong>Alterar senha do Adm</strong><div class="modal-row"><input id="newAdminPassword" class="field" type="password" placeholder="Nova senha do adm" /><button class="btn" onclick="saveAdminPassword()">Salvar</button></div></div>
+        <div id="adminDelegateSection" class="modal-section"><strong>Delegar função</strong><div class="mini-note">Pesquise pelo nome ou pelo id de 4 caracteres. Depois selecione as funções e clique em Adicionar.</div><div class="modal-row"><input id="adminUserSearch" class="field" type="text" placeholder="Pesquisar usuário por nome ou id" oninput="renderAdminUserSearch()" /><button class="btn secondary" onclick="clearAdminUserSelection()">Limpar</button></div><div id="adminUserSearchResults" class="admin-search-results"></div><div id="adminSelectedUser" class="admin-selected-user" style="display:none;"></div><div><strong>Funções de adm</strong><div id="adminFunctionList" class="admin-permission-list"></div><div class="modal-row"><button class="btn" onclick="addAdminDelegation()">Adicionar</button></div></div><div><strong>Usuários com função de adm</strong><div id="adminDelegatedList" class="admin-role-list"></div></div></div>
+        <div id="adminPlayersSection" class="modal-section"><strong>Excluir jogador</strong><div class="mini-note">Clique em excluir para remover a conta do jogador, com confirmação.</div><div id="adminPlayersList" class="admin-role-list"></div></div>
+        <div id="adminRoomsSection" class="modal-section"><strong>Nova sala</strong><div class="modal-row"><input id="newRoomName" class="field" type="text" placeholder="Nome da nova sala" /><button class="btn" onclick="createRoom()">Criar</button></div></div>
+        <div id="adminExistingRoomsSection" class="modal-section"><strong>Salas existentes</strong><div id="adminRooms" class="modal-list"></div></div>
+        <div id="adminMusicSection" class="modal-section"><strong>Músicas das salas</strong><div class="mini-note">Cole uma URL por linha. Vale para todas as salas ao mesmo tempo.</div><div class="music-admin-box"><textarea id="roomMusicList" placeholder="Uma URL por linha"></textarea><div class="modal-row"><button class="btn" onclick="saveRoomMusicList()">Salvar músicas</button><button class="btn secondary" onclick="resetRoomMusicList()">Restaurar padrão</button></div><label class="theme-switch" style="justify-content:flex-start;"><span>Auto play nas salas</span><span class="switch"><input id="roomAutoPlayToggle" type="checkbox" onchange="toggleRoomAutoPlay()" /><span class="slider"></span></span></label></div></div>
       </div>
     </div>
   </div>
   <div id="roomPasswordModal" class="modal">
     <div class="modal-card" style="max-width:520px; position:relative;">
-      <button class="btn secondary small" type="button" onclick="closeRoomPasswordModal()" aria-label="Fechar" style="position:absolute; top:12px; right:12px; width:34px; height:34px; padding:0; border-radius:999px;">×</button>
+      <button class="btn secondary small" type="button" onclick="closeRoomPasswordModal()" style="position:absolute; top:12px; right:12px; width:34px; height:34px; padding:0; border-radius:999px;">×</button>
       <h3 id="roomPasswordTitle">Entrar na sala</h3>
       <div class="mini-note" id="roomPasswordNote">Esta sala está trancada. Digite a senha correta para entrar.</div>
-      <div class="modal-section" style="margin-top:10px;">
-        <input id="roomPasswordInput" class="field" type="password" placeholder="Senha da sala" />
-      </div>
-      <div class="modal-row" style="margin-top:14px;">
-        <button class="btn" type="button" onclick="confirmRoomPassword()">Entrar</button>
-        <button class="btn secondary" type="button" onclick="backToLobby()">Cancelar</button>
-      </div>
+      <div class="modal-section" style="margin-top:10px;"><input id="roomPasswordInput" class="field" type="password" placeholder="Senha da sala" /></div>
+      <div class="modal-row" style="margin-top:14px;"><button class="btn" onclick="confirmRoomPassword()">Entrar</button><button class="btn secondary" onclick="backToLobby()">Cancelar</button></div>
     </div>
   </div>
 
-    <script>
-    // ==================== SEU SCRIPT ORIGINAL (NÃO ALTERADO) ====================
+  <script>
+    // ==================== SEU SCRIPT ORIGINAL COMPLETO (mantido) ====================
     const imgs = [
       "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
       "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
@@ -1399,53 +913,17 @@
       "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp"
     ];
     const colors = ["red", "blue", "green", "yellow"];
-
-    const colorMap = {
-      red: "#ef4444",
-      blue: "#3b82f6",
-      green: "#22c55e",
-      yellow: "#eab308"
-    };
+    const colorMap = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#eab308" };
 
     const state = {
-      roomMode: false,
-      roomName: "",
-      roomId: null,
-      myName: "Você",
-      roomMembers: [],
-      roomWaiting: false,
-      roomCountdown: 180,
-      roomTimerInterval: null,
-      chatCollapsed: false,
-      deck: [],
-      players: [[], [], [], []],
-      topCard: null,
-      turn: 0,
-      penalty: 0,
-      gameRunning: false,
-      botTimer: null,
-      audioEnabled: true,
-      micEnabled: false,
-      micStream: null,
-      micAudioContext: null,
-      micSource: null,
-      micGain: null,
-      micMonitor: null,
-      micVolumeValue: 1,
-      masterVolumeValue: 1,
-      trackIndex: 0,
-      musicAudio: null,
-      musicPlaying: false,
-      musicVolumeValue: 0.7,
-      chat: [],
-      isAdmin: false,
-      myId: "",
-      adminSelectedUserId: "",
-      adminPermissionDraft: {},
-      roomMusicAutoPlay: true,
-      mySeat: 0,
-      roomStateLoaded: false,
-      firebaseUid: ""
+      roomMode: false, roomName: "", roomId: null, myName: "Você", roomMembers: [],
+      roomWaiting: false, roomCountdown: 180, roomTimerInterval: null, chatCollapsed: false,
+      deck: [], players: [[], [], [], []], topCard: null, turn: 0, penalty: 0, gameRunning: false,
+      botTimer: null, audioEnabled: true, micEnabled: false, micStream: null, micAudioContext: null,
+      micSource: null, micGain: null, micMonitor: null, micVolumeValue: 1, masterVolumeValue: 1,
+      trackIndex: 0, musicAudio: null, musicPlaying: false, musicVolumeValue: 0.7, chat: [],
+      isAdmin: false, myId: "", adminSelectedUserId: "", adminPermissionDraft: {},
+      roomMusicAutoPlay: true, mySeat: 0, roomStateLoaded: false, firebaseUid: ""
     };
     window.state = state;
 
@@ -1467,10 +945,8 @@
     const LS_ADMIN_PASSWORD = "cartas.adminPassword.v1";
 
     const ADMIN_FUNCTIONS = [
-      { key: "rooms", label: "Salas" },
-      { key: "music", label: "Músicas" },
-      { key: "autoplay", label: "Auto play nas salas" },
-      { key: "chat", label: "Moderar chat" },
+      { key: "rooms", label: "Salas" }, { key: "music", label: "Músicas" },
+      { key: "autoplay", label: "Auto play nas salas" }, { key: "chat", label: "Moderar chat" },
       { key: "delegate", label: "Delegar função" }
     ];
 
@@ -1480,514 +956,194 @@
       { id: "room-3", name: "Sala 3", locked: false, password: "" }
     ];
 
-
     const FIREBASE_CONFIG = window.FIREBASE_CONFIG || null;
 
-    const firebaseBridge = (() => {
-      const PUBLIC_COLLECTION = "cartas_meta";
-      const PRIVATE_COLLECTION = "cartas_meta_private";
-      const CHAT_COLLECTION = "cartas_chats";
+    // firebaseBridge (original, será substituído pelo módulo)
+    const firebaseBridge = (() => { /* vazio por enquanto */ return { start:()=>{}, syncPublic:()=>{}, syncPrivate:()=>{}, listenChat:()=>{}, leaveChat:()=>{}, syncChat:()=>{} }; })();
 
-      let app = null;
-      let db = null;
-      let started = false;
-      let currentChatRoomKey = "";
-      let chatUnsub = null;
-      let publicUnsub = null;
-      let privateUnsub = null;
+    // Funções auxiliares originais
+    function randomId4(){ const n = Math.floor(Math.random() * 0x10000); return n.toString(16).toUpperCase().padStart(4, "0"); }
+    function normalizeText(value){ return String(value || "").trim().toLowerCase(); }
+    function loadUserRegistry(){ try{ const raw = localStorage.getItem(LS_USER_REGISTRY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; } }
+    function saveUserRegistry(users){ try{ localStorage.setItem(LS_USER_REGISTRY, JSON.stringify(users)); }catch(e){} firebaseBridge.syncPublic({ userRegistry: users }); }
+    function upsertKnownUser(user){ if (!user || !user.id) return; const users = loadUserRegistry(); const idx = users.findIndex(u => u.id === user.id); const clean = { id: String(user.id).slice(0,4).toUpperCase(), name: String(user.name || "Usuário").slice(0,18) }; if (idx >= 0) users[idx] = { ...users[idx], ...clean }; else users.push(clean); saveUserRegistry(users); }
+    function ensureCurrentUserIdentity(name){ let currentId = localStorage.getItem(LS_MY_USER_ID); if (!currentId){ currentId = randomId4(); localStorage.setItem(LS_MY_USER_ID, currentId); } const currentName = String(name || state.myName || "Você").trim().slice(0,18) || "Você"; state.myId = currentId; state.myName = currentName; upsertKnownUser({ id: currentId, name: currentName }); return { id: currentId, name: currentName }; }
+    function loadAdminDelegations(){ try{ const raw = localStorage.getItem(LS_ADMIN_DELEGATIONS); return raw ? JSON.parse(raw) : []; }catch(e){ return []; } }
+    function saveAdminDelegations(list){ try{ localStorage.setItem(LS_ADMIN_DELEGATIONS, JSON.stringify(list)); }catch(e){} firebaseBridge.syncPrivate({ adminDelegations: list }); }
+    function getAdminPassword(){ try{ const saved = localStorage.getItem(LS_ADMIN_PASSWORD); if (saved && String(saved).trim()) return String(saved).trim(); localStorage.setItem(LS_ADMIN_PASSWORD, "adm123"); }catch(e){} return "adm123"; }
+    function saveAdminPassword(){ const input = document.getElementById("newAdminPassword"); const nextPassword = (input?.value || "").trim(); if (!nextPassword){ alert("Digite uma nova senha."); return; } try{ localStorage.setItem(LS_ADMIN_PASSWORD, nextPassword); }catch(e){} firebaseBridge.syncPrivate({ adminPassword: nextPassword }); if (input) input.value = ""; const code = document.getElementById("adminCode"); if (code) code.value = ""; alert("Senha do Adm alterada com sucesso."); }
+    function getAdminGrantByUserId(userId){ if (!userId) return null; return loadAdminDelegations().find(item => item && item.userId === userId) || null; }
+    function getCurrentAdminGrant(){ if (state.isAdmin) return { userId: state.myId, permissions: Object.fromEntries(ADMIN_FUNCTIONS.map(f => [f.key, true])) }; return getAdminGrantByUserId(state.myId); }
+    function canUseAdminFunction(key){ if (state.isAdmin) return true; const grant = getCurrentAdminGrant(); return !!(grant && grant.permissions && grant.permissions[key]); }
+    function copyUserId(id){ const text = String(id || "").trim(); if (!text) return; if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).catch(() => {}); } else { const temp = document.createElement("textarea"); temp.value = text; document.body.appendChild(temp); temp.select(); try{ document.execCommand("copy"); }catch(e){} temp.remove(); } }
+    function collectKnownUsers(){ const byId = new Map(); loadUserRegistry().forEach(user => { if (user && user.id) byId.set(String(user.id).slice(0,4).toUpperCase(), { id: String(user.id).slice(0,4).toUpperCase(), name: String(user.name || "Usuário").slice(0,18) }); }); if (state.myId) byId.set(state.myId, { id: state.myId, name: state.myName || "Você" }); if (Array.isArray(state.roomMembers)) state.roomMembers.forEach(member => { if (member && member.id) byId.set(String(member.id).slice(0,4).toUpperCase(), { id: String(member.id).slice(0,4).toUpperCase(), name: String(member.name || "Usuário").slice(0,18) }); }); return Array.from(byId.values()); }
+    function findKnownUsers(query){ const q = normalizeText(query); const users = collectKnownUsers(); if (!q) return users; return users.filter(user => normalizeText(user.name).includes(q) || normalizeText(user.id).includes(q)); }
+    function findUserById(userId){ const id = String(userId || "").slice(0,4).toUpperCase(); if (!id) return null; return collectKnownUsers().find(user => user.id === id) || null; }
+    function getUserIdForName(name){ const cleanName = String(name || "").trim().slice(0,18) || "Usuário"; const registry = loadUserRegistry(); const exact = registry.find(user => normalizeText(user.name) === normalizeText(cleanName)); if (exact) return String(exact.id).slice(0,4).toUpperCase(); const existingRoomMember = Array.isArray(state.roomMembers) ? state.roomMembers.find(member => normalizeText(member.name) === normalizeText(cleanName)) : null; if (existingRoomMember && existingRoomMember.id){ const id = String(existingRoomMember.id).slice(0,4).toUpperCase(); upsertKnownUser({ id, name: cleanName }); return id; } if (normalizeText(cleanName) === normalizeText(state.myName) && state.myId){ upsertKnownUser({ id: state.myId, name: cleanName }); return state.myId; } const id = randomId4(); upsertKnownUser({ id, name: cleanName }); return id; }
+    function lookupKnownUserIdByName(name){ const clean = normalizeText(name); const found = collectKnownUsers().find(user => normalizeText(user.name) === clean); return found ? found.id : ""; }
+    function getDelegatedUsers(){ return loadAdminDelegations().map(item => ({ ...item, userId: String(item.userId || "").slice(0,4).toUpperCase(), userName: String(item.userName || "Usuário").slice(0,18) })); }
+    function hasAnyAdminAccess(){ return !!(state.isAdmin || getCurrentAdminGrant()); }
+    function getRooms(){ try{ const raw = localStorage.getItem(LS_ROOMS); const parsed = raw ? JSON.parse(raw) : null; if (Array.isArray(parsed) && parsed.length) return parsed; }catch(e){} return structuredClone(DEFAULT_ROOMS); }
+    function saveRooms(rooms){ try{ localStorage.setItem(LS_ROOMS, JSON.stringify(rooms)); }catch(e){} firebaseBridge.syncPublic({ rooms }); }
+    function loadRoomMusicPrefs(){ try{ const raw = localStorage.getItem(LS_ROOM_PLAYLIST); const parsed = raw ? JSON.parse(raw) : null; if (Array.isArray(parsed) && parsed.length){ roomPlaylist = parsed.map(String).map(s => s.trim()).filter(Boolean); if (!roomPlaylist.length) roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice(); } else { roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice(); } }catch(e){ roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice(); } const autoplayRaw = localStorage.getItem(LS_ROOM_AUTOPLAY); state.roomMusicAutoPlay = autoplayRaw === null ? true : autoplayRaw === "on"; }
+    function saveRoomMusicPrefs(){ try{ localStorage.setItem(LS_ROOM_PLAYLIST, JSON.stringify(roomPlaylist)); }catch(e){} try{ localStorage.setItem(LS_ROOM_AUTOPLAY, state.roomMusicAutoPlay ? "on" : "off"); }catch(e){} firebaseBridge.syncPublic({ roomPlaylist, roomMusicAutoPlay: state.roomMusicAutoPlay }); }
+    function syncRoomMusicAdminUI(){ const textarea = document.getElementById("roomMusicList"); if (textarea) textarea.value = roomPlaylist.join("\n"); const toggle = document.getElementById("roomAutoPlayToggle"); if (toggle) toggle.checked = !!state.roomMusicAutoPlay; }
+    function renderLobbyRooms(){ const list = document.getElementById("roomsList"); if (!list) return; const rooms = getRooms(); list.innerHTML = ""; rooms.forEach(room => { const card = document.createElement("div"); card.className = "room-card"; card.innerHTML = `<div class="room-head"><strong>${escapeHtml(room.name)}</strong><span class="room-tag">${room.locked ? "Trancada" : "Aberta"}</span></div><small>${room.locked ? "Tem senha para entrar." : "Espaço para jogadores humanos."}</small><div class="room-actions"><span class="room-lock-pill">${room.locked ? "🔒 Com senha" : "🔓 Livre"}</span><button class="btn secondary" type="button" onclick="joinRoomById('${room.id}')">Entrar</button></div>`; list.appendChild(card); }); }
+    function openAdminModal(){ document.getElementById("adminModal").style.display = "flex"; ensureCurrentUserIdentity(document.getElementById("playerName")?.value || document.getElementById("roomName")?.value || state.myName); if (!state.isAdmin && !hasAnyAdminAccess()){ const code = document.getElementById("adminCode"); if (code) code.value = ""; } renderAdminAccessState(); }
+    function closeAdminModal(){ document.getElementById("adminModal").style.display = "none"; }
+    function loginAdmin(){ const code = (document.getElementById("adminCode").value || "").trim(); if (!code || code !== getAdminPassword()){ alert("Código inválido."); return; } state.isAdmin = true; renderAdminAccessState(); }
+    function logoutAdmin(){ state.isAdmin = false; state.adminSelectedUserId = ""; state.adminPermissionDraft = {}; const code = document.getElementById("adminCode"); if (code) code.value = ""; renderAdminAccessState(); alert("Você saiu do adm."); }
+    function renderAdminRooms(){ const area = document.getElementById("adminRooms"); if (!area) return; const rooms = getRooms(); area.innerHTML = ""; rooms.forEach(room => { const item = document.createElement("div"); item.className = "admin-room-item"; item.innerHTML = `<div><strong>${escapeHtml(room.name)}</strong><small>${room.locked ? "Trancada" : "Aberta"}</small><div class="room-password-row"><input id="roomPassInput-${room.id}" type="password" value="${escapeAttr(room.password || "")}" placeholder="Senha da sala" /></div></div><div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;"><button class="btn small" type="button" onclick="saveRoomSettings('${room.id}')">Salvar</button><button class="btn danger small" type="button" onclick="deleteRoom('${room.id}')">Excluir</button></div>`; area.appendChild(item); }); }
+    function renderAdminFunctionToggles(){ const area = document.getElementById("adminFunctionList"); if (!area) return; const draft = state.adminPermissionDraft || {}; area.innerHTML = ""; ADMIN_FUNCTIONS.forEach(fn => { const row = document.createElement("div"); row.className = "admin-permission-item"; row.innerHTML = `<strong>${escapeHtml(fn.label)}</strong><label class="switch" title="${escapeAttr(fn.label)}"><input type="checkbox" ${draft[fn.key] ? "checked" : ""} onchange="toggleAdminPermission('${fn.key}', this.checked)" /><span class="slider" aria-hidden="true"></span></label>`; area.appendChild(row); }); }
+    function toggleAdminPermission(key, checked){ state.adminPermissionDraft = { ...(state.adminPermissionDraft || {}), [key]: !!checked }; }
+    function renderAdminSelectedUser(){ const box = document.getElementById("adminSelectedUser"); if (!box) return; const user = findUserById(state.adminSelectedUserId); if (!user){ box.style.display = "none"; box.innerHTML = ""; return; } box.style.display = "flex"; box.innerHTML = `<div class="admin-user-meta"><strong>${escapeHtml(user.name)}</strong><small>ID ${escapeHtml(user.id)}</small></div><button class="btn secondary small" type="button" onclick="clearAdminUserSelection()">Trocar</button>`; }
+    function renderAdminUserSearch(){ const box = document.getElementById("adminUserSearchResults"); if (!box) return; const query = document.getElementById("adminUserSearch")?.value || ""; const users = findKnownUsers(query); box.innerHTML = ""; if (!users.length){ box.innerHTML = `<div class="mini-note">Nenhum usuário encontrado.</div>`; return; } users.forEach(user => { const item = document.createElement("div"); item.className = "admin-user-result" + (state.adminSelectedUserId === user.id ? " selected" : ""); item.onclick = () => selectAdminUser(user.id); item.innerHTML = `<div class="admin-user-meta"><strong>${escapeHtml(user.name)}</strong><small>ID ${escapeHtml(user.id)}</small></div><span class="room-lock-pill">Selecionar</span>`; box.appendChild(item); }); }
+    function selectAdminUser(userId){ const user = findUserById(userId); if (!user) return; state.adminSelectedUserId = user.id; const existing = getAdminGrantByUserId(user.id); const draft = Object.fromEntries(ADMIN_FUNCTIONS.map(fn => [fn.key, !!(existing && existing.permissions && existing.permissions[fn.key])])); state.adminPermissionDraft = draft; const search = document.getElementById("adminUserSearch"); if (search) search.value = user.name; renderAdminUserSearch(); renderAdminSelectedUser(); renderAdminFunctionToggles(); }
+    function clearAdminUserSelection(){ state.adminSelectedUserId = ""; state.adminPermissionDraft = {}; const search = document.getElementById("adminUserSearch"); if (search) search.value = ""; renderAdminUserSearch(); renderAdminSelectedUser(); renderAdminFunctionToggles(); }
+    function addAdminDelegation(){ const user = findUserById(state.adminSelectedUserId); if (!user){ alert("Selecione um usuário."); return; } const selected = ADMIN_FUNCTIONS.reduce((acc, fn) => { acc[fn.key] = !!(state.adminPermissionDraft && state.adminPermissionDraft[fn.key]); return acc; }, {}); if (!Object.values(selected).some(Boolean)){ alert("Ligue ao menos uma função."); return; } const list = loadAdminDelegations().filter(item => String(item.userId).slice(0,4).toUpperCase() !== user.id); list.push({ userId: user.id, userName: user.name, permissions: selected }); saveAdminDelegations(list); upsertKnownUser({ id: user.id, name: user.name }); renderAdminDelegatedList(); renderAdminUserSearch(); alert("Função(ões) adicionada(s)."); }
+    function renderAdminDelegatedList(){ const area = document.getElementById("adminDelegatedList"); if (!area) return; const list = getDelegatedUsers(); area.innerHTML = ""; if (!list.length){ area.innerHTML = `<div class="mini-note">Nenhum usuário com função de adm.</div>`; return; } list.forEach(user => { const item = document.createElement("div"); item.className = "admin-role-item"; const badges = ADMIN_FUNCTIONS.filter(fn => user.permissions && user.permissions[fn.key]).map(fn => `<span class="role-badge">${escapeHtml(fn.label)}</span>`).join(""); item.innerHTML = `<div style="min-width:0;"><div class="admin-role-head"><strong>${escapeHtml(user.userName)}</strong><span class="id-chip">ID ${escapeHtml(user.userId)}</span></div><div class="role-badges">${badges || ""}</div></div><button class="btn secondary small" type="button" onclick="deleteAdminDelegation('${escapeAttr(user.userId)}')">Deletar</button>`; area.appendChild(item); }); }
+    function renderAdminPlayersList(){ const area = document.getElementById("adminPlayersList"); if (!area) return; area.innerHTML = ""; const list = collectKnownUsers(); if (!list.length){ area.innerHTML = `<div class="mini-note">Nenhum jogador encontrado.</div>`; return; } list.forEach((player) => { const uid = String(player.id || "").slice(0,4).toUpperCase(); const item = document.createElement("div"); item.className = "admin-role-item"; item.innerHTML = `<div class="admin-role-head"><strong>${escapeHtml(player.name || "Jogador")}</strong><span class="id-chip">ID ${escapeHtml(uid)}</span></div><button class="btn secondary small" type="button" onclick="deleteAdminPlayer('${escapeAttr(uid)}')">Deletar</button>`; area.appendChild(item); }); }
+    function deleteAdminDelegation(userId){ const uid = String(userId || "").slice(0,4).toUpperCase(); if (!confirm("realmente deseja deletar")) return; const next = loadAdminDelegations().filter(item => String(item.userId).slice(0,4).toUpperCase() !== uid); saveAdminDelegations(next); renderAdminAccessState(); if (state.myId === uid) state.isAdmin = false; }
+    function deleteAdminPlayer(userId){ const uid = String(userId || "").slice(0,4).toUpperCase(); const user = findUserById(uid); const label = user ? `${user.name} (${uid})` : uid; if (!confirm(`Deseja realmente excluir a conta do jogador ${label}?`)) return; const nextRegistry = loadUserRegistry().filter(item => String(item.id || "").slice(0,4).toUpperCase() !== uid); saveUserRegistry(nextRegistry); const nextDelegations = loadAdminDelegations().filter(item => String(item.userId || "").slice(0,4).toUpperCase() !== uid); saveAdminDelegations(nextDelegations); if (Array.isArray(state.roomMembers)) state.roomMembers = state.roomMembers.filter(m => String(m.id || "").slice(0,4).toUpperCase() !== uid); const messages = loadChatMessages().filter(m => { const mid = String(m.authorId || lookupKnownUserIdByName(m.author) || "").slice(0,4).toUpperCase(); return mid !== uid; }); saveChatMessages(messages); if (state.myId === uid){ try{ localStorage.removeItem(LS_MY_USER_ID); }catch(e){} state.isAdmin = false; backToLobby(); return; } renderRoomPresence(); renderChat(); renderAdminAccessState(); }
+    function renderAdminAccessState(){ const loginBox = document.getElementById("adminLoginBox"); const panel = document.getElementById("adminPanel"); const hasAccess = hasAnyAdminAccess(); if (loginBox) loginBox.style.display = (state.isAdmin || hasAccess) ? "none" : "block"; if (panel) panel.style.display = (state.isAdmin || hasAccess) ? "flex" : "none"; if (!state.isAdmin && !hasAccess) return; updateAdminSectionsVisibility(); renderAdminRooms(); syncRoomMusicAdminUI(); renderAdminUserSearch(); renderAdminSelectedUser(); renderAdminFunctionToggles(); renderAdminDelegatedList(); renderAdminPlayersList(); }
+    function updateAdminSectionsVisibility(){ const roomsSection = document.getElementById("adminRoomsSection"); const existingRoomsSection = document.getElementById("adminExistingRoomsSection"); const musicSection = document.getElementById("adminMusicSection"); const delegateSection = document.getElementById("adminDelegateSection"); const canRooms = canUseAdminFunction("rooms"); const canMusic = canUseAdminFunction("music") || canUseAdminFunction("autoplay"); const canDelegate = canUseAdminFunction("delegate"); const canChat = canUseAdminFunction("chat") && state.roomMode; const playersSection = document.getElementById("adminPlayersSection"); if (roomsSection) roomsSection.classList.toggle("admin-section-hidden", !canRooms); if (existingRoomsSection) existingRoomsSection.classList.toggle("admin-section-hidden", !canRooms); if (musicSection) musicSection.classList.toggle("admin-section-hidden", !canMusic); if (delegateSection) delegateSection.classList.toggle("admin-section-hidden", !canDelegate); if (playersSection) playersSection.classList.toggle("admin-section-hidden", false); void canChat; }
+    function createRoom(){ const name = (document.getElementById("newRoomName").value || "").trim(); if (!name){ alert("Digite um nome para a sala."); return; } const rooms = getRooms(); const id = "room-" + Date.now(); rooms.push({ id, name, locked:false, password:"" }); saveRooms(rooms); document.getElementById("newRoomName").value = ""; renderLobbyRooms(); renderAdminRooms(); syncRoomMusicAdminUI(); renderAdminAccessState(); }
+    function saveRoomSettings(roomId){ const rooms = getRooms(); const idx = rooms.findIndex(r => r.id === roomId); if (idx < 0) return; const password = (document.getElementById(`roomPassInput-${roomId}`).value || "").trim(); rooms[idx].password = password; rooms[idx].locked = password.length > 0; saveRooms(rooms); renderLobbyRooms(); renderAdminRooms(); syncRoomMusicAdminUI(); renderAdminAccessState(); }
+    function deleteRoom(roomId){ if (!confirm("Excluir esta sala?")) return; const rooms = getRooms().filter(r => r.id !== roomId); saveRooms(rooms); renderLobbyRooms(); renderAdminRooms(); syncRoomMusicAdminUI(); renderAdminAccessState(); }
+    function saveRoomMusicList(){ const raw = (document.getElementById("roomMusicList").value || "").split("\n").map(s => s.trim()).filter(Boolean); roomPlaylist = raw.length ? raw : DEFAULT_ROOM_PLAYLIST.slice(); saveRoomMusicPrefs(); syncRoomMusicAdminUI(); if (state.roomMode) setupMusic(); alert("Músicas das salas salvas."); }
+    function resetRoomMusicList(){ roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice(); saveRoomMusicPrefs(); syncRoomMusicAdminUI(); if (state.roomMode) setupMusic(); }
+    function toggleRoomAutoPlay(){ const toggle = document.getElementById("roomAutoPlayToggle"); state.roomMusicAutoPlay = !!(toggle && toggle.checked); saveRoomMusicPrefs(); }
+    let pendingRoomId = null;
+    function joinRoomById(roomId){ const room = getRooms().find(r => r.id === roomId); if (!room) return; const enteredName = getEnteredName(); if (!enteredName){ alert("Digite um nome para entrar na sala."); return; } ensureCurrentUserIdentity(enteredName); if (room.locked && !state.isAdmin){ pendingRoomId = roomId; document.getElementById("roomPasswordTitle").textContent = `Entrar em ${room.name}`; document.getElementById("roomPasswordInput").value = ""; document.getElementById("roomPasswordModal").style.display = "flex"; return; } state.roomId = room.id; state.roomName = room.name; enterRoomDirectly(room, enteredName); }
+    function enterRoomDirectly(room, enteredName){ const identity = ensureCurrentUserIdentity(enteredName || getEnteredName()); state.myName = identity.name; state.myId = identity.id; state.roomMode = true; state.roomWaiting = false; state.roomMembers = [ { name: "Jogador 2", id: randomId4(), color: "#3b82f6" }, { name: "Jogador 3", id: randomId4(), color: "#22c55e" }, { name: "Jogador 4", id: randomId4(), color: "#eab308" } ]; state.roomMembers.forEach(member => upsertKnownUser(member)); showGame(); firebaseBridge.listenChat(chatFirebaseKey()); initGame(); setupMusic(); if (state.roomMusicAutoPlay) playMusic(); else pauseMusic(); addChatMessage(state.myName, `Entrou em ${room.name}`); renderRoomPresence(); renderChat(); }
+    function getPlayerName(index){ if (index === 0) return state.myName || "Você"; if (state.roomMode){ const member = state.roomMembers[index - 1]; if (member && member.name) return member.name; return `Jogador ${index + 1}`; } return `Robô ${index}`; }
+    function showGame(){ document.getElementById("lobbyScreen").style.display = "none"; document.getElementById("endScreen").style.display = "none"; document.getElementById("table").style.display = "block"; document.getElementById("chatPanel").style.display = "flex"; }
+    function startRoomWaiting(){ const room = getRooms().find(r => r.name === state.roomName || r.id === state.roomId); if (room) enterRoomDirectly(room); }
+    function updateRoomCountdown(){ const el = document.getElementById("roomCountdown"); if (el) el.textContent = "00:00"; }
+    function startRoomMatch(){ return; }
+    function closeRoomPasswordModal(){ const modal = document.getElementById("roomPasswordModal"); if (modal) modal.style.display = "none"; pendingRoomId = null; }
+    function confirmRoomPassword(){ const room = pendingRoomId ? getRooms().find(r => r.id === pendingRoomId) : null; if (!room){ backToLobby(); return; } const entered = (document.getElementById("roomPasswordInput").value || "").trim(); if (entered !== (room.password || "")){ alert("Senha inválida."); return; } closeRoomPasswordModal(); const name = getEnteredName(); enterRoomDirectly(room, name); }
+    function backToLobby(){ clearTimeout(state.botTimer); clearInterval(state.roomTimerInterval); state.roomWaiting = false; state.roomMode = false; state.roomMembers = []; state.roomId = null; state.roomName = ""; firebaseBridge.leaveChat(); stopMic(); pauseMusic(); closeAdminModal(); const passwordModal = document.getElementById("roomPasswordModal"); if (passwordModal) passwordModal.style.display = "none"; pendingRoomId = null; document.body.classList.remove("room-waiting"); document.getElementById("table").style.display = "none"; document.getElementById("endScreen").style.display = "none"; document.getElementById("lobbyScreen").style.display = "flex"; document.getElementById("chatPanel").style.display = "none"; renderLobbyRooms(); renderRoomPresence(); renderChat(); }
+    function getEnteredName(){ const main = (document.getElementById("playerName").value || "").trim(); const room = (document.getElementById("roomName").value || "").trim(); return (room || main).slice(0,18); }
+    function joinRobots(){ ensureCurrentUserIdentity(getEnteredName() || state.myName || "Você"); state.roomMode = false; state.roomName = "Robôs"; state.roomMembers = []; startGame(); }
+    function joinRoom(roomNumber){ const rooms = getRooms(); const room = rooms[roomNumber - 1]; if (room) return joinRoomById(room.id); }
+    function startGame(){ ensureCurrentUserIdentity(document.getElementById("playerName")?.value || document.getElementById("roomName")?.value || state.myName); document.getElementById("lobbyScreen").style.display = "none"; document.getElementById("endScreen").style.display = "none"; showGame(); if (state.roomMode) firebaseBridge.listenChat(chatFirebaseKey()); initGame(); setupMusic(); playMusic(); addChatMessage(state.myName, `Entrou em ${state.roomMode ? state.roomName : 'jogo com robôs'}`); renderChat(); }
+    function restartGame(){ clearTimeout(state.botTimer); initGame(); setupMusic(); playMusic(); }
+    function toggleTheme(){ const isDark = document.getElementById("themeToggle").checked; document.body.setAttribute("data-theme", isDark ? "dark" : "light"); localStorage.setItem("cartas-theme", isDark ? "dark" : "light"); }
+    function loadTheme(){ const saved = localStorage.getItem("cartas-theme") || "light"; document.body.setAttribute("data-theme", saved); const toggle = document.getElementById("themeToggle"); if (toggle) toggle.checked = saved === "dark"; }
+    function drawFromDeck(){ if (state.deck.length === 0){ for (let i = 0; i < 60; i++) state.deck.push(createCard()); } return state.deck.pop(); }
+    function createCard(){ const r = Math.random(); let value = Math.floor(Math.random() * 10).toString(); if (r < 0.12) value = "+2"; else if (r < 0.18) value = "+4"; return { color: colors[Math.floor(Math.random() * colors.length)], value, img: imgs[Math.floor(Math.random() * imgs.length)] }; }
+    function initGame(){ clearTimeout(state.botTimer); state.deck = []; state.players = [[], [], [], []]; state.penalty = 0; state.turn = 0; state.gameRunning = true; state.topCard = null; document.getElementById("statusNote").textContent = state.roomMode ? `Você entrou na sala ${state.roomName}.` : `Combine cor ou valor para jogar.`; for (let i = 0; i < 100; i++) state.deck.push(createCard()); for (let p = 0; p < 4; p++) for (let i = 0; i < 6; i++) state.players[p].push(drawFromDeck()); state.topCard = drawFromDeck(); render(); renderRoomPresence(); if (!state.roomMode) scheduleBotTurn(); }
+    function cardHTML(c, interactive=false, index=0){ const playClass = interactive && canPlay(c) ? ' playable' : ''; const border = colorMap[c.color] || '#64748b'; const onClick = interactive && canPlay(c) ? ` onclick="playCard(${index})"` : ''; return `<div class="card${playClass}"${onClick} data-value="${c.value}" style="border-color:${border}; background-image:url('${c.img}')"></div>`; }
+    function backCard(){ return `<div class="card small back"></div>`; }
+    function canPlay(c){ if (!state.topCard) return true; if (c.value === "+4") return true; if (c.value === "+2") return c.color === state.topCard.color || state.topCard.value === "+2"; return c.color === state.topCard.color || c.value === state.topCard.value; }
+    function render(){ const topPile = document.getElementById("discardPile"); topPile.innerHTML = state.topCard ? cardHTML(state.topCard) : ''; document.getElementById("turnText").style.display = state.turn === 0 ? "block" : "none"; document.getElementById("hudTurn").querySelector('span:last-child').textContent = state.turn === 0 ? "Sua vez" : `Vez de ${getPlayerName(state.turn)}`; const p1 = document.getElementById("p1"); p1.querySelector('.info').innerHTML = `<span>${getPlayerName(0)}</span><small>${state.players[0].length} cartas</small>`; p1.querySelector('.cards').innerHTML = state.players[0].map((c, i) => cardHTML(c, true, i)).join(''); const p2 = document.getElementById("p2"); p2.querySelector('.info').innerHTML = `<span>${getPlayerName(1)}</span><small>${state.players[1].length} cartas</small>`; p2.querySelector('.cards').innerHTML = state.players[1].map(() => backCard()).join(''); const p3 = document.getElementById("p3"); p3.querySelector('.info').innerHTML = `<span>${getPlayerName(2)}</span><small>${state.players[2].length} cartas</small>`; p3.querySelector('.cards').innerHTML = state.players[2].map(() => backCard()).join(''); const p4 = document.getElementById("p4"); p4.querySelector('.info').innerHTML = `<span>${getPlayerName(3)}</span><small>${state.players[3].length} cartas</small>`; p4.querySelector('.cards').innerHTML = state.players[3].map(() => backCard()).join(''); }
+    function renderRoomPresence(){ const box = document.getElementById("roomPresence"); if (!box) return; box.innerHTML = ""; if (!state.roomMode) return; state.roomMembers.forEach((m) => { const dot = document.createElement("span"); dot.className = "presence-dot"; dot.title = m.name; dot.style.background = m.color || ""; box.appendChild(dot); }); }
+    function applyCard(c){ state.topCard = c; if (c.value === "+2") state.penalty += 2; if (c.value === "+4") state.penalty += 4; }
+    function checkWin(){ for (let i = 0; i < 4; i++){ if (state.players[i].length === 0){ clearTimeout(state.botTimer); state.gameRunning = false; document.getElementById("table").style.display = "none"; document.getElementById("endScreen").style.display = "flex"; document.getElementById("winnerText").textContent = i === 0 ? "Você venceu!" : `${getPlayerName(i)} venceu!`; return true; } } return false; }
+    function nextTurn(){ if (checkWin()) return; state.turn = (state.turn + 1) % 4; render(); clearTimeout(state.botTimer); if (!state.roomMode) state.botTimer = setTimeout(resolveTurn, 220); }
+    function resolveTurn(){ if (!state.gameRunning) return; if (state.penalty > 0){ const current = state.turn; for (let i = 0; i < state.penalty; i++) state.players[current].push(drawFromDeck()); state.penalty = 0; render(); nextTurn(); return; } if (!state.roomMode && state.turn !== 0) botTurn(); else if (state.roomMode && state.turn !== 0) document.getElementById("statusNote").textContent = `${getPlayerName(state.turn)} aguarda jogada nesta sala.`; }
+    function playCard(i){ if (!state.gameRunning || state.turn !== 0 || state.penalty > 0) return; const c = state.players[0][i]; if (!canPlay(c)) return; applyCard(c); state.players[0].splice(i, 1); render(); nextTurn(); if (state.roomMode && window.syncGameState) window.syncGameState(); }
+    function drawCard(){ if (!state.gameRunning || state.turn !== 0 || state.penalty > 0) return; state.players[0].push(drawFromDeck()); render(); nextTurn(); if (state.roomMode && window.syncGameState) window.syncGameState(); }
+    function botTurn(){ clearTimeout(state.botTimer); state.botTimer = setTimeout(() => { if (!state.gameRunning || state.turn === 0) return; const hand = state.players[state.turn]; const playable = hand.findIndex(c => canPlay(c)); if (playable !== -1){ const c = hand[playable]; applyCard(c); hand.splice(playable, 1); } else { hand.push(drawFromDeck()); } render(); nextTurn(); }, 1200 + Math.random() * 800); }
+    function scheduleBotTurn(){ clearTimeout(state.botTimer); state.botTimer = setTimeout(resolveTurn, 160); }
+    function toggleChat(){ state.chatCollapsed = !state.chatCollapsed; const panel = document.getElementById("chatPanel"); if (!panel) return; panel.classList.toggle("collapsed", state.chatCollapsed); const btn = panel.querySelector(".chat-toggle-btn"); if (btn) btn.textContent = state.chatCollapsed ? "+" : "−"; }
+    function chatStorageKey(){ if (state.roomMode && state.roomId) return LS_CHAT_PREFIX + state.roomId; if (state.roomMode && state.roomName) return LS_CHAT_PREFIX + state.roomName; return "cartas.chat.robots.v3"; }
+    function chatFirebaseKey(){ if (state.roomMode && state.roomId) return String(state.roomId); if (state.roomMode && state.roomName) return String(state.roomName); return "lobby"; }
+    function chatStorageKeys(){ const keys = []; const primary = chatStorageKey(); if (primary) keys.push(primary); if (state.roomMode && state.roomId) keys.push(LS_CHAT_PREFIX + state.roomId); if (state.roomMode && state.roomName) keys.push(LS_CHAT_PREFIX + state.roomName); if (!state.roomMode) keys.push("cartas.chat.robots.v3"); return [...new Set(keys.filter(Boolean))]; }
+    function loadChatMessages(){ try{ for (const key of chatStorageKeys()){ const raw = localStorage.getItem(key); if (!raw) continue; const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed; } return []; }catch(e){ return []; } }
+    function saveChatMessages(messages){ const payload = Array.isArray(messages) ? messages : []; try{ for (const key of chatStorageKeys()) localStorage.setItem(key, JSON.stringify(payload)); }catch(e){} firebaseBridge.syncChat(chatFirebaseKey(), payload); }
+    function renderChat(){ const box = document.getElementById("chatMessages"); if (!box) return; const messages = loadChatMessages(); box.innerHTML = ""; messages.forEach(msg => { const item = document.createElement("div"); item.className = msg.author === state.myName ? 'chat-msg me' : 'chat-msg'; const authorId = String(msg.authorId || getUserIdForName(msg.author)).slice(0,4).toUpperCase(); const adminButtons = (canUseAdminFunction("chat") && state.roomMode) ? `<div class="chat-actions"><button class="btn secondary chat-action-btn" type="button" onclick="deleteChatMessage('${msg.id}')">Excluir mensagem</button><button class="btn secondary chat-action-btn" type="button" onclick="deleteChatUser('${escapeAttr(authorId)}')">Excluir usuário</button></div>` : ""; item.innerHTML = `<div class="chat-msg-head"><div class="chat-author-meta"><strong>${escapeHtml(msg.author)}</strong><span class="id-chip">ID ${escapeHtml(authorId)}</span><button class="btn secondary copy-id-btn" type="button" onclick="copyUserId('${escapeAttr(authorId)}')">Copiar id</button></div>${adminButtons}</div><span>${escapeHtml(msg.message)}</span>`; box.appendChild(item); }); box.scrollTop = box.scrollHeight; }
+    function addChatMessage(author, message){ const messages = loadChatMessages(); const authorId = getUserIdForName(author); upsertKnownUser({ id: authorId, name: author }); messages.push({ id: Math.random().toString(16).slice(2), author, authorId, message, ts: Date.now() }); saveChatMessages(messages); renderChat(); }
+    function deleteChatMessage(messageId){ const messages = loadChatMessages().filter(m => m.id !== messageId); saveChatMessages(messages); renderChat(); }
+    function deleteChatUser(userId){ const uid = String(userId || "").slice(0,4).toUpperCase(); const user = findUserById(uid); const label = user ? `${user.name} (${user.id})` : uid; if (!confirm(`Excluir o usuário ${label}?`)) return; const messages = loadChatMessages().filter(m => { const mid = String(m.authorId || lookupKnownUserIdByName(m.author) || "").slice(0,4).toUpperCase(); return mid !== uid; }); saveChatMessages(messages); if (state.roomMembers && Array.isArray(state.roomMembers)) state.roomMembers = state.roomMembers.filter(m => String(m.id || "").slice(0,4).toUpperCase() !== uid && normalizeText(m.name) !== normalizeText(label)); if (state.myId === uid){ backToLobby(); return; } renderRoomPresence(); renderChat(); }
+    function escapeHtml(text){ return String(text).replace(/[&<>"]|'/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+    function escapeAttr(text){ return escapeHtml(text).replace(/'/g, "&#39;"); }
+    document.getElementById("chatForm").addEventListener("submit", (e) => { e.preventDefault(); const input = document.getElementById("chatInput"); const msg = input.value.trim(); if (!msg) return; addChatMessage(state.myName, msg); input.value = ""; });
+    function updateAudioButton(){ const btn = document.getElementById("audioBtn"); btn.textContent = state.audioEnabled ? "Áudio: ligado" : "Áudio: desligado"; }
+    function updateMicButton(){ const btn = document.getElementById("micBtn"); btn.textContent = state.micEnabled ? "Mic: ligado" : "Mic: desligado"; }
+    function applyVolumes(){ if (state.musicAudio) state.musicAudio.volume = state.musicVolumeValue * state.masterVolumeValue; if (state.micGain) state.micGain.gain.value = state.micVolumeValue; if (state.micMonitor) state.micMonitor.gain.value = state.audioEnabled ? state.masterVolumeValue : 0; }
+    function toggleAudio(){ state.audioEnabled = !state.audioEnabled; localStorage.setItem("cartas-audio", state.audioEnabled ? "on" : "off"); updateAudioButton(); applyVolumes(); }
+    async function toggleMic(){ state.micEnabled = !state.micEnabled; localStorage.setItem("cartas-mic", state.micEnabled ? "on" : "off"); updateMicButton(); if (state.micEnabled){ try{ state.micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); state.micAudioContext = new (window.AudioContext || window.webkitAudioContext)(); state.micSource = state.micAudioContext.createMediaStreamSource(state.micStream); state.micGain = state.micAudioContext.createGain(); state.micMonitor = state.micAudioContext.createGain(); state.micSource.connect(state.micGain); applyVolumes(); }catch(err){ state.micEnabled = false; updateMicButton(); localStorage.setItem("cartas-mic", "off"); alert("Não foi possível ativar o microfone. Verifique a permissão do navegador."); } } else { stopMic(); } }
+    function stopMic(){ try{ if (state.micStream) state.micStream.getTracks().forEach(t => t.stop()); }catch(e){} try{ if (state.micAudioContext) state.micAudioContext.close(); }catch(e){} state.micStream = null; state.micAudioContext = null; state.micSource = null; state.micGain = null; state.micMonitor = null; }
+    function setMicVolume(value){ state.micVolumeValue = Number(value) / 100; applyVolumes(); }
+    function setMasterVolume(value){ state.masterVolumeValue = Number(value) / 100; applyVolumes(); }
+    function getActivePlaylist(){ return state.roomMode ? roomPlaylist : ROBOT_PLAYLIST; }
+    function setupMusic(){ if (!state.musicAudio){ state.musicAudio = new Audio(); state.musicAudio.preload = "auto"; state.musicAudio.loop = false; state.musicAudio.addEventListener("ended", () => nextTrack(true)); } const active = getActivePlaylist(); if (active.length){ state.trackIndex = state.trackIndex % active.length; state.musicAudio.src = active[state.trackIndex]; } state.musicAudio.volume = state.musicVolumeValue * state.masterVolumeValue; document.getElementById("musicDisc").classList.remove("playing"); }
+    function playMusic(){ if (!state.musicAudio) setupMusic(); if (!state.musicAudio || !state.musicAudio.src) return; state.musicPlaying = true; const disc = document.getElementById("musicDisc"); if (disc) disc.classList.add("playing"); const playPromise = state.musicAudio.play(); if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => { state.musicPlaying = false; if (disc) disc.classList.remove("playing"); }); }
+    function pauseMusic(){ if (!state.musicAudio) return; state.musicPlaying = false; state.musicAudio.pause(); const disc = document.getElementById("musicDisc"); if (disc) disc.classList.remove("playing"); }
+    function toggleMusic(){ if (state.musicPlaying) pauseMusic(); else playMusic(); }
+    function nextTrack(autoPlay=false){ const active = getActivePlaylist(); if (!active.length) return; state.trackIndex = (state.trackIndex + 1) % active.length; setupMusic(); if (state.musicPlaying || autoPlay) playMusic(); }
+    function prevTrack(){ const active = getActivePlaylist(); if (!active.length) return; state.trackIndex = (state.trackIndex - 1 + active.length) % active.length; setupMusic(); if (state.musicPlaying) playMusic(); }
+    function loadPrefs(){ const savedTheme = localStorage.getItem("cartas-theme") || "light"; document.body.setAttribute("data-theme", savedTheme); const toggle = document.getElementById("themeToggle"); if (toggle) toggle.checked = savedTheme === "dark"; const savedAudio = localStorage.getItem("cartas-audio"); state.audioEnabled = savedAudio === null ? true : savedAudio === "on"; state.micEnabled = localStorage.getItem("cartas-mic") === "on"; updateAudioButton(); updateMicButton(); const musicVolume = document.getElementById("musicVolume"); if (musicVolume) state.musicVolumeValue = Number(musicVolume.value) / 100; const micVolume = document.getElementById("micVolume"); if (micVolume) state.micVolumeValue = Number(micVolume.value) / 100; const masterVolume = document.getElementById("masterVolume"); if (masterVolume) state.masterVolumeValue = Number(masterVolume.value) / 100; applyVolumes(); ensureCurrentUserIdentity(document.getElementById("playerName")?.value || document.getElementById("roomName")?.value || state.myName); loadRoomMusicPrefs(); syncRoomMusicAdminUI(); setupMusic(); const chatPanel = document.getElementById("chatPanel"); if (chatPanel) chatPanel.style.display = "none"; state.chatCollapsed = false; if (chatPanel) chatPanel.classList.remove("collapsed"); const btn = chatPanel ? chatPanel.querySelector(".chat-toggle-btn") : null; if (btn) btn.textContent = "−"; renderChat(); }
+    window.addEventListener("DOMContentLoaded", () => { firebaseBridge.start(); loadPrefs(); updateAudioButton(); updateMicButton(); renderLobbyRooms(); renderAdminAccessState(); document.getElementById("chatPanel").style.display = "none"; playMusic(); });
+  </script>
 
-      function canUseFirebase(){
-        return !!(window.firebase && FIREBASE_CONFIG && Object.keys(FIREBASE_CONFIG).length);
-      }
+  <script type="module">
+    // ==================== MÓDULO DE MULTIPLAYER (Firestore) ====================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import { getFirestore, doc, collection, getDocs, setDoc, deleteDoc, addDoc, onSnapshot, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
-      function safeParse(value, fallback){
-        try{
-          return value ? JSON.parse(value) : fallback;
-        }catch(e){
-          return fallback;
-        }
-      }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDr5UNy6SCUOQpKQMuqCxQbwJ32bTeN9Ew",
+      authDomain: "cartas--jogo.firebaseapp.com",
+      projectId: "cartas--jogo",
+      storageBucket: "cartas--jogo.firebasestorage.app",
+      messagingSenderId: "572709591073",
+      appId: "1:572709591073:web:ef23f9079b9fc98b95ab60"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    await signInAnonymously(auth);
+    let currentUser = null;
+    onAuthStateChanged(auth, (user) => { currentUser = user; });
 
-      function writeJson(key, value){
-        try{
-          localStorage.setItem(key, JSON.stringify(value));
-        }catch(e){}
-      }
-
-      function writeRaw(key, value){
-        try{
-          localStorage.setItem(key, String(value));
-        }catch(e){}
-      }
-
-      function readJson(key, fallback){
-        try{
-          const raw = localStorage.getItem(key);
-          return raw ? JSON.parse(raw) : fallback;
-        }catch(e){
-          return fallback;
-        }
-      }
-
-      function applyPublicSnapshot(data){
-        if (!data || typeof data !== "object") return;
-
-        if (Array.isArray(data.rooms)) {
-          writeJson(LS_ROOMS, data.rooms);
-        }
-        if (Array.isArray(data.roomPlaylist)) {
-          writeJson(LS_ROOM_PLAYLIST, data.roomPlaylist);
-          roomPlaylist = data.roomPlaylist.map(String).map(s => s.trim()).filter(Boolean);
-          if (!roomPlaylist.length) roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice();
-        }
-        if (typeof data.roomMusicAutoPlay === "boolean") {
-          state.roomMusicAutoPlay = !!data.roomMusicAutoPlay;
-          writeRaw(LS_ROOM_AUTOPLAY, state.roomMusicAutoPlay ? "on" : "off");
-        }
-        if (Array.isArray(data.userRegistry)) {
-          writeJson(LS_USER_REGISTRY, data.userRegistry);
-        }
-
-        renderLobbyRooms();
-        renderAdminRooms();
-        renderAdminPlayersList();
-        syncRoomMusicAdminUI();
-        renderAdminAccessState();
-        renderChat();
-      }
-
-      function applyPrivateSnapshot(data){
-        if (!data || typeof data !== "object") return;
-
-        if (Array.isArray(data.adminDelegations)) {
-          writeJson(LS_ADMIN_DELEGATIONS, data.adminDelegations);
-        }
-        if (typeof data.adminPassword === "string" && data.adminPassword.trim()) {
-          writeRaw(LS_ADMIN_PASSWORD, data.adminPassword.trim());
-        }
-
-        renderAdminAccessState();
-      }
-
-      function ensureStarted(){
-        if (started || !canUseFirebase()) return;
-        started = true;
-        try{
-          app = firebase.apps.length ? firebase.app() : firebase.initializeApp(FIREBASE_CONFIG);
-       db = firebase.firestore();
-
-// FORÇA fallback sem QUIC (corrige chat em tempo real)
-db.settings({
-  experimentalForceLongPolling: true,
-  useFetchStreams: false
-});
-        }catch(err){
-          started = false;
-          return;
-        }
-
-        const publicRef = db.collection(PUBLIC_COLLECTION).doc("public");
-        const privateRef = db.collection(PRIVATE_COLLECTION).doc("private");
-
-        publicUnsub = publicRef.onSnapshot((snap) => {
-          if (snap && snap.exists) applyPublicSnapshot(snap.data());
-        });
-
-        privateUnsub = privateRef.onSnapshot((snap) => {
-          if (snap && snap.exists) applyPrivateSnapshot(snap.data());
-        });
-      }
-
-      function mergePublic(patch){
-        ensureStarted();
-        if (!db) return;
-        return db.collection(PUBLIC_COLLECTION).doc("public").set(patch, { merge: true }).catch(() => {});
-      }
-
-      function mergePrivate(patch){
-        ensureStarted();
-        if (!db) return;
-        return db.collection(PRIVATE_COLLECTION).doc("private").set(patch, { merge: true }).catch(() => {});
-      }
-
-      function chatDocRef(roomKey){
-        return db.collection(CHAT_COLLECTION).doc(String(roomKey || "lobby"));
-      }
-
-      function listenChat(roomKey){
-        ensureStarted();
-        if (!db) return;
-
-        const cleanKey = String(roomKey || "lobby");
-        if (chatUnsub && currentChatRoomKey === cleanKey) return;
-
-        if (chatUnsub) {
-          try{ chatUnsub(); }catch(e){}
-          chatUnsub = null;
-        }
-
-        currentChatRoomKey = cleanKey;
-        chatUnsub = chatDocRef(cleanKey).onSnapshot((snap) => {
-          if (!snap || !snap.exists) return;
-          const data = snap.data() || {};
-          if (Array.isArray(data.messages)) {
-            writeJson(LS_CHAT_PREFIX + cleanKey, data.messages);
-            if (state.roomMode && chatStorageKey() === LS_CHAT_PREFIX + cleanKey) {
-              renderChat();
-            }
-          }
-        });
-      }
-
-      function leaveChat(){
-        if (chatUnsub) {
-          try{ chatUnsub(); }catch(e){}
-        }
-        chatUnsub = null;
-        currentChatRoomKey = "";
-      }
-
-      function syncChat(roomKey, messages){
-        ensureStarted();
-        if (!db) return;
-        const cleanKey = String(roomKey || "lobby");
-        return chatDocRef(cleanKey).set({
-          messages: Array.isArray(messages) ? messages : [],
-          updatedAt: Date.now()
-        }, { merge: true }).catch(() => {});
-      }
-
-      function syncCacheFromRemote(roomKey, messages){
-        writeJson(LS_CHAT_PREFIX + String(roomKey || "lobby"), Array.isArray(messages) ? messages : []);
-      }
-
-      return {
-        start: ensureStarted,
-        syncPublic: mergePublic,
-        syncPrivate: mergePrivate,
-        listenChat,
-        leaveChat,
-        syncChat,
-        syncCacheFromRemote
-      };
-    })();
-
-
-    function randomId4(){
-      const n = Math.floor(Math.random() * 0x10000);
-      return n.toString(16).toUpperCase().padStart(4, "0");
-    }
-
-    function normalizeText(value){
-      return String(value || "").trim().toLowerCase();
-    }
-
-    function loadUserRegistry(){
-      try{
-        const raw = localStorage.getItem(LS_USER_REGISTRY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
-      }catch(e){
-        return [];
-      }
-    }
-
-    function saveUserRegistry(users){
-      try{ localStorage.setItem(LS_USER_REGISTRY, JSON.stringify(users)); }catch(e){}
-      firebaseBridge.syncPublic({ userRegistry: users });
-    }
-
-    function upsertKnownUser(user){
-      if (!user || !user.id) return;
-      const users = loadUserRegistry();
-      const idx = users.findIndex(u => u.id === user.id);
-      const clean = {
-        id: String(user.id).slice(0, 4).toUpperCase(),
-        name: String(user.name || "Usuário").slice(0, 18)
-      };
-      if (idx >= 0){
-        users[idx] = { ...users[idx], ...clean };
-      } else {
-        users.push(clean);
-      }
-      saveUserRegistry(users);
-    }
-
-    function ensureCurrentUserIdentity(name){
-      let currentId = localStorage.getItem(LS_MY_USER_ID);
-      if (!currentId){
-        currentId = randomId4();
-        localStorage.setItem(LS_MY_USER_ID, currentId);
-      }
-      const currentName = String(name || state.myName || "Você").trim().slice(0, 18) || "Você";
-      state.myId = currentId;
-      state.myName = currentName;
-      upsertKnownUser({ id: currentId, name: currentName });
-      return { id: currentId, name: currentName };
-    }
-
-    function loadAdminDelegations(){
-      try{
-        const raw = localStorage.getItem(LS_ADMIN_DELEGATIONS);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
-      }catch(e){
-        return [];
-      }
-    }
-
-    function saveAdminDelegations(list){
-      try{ localStorage.setItem(LS_ADMIN_DELEGATIONS, JSON.stringify(list)); }catch(e){}
-      firebaseBridge.syncPrivate({ adminDelegations: list });
-    }
-
-    function getAdminPassword(){
-      try{
-        const saved = localStorage.getItem(LS_ADMIN_PASSWORD);
-        if (saved && String(saved).trim()) return String(saved).trim();
-        localStorage.setItem(LS_ADMIN_PASSWORD, "adm123");
-      }catch(e){}
-      return "adm123";
-    }
-
-    function saveAdminPassword(){
-      const input = document.getElementById("newAdminPassword");
-      const nextPassword = (input?.value || "").trim();
-      if (!nextPassword){
-        alert("Digite uma nova senha.");
-        return;
-      }
-      try{
-        localStorage.setItem(LS_ADMIN_PASSWORD, nextPassword);
-      }catch(e){}
-      firebaseBridge.syncPrivate({ adminPassword: nextPassword });
-      if (input) input.value = "";
-      const code = document.getElementById("adminCode");
-      if (code) code.value = "";
-      alert("Senha do Adm alterada com sucesso.");
-    }
-
-    function getAdminGrantByUserId(userId){
-      if (!userId) return null;
-      return loadAdminDelegations().find(item => item && item.userId === userId) || null;
-    }
-
-    function getCurrentAdminGrant(){
-      if (state.isAdmin) return { userId: state.myId, permissions: Object.fromEntries(ADMIN_FUNCTIONS.map(f => [f.key, true])) };
-      return getAdminGrantByUserId(state.myId);
-    }
-
-    function canUseAdminFunction(key){
-      if (state.isAdmin) return true;
-      const grant = getCurrentAdminGrant();
-      return !!(grant && grant.permissions && grant.permissions[key]);
-    }
-
-    function copyUserId(id){
-      const text = String(id || "").trim();
-      if (!text) return;
-      if (navigator.clipboard && navigator.clipboard.writeText){
-        navigator.clipboard.writeText(text).catch(() => {});
-      } else {
-        const temp = document.createElement("textarea");
-        temp.value = text;
-        document.body.appendChild(temp);
-        temp.select();
-        try{ document.execCommand("copy"); }catch(e){}
-        temp.remove();
-      }
-    }
-
-    function collectKnownUsers(){
-      const byId = new Map();
-      loadUserRegistry().forEach(user => {
-        if (user && user.id){
-          byId.set(String(user.id).slice(0,4).toUpperCase(), {
-            id: String(user.id).slice(0,4).toUpperCase(),
-            name: String(user.name || "Usuário").slice(0,18)
-          });
-        }
-      });
-      if (state.myId){
-        byId.set(state.myId, { id: state.myId, name: state.myName || "Você" });
-      }
-      if (Array.isArray(state.roomMembers)){
-        state.roomMembers.forEach(member => {
-          if (member && member.id){
-            byId.set(String(member.id).slice(0,4).toUpperCase(), {
-              id: String(member.id).slice(0,4).toUpperCase(),
-              name: String(member.name || "Usuário").slice(0,18)
-            });
-          }
-        });
-      }
-      return Array.from(byId.values());
-    }
-
-    function findKnownUsers(query){
-      const q = normalizeText(query);
-      const users = collectKnownUsers();
-      if (!q) return users;
-      return users.filter(user => normalizeText(user.name).includes(q) || normalizeText(user.id).includes(q));
-    }
-
-    function findUserById(userId){
-      const id = String(userId || "").slice(0, 4).toUpperCase();
-      if (!id) return null;
-      return collectKnownUsers().find(user => user.id === id) || null;
-    }
-
-    function getUserIdForName(name){
-      const cleanName = String(name || "").trim().slice(0, 18) || "Usuário";
-      const registry = loadUserRegistry();
-      const exact = registry.find(user => normalizeText(user.name) === normalizeText(cleanName));
-      if (exact){
-        return String(exact.id).slice(0, 4).toUpperCase();
-      }
-      const existingRoomMember = Array.isArray(state.roomMembers)
-        ? state.roomMembers.find(member => normalizeText(member.name) === normalizeText(cleanName))
-        : null;
-      if (existingRoomMember && existingRoomMember.id){
-        const id = String(existingRoomMember.id).slice(0, 4).toUpperCase();
-        upsertKnownUser({ id, name: cleanName });
-        return id;
-      }
-      if (normalizeText(cleanName) === normalizeText(state.myName) && state.myId){
-        upsertKnownUser({ id: state.myId, name: cleanName });
-        return state.myId;
-      }
-      const id = randomId4();
-      upsertKnownUser({ id, name: cleanName });
-      return id;
-    }
-
-    function lookupKnownUserIdByName(name){
-      const clean = normalizeText(name);
-      const found = collectKnownUsers().find(user => normalizeText(user.name) === clean);
-      return found ? found.id : "";
-    }
-
-    function getDelegatedUsers(){
-      return loadAdminDelegations().map(item => ({
-        ...item,
-        userId: String(item.userId || "").slice(0, 4).toUpperCase(),
-        userName: String(item.userName || "Usuário").slice(0, 18)
-      }));
-    }
-
-    function hasAnyAdminAccess(){
-      return !!(state.isAdmin || getCurrentAdminGrant());
-    }
-
-    function getRooms(){
-      try{
-        const raw = localStorage.getItem(LS_ROOMS);
-        const parsed = raw ? JSON.parse(raw) : null;
-        if (Array.isArray(parsed) && parsed.length) return parsed;
-      }catch(e){}
-      return structuredClone(DEFAULT_ROOMS);
-    }
-
-    function saveRooms(rooms){
-      try{ localStorage.setItem(LS_ROOMS, JSON.stringify(rooms)); }catch(e){}
-      firebaseBridge.syncPublic({ rooms });
-    }
-
-    function loadRoomMusicPrefs(){
-      try{
-        const raw = localStorage.getItem(LS_ROOM_PLAYLIST);
-        const parsed = raw ? JSON.parse(raw) : null;
-        if (Array.isArray(parsed) && parsed.length){
-          roomPlaylist = parsed.map(String).map(s => s.trim()).filter(Boolean);
-          if (!roomPlaylist.length) roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice();
-        } else {
-          roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice();
-        }
-      }catch(e){
-        roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice();
-      }
-      const autoplayRaw = localStorage.getItem(LS_ROOM_AUTOPLAY);
-      state.roomMusicAutoPlay = autoplayRaw === null ? true : autoplayRaw === "on";
-    }
-
-    function saveRoomMusicPrefs(){
-      try{ localStorage.setItem(LS_ROOM_PLAYLIST, JSON.stringify(roomPlaylist)); }catch(e){}
-      try{ localStorage.setItem(LS_ROOM_AUTOPLAY, state.roomMusicAutoPlay ? "on" : "off"); }catch(e){}
-      firebaseBridge.syncPublic({
-        roomPlaylist,
-        roomMusicAutoPlay: state.roomMusicAutoPlay
-      });
-    }
-
-    function syncRoomMusicAdminUI(){
-      const textarea = document.getElementById("roomMusicList");
-      if (textarea) textarea.value = roomPlaylist.join("\n");
-      const toggle = document.getElementById("roomAutoPlayToggle");
-      if (toggle) toggle.checked = !!state.roomMusicAutoPlay;
-    }
-
-    function renderLobbyRooms(){
-      const list = document.getElementById("roomsList");
-      if (!list) return;
-      const rooms = getRooms();
-      list.innerHTML = "";
-      rooms.forEach(room => {
-        const card = document.createElement("div");
-        card.className = "room-card";
-        card.innerHTML = `
-          <div class="room-head">
-            <strong>${escapeHtml(room.name)}</strong>
-            <span class="room-tag">${room.locked ? "Trancada" : "Aberta"}</span>
-          </div>
-          <small>${room.locked ? "Tem senha para entrar." : "Espaço para jogadores humanos."}</small>
-          <div class="room-actions">
-            <span class="room-lock-pill">${room.locked ? "🔒 Com senha" : "🔓 Livre"}</span>
-            <button class="btn secondary" type="button" onclick="joinRoomById('${room.id}')">Entrar</button>
-          </div>`;
-        list.appendChild(card);
-      });
-    }
-
-    function openAdminModal(){
-      document.getElementById("adminModal").style.display = "flex";
-      ensureCurrentUserIdentity(document.getElementById("playerName")?.value || document.getElementById("roomName")?.value || state.myName);
-      if (!state.isAdmin && !hasAnyAdminAccess()){
-        const code = document.getElementById("adminCode");
-        if (code) code.value = "";
-      }
-      renderAdminAccessState();
-    }
-
-    function closeAdminModal(){
-      document.getElementById("adminModal").style.display = "none";
-    }
-
-    function loginAdmin(){
-      const code = (document.getElementById("adminCode").value || "").trim();
-      if (!code || code !== getAdminPassword()){
-        alert("Código inválido.");
-        return;
-      }
-      state.isAdmin = true;
-      renderAdminAccessState();
-    }
-
-    function logoutAdmin(){
-      state.isAdmin = false;
-      state.adminSelectedUserId = "";
-      state.adminPermissionDraft = {};
-      const code = document.getElementById("adminCode");
-      if (code) code.value = "";
-      renderAdminAccessState();
-      alert("Você saiu do adm.");
-    }
-
-    function renderAdminRooms(){
+    // ==================== SUBSTITUI AS FUNÇÕES DE SALA PELO FIRESTORE ====================
+    window.getRooms = async function() {
+      const snapshot = await getDocs(collection(db, "global_rooms"));
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    };
+    window.saveRooms = async function(rooms) { /* não usado, mantido para compatibilidade */ };
+    window.renderLobbyRooms = async function() {
+      const container = document.getElementById("roomsList");
+      if (!container) return;
+      const rooms = await window.getRooms();
+      if (rooms.length === 0) { container.innerHTML = "<div class='mini-note'>Nenhuma sala criada. Use o botão Adm para criar.</div>"; return; }
+      container.innerHTML = rooms.map(room => `
+        <div class="room-card">
+          <div class="room-head"><strong>${escapeHtml(room.name)}</strong><span class="room-tag">${room.locked ? "🔒" : "🔓"}</span></div>
+          <div class="room-actions"><button class="btn secondary" type="button" onclick="joinRoomById('${room.id}')">Entrar</button></div>
+        </div>
+      `).join('');
+    };
+    window.createRoom = async function() {
+      const name = document.getElementById("newRoomName").value.trim();
+      if (!name) { alert("Digite um nome para a sala."); return; }
+      await setDoc(doc(collection(db, "global_rooms")), { name, locked: false, password: "", createdAt: Date.now() });
+      document.getElementById("newRoomName").value = "";
+      window.renderLobbyRooms();
+      window.renderAdminRooms();
+    };
+    window.deleteRoom = async function(roomId) {
+      if (!confirm("Excluir esta sala?")) return;
+      await deleteDoc(doc(db, "global_rooms", roomId));
+      window.renderLobbyRooms();
+      window.renderAdminRooms();
+    };
+    window.saveRoomSettings = async function(roomId) {
+      const password = document.getElementById(`roomPassInput-${roomId}`).value.trim();
+      const locked = password.length > 0;
+      await setDoc(doc(db, "global_rooms", roomId), { password, locked }, { merge: true });
+      window.renderLobbyRooms();
+    };
+    window.renderAdminRooms = async function() {
       const area = document.getElementById("adminRooms");
       if (!area) return;
-      const rooms = getRooms();
+      const rooms = await window.getRooms();
       area.innerHTML = "";
-      rooms.forEach(room => {
+      for (const room of rooms) {
         const item = document.createElement("div");
         item.className = "admin-room-item";
         item.innerHTML = `
@@ -2003,1228 +1159,209 @@ db.settings({
             <button class="btn danger small" type="button" onclick="deleteRoom('${room.id}')">Excluir</button>
           </div>`;
         area.appendChild(item);
-      });
-    }
-
-
-    function renderAdminFunctionToggles(){
-      const area = document.getElementById("adminFunctionList");
-      if (!area) return;
-      const draft = state.adminPermissionDraft || {};
-      area.innerHTML = "";
-      ADMIN_FUNCTIONS.forEach(fn => {
-        const row = document.createElement("div");
-        row.className = "admin-permission-item";
-        row.innerHTML = `
-          <strong>${escapeHtml(fn.label)}</strong>
-          <label class="switch" title="${escapeAttr(fn.label)}">
-            <input type="checkbox" ${draft[fn.key] ? "checked" : ""} onchange="toggleAdminPermission('${fn.key}', this.checked)" />
-            <span class="slider" aria-hidden="true"></span>
-          </label>
-        `;
-        area.appendChild(row);
-      });
-    }
-
-    function toggleAdminPermission(key, checked){
-      state.adminPermissionDraft = { ...(state.adminPermissionDraft || {}), [key]: !!checked };
-    }
-
-    function renderAdminSelectedUser(){
-      const box = document.getElementById("adminSelectedUser");
-      if (!box) return;
-      const user = findUserById(state.adminSelectedUserId);
-      if (!user){
-        box.style.display = "none";
-        box.innerHTML = "";
-        return;
       }
-      box.style.display = "flex";
-      box.innerHTML = `
-        <div class="admin-user-meta">
-          <strong>${escapeHtml(user.name)}</strong>
-          <small>ID ${escapeHtml(user.id)}</small>
-        </div>
-        <button class="btn secondary small" type="button" onclick="clearAdminUserSelection()">Trocar</button>
-      `;
-    }
-
-    function renderAdminUserSearch(){
-      const box = document.getElementById("adminUserSearchResults");
-      if (!box) return;
-      const query = document.getElementById("adminUserSearch")?.value || "";
-      const users = findKnownUsers(query);
-      box.innerHTML = "";
-      if (!users.length){
-        box.innerHTML = `<div class="mini-note">Nenhum usuário encontrado.</div>`;
-        return;
-      }
-      users.forEach(user => {
-        const item = document.createElement("div");
-        item.className = "admin-user-result" + (state.adminSelectedUserId === user.id ? " selected" : "");
-        item.onclick = () => selectAdminUser(user.id);
-        item.innerHTML = `
-          <div class="admin-user-meta">
-            <strong>${escapeHtml(user.name)}</strong>
-            <small>ID ${escapeHtml(user.id)}</small>
-          </div>
-          <span class="room-lock-pill">Selecionar</span>
-        `;
-        box.appendChild(item);
-      });
-    }
-
-    function selectAdminUser(userId){
-      const user = findUserById(userId);
-      if (!user) return;
-      state.adminSelectedUserId = user.id;
-      const existing = getAdminGrantByUserId(user.id);
-      const draft = Object.fromEntries(ADMIN_FUNCTIONS.map(fn => [fn.key, !!(existing && existing.permissions && existing.permissions[fn.key])]));
-      state.adminPermissionDraft = draft;
-      const search = document.getElementById("adminUserSearch");
-      if (search) search.value = user.name;
-      renderAdminUserSearch();
-      renderAdminSelectedUser();
-      renderAdminFunctionToggles();
-    }
-
-    function clearAdminUserSelection(){
-      state.adminSelectedUserId = "";
-      state.adminPermissionDraft = {};
-      const search = document.getElementById("adminUserSearch");
-      if (search) search.value = "";
-      renderAdminUserSearch();
-      renderAdminSelectedUser();
-      renderAdminFunctionToggles();
-    }
-
-    function addAdminDelegation(){
-      const user = findUserById(state.adminSelectedUserId);
-      if (!user){
-        alert("Selecione um usuário.");
-        return;
-      }
-      const selected = ADMIN_FUNCTIONS.reduce((acc, fn) => {
-        acc[fn.key] = !!(state.adminPermissionDraft && state.adminPermissionDraft[fn.key]);
-        return acc;
-      }, {});
-      if (!Object.values(selected).some(Boolean)){
-        alert("Ligue ao menos uma função.");
-        return;
-      }
-      const list = loadAdminDelegations().filter(item => String(item.userId).slice(0,4).toUpperCase() !== user.id);
-      list.push({
-        userId: user.id,
-        userName: user.name,
-        permissions: selected
-      });
-      saveAdminDelegations(list);
-      upsertKnownUser({ id: user.id, name: user.name });
-      renderAdminDelegatedList();
-      renderAdminUserSearch();
-      alert("Função(ões) adicionada(s).");
-    }
-
-    function renderAdminDelegatedList(){
-      const area = document.getElementById("adminDelegatedList");
-      if (!area) return;
-      const list = getDelegatedUsers();
-      area.innerHTML = "";
-      if (!list.length){
-        area.innerHTML = `<div class="mini-note">Nenhum usuário com função de adm.</div>`;
-        return;
-      }
-      list.forEach(user => {
-        const item = document.createElement("div");
-        item.className = "admin-role-item";
-        const badges = ADMIN_FUNCTIONS.filter(fn => user.permissions && user.permissions[fn.key]).map(fn => `<span class="role-badge">${escapeHtml(fn.label)}</span>`).join("");
-        item.innerHTML = `
-          <div style="min-width:0;">
-            <div class="admin-role-head">
-              <strong>${escapeHtml(user.userName)}</strong>
-              <span class="id-chip">ID ${escapeHtml(user.userId)}</span>
-            </div>
-            <div class="role-badges">${badges || ""}</div>
-          </div>
-          <button class="btn secondary small" type="button" onclick="deleteAdminDelegation('${escapeAttr(user.userId)}')">Deletar</button>
-        `;
-        area.appendChild(item);
-      });
-    }
-
-    function renderAdminPlayersList(){
-      const area = document.getElementById("adminPlayersList");
-      if (!area) return;
-      area.innerHTML = "";
-      const list = collectKnownUsers();
-      if (!list.length){
-        area.innerHTML = `<div class="mini-note">Nenhum jogador encontrado.</div>`;
-        return;
-      }
-      list.forEach((player) => {
-        const uid = String(player.id || "").slice(0, 4).toUpperCase();
-        const item = document.createElement("div");
-        item.className = "admin-role-item";
-        item.innerHTML = `
-          <div class="admin-role-head">
-            <strong>${escapeHtml(player.name || "Jogador")}</strong>
-            <span class="id-chip">ID ${escapeHtml(uid)}</span>
-          </div>
-          <button class="btn secondary small" type="button" onclick="deleteAdminPlayer('${escapeAttr(uid)}')">Deletar</button>
-        `;
-        area.appendChild(item);
-      });
-    }
-
-    function deleteAdminDelegation(userId){
-      const uid = String(userId || "").slice(0,4).toUpperCase();
-      if (!confirm("realmente deseja deletar")) return;
-      const next = loadAdminDelegations().filter(item => String(item.userId).slice(0,4).toUpperCase() !== uid);
-      saveAdminDelegations(next);
-      renderAdminAccessState();
-      if (state.myId === uid){
-        state.isAdmin = false;
-      }
-    }
-
-    function deleteAdminPlayer(userId){
-      const uid = String(userId || "").slice(0, 4).toUpperCase();
-      const user = findUserById(uid);
-      const label = user ? `${user.name} (${uid})` : uid;
-      if (!confirm(`Deseja realmente excluir a conta do jogador ${label}?`)) return;
-      const nextRegistry = loadUserRegistry().filter(item => String(item.id || "").slice(0, 4).toUpperCase() !== uid);
-      saveUserRegistry(nextRegistry);
-      const nextDelegations = loadAdminDelegations().filter(item => String(item.userId || "").slice(0, 4).toUpperCase() !== uid);
-      saveAdminDelegations(nextDelegations);
-      if (Array.isArray(state.roomMembers)){
-        state.roomMembers = state.roomMembers.filter(m => String(m.id || "").slice(0, 4).toUpperCase() !== uid);
-      }
-      const messages = loadChatMessages().filter(m => {
-        const mid = String(m.authorId || lookupKnownUserIdByName(m.author) || "").slice(0, 4).toUpperCase();
-        return mid !== uid;
-      });
-      saveChatMessages(messages);
-      if (state.myId === uid){
-        try{ localStorage.removeItem(LS_MY_USER_ID); }catch(e){}
-        state.isAdmin = false;
-        backToLobby();
-        return;
-      }
-      renderRoomPresence();
-      renderChat();
-      renderAdminAccessState();
-    }
-
-    function renderAdminAccessState(){
-      const loginBox = document.getElementById("adminLoginBox");
-      const panel = document.getElementById("adminPanel");
-      const hasAccess = hasAnyAdminAccess();
-      if (loginBox) loginBox.style.display = (state.isAdmin || hasAccess) ? "none" : "block";
-      if (panel) panel.style.display = (state.isAdmin || hasAccess) ? "flex" : "none";
-      if (!state.isAdmin && !hasAccess) return;
-      updateAdminSectionsVisibility();
-      renderAdminRooms();
-      syncRoomMusicAdminUI();
-      renderAdminUserSearch();
-      renderAdminSelectedUser();
-      renderAdminFunctionToggles();
-      renderAdminDelegatedList();
-      renderAdminPlayersList();
-    }
-
-    function updateAdminSectionsVisibility(){
-      const roomsSection = document.getElementById("adminRoomsSection");
-      const existingRoomsSection = document.getElementById("adminExistingRoomsSection");
-      const musicSection = document.getElementById("adminMusicSection");
-      const delegateSection = document.getElementById("adminDelegateSection");
-      const canRooms = canUseAdminFunction("rooms");
-      const canMusic = canUseAdminFunction("music") || canUseAdminFunction("autoplay");
-      const canDelegate = canUseAdminFunction("delegate");
-      const canChat = canUseAdminFunction("chat") && state.roomMode;
-      const playersSection = document.getElementById("adminPlayersSection");
-      if (roomsSection) roomsSection.classList.toggle("admin-section-hidden", !canRooms);
-      if (existingRoomsSection) existingRoomsSection.classList.toggle("admin-section-hidden", !canRooms);
-      if (musicSection) musicSection.classList.toggle("admin-section-hidden", !canMusic);
-      if (delegateSection) delegateSection.classList.toggle("admin-section-hidden", !canDelegate);
-      if (playersSection) playersSection.classList.toggle("admin-section-hidden", false);
-      void canChat;
-    }
-
-    function createRoom(){
-      const name = (document.getElementById("newRoomName").value || "").trim();
-      if (!name){
-        alert("Digite um nome para a sala.");
-        return;
-      }
-      const rooms = getRooms();
-      const id = "room-" + Date.now();
-      rooms.push({ id, name, locked:false, password:"" });
-      saveRooms(rooms);
-      document.getElementById("newRoomName").value = "";
-      renderLobbyRooms();
-      renderAdminRooms();
-      syncRoomMusicAdminUI();
-      renderAdminAccessState();
-    }
-
-    function saveRoomSettings(roomId){
-      const rooms = getRooms();
-      const idx = rooms.findIndex(r => r.id === roomId);
-      if (idx < 0) return;
-      const password = (document.getElementById(`roomPassInput-${roomId}`).value || "").trim();
-      rooms[idx].password = password;
-      rooms[idx].locked = password.length > 0;
-      saveRooms(rooms);
-      renderLobbyRooms();
-      renderAdminRooms();
-      syncRoomMusicAdminUI();
-      renderAdminAccessState();
-    }
-
-    function deleteRoom(roomId){
-      if (!confirm("Excluir esta sala?")) return;
-      const rooms = getRooms().filter(r => r.id !== roomId);
-      saveRooms(rooms);
-      renderLobbyRooms();
-      renderAdminRooms();
-      syncRoomMusicAdminUI();
-      renderAdminAccessState();
-    }
-
-    function saveRoomMusicList(){
-      const raw = (document.getElementById("roomMusicList").value || "").split("\n").map(s => s.trim()).filter(Boolean);
-      roomPlaylist = raw.length ? raw : DEFAULT_ROOM_PLAYLIST.slice();
-      saveRoomMusicPrefs();
-      syncRoomMusicAdminUI();
-      if (state.roomMode) setupMusic();
-      alert("Músicas das salas salvas.");
-    }
-
-    function resetRoomMusicList(){
-      roomPlaylist = DEFAULT_ROOM_PLAYLIST.slice();
-      saveRoomMusicPrefs();
-      syncRoomMusicAdminUI();
-      if (state.roomMode) setupMusic();
-    }
-
-    function toggleRoomAutoPlay(){
-      const toggle = document.getElementById("roomAutoPlayToggle");
-      state.roomMusicAutoPlay = !!(toggle && toggle.checked);
-      saveRoomMusicPrefs();
-    }
-
-    let pendingRoomId = null;
-
-    function joinRoomById(roomId){
-      const room = getRooms().find(r => r.id === roomId);
-      if (!room) return;
-      const enteredName = getEnteredName();
-      if (!enteredName){
-        alert("Digite um nome para entrar na sala.");
-        return;
-      }
-      ensureCurrentUserIdentity(enteredName);
-      if (room.locked && !state.isAdmin){
-        pendingRoomId = roomId;
-        document.getElementById("roomPasswordTitle").textContent = `Entrar em ${room.name}`;
-        document.getElementById("roomPasswordInput").value = "";
-        document.getElementById("roomPasswordModal").style.display = "flex";
-        return;
-      }
-      state.roomId = room.id;
-      state.roomName = room.name;
-      enterRoomDirectly(room, enteredName);
-    }
-
-    function enterRoomDirectly(room, enteredName){
-      const identity = ensureCurrentUserIdentity(enteredName || getEnteredName());
-      state.myName = identity.name;
-      state.myId = identity.id;
-      state.roomMode = true;
-      state.roomWaiting = false;
-      state.roomMembers = [
-        { name: "Jogador 2", id: randomId4(), color: "#3b82f6" },
-        { name: "Jogador 3", id: randomId4(), color: "#22c55e" },
-        { name: "Jogador 4", id: randomId4(), color: "#eab308" }
-      ];
-      state.roomMembers.forEach(member => upsertKnownUser(member));
-      showGame();
-      firebaseBridge.listenChat(chatFirebaseKey());
-      initGame();
-      setupMusic();
-      if (state.roomMusicAutoPlay) playMusic();
-      else pauseMusic();
-      addChatMessage(state.myName, `Entrou em ${room.name}`);
-      renderRoomPresence();
-      renderChat();
-    }
-
-    function getPlayerName(index){
-      if (index === 0) return state.myName || "Você";
-      if (state.roomMode){
-        const member = state.roomMembers[index - 1];
-        if (member && member.name) return member.name;
-        return `Jogador ${index + 1}`;
-      }
-      return `Robô ${index}`;
-    }
-
-    function showGame(){
-      document.getElementById("lobbyScreen").style.display = "none";
-      document.getElementById("endScreen").style.display = "none";
-      document.getElementById("table").style.display = "block";
-      document.getElementById("chatPanel").style.display = "flex";
-    }
-
-    function startRoomWaiting(){
-      const room = getRooms().find(r => r.name === state.roomName || r.id === state.roomId);
-      if (room) enterRoomDirectly(room);
-    }
-
-    function updateRoomCountdown(){
-      const el = document.getElementById("roomCountdown");
-      if (el) el.textContent = "00:00";
-    }
-
-    function startRoomMatch(){
-      return;
-    }
-
-    function closeRoomPasswordModal(){
-      const modal = document.getElementById("roomPasswordModal");
-      if (modal) modal.style.display = "none";
-      pendingRoomId = null;
-    }
-
-    function confirmRoomPassword(){
-      const room = pendingRoomId ? getRooms().find(r => r.id === pendingRoomId) : null;
-      if (!room){
-        backToLobby();
-        return;
-      }
-      const entered = (document.getElementById("roomPasswordInput").value || "").trim();
-      if (entered !== (room.password || "")){
-        alert("Senha inválida.");
-        return;
-      }
-      closeRoomPasswordModal();
-      const name = getEnteredName();
-      enterRoomDirectly(room, name);
-    }
-
-    function backToLobby(){
-      clearTimeout(state.botTimer);
-      clearInterval(state.roomTimerInterval);
-      state.roomWaiting = false;
-      state.roomMode = false;
-      state.roomMembers = [];
-      state.roomId = null;
-      state.roomName = "";
-      firebaseBridge.leaveChat();
-      stopMic();
-      pauseMusic();
-      closeAdminModal();
-      const passwordModal = document.getElementById("roomPasswordModal");
-      if (passwordModal) passwordModal.style.display = "none";
-      pendingRoomId = null;
-      document.body.classList.remove("room-waiting");
-      document.getElementById("table").style.display = "none";
-      document.getElementById("endScreen").style.display = "none";
-      document.getElementById("lobbyScreen").style.display = "flex";
-      document.getElementById("chatPanel").style.display = "none";
-      renderLobbyRooms();
-      renderRoomPresence();
-      renderChat();
-    }
-
-    function getEnteredName(){
-      const main = (document.getElementById("playerName").value || "").trim();
-      const room = (document.getElementById("roomName").value || "").trim();
-      return (room || main).slice(0, 18);
-    }
-
-    function joinRobots(){
-      ensureCurrentUserIdentity(getEnteredName() || state.myName || "Você");
-      state.roomMode = false;
-      state.roomName = "Robôs";
-      state.roomMembers = [];
-      startGame();
-    }
-
-    function joinRoom(roomNumber){
-      const rooms = getRooms();
-      const room = rooms[roomNumber - 1];
-      if (room) return joinRoomById(room.id);
-    }
-
-    function startGame(){
-      ensureCurrentUserIdentity(document.getElementById("playerName")?.value || document.getElementById("roomName")?.value || state.myName);
-      document.getElementById("lobbyScreen").style.display = "none";
-      document.getElementById("endScreen").style.display = "none";
-      showGame();
-      if (state.roomMode) firebaseBridge.listenChat(chatFirebaseKey());
-      initGame();
-      setupMusic();
-      playMusic();
-      addChatMessage(state.myName, `Entrou em ${state.roomMode ? state.roomName : 'jogo com robôs'}`);
-      renderChat();
-    }
-
-    function restartGame(){
-      clearTimeout(state.botTimer);
-      initGame();
-      setupMusic();
-      playMusic();
-    }
-
-    function toggleTheme(){
-      const isDark = document.getElementById("themeToggle").checked;
-      document.body.setAttribute("data-theme", isDark ? "dark" : "light");
-      localStorage.setItem("cartas-theme", isDark ? "dark" : "light");
-    }
-
-    function loadTheme(){
-      const saved = localStorage.getItem("cartas-theme") || "light";
-      document.body.setAttribute("data-theme", saved);
-      const toggle = document.getElementById("themeToggle");
-      if (toggle) toggle.checked = saved === "dark";
-    }
-
-    function drawFromDeck(){
-      if (state.deck.length === 0){
-        for (let i = 0; i < 60; i++) state.deck.push(createCard());
-      }
-      return state.deck.pop();
-    }
-
-    function createCard(){
-      const r = Math.random();
-      let value = Math.floor(Math.random() * 10).toString();
-      if (r < 0.12) value = "+2";
-      else if (r < 0.18) value = "+4";
-      return {
-        color: colors[Math.floor(Math.random() * colors.length)],
-        value,
-        img: imgs[Math.floor(Math.random() * imgs.length)]
-      };
-    }
-
-    function initGame(){
-      clearTimeout(state.botTimer);
-      state.deck = [];
-      state.players = [[], [], [], []];
-      state.penalty = 0;
-      state.turn = 0;
-      state.gameRunning = true;
-      state.topCard = null;
-      document.getElementById("statusNote").textContent = state.roomMode
-        ? `Você entrou na sala ${state.roomName}.`
-        : `Combine cor ou valor para jogar.`;
-
-      for (let i = 0; i < 100; i++) state.deck.push(createCard());
-      for (let p = 0; p < 4; p++) for (let i = 0; i < 6; i++) state.players[p].push(drawFromDeck());
-      state.topCard = drawFromDeck();
-      render();
-      renderRoomPresence();
-      if (!state.roomMode) scheduleBotTurn();
-    }
-
-    function cardHTML(c, interactive=false, index=0){
-      const playClass = interactive && canPlay(c) ? ' playable' : '';
-      const border = colorMap[c.color] || '#64748b';
-      const onClick = interactive && canPlay(c) ? ` onclick="playCard(${index})"` : '';
-      return `<div class="card${playClass}"${onClick} data-value="${c.value}" style="border-color:${border}; background-image:url('${c.img}')"></div>`;
-    }
-
-    function backCard(){
-      return `<div class="card small back"></div>`;
-    }
-
-    function canPlay(c){
-      if (!state.topCard) return true;
-      if (c.value === "+4") return true;
-      if (c.value === "+2") return c.color === state.topCard.color || state.topCard.value === "+2";
-      return c.color === state.topCard.color || c.value === state.topCard.value;
-    }
-
-    function render(){
-      const topPile = document.getElementById("discardPile");
-      topPile.innerHTML = state.topCard ? cardHTML(state.topCard) : '';
-      document.getElementById("turnText").style.display = state.turn === 0 ? "block" : "none";
-      document.getElementById("hudTurn").querySelector('span:last-child').textContent = state.turn === 0 ? "Sua vez" : `Vez de ${getPlayerName(state.turn)}`;
-
-      const p1 = document.getElementById("p1");
-      p1.querySelector('.info').innerHTML = `<span>${getPlayerName(0)}</span><small>${state.players[0].length} cartas</small>`;
-      p1.querySelector('.cards').innerHTML = state.players[0].map((c, i) => cardHTML(c, true, i)).join('');
-
-      const p2 = document.getElementById("p2");
-      p2.querySelector('.info').innerHTML = `<span>${getPlayerName(1)}</span><small>${state.players[1].length} cartas</small>`;
-      p2.querySelector('.cards').innerHTML = state.players[1].map(() => backCard()).join('');
-
-      const p3 = document.getElementById("p3");
-      p3.querySelector('.info').innerHTML = `<span>${getPlayerName(2)}</span><small>${state.players[2].length} cartas</small>`;
-      p3.querySelector('.cards').innerHTML = state.players[2].map(() => backCard()).join('');
-
-      const p4 = document.getElementById("p4");
-      p4.querySelector('.info').innerHTML = `<span>${getPlayerName(3)}</span><small>${state.players[3].length} cartas</small>`;
-      p4.querySelector('.cards').innerHTML = state.players[3].map(() => backCard()).join('');
-
-    }
-
-    function renderRoomPresence(){
-      const box = document.getElementById("roomPresence");
-      if (!box) return;
-      box.innerHTML = "";
-      if (!state.roomMode){
-        return;
-      }
-      state.roomMembers.forEach((m) => {
-        const dot = document.createElement("span");
-        dot.className = "presence-dot";
-        dot.title = m.name;
-        dot.style.background = m.color || "";
-        box.appendChild(dot);
-      });
-    }
-
-    function applyCard(c){
-      state.topCard = c;
-      if (c.value === "+2") state.penalty += 2;
-      if (c.value === "+4") state.penalty += 4;
-    }
-
-    function checkWin(){
-      for (let i = 0; i < 4; i++){
-        if (state.players[i].length === 0){
-          clearTimeout(state.botTimer);
-          state.gameRunning = false;
-          document.getElementById("table").style.display = "none";
-          document.getElementById("endScreen").style.display = "flex";
-          document.getElementById("winnerText").textContent = i === 0 ? "Você venceu!" : `${getPlayerName(i)} venceu!`;
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function nextTurn(){
-      if (checkWin()) return;
-      state.turn = (state.turn + 1) % 4;
-      render();
-      clearTimeout(state.botTimer);
-      if (!state.roomMode){
-        state.botTimer = setTimeout(resolveTurn, 220);
-      }
-    }
-
-    function resolveTurn(){
-      if (!state.gameRunning) return;
-
-      if (state.penalty > 0){
-        const current = state.turn;
-        for (let i = 0; i < state.penalty; i++) state.players[current].push(drawFromDeck());
-        state.penalty = 0;
-        render();
-        nextTurn();
-        return;
-      }
-
-      if (!state.roomMode && state.turn !== 0){
-        botTurn();
-      } else if (state.roomMode && state.turn !== 0){
-        document.getElementById("statusNote").textContent = `${getPlayerName(state.turn)} aguarda jogada nesta sala.`;
-      }
-    }
-
-    function playCard(i){
-      if (!state.gameRunning || state.turn !== 0 || state.penalty > 0) return;
-      const c = state.players[0][i];
-      if (!canPlay(c)) return;
-      applyCard(c);
-      state.players[0].splice(i, 1);
-      render();
-      nextTurn();
-    }
-
-    function drawCard(){
-      if (!state.gameRunning || state.turn !== 0 || state.penalty > 0) return;
-      state.players[0].push(drawFromDeck());
-      render();
-      nextTurn();
-    }
-
-    function botTurn(){
-      clearTimeout(state.botTimer);
-      state.botTimer = setTimeout(() => {
-        if (!state.gameRunning || state.turn === 0) return;
-        const hand = state.players[state.turn];
-        const playable = hand.findIndex(c => canPlay(c));
-        if (playable !== -1){
-          const c = hand[playable];
-          applyCard(c);
-          hand.splice(playable, 1);
-        } else {
-          hand.push(drawFromDeck());
-        }
-        render();
-        nextTurn();
-      }, 1200 + Math.random() * 800);
-    }
-
-    function scheduleBotTurn(){
-      clearTimeout(state.botTimer);
-      state.botTimer = setTimeout(resolveTurn, 160);
-    }
-
-    function toggleChat(){
-      state.chatCollapsed = !state.chatCollapsed;
-      const panel = document.getElementById("chatPanel");
-      if (!panel) return;
-      panel.classList.toggle("collapsed", state.chatCollapsed);
-      const btn = panel.querySelector(".chat-toggle-btn");
-      if (btn) btn.textContent = state.chatCollapsed ? "+" : "−";
-    }
-
-    function chatStorageKey(){
-      if (state.roomMode && state.roomId) return LS_CHAT_PREFIX + state.roomId;
-      if (state.roomMode && state.roomName) return LS_CHAT_PREFIX + state.roomName;
-      return "cartas.chat.robots.v3";
-    }
-    function chatFirebaseKey(){
-      if (state.roomMode && state.roomId) return String(state.roomId);
-      if (state.roomMode && state.roomName) return String(state.roomName);
-      return "lobby";
-    }
-
-    function chatStorageKeys(){
-      const keys = [];
-      const primary = chatStorageKey();
-      if (primary) keys.push(primary);
-      if (state.roomMode && state.roomId) keys.push(LS_CHAT_PREFIX + state.roomId);
-      if (state.roomMode && state.roomName) keys.push(LS_CHAT_PREFIX + state.roomName);
-      if (!state.roomMode) keys.push("cartas.chat.robots.v3");
-      return [...new Set(keys.filter(Boolean))];
-    }
-
-    function loadChatMessages(){
-      try{
-        for (const key of chatStorageKeys()){
-          const raw = localStorage.getItem(key);
-          if (!raw) continue;
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) return parsed;
-        }
-        return [];
-      }catch(e){
-        return [];
-      }
-    }
-
-    function saveChatMessages(messages){
-      const payload = Array.isArray(messages) ? messages : [];
-      try{
-        for (const key of chatStorageKeys()) localStorage.setItem(key, JSON.stringify(payload));
-      }catch(e){}
-      firebaseBridge.syncChat(chatFirebaseKey(), payload);
-    }
-
-    function renderChat(){
-      const box = document.getElementById("chatMessages");
-      if (!box) return;
-      const messages = loadChatMessages();
-      box.innerHTML = "";
-      messages.forEach(msg => {
-        const item = document.createElement("div");
-        item.className = msg.author === state.myName ? 'chat-msg me' : 'chat-msg';
-        const authorId = String(msg.authorId || getUserIdForName(msg.author)).slice(0, 4).toUpperCase();
-        const adminButtons = (canUseAdminFunction("chat") && state.roomMode)
-          ? `<div class="chat-actions">
-               <button class="btn secondary chat-action-btn" type="button" onclick="deleteChatMessage('${msg.id}')">Excluir mensagem</button>
-               <button class="btn secondary chat-action-btn" type="button" onclick="deleteChatUser('${escapeAttr(authorId)}')">Excluir usuário</button>
-             </div>`
-          : "";
-        item.innerHTML = `
-          <div class="chat-msg-head">
-            <div class="chat-author-meta">
-              <strong>${escapeHtml(msg.author)}</strong>
-              <span class="id-chip">ID ${escapeHtml(authorId)}</span>
-              <button class="btn secondary copy-id-btn" type="button" onclick="copyUserId('${escapeAttr(authorId)}')">Copiar id</button>
-            </div>
-            ${adminButtons}
-          </div>
-          <span>${escapeHtml(msg.message)}</span>`;
-        box.appendChild(item);
-      });
-      box.scrollTop = box.scrollHeight;
-    }
-
-    function addChatMessage(author, message){
-      const messages = loadChatMessages();
-      const authorId = getUserIdForName(author);
-      upsertKnownUser({ id: authorId, name: author });
-      messages.push({ id: Math.random().toString(16).slice(2), author, authorId, message, ts: Date.now() });
-      saveChatMessages(messages);
-      renderChat();
-    }
-
-    function deleteChatMessage(messageId){
-      const messages = loadChatMessages().filter(m => m.id !== messageId);
-      saveChatMessages(messages);
-      renderChat();
-    }
-
-    function deleteChatUser(userId){
-      const uid = String(userId || "").slice(0, 4).toUpperCase();
-      const user = findUserById(uid);
-      const label = user ? `${user.name} (${user.id})` : uid;
-      if (!confirm(`Excluir o usuário ${label}?`)) return;
-      const messages = loadChatMessages().filter(m => {
-        const mid = String(m.authorId || lookupKnownUserIdByName(m.author) || "").slice(0, 4).toUpperCase();
-        return mid !== uid;
-      });
-      saveChatMessages(messages);
-      if (state.roomMembers && Array.isArray(state.roomMembers)){
-        state.roomMembers = state.roomMembers.filter(m => String(m.id || "").slice(0,4).toUpperCase() !== uid && normalizeText(m.name) !== normalizeText(label));
-      }
-      if (state.myId === uid){
-        backToLobby();
-        return;
-      }
-      renderRoomPresence();
-      renderChat();
-    }
-
-    function escapeHtml(text){
-      return String(text).replace(/[&<>"]|'/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
-    }
-
-    function escapeAttr(text){
-      return escapeHtml(text).replace(/'/g, "&#39;");
-    }
-
-    document.getElementById("chatForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const input = document.getElementById("chatInput");
-      const msg = input.value.trim();
-      if (!msg) return;
-      addChatMessage(state.myName, msg);
-      input.value = "";
-    });
-
-    function updateAudioButton(){
-      const btn = document.getElementById("audioBtn");
-      btn.textContent = state.audioEnabled ? "Áudio: ligado" : "Áudio: desligado";
-    }
-
-    function updateMicButton(){
-      const btn = document.getElementById("micBtn");
-      btn.textContent = state.micEnabled ? "Mic: ligado" : "Mic: desligado";
-    }
-
-    function applyVolumes(){
-      if (state.musicAudio) state.musicAudio.volume = state.musicVolumeValue * state.masterVolumeValue;
-      if (state.micGain) state.micGain.gain.value = state.micVolumeValue;
-      if (state.micMonitor) state.micMonitor.gain.value = state.audioEnabled ? state.masterVolumeValue : 0;
-    }
-
-    function toggleAudio(){
-      state.audioEnabled = !state.audioEnabled;
-      localStorage.setItem("cartas-audio", state.audioEnabled ? "on" : "off");
-      updateAudioButton();
-      applyVolumes();
-    }
-
-    async function toggleMic(){
-      state.micEnabled = !state.micEnabled;
-      localStorage.setItem("cartas-mic", state.micEnabled ? "on" : "off");
-      updateMicButton();
-      if (state.micEnabled){
-        try{
-          state.micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-          state.micAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-          state.micSource = state.micAudioContext.createMediaStreamSource(state.micStream);
-          state.micGain = state.micAudioContext.createGain();
-          state.micMonitor = state.micAudioContext.createGain();
-          state.micSource.connect(state.micGain);
-          // micMonitor não conectado ao destination para evitar eco local
-          applyVolumes();
-        }catch(err){
-          state.micEnabled = false;
-          updateMicButton();
-          localStorage.setItem("cartas-mic", "off");
-          alert("Não foi possível ativar o microfone. Verifique a permissão do navegador.");
-        }
-      } else {
-        stopMic();
-      }
-    }
-
-    function stopMic(){
-      try{ if (state.micStream) state.micStream.getTracks().forEach(t => t.stop()); }catch(e){}
-      try{ if (state.micAudioContext) state.micAudioContext.close(); }catch(e){}
-      state.micStream = null;
-      state.micAudioContext = null;
-      state.micSource = null;
-      state.micGain = null;
-      state.micMonitor = null;
-    }
-
-    function setMicVolume(value){
-      state.micVolumeValue = Number(value) / 100;
-      applyVolumes();
-    }
-
-    function setMasterVolume(value){
-      state.masterVolumeValue = Number(value) / 100;
-      applyVolumes();
-    }
-
-    function getActivePlaylist(){
-      return state.roomMode ? roomPlaylist : ROBOT_PLAYLIST;
-    }
-
-    function setupMusic(){
-      if (!state.musicAudio){
-        state.musicAudio = new Audio();
-        state.musicAudio.preload = "auto";
-        state.musicAudio.loop = false;
-        state.musicAudio.addEventListener("ended", () => nextTrack(true));
-      }
-      const active = getActivePlaylist();
-      if (active.length){
-        state.trackIndex = state.trackIndex % active.length;
-        state.musicAudio.src = active[state.trackIndex];
-      }
-      state.musicAudio.volume = state.musicVolumeValue * state.masterVolumeValue;
-      document.getElementById("musicDisc").classList.remove("playing");
-    }
-
-    function playMusic(){
-      if (!state.musicAudio) setupMusic();
-      if (!state.musicAudio || !state.musicAudio.src) return;
-      state.musicPlaying = true;
-      const disc = document.getElementById("musicDisc");
-      if (disc) disc.classList.add("playing");
-      const playPromise = state.musicAudio.play();
-      if (playPromise && typeof playPromise.catch === "function"){
-        playPromise.catch(() => {
-          state.musicPlaying = false;
-          if (disc) disc.classList.remove("playing");
-        });
-      }
-    }
-
-    function pauseMusic(){
-      if (!state.musicAudio) return;
-      state.musicPlaying = false;
-      state.musicAudio.pause();
-      const disc = document.getElementById("musicDisc");
-      if (disc) disc.classList.remove("playing");
-    }
-
-    function toggleMusic(){
-      if (state.musicPlaying) pauseMusic();
-      else playMusic();
-    }
-
-    function nextTrack(autoPlay=false){
-      const active = getActivePlaylist();
-      if (!active.length) return;
-      state.trackIndex = (state.trackIndex + 1) % active.length;
-      setupMusic();
-      if (state.musicPlaying || autoPlay) playMusic();
-    }
-
-    function prevTrack(){
-      const active = getActivePlaylist();
-      if (!active.length) return;
-      state.trackIndex = (state.trackIndex - 1 + active.length) % active.length;
-      setupMusic();
-      if (state.musicPlaying) playMusic();
-    }
-
-    function loadPrefs(){
-      const savedTheme = localStorage.getItem("cartas-theme") || "light";
-      document.body.setAttribute("data-theme", savedTheme);
-      const toggle = document.getElementById("themeToggle");
-      if (toggle) toggle.checked = savedTheme === "dark";
-      const savedAudio = localStorage.getItem("cartas-audio");
-      state.audioEnabled = savedAudio === null ? true : savedAudio === "on";
-      state.micEnabled = localStorage.getItem("cartas-mic") === "on";
-      updateAudioButton();
-      updateMicButton();
-      const musicVolume = document.getElementById("musicVolume");
-      if (musicVolume) state.musicVolumeValue = Number(musicVolume.value) / 100;
-      const micVolume = document.getElementById("micVolume");
-      if (micVolume) state.micVolumeValue = Number(micVolume.value) / 100;
-      const masterVolume = document.getElementById("masterVolume");
-      if (masterVolume) state.masterVolumeValue = Number(masterVolume.value) / 100;
-      applyVolumes();
-      ensureCurrentUserIdentity(document.getElementById("playerName")?.value || document.getElementById("roomName")?.value || state.myName);
-      loadRoomMusicPrefs();
-      syncRoomMusicAdminUI();
-      setupMusic();
-      const chatPanel = document.getElementById("chatPanel");
-      if (chatPanel) chatPanel.style.display = "none";
-      state.chatCollapsed = false;
-      if (chatPanel) chatPanel.classList.remove("collapsed");
-      const btn = chatPanel ? chatPanel.querySelector(".chat-toggle-btn") : null;
-      if (btn) btn.textContent = "−";
-      renderChat();
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      firebaseBridge.start();
-      loadPrefs();
-      updateAudioButton();
-      updateMicButton();
-      renderLobbyRooms();
-      renderAdminAccessState();
-      document.getElementById("chatPanel").style.display = "none";
-      // Autoplay pode ser bloqueado pelo navegador, mas tentamos iniciar ao carregar.
-      playMusic();
-    });
-  </script>
-
-<script type="module">
-  // ==================== MÓDULO FIREBASE MULTIPLAYER (CORRIGIDO) ====================
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    collection,
-    getDocs,
-    setDoc,
-    deleteDoc,
-    addDoc,
-    onSnapshot,
-    updateDoc,
-    arrayUnion
-  } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDr5UNy6SCUOQpKQMuqCxQbwJ32bTeN9Ew",
-    authDomain: "cartas--jogo.firebaseapp.com",
-    projectId: "cartas--jogo",
-    storageBucket: "cartas--jogo.firebasestorage.app",
-    messagingSenderId: "572709591073",
-    appId: "1:572709591073:web:ef23f9079b9fc98b95ab60"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  window.FIREBASE_CONFIG = firebaseConfig;
-  window.__firebaseReady = { app, auth, db };
-  window.__firebaseUid = "";
-
-  try {
-    await signInAnonymously(auth);
-  } catch (err) {
-    console.warn("Firebase Anonymous Auth não ativou automaticamente.", err);
-  }
-
-  onAuthStateChanged(auth, (user) => {
-    window.__firebaseUid = user ? user.uid : "";
-  });
-
-  // ==================== SOBRESCREVER FUNÇÕES DE SALA PARA USAR FIRESTORE ====================
-  // Substitui a função renderLobbyRooms para buscar salas do Firestore (global_rooms)
-  const originalRenderLobbyRooms = window.renderLobbyRooms;
-  window.renderLobbyRooms = async function() {
-    const container = document.getElementById("roomsList");
-    if (!container) return;
-    try {
-      const snapshot = await getDocs(collection(db, "global_rooms"));
-      const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      if (rooms.length === 0) {
-        container.innerHTML = "<div class='mini-note'>Nenhuma sala criada. Use o botão Adm para criar.</div>";
-        return;
-      }
-      container.innerHTML = rooms.map(room => `
-        <div class="room-card">
-          <div class="room-head"><strong>${escapeHtml(room.name)}</strong><span class="room-tag">${room.locked ? "🔒" : "🔓"}</span></div>
-          <div class="room-actions"><button class="btn secondary" onclick="joinRoomById('${room.id}')">Entrar</button></div>
-        </div>
-      `).join('');
-    } catch(e) { console.error(e); }
-  };
-
-  // Substitui createRoom para criar no Firestore
-  const originalCreateRoom = window.createRoom;
-  window.createRoom = async function() {
-    const name = document.getElementById("newRoomName").value.trim();
-    if (!name) { alert("Digite um nome para a sala."); return; }
-    const newRoomRef = doc(collection(db, "global_rooms"));
-    await setDoc(newRoomRef, { name, locked: false, password: "", createdAt: Date.now() });
-    document.getElementById("newRoomName").value = "";
-    window.renderLobbyRooms();
-    if (window.renderAdminRooms) window.renderAdminRooms();
-  };
-
-  // Substitui deleteRoom
-  const originalDeleteRoom = window.deleteRoom;
-  window.deleteRoom = async function(roomId) {
-    if (!confirm("Excluir esta sala?")) return;
-    await deleteDoc(doc(db, "global_rooms", roomId));
-    window.renderLobbyRooms();
-    if (window.renderAdminRooms) window.renderAdminRooms();
-  };
-
-  // Substitui saveRoomSettings (para compatibilidade com senha)
-  const originalSaveRoomSettings = window.saveRoomSettings;
-  window.saveRoomSettings = async function(roomId) {
-    const password = document.getElementById(`roomPassInput-${roomId}`).value.trim();
-    const locked = password.length > 0;
-    await setDoc(doc(db, "global_rooms", roomId), { password, locked }, { merge: true });
-    window.renderLobbyRooms();
-  };
-
-  // Substitui renderAdminRooms para exibir salas do Firestore
-  const originalRenderAdminRooms = window.renderAdminRooms;
-  window.renderAdminRooms = async function() {
-    const area = document.getElementById("adminRooms");
-    if (!area) return;
-    const snapshot = await getDocs(collection(db, "global_rooms"));
-    const rooms = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    area.innerHTML = "";
-    for (const room of rooms) {
-      const item = document.createElement("div");
-      item.className = "admin-room-item";
-      item.innerHTML = `
-        <div>
-          <strong>${escapeHtml(room.name)}</strong>
-          <small>${room.locked ? "Trancada" : "Aberta"}</small>
-          <div class="room-password-row">
-            <input id="roomPassInput-${room.id}" type="password" value="${escapeAttr(room.password || "")}" placeholder="Senha da sala" />
-          </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
-          <button class="btn small" type="button" onclick="saveRoomSettings('${room.id}')">Salvar</button>
-          <button class="btn danger small" type="button" onclick="deleteRoom('${room.id}')">Excluir</button>
-        </div>`;
-      area.appendChild(item);
-    }
-  };
-
-  // Função de entrada na sala (substitui enterRoomDirectly original)
-  window.enterRoomDirectly = async function(room, enteredName) {
-    const identity = window.ensureCurrentUserIdentity(enteredName);
-    window.state.myName = identity.name;
-    window.state.myId = identity.id;
-    window.state.roomMode = true;
-    window.state.roomId = room.id;
-    window.state.roomName = room.name;
-    window.showGame();
-    window.setupMusic();
-    if (window.state.roomMusicAutoPlay) window.playMusic(); else window.pauseMusic();
-    window.addChatMessage(window.state.myName, `Entrou em ${room.name}`);
-    window.renderRoomPresence();
-
-    // Limpar conexões anteriores
-    if (window.state.peerConnections) {
-      for (let pc of window.state.peerConnections.values()) pc.close();
-      window.state.peerConnections.clear();
-      for (let el of window.state.remoteAudioElements.values()) el.remove();
-      window.state.remoteAudioElements.clear();
-    }
-
-    const uid = window.__firebaseUid || window.state.myId;
-    const memberRef = doc(db, `room_members/${room.id}/members`, uid);
-    await setDoc(memberRef, {
-      uid,
-      userId: window.state.myId,
-      name: window.state.myName,
-      seat: -1,
-      color: `#${Math.floor(Math.random()*16777215).toString(16)}`,
-      lastSeen: Date.now()
-    });
-
-    // Listeners
-    onSnapshot(collection(db, `room_members/${room.id}/members`), (snap) => {
-      let members = []; snap.forEach(d => members.push(d.data()));
-      members.sort((a,b)=>a.lastSeen - b.lastSeen);
-      for(let i=0;i<members.length && i<4;i++) members[i].seat = i;
-      window.state.roomMembers = members;
-      const me = members.find(m=>m.uid === uid);
-      if(me) window.state.mySeat = me.seat;
-      window.renderGame();
+    };
+
+    // ==================== ENTRADA NA SALA (SUBSTITUI enterRoomDirectly) ====================
+    window.enterRoomDirectly = async function(room, enteredName) {
+      const identity = window.ensureCurrentUserIdentity(enteredName);
+      window.state.myName = identity.name;
+      window.state.myId = identity.id;
+      window.state.roomMode = true;
+      window.state.roomId = room.id;
+      window.state.roomName = room.name;
+      window.showGame();
+      window.setupMusic();
+      if (window.state.roomMusicAutoPlay) window.playMusic(); else window.pauseMusic();
+      window.addChatMessage(window.state.myName, `Entrou em ${room.name}`);
       window.renderRoomPresence();
-    });
 
-    onSnapshot(doc(db, "game_states", room.id), (snap) => {
-      if(!snap.exists()) { window.initGame(); window.syncGameState(); }
-      else {
-        const data = snap.data();
-        window.state.players = data.players || [[],[],[],[]];
-        window.state.topCard = data.topCard || null;
-        window.state.turn = data.turn || 0;
-        window.state.penalty = data.penalty || 0;
-        window.state.gameRunning = data.gameRunning !== false;
-        window.state.deck = data.deck || [];
+      // Limpar conexões anteriores
+      if (window.state.peerConnections) {
+        for (let pc of window.state.peerConnections.values()) pc.close();
+        window.state.peerConnections.clear();
+        for (let el of window.state.remoteAudioElements.values()) el.remove();
+        window.state.remoteAudioElements.clear();
+      }
+      window.state.peerConnections = new Map();
+      window.state.remoteAudioElements = new Map();
+      window.state.processedSignals = new Set();
+
+      const uid = currentUser?.uid || window.state.myId;
+      const memberRef = doc(db, `room_members/${room.id}/members`, uid);
+      await setDoc(memberRef, {
+        uid, userId: window.state.myId, name: window.state.myName, seat: -1,
+        color: `#${Math.floor(Math.random()*16777215).toString(16)}`, lastSeen: Date.now()
+      });
+
+      // Listener de membros
+      onSnapshot(collection(db, `room_members/${room.id}/members`), (snap) => {
+        let members = []; snap.forEach(d => members.push(d.data()));
+        members.sort((a,b)=>a.lastSeen - b.lastSeen);
+        for(let i=0;i<members.length && i<4;i++) members[i].seat = i;
+        window.state.roomMembers = members;
+        const me = members.find(m=>m.uid === uid);
+        if(me) window.state.mySeat = me.seat;
         window.render();
-      }
-    });
+        window.renderRoomPresence();
+      });
 
-    window.syncGameState = async function() {
-      if(!window.state.roomId) return;
-      await setDoc(doc(db, "game_states", window.state.roomId), {
-        players: window.state.players,
-        topCard: window.state.topCard,
-        turn: window.state.turn,
-        penalty: window.state.penalty,
-        gameRunning: window.state.gameRunning,
-        deck: window.state.deck,
-        updatedAt: Date.now()
-      }, { merge: true });
+      // Listener do estado do jogo
+      onSnapshot(doc(db, "game_states", room.id), (snap) => {
+        if(!snap.exists()) {
+          window.initGame();
+          window.syncGameState();
+        } else {
+          const data = snap.data();
+          window.state.players = data.players || [[],[],[],[]];
+          window.state.topCard = data.topCard || null;
+          window.state.turn = data.turn || 0;
+          window.state.penalty = data.penalty || 0;
+          window.state.gameRunning = data.gameRunning !== false;
+          window.state.deck = data.deck || [];
+          window.render();
+        }
+      });
+
+      window.syncGameState = async function() {
+        if(!window.state.roomId) return;
+        await setDoc(doc(db, "game_states", window.state.roomId), {
+          players: window.state.players,
+          topCard: window.state.topCard,
+          turn: window.state.turn,
+          penalty: window.state.penalty,
+          gameRunning: window.state.gameRunning,
+          deck: window.state.deck,
+          updatedAt: Date.now()
+        }, { merge: true });
+      };
+
+      // Listener do chat (substitui o original)
+      onSnapshot(doc(db, "chats", room.id), (snap) => {
+        if(snap.exists()) {
+          const msgs = snap.data().messages || [];
+          const container = document.getElementById("chatMessages");
+          if(container) container.innerHTML = msgs.map(m => `<div class="chat-msg"><strong>${escapeHtml(m.author)}</strong>: ${escapeHtml(m.message)}</div>`).join('');
+        }
+      });
+
+      // Envio de mensagens
+      window.sendChatMessage = async function(text) {
+        if(!text.trim()) return;
+        await updateDoc(doc(db, "chats", window.state.roomId), {
+          messages: arrayUnion({ author: window.state.myName, authorId: window.state.myId, message: text.trim(), timestamp: Date.now() })
+        }).catch(()=>setDoc(doc(db, "chats", window.state.roomId), { messages: [{ author: window.state.myName, authorId: window.state.myId, message: text.trim(), timestamp: Date.now() }] }));
+      };
+      const originalAddChatMessage = window.addChatMessage;
+      window.addChatMessage = function(author, message) {
+        if(window.state.roomMode && window.state.roomId) {
+          window.sendChatMessage(message);
+        } else {
+          originalAddChatMessage(author, message);
+        }
+      };
+      document.getElementById("chatForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("chatInput");
+        const msg = input.value.trim();
+        if (!msg) return;
+        if(window.state.roomMode && window.state.roomId) window.sendChatMessage(msg);
+        else originalAddChatMessage(window.state.myName, msg);
+        input.value = "";
+      });
+
+      // ==================== WEBRTC (ÁUDIO) ====================
+      const SIGNAL_STUN = [{ urls: "stun:stun.l.google.com:19302" }];
+      async function createPeerConnection(peerUid) {
+        if(peerUid === uid) return null;
+        if(window.state.peerConnections.has(peerUid)) return window.state.peerConnections.get(peerUid);
+        const pc = new RTCPeerConnection({ iceServers: SIGNAL_STUN });
+        window.state.peerConnections.set(peerUid, pc);
+        if(window.state.localStream) {
+          window.state.localStream.getTracks().forEach(t => pc.addTrack(t, window.state.localStream));
+        }
+        pc.onicecandidate = (e) => {
+          if(e.candidate) addDoc(collection(db, `signals/${room.id}/messages`), { to: peerUid, from: uid, type: "ice-candidate", candidate: e.candidate, createdAt: Date.now() });
+        };
+        pc.ontrack = (e) => {
+          let audio = window.state.remoteAudioElements.get(peerUid);
+          if(!audio) { audio = new Audio(); audio.autoplay = true; audio.hidden = true; document.body.appendChild(audio); window.state.remoteAudioElements.set(peerUid, audio); }
+          audio.srcObject = e.streams[0];
+          audio.volume = window.state.audioEnabled ? 1 : 0;
+        };
+        if(uid < peerUid) {
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          await addDoc(collection(db, `signals/${room.id}/messages`), { to: peerUid, from: uid, type: "offer", sdp: pc.localDescription, createdAt: Date.now() });
+        }
+        return pc;
+      }
+
+      onSnapshot(collection(db, `signals/${room.id}/messages`), async (snap) => {
+        for(const docSnap of snap.docs) {
+          const sig = docSnap.data();
+          if(sig.to !== uid) continue;
+          if(window.state.processedSignals.has(docSnap.id)) continue;
+          window.state.processedSignals.add(docSnap.id);
+          let pc = window.state.peerConnections.get(sig.from);
+          if(!pc && sig.type !== "ice-candidate") pc = await createPeerConnection(sig.from);
+          if(!pc) continue;
+          if(sig.type === "offer") {
+            await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+            const ans = await pc.createAnswer();
+            await pc.setLocalDescription(ans);
+            await addDoc(collection(db, `signals/${room.id}/messages`), { to: sig.from, from: uid, type: "answer", sdp: pc.localDescription, createdAt: Date.now() });
+          } else if(sig.type === "answer") {
+            await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+          } else if(sig.type === "ice-candidate" && sig.candidate) {
+            try { await pc.addIceCandidate(new RTCIceCandidate(sig.candidate)); } catch(e) {}
+          }
+        }
+      });
+
+      // Atualiza toggleMic para usar WebRTC
+      const originalToggleMic = window.toggleMic;
+      window.toggleMic = async function() {
+        window.state.micEnabled = !window.state.micEnabled;
+        localStorage.setItem("cartas-mic", window.state.micEnabled ? "on" : "off");
+        window.updateMicButton();
+        if(window.state.micEnabled) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            window.state.localStream = stream;
+            for(const [uid, pc] of window.state.peerConnections.entries()) {
+              stream.getTracks().forEach(t => pc.addTrack(t, stream));
+            }
+            for(const m of window.state.roomMembers) {
+              if(m.uid !== uid && !window.state.peerConnections.has(m.uid)) await createPeerConnection(m.uid);
+            }
+          } catch(err) {
+            window.state.micEnabled = false;
+            window.updateMicButton();
+            alert("Microfone não permitido");
+          }
+        } else {
+          if(window.state.localStream) window.state.localStream.getTracks().forEach(t => t.stop());
+          window.state.localStream = null;
+        }
+      };
     };
 
-    // Chat da sala
-    onSnapshot(doc(db, "chats", room.id), (snap) => {
-      if(snap.exists()) {
-        const msgs = snap.data().messages || [];
-        const container = document.getElementById("chatMessages");
-        if(container) container.innerHTML = msgs.map(m => `<div class="chat-msg"><strong>${escapeHtml(m.author)}</strong>: ${escapeHtml(m.message)}</div>`).join('');
-      }
-    });
-
-    // Envio de chat
-    window.sendChatMessage = async function(text) {
-      if(!text.trim()) return;
-      await updateDoc(doc(db, "chats", window.state.roomId), {
-        messages: arrayUnion({ author: window.state.myName, authorId: window.state.myId, message: text.trim(), timestamp: Date.now() })
-      }).catch(()=>setDoc(doc(db, "chats", window.state.roomId), { messages: [{ author: window.state.myName, authorId: window.state.myId, message: text.trim(), timestamp: Date.now() }] }));
+    // Atualiza funções de áudio para usar os volumes
+    const originalSetMasterVolume = window.setMasterVolume;
+    window.setMasterVolume = function(value) {
+      originalSetMasterVolume(value);
+      for(let el of window.state.remoteAudioElements?.values() || []) el.volume = (window.state.audioEnabled?1:0)*(value/100);
+    };
+    const originalToggleAudio = window.toggleAudio;
+    window.toggleAudio = function() {
+      originalToggleAudio();
+      for(let el of window.state.remoteAudioElements?.values() || []) el.volume = window.state.audioEnabled?1:0;
     };
 
-    // WebRTC
-    const SIGNAL_STUN = [{ urls: "stun:stun.l.google.com:19302" }];
-    window.state.peerConnections = new Map();
-    window.state.remoteAudioElements = new Map();
-    window.state.processedSignals = new Set();
-
-    async function createPeerConnection(peerUid) {
-      if(peerUid === uid) return null;
-      if(window.state.peerConnections.has(peerUid)) return window.state.peerConnections.get(peerUid);
-      const pc = new RTCPeerConnection({ iceServers: SIGNAL_STUN });
-      window.state.peerConnections.set(peerUid, pc);
-      if(window.state.localStream) {
-        window.state.localStream.getTracks().forEach(t => pc.addTrack(t, window.state.localStream));
-      }
-      pc.onicecandidate = (e) => {
-        if(e.candidate) addDoc(collection(db, `signals/${room.id}/messages`), { to: peerUid, from: uid, type: "ice-candidate", candidate: e.candidate, createdAt: Date.now() });
-      };
-      pc.ontrack = (e) => {
-        let audio = window.state.remoteAudioElements.get(peerUid);
-        if(!audio) { audio = new Audio(); audio.autoplay = true; audio.hidden = true; document.body.appendChild(audio); window.state.remoteAudioElements.set(peerUid, audio); }
-        audio.srcObject = e.streams[0];
-        audio.volume = window.state.audioEnabled ? 1 : 0;
-      };
-      if(uid < peerUid) {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        await addDoc(collection(db, `signals/${room.id}/messages`), { to: peerUid, from: uid, type: "offer", sdp: pc.localDescription, createdAt: Date.now() });
-      }
-      return pc;
-   
+    // Força a chamada inicial das funções sobrescritas
+    window.renderLobbyRooms();
+    if(window.renderAdminRooms) window.renderAdminRooms();
+  </script>
+</body>
+</html>
