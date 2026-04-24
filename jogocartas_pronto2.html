@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartasss</title>
+  <title>Cartax</title>
   <style>
     :root{
       --bg1:#eef2ff;
@@ -1423,7 +1422,7 @@
       penalty: 0,
       gameRunning: false,
       botTimer: null,
-      audioEnabled: true,
+      audioEnabled: false,
       micEnabled: false,
       micStream: null,
       micAudioContext: null,
@@ -2348,7 +2347,7 @@ db.settings({
       ];
       state.roomMembers.forEach(member => upsertKnownUser(member));
       showGame();
-      firebaseBridge.listenChat(chatFirebaseKey());
+      firebaseBridge.listenChat(chatStorageKey());
       initGame();
       setupMusic();
       if (state.roomMusicAutoPlay) playMusic();
@@ -2461,7 +2460,7 @@ db.settings({
       document.getElementById("lobbyScreen").style.display = "none";
       document.getElementById("endScreen").style.display = "none";
       showGame();
-      if (state.roomMode) firebaseBridge.listenChat(chatFirebaseKey());
+      if (state.roomMode) firebaseBridge.listenChat(chatStorageKey());
       initGame();
       setupMusic();
       playMusic();
@@ -2690,12 +2689,6 @@ db.settings({
       return "cartas.chat.robots.v3";
     }
 
-    function chatFirebaseKey(){
-      if (state.roomMode && state.roomId) return String(state.roomId);
-      if (state.roomMode && state.roomName) return String(state.roomName);
-      return "lobby";
-    }
-
     function chatStorageKeys(){
       const keys = [];
       const primary = chatStorageKey();
@@ -2725,7 +2718,7 @@ db.settings({
       try{
         for (const key of chatStorageKeys()) localStorage.setItem(key, JSON.stringify(payload));
       }catch(e){}
-      firebaseBridge.syncChat(chatFirebaseKey(), payload);
+      firebaseBridge.syncChat(chatStorageKey(), payload);
     }
 
     function renderChat(){
@@ -2947,8 +2940,7 @@ db.settings({
       document.body.setAttribute("data-theme", savedTheme);
       const toggle = document.getElementById("themeToggle");
       if (toggle) toggle.checked = savedTheme === "dark";
-      const savedAudio = localStorage.getItem("cartas-audio");
-      state.audioEnabled = savedAudio === null ? true : savedAudio === "on";
+      state.audioEnabled = localStorage.getItem("cartas-audio") === "on";
       state.micEnabled = localStorage.getItem("cartas-mic") === "on";
       updateAudioButton();
       updateMicButton();
@@ -3282,9 +3274,11 @@ db.settings({
   }
 
   function roomGameStatePayload() {
-    const players = Array.isArray(window.state.players)
-      ? window.state.players.map((seatCards) => clone(Array.isArray(seatCards) ? seatCards : []))
-      : [[], [], [], []];
+    const playersBySeat = {};
+    const playersSource = Array.isArray(window.state.players) ? window.state.players : [[], [], [], []];
+    for (let seat = 0; seat < 4; seat++) {
+      playersBySeat[String(seat)] = clone(Array.isArray(playersSource[seat]) ? playersSource[seat] : []);
+    }
 
     return {
       schemaVersion: 3,
@@ -3293,7 +3287,7 @@ db.settings({
       roomMode: !!window.state.roomMode,
       roomMembers: Array.isArray(window.state.roomMembers) ? clone(window.state.roomMembers) : [],
       mySeat: Number.isInteger(window.state.mySeat) ? window.state.mySeat : 0,
-      players,
+      playersBySeat,
       topCard: clone(window.state.topCard),
       turn: window.state.turn,
       penalty: window.state.penalty,
@@ -3615,7 +3609,7 @@ db.settings({
         return;
       }
       const data = snap.data() || {};
-      if (typeof data.revision === "number" && firebaseState.roomRevision > 0 && data.revision < firebaseState.roomRevision) return;
+      if (typeof data.revision === "number" && data.revision < firebaseState.roomRevision) return;
       applyRoomGameState(data);
       firebaseState.roomRevision = Number(data.revision || firebaseState.roomRevision || 0);
     });
