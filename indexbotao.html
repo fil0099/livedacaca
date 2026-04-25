@@ -3,103 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Firebase Multi-App</title>
+    <title>xxFirebase Full Fix</title>
     <style>
-        :root {
-            --primary: #3498db;
-            --success: #2ecc71;
-            --bg: #f0f2f5;
-            --text: #2f3640;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg);
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 20px;
-            padding: 20px;
-            margin: 0;
-            color: var(--text);
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            width: 320px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* --- Estilo Botão --- */
-        .switch { position: relative; display: inline-block; width: 60px; height: 34px; margin: 15px 0; }
+        :root { --primary: #3498db; --success: #2ecc71; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        
+        /* Botão */
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; margin-bottom: 10px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(26px); }
-        .ball { width: 20px; height: 20px; border-radius: 50%; background: gray; transition: 0.3s; }
-        .ball.on { background: var(--success); box-shadow: 0 0 10px var(--success); }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background: var(--primary); }
+        input:checked + .slider:before { transform: translateX(22px); }
+        .ball { width: 15px; height: 15px; border-radius: 50%; background: gray; display: inline-block; margin-right: 5px; }
+        .ball.on { background: var(--success); box-shadow: 0 0 8px var(--success); }
 
-        /* --- Estilo Chat --- */
-        #chat-messages { width: 100%; height: 200px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 10px; padding: 5px; font-size: 14px; display: flex; flex-direction: column; }
-        .msg { background: #e1ffc7; padding: 5px 10px; border-radius: 10px; margin: 2px 0; align-self: flex-start; max-width: 80%; }
-        input[type="text"] { width: 80%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        /* Chat */
+        #chat-box { height: 150px; overflow-y: auto; border: 1px solid #eee; margin: 10px 0; padding: 5px; display: flex; flex-direction: column; text-align: left; font-size: 13px; }
+        .m { background: #e1ffc7; padding: 4px 8px; border-radius: 8px; margin: 2px 0; width: fit-content; }
 
-        /* --- Estilo Jogo da Velha --- */
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
-        .cell { width: 60px; height: 60px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; border-radius: 8px; }
-        .cell:hover { background: #ddd; }
-        button#reset-game { margin-top: 10px; padding: 5px 15px; cursor: pointer; border: none; background: var(--primary); color: white; border-radius: 5px; }
+        /* Jogo da Velha */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 180px; margin: 10px auto; }
+        .cell { width: 55px; height: 55px; background: #f8f9fa; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h3>Controle Remoto</h3>
-        <label class="switch">
-            <input type="checkbox" id="toggleBtn">
-            <span class="slider"></span>
-        </label>
-        <div style="display:flex; align-items:center; gap:10px">
-            <div id="statusBall" class="ball"></div>
-            <span id="statusTxt">Desligado</span>
-        </div>
+        <h3>Status</h3>
+        <label class="switch"><input type="checkbox" id="tgl"><span class="slider"></span></label>
+        <div><div id="bl" class="ball"></div> <span id="st">Off</span></div>
     </div>
 
     <div class="card">
         <h3>Jogo da Velha</h3>
-        <div id="game-info">Turno: <b id="turn">X</b></div>
-        <div class="grid" id="board">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
+        <div id="info">Vez de: <b id="p">X</b></div>
+        <div class="grid" id="brd">
+            <div class="cell" data-i="0"></div><div class="cell" data-i="1"></div><div class="cell" data-i="2"></div>
+            <div class="cell" data-i="3"></div><div class="cell" data-i="4"></div><div class="cell" data-i="5"></div>
+            <div class="cell" data-i="6"></div><div class="cell" data-i="7"></div><div class="cell" data-i="8"></div>
         </div>
-        <button id="reset-game">Resetar Jogo</button>
+        <button onclick="window.resetGame()">Resetar</button>
     </div>
 
     <div class="card">
-        <h3>Chat Global</h3>
-        <div id="chat-messages"></div>
-        <div style="width: 100%; display: flex; gap: 5px;">
-            <input type="text" id="chatInput" placeholder="Mensagem...">
-            <button id="sendBtn">➤</button>
-        </div>
+        <h3>Chat</h3>
+        <div id="chat-box"></div>
+        <input type="text" id="msgIn" style="width:70%" placeholder="Oi!">
+        <button id="send">Ok</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, limit } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
@@ -114,76 +71,59 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // --- LÓGICA BOTÃO ---
-        const btnDoc = doc(db, "toggle", "estado");
-        const toggleBtn = document.getElementById('toggleBtn');
-        const statusBall = document.getElementById('statusBall');
-        const statusTxt = document.getElementById('statusTxt');
-
-        toggleBtn.onclick = () => setDoc(btnDoc, { ligado: toggleBtn.checked }, { merge: true });
-        
-        onSnapshot(btnDoc, (s) => {
-            const isOn = s.data()?.ligado || false;
-            toggleBtn.checked = isOn;
-            statusBall.className = isOn ? 'ball on' : 'ball';
-            statusTxt.innerText = isOn ? 'Ligado' : 'Desligado';
+        // --- BOTÃO (Caminho: toggle/estado) ---
+        const btnRef = doc(db, "toggle", "estado");
+        document.getElementById('tgl').onchange = (e) => setDoc(btnRef, {ligado: e.target.checked});
+        onSnapshot(btnRef, (s) => {
+            const val = s.data()?.ligado || false;
+            document.getElementById('tgl').checked = val;
+            document.getElementById('bl').className = val ? 'ball on' : 'ball';
+            document.getElementById('st').innerText = val ? 'Ligado' : 'Desligado';
         });
 
-        // --- LÓGICA CHAT ---
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const chatBox = document.getElementById('chat-messages');
-
-        const sendMsg = async () => {
-            if(!chatInput.value.trim()) return;
-            await addDoc(collection(db, "chat"), {
-                text: chatInput.value,
-                time: Date.now()
-            });
-            chatInput.value = '';
+        // --- CHAT (Caminho: chat/...) ---
+        const chatIn = document.getElementById('msgIn');
+        const chatBox = document.getElementById('chat-box');
+        document.getElementById('send').onclick = () => {
+            if(!chatIn.value) return;
+            addDoc(collection(db, "chat"), { t: chatIn.value, d: Date.now() });
+            chatIn.value = '';
         };
-        sendBtn.onclick = sendMsg;
-        chatInput.onkeypress = (e) => e.key === 'Enter' && sendMsg();
-
-        onSnapshot(query(collection(db, "chat"), orderBy("time", "desc"), limit(20)), (s) => {
+        // Snapshot simples (sem orderBy para evitar erro de índice)
+        onSnapshot(query(collection(db, "chat"), limit(15)), (s) => {
             chatBox.innerHTML = '';
-            s.docs.reverse().forEach(d => {
-                const div = document.createElement('div');
-                div.className = 'msg';
-                div.textContent = d.data().text;
-                chatBox.appendChild(div);
+            s.docs.sort((a,b) => a.data().d - b.data().d).forEach(doc => {
+                const item = document.createElement('div');
+                item.className = 'm';
+                item.textContent = doc.data().t;
+                chatBox.appendChild(item);
             });
             chatBox.scrollTop = chatBox.scrollHeight;
         });
 
-        // --- LÓGICA JOGO DA VELHA ---
-        const gameDoc = doc(db, "jogos", "velha");
-        const cells = document.querySelectorAll('.cell');
-        const turnTxt = document.getElementById('turn');
-        let currentBoard = Array(9).fill("");
-        let currentTurn = "X";
+        // --- JOGO DA VELHA (Caminho: chat/game_velha) ---
+        // Movi para o caminho "chat" para aproveitar sua regra "match /chat/{docId}"
+        const gameRef = doc(db, "chat", "game_velha");
+        let board = Array(9).fill("");
+        let turn = "X";
 
-        onSnapshot(gameDoc, (s) => {
-            const data = s.data() || { board: Array(9).fill(""), turn: "X" };
-            currentBoard = data.board;
-            currentTurn = data.turn;
-            turnTxt.innerText = currentTurn;
-            cells.forEach((c, i) => c.innerText = currentBoard[i]);
+        onSnapshot(gameRef, (s) => {
+            const data = s.data() || { b: Array(9).fill(""), t: "X" };
+            board = data.b; turn = data.t;
+            document.getElementById('p').innerText = turn;
+            document.querySelectorAll('.cell').forEach((c, i) => c.innerText = board[i]);
         });
 
-        cells.forEach(cell => {
-            cell.onclick = async () => {
-                const i = cell.dataset.index;
-                if(currentBoard[i] !== "") return;
-                currentBoard[i] = currentTurn;
-                const nextTurn = currentTurn === "X" ? "O" : "X";
-                await setDoc(gameDoc, { board: currentBoard, turn: nextTurn });
+        document.querySelectorAll('.cell').forEach(c => {
+            c.onclick = () => {
+                const i = c.dataset.i;
+                if(board[i]) return;
+                board[i] = turn;
+                setDoc(gameRef, { b: board, t: turn === "X" ? "O" : "X" });
             };
         });
 
-        document.getElementById('reset-game').onclick = () => {
-            setDoc(gameDoc, { board: Array(9).fill(""), turn: "X" });
-        };
+        window.resetGame = () => setDoc(gameRef, { b: Array(9).fill(""), t: "X" });
     </script>
 </body>
 </html>
