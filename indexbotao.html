@@ -1,295 +1,309 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Controle Firestore</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Firebase Realtime - Botão, Chat e Jogo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    display: grid;
-    place-items: center;
-    padding: 20px;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
     color: #e2e8f0;
-    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 16px 60px;
   }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: 
-      radial-gradient(circle at 20% 20%, rgba(34,197,94,0.15) 0%, transparent 40%),
-      radial-gradient(circle at 80% 80%, rgba(59,130,246,0.1) 0%, transparent 40%);
-    pointer-events: none;
-  }
-
-  .card {
-    position: relative;
+  .app {
     width: 100%;
-    max-width: 380px;
-    background: rgba(15, 23, 42, 0.7);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 28px;
-    padding: 40px 32px;
-    box-shadow: 
-      0 20px 60px -15px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    max-width: 440px;
+  }
+  header {
     text-align: center;
-    animation: fadeIn 0.6s ease-out;
+    margin-bottom: 28px;
   }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .icon-wrap {
-    width: 56px;
-    height: 56px;
-    margin: 0 auto 16px;
-    background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.05));
-    border: 1px solid rgba(34,197,94,0.2);
-    border-radius: 16px;
-    display: grid;
-    place-items: center;
-  }
-
-  .icon-wrap svg {
-    width: 28px;
-    height: 28px;
-    color: #22c55e;
-  }
-
-  h1 {
-    font-size: 24px;
+  header h1 {
+    font-size: 28px;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    color: #f8fafc;
-    margin-bottom: 4px;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 6px;
   }
-
-  .subtitle {
-    font-size: 14px;
+  header p {
     color: #94a3b8;
-    font-weight: 500;
-    margin-bottom: 36px;
+    font-size: 14px;
   }
-
-  .control {
+  .card {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 24px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  }
+  .card-header {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 24px;
-    margin: 36px 0 28px;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+  .card-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+  }
+  .icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.9;
   }
 
-  /* Switch iOS */
-  .switch { 
-    position:relative; 
-    display:inline-block; 
-    width:64px; 
-    height:36px;
+  /* BOTÃO */
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0,0,0,0.2);
+    padding: 16px;
+    border-radius: 16px;
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 64px;
+    height: 36px;
     flex-shrink: 0;
   }
-  .switch input { 
-    opacity:0; 
-    width:0; 
-    height:0 
-  }
-  .slider { 
-    position:absolute; 
-    cursor:pointer; 
-    inset:0; 
-    background:#334155; 
-    transition:.3s cubic-bezier(0.4, 0, 0.2, 1); 
-    border-radius:36px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-  }
-  .slider:before { 
-    content:""; 
-    position:absolute; 
-    height:28px; 
-    width:28px; 
-    left:4px; 
-    bottom:4px; 
-    background:white; 
-    transition:.3s cubic-bezier(0.4, 0, 0.2, 1); 
-    border-radius:50%; 
-    box-shadow:0 2px 4px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1);
-  }
-  input:checked + .slider { 
-    background:#22c55e;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), 0 0 20px rgba(34,197,94,0.3);
-  }
-  input:checked + .slider:before { 
-    transform:translateX(28px) 
-  }
-  input:disabled + .slider {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  .switch:hover input:not(:disabled) + .slider {
-    background: #475569;
-  }
-  .switch:hover input:checked:not(:disabled) + .slider {
-    background: #16a34a;
-  }
-
-  /* Bola indicadora */
-  .bola {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #9ca3af;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 
-      0 0 0 4px rgba(156, 163, 175, 0.15),
-      0 2px 8px rgba(0,0,0,0.3),
-      inset 0 1px 2px rgba(255,255,255,0.2);
-    position: relative;
-  }
-
-  .bola::after {
-    content: '';
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
     position: absolute;
-    inset: 4px;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: #334155;
+    transition: .3s;
+    border-radius: 34px;
+  }
+  .slider:before {
+    content: "";
+    position: absolute;
+    height: 28px; width: 28px;
+    left: 4px; bottom: 4px;
+    background: white;
+    transition: .3s;
     border-radius: 50%;
-    background: linear-gradient(145deg, rgba(255,255,255,0.3), transparent);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   }
-
-  .bola.ligada {
-    background: #22c55e;
-    box-shadow: 
-      0 0 0 4px rgba(34, 197, 94, 0.2),
-      0 0 24px rgba(34,197,94,0.5),
-      0 2px 8px rgba(0,0,0,0.3),
-      inset 0 1px 2px rgba(255,255,255,0.3);
-    animation: pulse 2s infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
+  input:checked + .slider { background: #16a34a; }
+  input:checked + .slider:before { transform: translateX(28px); }
 
   .status {
-    font-size: 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .bola {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #9ca3af;
+    transition: all .3s;
+  }
+  #status-texto {
+    font-weight: 600;
+    font-size: 18px;
+    color: #9ca3af;
+    min-width: 95px;
+    text-align: right;
+  }
+
+  /* CHAT */
+  #chat-mensagens {
+    height: 300px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.25);
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  #chat-mensagens::-webkit-scrollbar { width: 6px; }
+  #chat-mensagens::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  .msg {
+    background: rgba(255,255,255,0.06);
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.35;
+    animation: fadeIn .2s ease;
+  }
+  .msg-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
+  }
+  .msg-autor { font-weight: 600; color: #7dd3fc; font-size: 12px; }
+  .msg-hora { font-size: 11px; color: #64748b; }
+  .msg-texto { color: #e2e8f0; word-break: break-word; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .chat-inputs { display: grid; grid-template-columns: 1fr 2fr auto; gap: 8px; }
+  .chat-inputs input {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e2e8f0;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+  }
+  .chat-inputs input:focus { border-color: #38bdf8; }
+  .chat-inputs button {
+    background: #0ea5e9;
+    color: white;
+    border: none;
+    padding: 0 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+    font-family: inherit;
+  }
+  .chat-inputs button:hover { background: #0284c7; }
+  .chat-inputs button:active { transform: scale(0.97); }
+
+  /* JOGO DA VELHA */
+  #jogo-status {
+    text-align: center;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 14px;
+    height: 26px;
+    color: #cbd5e1;
+  }
+  #jogo-status.vitoria { color: #22c55e; }
+  #jogo-status.empate { color: #f59e0b; }
+
+  .tabuleiro {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 280px;
+    margin: 0 auto 16px;
+  }
+  .casa {
+    aspect-ratio: 1/1;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    font-size: 42px;
     font-weight: 700;
-    letter-spacing: -0.02em;
-    margin: 8px 0 32px;
-    transition: all 0.3s ease;
-    line-height: 1;
-  }
-
-  .status.desligado {
-    color: #94a3b8;
-  }
-
-  .status.ligado {
-    color: #22c55e;
-    text-shadow: 0 0 30px rgba(34,197,94,0.4);
-  }
-
-  .footer {
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all .15s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    font-family: inherit;
   }
+  .casa:hover:not(:disabled) { background: rgba(255,255,255,0.08); transform: translateY(-1px); }
+  .casa:disabled { cursor: not-allowed; opacity: 0.7; }
+  .casa.x { color: #38bdf8; text-shadow: 0 0 12px rgba(56,189,248,0.5); }
+  .casa.o { color: #f472b6; text-shadow: 0 0 12px rgba(244,114,182,0.5); }
+  .casa.vencedora { background: rgba(34,197,94,0.15); border-color: #22c55e; }
 
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #475569;
-    transition: all 0.3s ease;
-    position: relative;
+  #reiniciar {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #e2e8f0;
+    padding: 12px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: .2s;
+    font-family: inherit;
   }
-
-  .dot.connected {
-    background: #22c55e;
-    box-shadow: 0 0 8px rgba(34,197,94,0.6);
-  }
-
-  .dot.connected::after {
-    content: '';
-    position: absolute;
-    inset: -4px;
-    border-radius: 50%;
-    border: 1px solid #22c55e;
-    opacity: 0;
-    animation: ping 2s cubic-bezier(0,0,0.2,1) infinite;
-  }
-
-  @keyframes ping {
-    75%, 100% {
-      transform: scale(1.8);
-      opacity: 0;
-    }
-  }
-
-  .footer small {
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 500;
-  }
-
-  .footer small.connected {
-    color: #86efac;
-  }
+  #reiniciar:hover { background: rgba(255,255,255,0.1); }
 
   @media (max-width: 400px) {
-    .card { padding: 32px 24px; }
-    .status { font-size: 36px; }
+    .chat-inputs { grid-template-columns: 1fr; }
+    .casa { font-size: 36px; }
   }
 </style>
 </head>
 <body>
-  <main class="card">
-    <div class="icon-wrap">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-      </svg>
-    </div>
-    
-    <h1>Controle Firestore</h1>
-    <p class="subtitle">Botão em tempo real</p>
+  <div class="app">
+    <header>
+      <h1>Realtime Lab</h1>
+      <p>Botão • Chat • Jogo da Velha em tempo real</p>
+    </header>
 
-    <div class="control">
-      <label class="switch">
-        <input type="checkbox" id="toggle" aria-label="Alternar estado">
-        <span class="slider"></span>
-      </label>
-      <div class="bola" id="bola-indicadora" aria-hidden="true"></div>
+    <!-- CARD 1: BOTÃO -->
+    <div class="card">
+      <div class="card-header">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <h2>Controle Remoto</h2>
+      </div>
+      <div class="toggle-row">
+        <label class="switch">
+          <input type="checkbox" id="toggle-switch">
+          <span class="slider"></span>
+        </label>
+        <div class="status">
+          <div id="status-bola" class="bola"></div>
+          <span id="status-texto">Desligado</span>
+        </div>
+      </div>
     </div>
 
-    <p class="status desligado" id="status">Desligado</p>
-
-    <div class="footer">
-      <span class="dot" id="connection-dot"></span>
-      <small id="connection">Conectando ao Firestore...</small>
+    <!-- CARD 2: CHAT -->
+    <div class="card">
+      <div class="card-header">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+        <h2>Chat Simples</h2>
+      </div>
+      <div id="chat-mensagens"></div>
+      <div class="chat-inputs">
+        <input id="chat-nome" type="text" placeholder="Seu nome" maxlength="15">
+        <input id="chat-input" type="text" placeholder="Digite uma mensagem..." maxlength="200">
+        <button id="chat-enviar">Enviar</button>
+      </div>
     </div>
-  </main>
+
+    <!-- CARD 3: JOGO DA VELHA -->
+    <div class="card">
+      <div class="card-header">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+        <h2>Jogo da Velha Multiplayer</h2>
+      </div>
+      <div id="jogo-status">Carregando...</div>
+      <div class="tabuleiro">
+        <button class="casa" data-i="0"></button>
+        <button class="casa" data-i="1"></button>
+        <button class="casa" data-i="2"></button>
+        <button class="casa" data-i="3"></button>
+        <button class="casa" data-i="4"></button>
+        <button class="casa" data-i="5"></button>
+        <button class="casa" data-i="6"></button>
+        <button class="casa" data-i="7"></button>
+        <button class="casa" data-i="8"></button>
+      </div>
+      <button id="reiniciar">Reiniciar Jogo</button>
+    </div>
+  </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, collection, onSnapshot, setDoc, addDoc, serverTimestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
@@ -303,81 +317,184 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const docRef = doc(db, "toggle", "estado");
 
-const toggle = document.getElementById('toggle');
-const statusEl = document.getElementById('status');
-const bola = document.getElementById('bola-indicadora');
-const connection = document.getElementById('connection');
-const connectionDot = document.getElementById('connection-dot');
+// ===== A) BOTÃO DESLIZANTE =====
+const toggleRef = doc(db, "toggle", "estado");
+const toggleSwitch = document.getElementById('toggle-switch');
+const bola = document.getElementById('status-bola');
+const statusTexto = document.getElementById('status-texto');
 
-toggle.disabled = true;
-
-function updateUI(ligado) {
-  toggle.checked = ligado;
-  statusEl.textContent = ligado ? 'Ligado' : 'Desligado';
-  statusEl.className = 'status ' + (ligado ? 'ligado' : 'desligado');
+onSnapshot(toggleRef, (snap) => {
+  const data = snap.data() || { ligado: false };
+  const ligado = !!data.ligado;
+  toggleSwitch.checked = ligado;
   
   if (ligado) {
-    bola.classList.add('ligada');
     bola.style.background = '#22c55e';
+    bola.style.boxShadow = '0 0 16px rgba(34,197,94,0.5)';
+    statusTexto.textContent = 'Ligado';
+    statusTexto.style.color = '#22c55e';
   } else {
-    bola.classList.remove('ligada');
     bola.style.background = '#9ca3af';
+    bola.style.boxShadow = 'none';
+    statusTexto.textContent = 'Desligado';
+    statusTexto.style.color = '#9ca3af';
+  }
+});
+
+toggleSwitch.addEventListener('change', async () => {
+  await setDoc(toggleRef, { 
+    ligado: toggleSwitch.checked, 
+    atualizado: serverTimestamp() 
+  });
+});
+
+// ===== B) CHAT SIMPLES =====
+const chatCol = collection(db, "chat");
+const chatQuery = query(chatCol, orderBy("ts", "asc"), limit(100));
+const mensagensDiv = document.getElementById('chat-mensagens');
+const nomeInput = document.getElementById('chat-nome');
+const inputMsg = document.getElementById('chat-input');
+const btnEnviar = document.getElementById('chat-enviar');
+
+nomeInput.value = localStorage.getItem('chatNome') || '';
+nomeInput.addEventListener('input', () => {
+  localStorage.setItem('chatNome', nomeInput.value);
+});
+
+onSnapshot(chatQuery, (snapshot) => {
+  mensagensDiv.innerHTML = '';
+  snapshot.forEach(docSnap => {
+    const m = docSnap.data();
+    if (m.tipo !== 'msg') return;
+    
+    const hora = m.ts?.toDate ? m.ts.toDate().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+    const div = document.createElement('div');
+    div.className = 'msg';
+    div.innerHTML = `
+      <div class="msg-header">
+        <span class="msg-autor">${m.autor || 'Anônimo'}</span>
+        <span class="msg-hora">${hora}</span>
+      </div>
+      <div class="msg-texto">${m.texto || ''}</div>
+    `;
+    mensagensDiv.appendChild(div);
+  });
+  mensagensDiv.scrollTop = mensagensDiv.scrollHeight;
+});
+
+async function enviarMensagem() {
+  const texto = inputMsg.value.trim();
+  const autor = nomeInput.value.trim() || 'Anônimo';
+  if (!texto) return;
+  
+  await addDoc(chatCol, {
+    tipo: "msg",
+    texto,
+    autor,
+    ts: serverTimestamp()
+  });
+  inputMsg.value = '';
+  inputMsg.focus();
+}
+
+btnEnviar.addEventListener('click', enviarMensagem);
+inputMsg.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') enviarMensagem();
+});
+
+// ===== C) JOGO DA VELHA =====
+const jogoRef = doc(db, "chat", "jogo-da-velha");
+const estadoInicial = { tabuleiro: ["","","","","","","","",""], vez: "X", vencedor: null, jogadas: 0 };
+const casas = document.querySelectorAll('.casa');
+const jogoStatus = document.getElementById('jogo-status');
+const btnReiniciar = document.getElementById('reiniciar');
+let jogoAtual = null;
+
+const combinacoes = [
+  [0,1,2],[3,4,5],[6,7,8],
+  [0,3,6],[1,4,7],[2,5,8],
+  [0,4,8],[2,4,6]
+];
+
+function checkVitoria(tab) {
+  for (const [a,b,c] of combinacoes) {
+    if (tab[a] && tab[a] === tab[b] && tab[a] === tab[c]) {
+      return { vencedor: tab[a], linha: [a,b,c] };
+    }
+  }
+  return null;
+}
+
+function renderJogo(data) {
+  jogoAtual = data;
+  const { tabuleiro, vez, vencedor } = data;
+  const vitoria = checkVitoria(tabuleiro);
+  
+  casas.forEach((btn, i) => {
+    btn.textContent = tabuleiro[i];
+    btn.className = 'casa';
+    if (tabuleiro[i] === 'X') btn.classList.add('x');
+    if (tabuleiro[i] === 'O') btn.classList.add('o');
+    if (vitoria && vitoria.linha.includes(i)) btn.classList.add('vencedora');
+    btn.disabled = !!tabuleiro[i] || !!vencedor;
+  });
+
+  jogoStatus.className = '';
+  if (vencedor === 'X') {
+    jogoStatus.textContent = 'X venceu!';
+    jogoStatus.classList.add('vitoria');
+  } else if (vencedor === 'O') {
+    jogoStatus.textContent = 'O venceu!';
+    jogoStatus.classList.add('vitoria');
+  } else if (vencedor === 'E') {
+    jogoStatus.textContent = 'Empate!';
+    jogoStatus.classList.add('empate');
+  } else {
+    jogoStatus.textContent = `Vez do ${vez}`;
   }
 }
 
-// Estado inicial: desligado
-updateUI(false);
-
-onSnapshot(docRef, async (snap) => {
+onSnapshot(jogoRef, async (snap) => {
   if (!snap.exists()) {
-    try {
-      await setDoc(docRef, { ligado: false, atualizado: serverTimestamp() });
-      return;
-    } catch (e) {
-      console.error('Erro ao criar documento:', e);
-    }
+    await setDoc(jogoRef, estadoInicial);
+    return;
   }
-  
-  const data = snap.data();
-  const ligado = !!data.ligado;
-  
-  updateUI(ligado);
-  
-  toggle.disabled = false;
-  connection.textContent = 'Sincronizado em tempo real';
-  connection.classList.add('connected');
-  connectionDot.classList.add('connected');
-  
-}, (error) => {
-  console.error('Erro Firestore:', error);
-  connection.textContent = 'Erro de conexão';
-  connection.classList.remove('connected');
-  connectionDot.classList.remove('connected');
-  toggle.disabled = true;
+  renderJogo(snap.data());
 });
 
-toggle.addEventListener('change', async () => {
-  const novoEstado = toggle.checked;
-  
-  // feedback imediato
-  updateUI(novoEstado);
-  toggle.disabled = true;
-  
-  try {
-    await setDoc(docRef, { 
-      ligado: novoEstado, 
-      atualizado: serverTimestamp() 
-    }, { merge: true });
-  } catch (error) {
-    console.error('Erro ao atualizar:', error);
-    // reverter em caso de erro
-    updateUI(!novoEstado);
-    connection.textContent = 'Falha ao sincronizar';
-    connection.classList.remove('connected');
-    connectionDot.classList.remove('connected');
-  }
+casas.forEach(btn => {
+  btn.addEventListener('click', async () => {
+    if (!jogoAtual || jogoAtual.vencedor) return;
+    const i = parseInt(btn.dataset.i);
+    if (jogoAtual.tabuleiro[i]) return;
+    
+    const novoTab = [...jogoAtual.tabuleiro];
+    novoTab[i] = jogoAtual.vez;
+    const jogadas = jogoAtual.jogadas + 1;
+    const vitoria = checkVitoria(novoTab);
+    
+    let vencedor = null;
+    let proximaVez = jogoAtual.vez === 'X' ? 'O' : 'X';
+    
+    if (vitoria) {
+      vencedor = vitoria.vencedor;
+    } else if (jogadas === 9) {
+      vencedor = 'E';
+    }
+    
+    await setDoc(jogoRef, {
+      tabuleiro: novoTab,
+      vez: vencedor ? jogoAtual.vez : proximaVez,
+      vencedor,
+      jogadas,
+      atualizado: serverTimestamp()
+    });
+  });
+});
+
+btnReiniciar.addEventListener('click', async () => {
+  await setDoc(jogoRef, { ...estadoInicial, atualizado: serverTimestamp() });
 });
 </script>
 </body>
