@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bmCartas - Jogo Multiplayer com Chat</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -939,18 +939,18 @@
               }
             }
           }
-          if(chosenSlot === null) throw new Error("Sala cheia");
-
-          state.slots[chosenSlot] = {
-            id: gameState.myId,
-            name: userName,
-            joinedAt: Date.now(),
-            lastSeen: Date.now()
-          };
+          if(chosenSlot !== null){
+            state.slots[chosenSlot] = {
+              id: gameState.myId,
+              name: userName,
+              joinedAt: Date.now(),
+              lastSeen: Date.now()
+            };
+          }
 
           state.turn = normalizeTurn(state);
           state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
-          if(!state.topCard){
+          if(!state.topCard && chosenSlot !== null){
             state = createFreshRoomState();
             state.slots[chosenSlot] = {
               id: gameState.myId,
@@ -1000,7 +1000,7 @@
       }, err => {
         console.error("Erro ao ouvir sala:", err);
       });
-      roomDocUnsubs.push(unsub);
+      activeRoomUnsubs.push(unsub);
     }
 
     function startRoomHeartbeat(){
