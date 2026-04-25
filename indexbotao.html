@@ -310,17 +310,38 @@
       color:var(--text);
     }
     .hand .info small{ color:var(--muted); font-weight:700; }
-    .cards{ display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start; }
 
-    .player-top{ grid-column:1 / 4; grid-row:1; align-self:start; }
-    .player-left{ grid-column:1; grid-row:2; align-self:center; }
-    .player-right{ grid-column:3; grid-row:2; align-self:center; }
+    /* MODIFICAÇÃO: só a posição/organização das cartas */
+    .cards{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .player-top .cards,
+    .player-bottom .cards{
+      flex-direction:row;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+
+    .player-left .cards,
+    .player-right .cards{
+      flex-direction:column;
+      flex-wrap:nowrap;
+      align-items:center;
+    }
+
+    .player-top{ grid-column:1 / 4; grid-row:1; align-self:start; justify-self:center; }
+    .player-left{ grid-column:1; grid-row:2; align-self:center; justify-self:start; }
+    .player-right{ grid-column:3; grid-row:2; align-self:center; justify-self:end; }
     .center-area{
       grid-column:2; grid-row:2;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
       min-height:0;
     }
-    .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; }
+    .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; justify-self:center; }
 
     .center-card-row{ display:flex; align-items:center; gap:14px; justify-content:center; }
     .pile{
