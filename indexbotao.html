@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartas - Jogo Multiplayer com Chat</title>
+  <title>xx - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <style>
-    /* ========== ESTILOS COMPLETOS DO JOGO ORIGINAL ========== */
+    /* ========== ESTILOS COMPLETOS ORIGINAIS ========== */
     :root{
       --bg1:#eef2ff;
       --bg2:#f8fafc;
@@ -371,7 +371,7 @@
     }
     .card.back::after{ content:""; }
 
-    /* ========== CHAT CORRIGIDO (SEM ÍNDICE) ========== */
+    /* ========== CHAT SIMPLES (SEM CAMPO ANÔNIMO) ========== */
     .chat-panel{
       position:fixed;
       right:16px; bottom:16px;
@@ -438,31 +438,9 @@
     }
     .chat-input-area{
       display:flex;
-      flex-direction:column;
       gap:8px;
     }
-    .chat-name-row{
-      display:flex;
-      gap:6px;
-    }
-    .chat-name-row input{
-      flex:2;
-      padding:8px 12px;
-      border-radius:40px;
-      border:1px solid var(--stroke);
-      background:var(--panel);
-      color:var(--text);
-      font-size:0.85rem;
-    }
-    .chat-name-row button{
-      padding:6px 12px;
-      font-size:0.75rem;
-    }
-    .chat-message-row{
-      display:flex;
-      gap:8px;
-    }
-    .chat-message-row input{
+    .chat-input-area input{
       flex:1;
       padding:8px 12px;
       border-radius:40px;
@@ -514,7 +492,7 @@
             <input id="playerName" type="text" placeholder="Digite seu nome" maxlength="18" />
             <button class="btn" onclick="joinRobots()">Jogar com robôs</button>
           </div>
-          <div class="mini-note">Entre sozinho contra robôs ou entre em uma sala multiplayer. Chat com nome obrigatório e moderação.</div>
+          <div class="mini-note">Entre sozinho contra robôs ou entre em uma sala multiplayer. Chat com nome obrigatório.</div>
         </div>
         <div class="lobby-card" style="padding:22px;">
           <strong>Salas multiplayer</strong>
@@ -587,7 +565,7 @@
     </div>
   </div>
 
-  <!-- CHAT CORRIGIDO (FUNCIONAL SEM ÍNDICE) -->
+  <!-- CHAT SIMPLES (SEM CAMPO ANÔNIMO) -->
   <div id="chatPanel" class="chat-panel" style="display:none">
     <div class="chat-header">
       <strong>💬 Chat da sala</strong>
@@ -597,14 +575,8 @@
       <div style="text-align:center; color:var(--muted);">Aguardando mensagens...</div>
     </div>
     <div class="chat-input-area">
-      <div class="chat-name-row">
-        <input type="text" id="chatUserName" placeholder="Seu nome (obrigatório)" maxlength="20" value="Anônimo">
-        <button class="btn secondary small" onclick="updateChatUserName()">Definir</button>
-      </div>
-      <div class="chat-message-row">
-        <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." maxlength="200">
-        <button class="btn" id="sendChatBtn">Enviar</button>
-      </div>
+      <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." maxlength="200">
+      <button class="btn" id="sendChatBtn">Enviar</button>
     </div>
   </div>
 
@@ -745,7 +717,7 @@
       for(let i=1;i<=3;i++){ const h=document.getElementById(`p${i+1}`); h.querySelector('.info').innerHTML=`<span>${getPlayerName(i)}</span><small>${gameState.players[i].length}</small>`; h.querySelector('.cards').innerHTML=Array(gameState.players[i].length).fill('<div class="card back"></div>').join(''); }
     }
 
-    // ========== MÚSICA ==========
+    // ========== MÚSICA E ÁUDIO ==========
     function setupMusic(){
       if(!gameState.musicAudio){ gameState.musicAudio=new Audio(); gameState.musicAudio.loop=false; gameState.musicAudio.addEventListener("ended",()=>nextTrack(true)); }
       const pl=gameState.roomMode?gameState.roomPlaylist:gameState.robotPlaylist;
@@ -766,13 +738,9 @@
       if(gameState.micEnabled){ try{ gameState.micStream=await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext=new (window.AudioContext||window.webkitAudioContext)(); const src=gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain=gameState.micAudioContext.createGain(); const mon=gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value=gameState.micVolume; mon.gain.value=gameState.audioEnabled?gameState.masterVolume:0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled=false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream=null; } }
     function toggleAudio(){ gameState.audioEnabled=!gameState.audioEnabled; document.getElementById("audioBtn").textContent=gameState.audioEnabled?"Áudio: ligado":"Áudio: desligado"; }
 
-    // ========== CHAT CORRIGIDO (SEM ORDERBY NO FIRESTORE) ==========
-    let currentChatUserName = "Anônimo";
-    function updateChatUserName(){ let n=document.getElementById("chatUserName").value.trim(); if(n==="") n="Anônimo"; currentChatUserName=n.slice(0,20); document.getElementById("chatUserName").value=currentChatUserName; }
-
+    // ========== CHAT SIMPLES (NOME FIXO DO JOGADOR) ==========
     function initRoomChat(roomId){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
-      // Consulta sem orderBy para evitar necessidade de índice composto
       const q = db.collection('chat').where('roomId', '==', roomId);
       window.chatUnsubscribe = q.onSnapshot(snapshot => {
         const msgs = [];
@@ -785,16 +753,11 @@
             timestamp: d.timestamp?.toDate?.() || new Date() 
           }); 
         });
-        // Ordena no cliente por timestamp (mais antigo primeiro)
         msgs.sort((a,b) => a.timestamp - b.timestamp);
         renderChatMessages(msgs);
       }, err => { 
-        console.error("Erro detalhado do chat:", err);
-        let errorMsg = "Erro no chat. ";
-        if(err.code === "permission-denied") errorMsg += "Permissão negada. Verifique as regras do Firestore.";
-        else if(err.code === "failed-precondition") errorMsg += "Índice ausente. O chat está usando ordenação local, mas a consulta pode estar lenta.";
-        else errorMsg += err.message;
-        document.getElementById("chatMessagesList").innerHTML = `<div style="text-align:center;color:red;">${errorMsg}</div>`;
+        console.error("Erro no chat:", err);
+        document.getElementById("chatMessagesList").innerHTML = `<div style="text-align:center;color:red;">Erro no chat: ${err.message}</div>`;
       });
     }
 
@@ -819,9 +782,11 @@
     async function sendMessage(){
       let msg = document.getElementById("chatMessageInput").value.trim();
       if(!msg) return;
-      let author = currentChatUserName;
-      if(author === "Anônimo" && gameState.myName !== "Você") author = gameState.myName;
-      if(author === "Anônimo"){ alert("Por favor, defina seu nome no campo acima."); return; }
+      let author = gameState.myName;
+      if(author === "Você" || author === "Jogador" || author === ""){
+        alert("Por favor, defina seu nome na lobby antes de enviar mensagem.");
+        return;
+      }
       if(gameState.roomMode && gameState.roomId){
         try { 
           await db.collection('chat').add({ 
@@ -901,13 +866,10 @@
 
     document.getElementById("sendChatBtn")?.addEventListener("click", sendMessage);
     document.getElementById("chatMessageInput")?.addEventListener("keypress", e=>{ if(e.key==="Enter") sendMessage(); });
-    document.getElementById("setNameBtn")?.addEventListener("click", updateChatUserName);
 
     window.onload = () => {
       loadTheme();
       renderLobbyRooms();
-      if(gameState.myName !== "Você") currentChatUserName = gameState.myName;
-      document.getElementById("chatUserName").value = currentChatUserName;
     };
   </script>
 </body>
