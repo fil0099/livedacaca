@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>bbCartas - Jogo Multiplayer com Chat</title>
+  <title>lkCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -328,8 +328,7 @@
     }
 
     .player-left .cards,
-    .player-right .cards,
-    .player-top .cards{
+    .player-right .cards{
       flex-direction:row;
       flex-wrap:wrap;
       align-items:center;
@@ -337,7 +336,6 @@
       gap:4px;
       max-width:100%;
     }
-    .player-top .card,
     .player-left .card,
     .player-right .card{
       width:clamp(34px, 3.2vw, 48px);
@@ -345,7 +343,6 @@
       transform: none;
       transform-origin:center;
     }
-    .player-top .card:hover,
     .player-left .card:hover,
     .player-right .card:hover{
       transform: translateY(-3px) scale(1.02);
@@ -836,13 +833,6 @@
       return `Jogador ${slot}`;
     }
 
-    function getRoomDisplaySlot(slot){
-      if(!gameState.roomMode || !gameState.mySlot){
-        return slot;
-      }
-      return ((slot - gameState.mySlot + 4) % 4) + 1;
-    }
-
     function renderLobbyRooms(){
       const container = document.getElementById("roomsList");
       if(!container) return;
@@ -949,18 +939,18 @@
               }
             }
           }
-          if(chosenSlot !== null){
-            state.slots[chosenSlot] = {
-              id: gameState.myId,
-              name: userName,
-              joinedAt: Date.now(),
-              lastSeen: Date.now()
-            };
-          }
+          if(chosenSlot === null) throw new Error("Sala cheia");
+
+          state.slots[chosenSlot] = {
+            id: gameState.myId,
+            name: userName,
+            joinedAt: Date.now(),
+            lastSeen: Date.now()
+          };
 
           state.turn = normalizeTurn(state);
           state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
-          if(!state.topCard && chosenSlot !== null){
+          if(!state.topCard){
             state = createFreshRoomState();
             state.slots[chosenSlot] = {
               id: gameState.myId,
@@ -1010,7 +1000,7 @@
       }, err => {
         console.error("Erro ao ouvir sala:", err);
       });
-      activeRoomUnsubs.push(unsub);
+      roomDocUnsubs.push(unsub);
     }
 
     function startRoomHeartbeat(){
@@ -1310,14 +1300,26 @@
         document.getElementById("discardPile").innerHTML = state.topCard ? `<div class="card" data-value="${state.topCard.value}" style="background-image:url('${state.topCard.img}'); border-color:${colorMap[state.topCard.color]}"></div>` : '';
         document.getElementById("statusNote").textContent = state.penalty > 0 ? `Punição ativa: compre ${state.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
 
-        for(let slot = 1; slot <= 4; slot++){
-          const displaySlot = getRoomDisplaySlot(slot);
-          const h = document.getElementById(`p${displaySlot}`);
+        const mySlot = gameState.mySlot || 1;
+        const roomOrder = [mySlot];
+        for(let step = 1; step < 4; step++){
+          roomOrder.push(((mySlot - 1 + step) % 4) + 1);
+        }
+        const slotByPanel = {
+          p1: roomOrder[0],
+          p2: roomOrder[1],
+          p4: roomOrder[2],
+          p3: roomOrder[3]
+        };
+
+        for(const panelId of ["p1", "p2", "p4", "p3"]){
+          const slot = slotByPanel[panelId];
+          const h = document.getElementById(panelId);
           const slotName = getPlayerName(slot);
           const hand = state.hands[slot] || [];
           h.querySelector('.info').innerHTML = `<span>${escapeHtml(slotName)}${gameState.mySlot === slot ? ' (você)' : ''}</span><small>${hand.length}</small>`;
           const cardsEl = h.querySelector('.cards');
-          if(gameState.mySlot === slot){
+          if(slot === mySlot){
             cardsEl.innerHTML = hand.map((c, i) => `<div class="card ${canPlay(c, state.topCard) ? 'playable' : ''}" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`).join('');
           } else {
             cardsEl.innerHTML = Array(hand.length).fill('<div class="card back"></div>').join('');
