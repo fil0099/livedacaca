@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Botão + Chat + Jogo da Velha</title>
+<title>App Completo</title>
 
 <style>
 body {
@@ -15,6 +15,7 @@ body {
   background: #f3f4f6;
 }
 
+/* BOTÃO */
 .container {
   display: flex;
   align-items: center;
@@ -22,25 +23,53 @@ body {
   background: white;
   padding: 20px;
   border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
-.switch { position: relative; width: 60px; height: 34px; }
+.switch {
+  position: relative;
+  width: 60px;
+  height: 34px;
+}
+
 .switch input { opacity: 0; }
-.slider { position: absolute; cursor: pointer; background-color: #ccc; border-radius: 34px; inset: 0; }
-.slider:before { content: ""; position: absolute; height: 26px; width: 26px; left: 4px; top: 4px; background: white; border-radius: 50%; transition: 0.3s; }
-input:checked + .slider { background-color: #22c55e; }
+
+.slider {
+  position: absolute;
+  inset: 0;
+  background: #ccc;
+  border-radius: 34px;
+  cursor: pointer;
+}
+
+.slider:before {
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  left: 4px;
+  top: 4px;
+  background: white;
+  border-radius: 50%;
+  transition: .3s;
+}
+
+input:checked + .slider { background: #22c55e; }
 input:checked + .slider:before { transform: translateX(26px); }
 
-.bola { width: 20px; height: 20px; border-radius: 50%; background: gray; }
+.bola {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: gray;
+}
 .bola.on { background: #22c55e; }
 
+/* CHAT */
 .chat, .game {
   width: 300px;
   background: white;
   padding: 15px;
   border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
 .messages {
@@ -48,27 +77,26 @@ input:checked + .slider:before { transform: translateX(26px); }
   overflow-y: auto;
   border: 1px solid #ddd;
   padding: 10px;
-  margin-bottom: 10px;
 }
 
-.input-area { display: flex; gap: 5px; }
-input[type="text"] { flex: 1; padding: 8px; }
-button { padding: 8px; cursor: pointer; }
+.input-area { display: flex; gap: 5px; margin-top: 10px; }
 
+/* JOGO */
 .grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 5px;
+  margin-top: 10px;
 }
 
 .cell {
   width: 80px;
   height: 80px;
-  font-size: 24px;
+  background: #eee;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #eee;
+  font-size: 24px;
   cursor: pointer;
 }
 </style>
@@ -76,6 +104,7 @@ button { padding: 8px; cursor: pointer; }
 
 <body>
 
+<!-- BOTÃO -->
 <div class="container">
   <label class="switch">
     <input id="toggle" type="checkbox">
@@ -84,88 +113,101 @@ button { padding: 8px; cursor: pointer; }
   <div id="bola" class="bola"></div>
 </div>
 
+<!-- CHAT -->
 <div class="chat">
   <div id="messages" class="messages"></div>
   <div class="input-area">
-    <input id="msgInput" type="text" placeholder="Digite...">
+    <input id="msgInput" type="text">
     <button id="sendBtn">Enviar</button>
   </div>
 </div>
 
+<!-- JOGO -->
 <div class="game">
   <div id="grid" class="grid"></div>
+  <button id="reset">Reiniciar</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, onSnapshot, getDoc, collection, addDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
   authDomain: "testbotao.firebaseapp.com",
-  projectId: "testbotao",
-  storageBucket: "testbotao.firebasestorage.app",
-  messagingSenderId: "940068631746",
-  appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
+  projectId: "testbotao"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// BOTÃO
+//
+// 🔘 BOTÃO
+//
 const toggle = document.getElementById("toggle");
 const bola = document.getElementById("bola");
-const ref = doc(db, "toggle", "estado");
+const toggleRef = doc(db, "toggle", "estado");
 
-onSnapshot(ref, (snap) => {
+onSnapshot(toggleRef, (snap) => {
   if (snap.exists()) {
-    const ativo = snap.data().ativo;
-    toggle.checked = ativo;
-    bola.classList.toggle("on", ativo);
+    const v = snap.data().ativo;
+    toggle.checked = v;
+    bola.classList.toggle("on", v);
   }
 });
 
 toggle.addEventListener("change", async () => {
-  await setDoc(ref, { ativo: toggle.checked });
+  await setDoc(toggleRef, { ativo: toggle.checked });
 });
 
-// CHAT
-const messagesDiv = document.getElementById("messages");
-const msgInput = document.getElementById("msgInput");
-const sendBtn = document.getElementById("sendBtn");
-
+//
+// 💬 CHAT
+//
 const chatRef = collection(db, "chat");
+const messagesDiv = document.getElementById("messages");
 
-onSnapshot(query(chatRef, orderBy("time")), (snapshot) => {
+onSnapshot(query(chatRef, orderBy("time")), (snap) => {
   messagesDiv.innerHTML = "";
-  snapshot.forEach(doc => {
-    const el = document.createElement("div");
-    el.textContent = doc.data().text;
-    messagesDiv.appendChild(el);
+  snap.forEach(doc => {
+    const div = document.createElement("div");
+    div.textContent = doc.data().text;
+    messagesDiv.appendChild(div);
   });
 });
 
-sendBtn.addEventListener("click", async () => {
-  const text = msgInput.value.trim();
-  if (!text) return;
-  await addDoc(chatRef, { text, time: Date.now() });
-  msgInput.value = "";
-});
+document.getElementById("sendBtn").onclick = async () => {
+  const input = document.getElementById("msgInput");
+  if (!input.value.trim()) return;
 
-// JOGO DA VELHA (tempo real)
-const grid = document.getElementById("grid");
+  await addDoc(chatRef, {
+    text: input.value,
+    time: Date.now()
+  });
+
+  input.value = "";
+};
+
+//
+// 🎮 JOGO DA VELHA (CORRIGIDO)
+//
 const gameRef = doc(db, "game", "velha");
+const grid = document.getElementById("grid");
 
-// cria grid
+// garante criação
+await setDoc(gameRef, {
+  board: Array(9).fill(""),
+  turn: "X"
+}, { merge: true });
+
+// cria células
 for (let i = 0; i < 9; i++) {
   const cell = document.createElement("div");
   cell.className = "cell";
-  cell.dataset.index = i;
   grid.appendChild(cell);
 
-  cell.addEventListener("click", async () => {
-    const snap = await new Promise(resolve => onSnapshot(gameRef, resolve));
-    const data = snap.data() || { board: Array(9).fill(""), turn: "X" };
+  cell.onclick = async () => {
+    const snap = await getDoc(gameRef);
+    const data = snap.data();
 
     if (data.board[i]) return;
 
@@ -173,17 +215,26 @@ for (let i = 0; i < 9; i++) {
     data.turn = data.turn === "X" ? "O" : "X";
 
     await setDoc(gameRef, data);
-  });
+  };
 }
 
+// tempo real
 onSnapshot(gameRef, (snap) => {
   const data = snap.data();
   if (!data) return;
 
   document.querySelectorAll(".cell").forEach((c, i) => {
-    c.textContent = data.board[i] || "";
+    c.textContent = data.board[i];
   });
 });
+
+// reset
+document.getElementById("reset").onclick = async () => {
+  await setDoc(gameRef, {
+    board: Array(9).fill(""),
+    turn: "X"
+  });
+};
 </script>
 
 </body>
