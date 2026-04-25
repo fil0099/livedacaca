@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>qqCartas - Jogo Multiplayer com Chat</title>
+  <title>kkCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -256,22 +256,28 @@
     .turn-dot{ width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(34,197,94,.14); }
 
     .theme-switch{
-      display:inline-flex; align-items:center; gap:10px;
+      display:inline-flex; align-items:center; gap:8px;
       padding:8px 10px; border-radius:999px;
       background:var(--panel-strong); border:1px solid var(--stroke);
-      font-size:.84rem; font-weight:800;
       white-space:nowrap;
     }
-    .switch{ position:relative; width:46px; height:26px; display:inline-block; }
-    .switch input{ opacity:0; width:0; height:0; }
-    .slider{
-      position:absolute; inset:0; cursor:pointer; background:#cbd5e1; transition:.2s; border-radius:999px;
+    .theme-label{
+      font-size:.78rem; font-weight:800; color:var(--muted);
+      margin-right:2px;
     }
-    .slider:before{
-      position:absolute; content:""; height:20px; width:20px; left:3px; top:3px; background:white; transition:.2s; border-radius:50%;
+    .theme-dots{ display:inline-flex; align-items:center; gap:6px; }
+    .theme-dot{
+      width:14px; height:14px; border-radius:50%;
+      border:1px solid rgba(255,255,255,.55);
+      box-shadow:0 2px 6px rgba(15,23,42,.18);
+      cursor:pointer;
+      padding:0;
+      outline:none;
     }
-    .switch input:checked + .slider{ background:#22c55e; }
-    .switch input:checked + .slider:before{ transform:translateX(20px); }
+    .theme-dot.active{
+      transform:scale(1.15);
+      box-shadow:0 0 0 3px rgba(255,255,255,.35), 0 2px 6px rgba(15,23,42,.18);
+    }
 
     .voice-group{
       display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
@@ -576,10 +582,10 @@
             <label class="tiny-control"><span>Som</span><input id="masterVolume" type="range" min="0" max="100" value="100" oninput="setMasterVolume(this.value)" /></label>
           </div>
           <div id="hudTurn" class="turn-badge"><span class="turn-dot"></span><span>Sua vez</span></div>
-          <label id="themeSwitch" class="theme-switch">
-            <span>Claro/Escuro</span>
-            <span class="switch"><input id="themeToggle" type="checkbox" onchange="toggleTheme()" /><span class="slider"></span></span>
-          </label>
+          <div id="themeSwitch" class="theme-switch">
+            <span class="theme-label">Tema</span>
+            <div id="themeDots" class="theme-dots"></div>
+          </div>
         </div>
       </div>
       <div class="board" id="gameBoard">
@@ -653,6 +659,13 @@
     ];
     const colors = ["red", "blue", "green", "yellow"];
     const colorMap = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#eab308" };
+    const THEME_OPTIONS = [
+      { id: "green", label: "Verde", bg1: "#eef2ff", bg2: "#f8fafc", glow1: "rgba(34,197,94,.12)", glow2: "rgba(14,165,233,.12)" },
+      { id: "blue", label: "Azul", bg1: "#eff6ff", bg2: "#f8fafc", glow1: "rgba(59,130,246,.14)", glow2: "rgba(14,165,233,.12)" },
+      { id: "purple", label: "Roxo", bg1: "#f5f3ff", bg2: "#faf5ff", glow1: "rgba(168,85,247,.14)", glow2: "rgba(236,72,153,.10)" },
+      { id: "orange", label: "Laranja", bg1: "#fff7ed", bg2: "#fffbeb", glow1: "rgba(249,115,22,.14)", glow2: "rgba(245,158,11,.10)" },
+      { id: "pink", label: "Rosa", bg1: "#fdf2f8", bg2: "#fff1f2", glow1: "rgba(236,72,153,.14)", glow2: "rgba(244,63,94,.10)" }
+    ];
     const STALE_SLOT_MS = 18000;
 
     let gameState = {
@@ -697,6 +710,44 @@
 
     let lobbyRoomUnsubs = [];
     let activeRoomUnsubs = [];
+    const OFFLINE_THEME_KEY = "cartas_theme_offline";
+    const ROOM_THEME_KEY = "cartas_theme_room";
+    const THEME_KEY = "cartas_theme_selected";
+
+    function getThemeStorageKey(){
+      return gameState.roomMode ? ROOM_THEME_KEY : OFFLINE_THEME_KEY;
+    }
+
+    function applyTheme(themeId){
+      const theme = THEME_OPTIONS.find(t => t.id === themeId) || THEME_OPTIONS[0];
+      document.body.style.setProperty("--bg1", theme.bg1);
+      document.body.style.setProperty("--bg2", theme.bg2);
+      document.body.style.setProperty("--board-glow", theme.glow1);
+      document.body.style.setProperty("--board-glow-2", theme.glow2);
+      localStorage.setItem(getThemeStorageKey(), theme.id);
+      localStorage.setItem(THEME_KEY, theme.id);
+      renderThemeDots();
+    }
+
+    function renderThemeDots(){
+      const container = document.getElementById("themeDots");
+      if(!container) return;
+      const saved = localStorage.getItem(getThemeStorageKey()) || localStorage.getItem(THEME_KEY) || THEME_OPTIONS[0].id;
+      container.innerHTML = THEME_OPTIONS.map(theme => {
+        const active = theme.id === saved ? "active" : "";
+        return `<button type="button" class="theme-dot ${active}" title="${theme.label}" aria-label="${theme.label}" onclick="applyTheme('${theme.id}')" style="background:${theme.bg1}"></button>`;
+      }).join("");
+    }
+
+    function loadTheme(){
+      const saved = localStorage.getItem(getThemeStorageKey()) || localStorage.getItem(THEME_KEY) || THEME_OPTIONS[0].id;
+      applyTheme(saved);
+    }
+
+    function refreshThemeForMode(){
+      const saved = localStorage.getItem(getThemeStorageKey()) || localStorage.getItem(THEME_KEY) || THEME_OPTIONS[0].id;
+      applyTheme(saved);
+    }
 
     function shuffle(array){
       for (let i = array.length - 1; i > 0; i--) {
@@ -921,6 +972,35 @@
       gameState.mySlot = null;
     }
 
+    function getOccupiedSlotsCount(state){
+      return Object.values(state?.slots || {}).filter(Boolean).length;
+    }
+
+    function isRoomEmpty(state){
+      return getOccupiedSlotsCount(state) === 0;
+    }
+
+    async function deleteRoomChatMessages(roomId){
+      try {
+        const snap = await db.collection('chat').where('roomId', '==', roomId).get();
+        if(snap.empty) return;
+        const batch = db.batch();
+        snap.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      } catch(err){
+        console.warn("Não foi possível limpar o chat da sala:", err);
+      }
+    }
+
+    async function resetEmptyRoom(roomId){
+      try {
+        await db.collection('rooms').doc(roomId).delete();
+      } catch(err){
+        console.warn("Não foi possível apagar a sala vazia:", err);
+      }
+      await deleteRoomChatMessages(roomId);
+    }
+
     async function ensureRoomDoc(roomId){
       const ref = db.collection('rooms').doc(roomId);
       const snap = await ref.get();
@@ -947,6 +1027,7 @@
 
       showGame();
       applyModeUI();
+      refreshThemeForMode();
       renderGame();
 
       try {
@@ -958,6 +1039,11 @@
           const data = snap.data() || {};
           let state = normalizeSharedState(data.state);
           state = cleanupStaleSlots(state);
+          const wasEmpty = isRoomEmpty(state);
+
+          if(wasEmpty){
+            state = createFreshRoomState();
+          }
 
           let existingSlot = null;
           for(let slot = 1; slot <= 4; slot++){
@@ -981,14 +1067,14 @@
             };
           }
 
-          const occupiedAfterJoin = Object.values(state.slots).filter(Boolean).length;
+          const occupiedAfterJoin = getOccupiedSlotsCount(state);
           if(occupiedAfterJoin >= 4){
             state.seatingOpen = false;
           }
 
           state.turn = normalizeTurn(state);
           state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
-          if(!state.topCard && chosenSlot !== null){
+          if(!state.topCard && chosenSlot !== null && !wasEmpty){
             state = createFreshRoomState();
             state.slots[chosenSlot] = {
               id: gameState.myId,
@@ -1006,12 +1092,13 @@
             state,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
-          return { slot: chosenSlot };
+          return { slot: chosenSlot, wasEmpty };
         });
 
         gameState.mySlot = joined.slot;
         subscribeRoom(roomId);
         startRoomHeartbeat();
+        if(joined.wasEmpty) await deleteRoomChatMessages(roomId);
         initRoomChat(roomId);
         renderGame();
       } catch(err){
@@ -1077,6 +1164,7 @@
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
+      let shouldReset = false;
       try {
         await db.runTransaction(async (tx) => {
           const snap = await tx.get(roomRef);
@@ -1086,12 +1174,18 @@
           if(state.slots[mySlot] && state.slots[mySlot].id === myId){
             state.slots[mySlot] = null;
             if(state.turn === mySlot) state.turn = normalizeTurn(state);
-            tx.update(roomRef, {
-              state,
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            shouldReset = isRoomEmpty(state);
+            if(shouldReset){
+              tx.delete(roomRef);
+            } else {
+              tx.update(roomRef, {
+                state,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            }
           }
         });
+        if(shouldReset) await deleteRoomChatMessages(roomId);
       } catch(e) {
         console.warn("Não foi possível liberar a sala imediatamente:", e);
       }
@@ -1105,6 +1199,7 @@
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
+      let shouldReset = false;
       try {
         await db.runTransaction(async (tx) => {
           const snap = await tx.get(roomRef);
@@ -1114,12 +1209,18 @@
           if(state.slots[mySlot] && state.slots[mySlot].id === myId){
             state.slots[mySlot] = null;
             if(state.turn === mySlot) state.turn = normalizeTurn(state);
-            tx.update(roomRef, {
-              state,
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            shouldReset = isRoomEmpty(state);
+            if(shouldReset){
+              tx.delete(roomRef);
+            } else {
+              tx.update(roomRef, {
+                state,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            }
           }
         });
+        if(shouldReset) await deleteRoomChatMessages(roomId);
         gameState.mySlot = null;
         renderGame();
       } catch(e) {
@@ -1138,6 +1239,10 @@
           if(!snap.exists) throw new Error("Sala não encontrada");
           const data = snap.data() || {};
           let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          const wasEmpty = isRoomEmpty(state);
+          if(wasEmpty){
+            state = createFreshRoomState();
+          }
 
           let existingSlot = null;
           for(let slot = 1; slot <= 4; slot++){
@@ -1157,19 +1262,22 @@
             joinedAt: Date.now(),
             lastSeen: Date.now()
           };
-          if(Object.values(state.slots).filter(Boolean).length >= 4){
+          if(getOccupiedSlotsCount(state) >= 4){
             state.seatingOpen = false;
           }
           state = ensureOccupiedHandsHaveSeven(state);
           state.turn = normalizeTurn(state);
-          tx.update(roomRef, {
+          tx.set(roomRef, {
+            roomId,
+            roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
             state,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          return chosenSlot;
+          }, { merge: true });
+          return { chosenSlot, wasEmpty };
         });
-        gameState.mySlot = result;
+        gameState.mySlot = result.chosenSlot;
         startRoomHeartbeat();
+        if(result.wasEmpty) await deleteRoomChatMessages(roomId);
         renderGame();
       } catch(e) {
         console.warn("Não foi possível subir para a mesa:", e);
@@ -1187,6 +1295,7 @@
       initGame();
       initOfflineChat();
       applyModeUI();
+      refreshThemeForMode();
     }
 
     function applyModeUI(){
@@ -1214,9 +1323,11 @@
       document.getElementById("endScreen").style.display = "none";
       document.getElementById("lobbyScreen").style.display = "flex";
       document.getElementById("chatPanel").style.display = "none";
+      closeRoomSession();
+      refreshThemeForMode();
       renderLobbyRooms();
       bootstrapLobbyRooms();
-      closeRoomSession();
+      renderThemeDots();
     }
 
     function initGame(){
@@ -1621,15 +1732,9 @@
       p.querySelector(".chat-collapse-btn").textContent = p.classList.contains("collapsed") ? "+" : "−";
     }
 
-    function toggleTheme(){
-      const isDark = document.getElementById("themeToggle").checked;
-      document.body.setAttribute("data-theme", isDark ? "dark" : "light");
-      localStorage.setItem("cartas_theme", isDark ? "dark" : "light");
-    }
+    function toggleTheme(){ }
     function loadTheme(){
-      const saved = localStorage.getItem("cartas_theme") || "light";
-      document.body.setAttribute("data-theme", saved);
-      document.getElementById("themeToggle").checked = saved === "dark";
+      refreshThemeForMode();
     }
     function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
