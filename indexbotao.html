@@ -3,64 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Controle Deslizante com Bola - Firebase Realtime</title>
-    <!-- Estilos modernos e responsivos -->
+    <title>Firestore Sync - Botão Deslizante + Bola</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            user-select: none; /* Evita seleção acidental nos toggles */
         }
 
         body {
-            background: linear-gradient(145deg, #1a2639 0%, #2c3e4e 100%);
+            background: linear-gradient(145deg, #0b2b2b 0%, #1a2f3a 100%);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
             padding: 20px;
         }
 
-        /* Card principal com vidro (glassmorphism) */
         .glass-card {
-            background: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(12px);
-            border-radius: 56px;
-            padding: 2rem 2.5rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
-            transition: all 0.2s ease;
+            background: rgba(20, 30, 40, 0.75);
+            backdrop-filter: blur(14px);
+            border-radius: 64px;
+            padding: 2rem 2rem;
             width: 100%;
-            max-width: 580px;
+            max-width: 620px;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+            transition: all 0.2s;
         }
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        /* Área principal: toggle + bola lado a lado */
         .control-panel {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 2.5rem;
             flex-wrap: wrap;
-            background: rgba(0, 0, 0, 0.25);
-            padding: 1.8rem 2rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.6rem 2rem;
             border-radius: 80px;
-            backdrop-filter: blur(4px);
+            margin-bottom: 24px;
         }
 
-        /* --- Estilo do botão deslizante (toggle switch premium) --- */
+        /* TOGGLE SWITCH PREMIUM */
         .switch {
             position: relative;
             display: inline-block;
-            width: 84px;
-            height: 44px;
+            width: 92px;
+            height: 48px;
             cursor: pointer;
         }
 
@@ -76,124 +65,101 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #4a5568;
-            border-radius: 44px;
-            transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3), 0 1px 1px rgba(255,255,255,0.2);
+            background-color: #4a5b6e;
+            border-radius: 48px;
+            transition: 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            box-shadow: inset 0 1px 3px #00000055, 0 1px 2px #ffffff44;
         }
 
         .slider:before {
             position: absolute;
             content: "";
-            height: 36px;
-            width: 36px;
+            height: 40px;
+            width: 40px;
             left: 4px;
             bottom: 4px;
             background-color: white;
-            transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             border-radius: 50%;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            transition: 0.2s;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         input:checked + .slider {
-            background-color: #2b9348; /* verde vibrante quando ligado */
+            background-color: #2ecc71;
         }
 
         input:checked + .slider:before {
-            transform: translateX(40px);
+            transform: translateX(44px);
         }
 
-        /* efeito hover suave */
-        .switch:hover .slider {
-            filter: brightness(1.05);
-        }
-
-        /* --- Bola indicadora ao lado --- */
+        /* BOLA INDICADORA */
         .ball {
-            width: 64px;
-            height: 64px;
+            width: 76px;
+            height: 76px;
             border-radius: 50%;
-            background-color: #6c757d;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.4);
-            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s;
+            background-color: #95a5a6;
+            transition: background-color 0.15s, transform 0.1s, box-shadow 0.2s;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.4), inset 0 1px 3px rgba(255,255,255,0.6);
         }
 
-        /* efeito pulsante sutil ao mudar estado (somente clique) */
-        .ball.active-pulse {
-            transform: scale(1.02);
-            box-shadow: 0 0 12px rgba(46, 204, 113, 0.6);
-        }
-
-        /* Estado ligado (verde) */
         .ball.ball-on {
             background-color: #2ecc71;
-            box-shadow: 0 0 12px rgba(46, 204, 113, 0.5), 0 4px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 0 18px rgba(46, 204, 113, 0.7);
         }
 
-        /* Estado desligado (cinza) */
-        .ball.ball-off {
-            background-color: #95a5a6;
-        }
-
-        /* Etiqueta de status */
         .status-area {
             text-align: center;
-            background: rgba(0, 0, 0, 0.4);
-            padding: 0.8rem 1.5rem;
+            background: #00000066;
             border-radius: 60px;
-            backdrop-filter: blur(4px);
+            padding: 14px 18px;
+            margin: 20px 0;
         }
 
         .status-text {
-            font-size: 1.6rem;
-            font-weight: 600;
-            letter-spacing: 1px;
-            color: #f8f9fa;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border-radius: 14px;
-            background-color: #95a5a6;
-            transition: background-color 0.2s;
-            box-shadow: 0 0 2px white;
-        }
-
-        .badge-on {
-            background-color: #2ecc71;
-            box-shadow: 0 0 6px #2ecc71;
-        }
-
-        .badge-off {
-            background-color: #7f8c8d;
-        }
-
-        /* mensagem de conexão e sincronia */
-        .sync-info {
-            font-size: 0.8rem;
-            background: rgba(0,0,0,0.5);
-            padding: 6px 12px;
-            border-radius: 60px;
-            color: #cfd8dc;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 10px;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .badge-led {
+            width: 20px;
+            height: 20px;
+            border-radius: 20px;
+            background-color: #7f8c8d;
+            transition: 0.1s;
+        }
+
+        .badge-led.on {
+            background-color: #2ecc71;
+            box-shadow: 0 0 8px #2ecc71;
+        }
+
+        .sync-info {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 16px;
+            font-size: 0.85rem;
+            color: #cbd5e6;
+            background: #0f172acc;
+            padding: 8px 18px;
+            border-radius: 60px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .live-dot {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             background-color: #2ecc71;
-            border-radius: 10px;
-            display: inline-block;
-            animation: pulseGreen 1.5s infinite;
+            border-radius: 50%;
+            animation: pulseGreen 1.2s infinite;
         }
 
         @keyframes pulseGreen {
@@ -201,262 +167,255 @@
             100% { opacity: 1; transform: scale(1.2);}
         }
 
-        /* responsividade */
-        @media (max-width: 500px) {
-            .glass-card {
-                padding: 1.2rem 1.5rem;
-            }
-            .control-panel {
-                gap: 1.2rem;
-                padding: 1rem 1.5rem;
-            }
-            .ball {
-                width: 52px;
-                height: 52px;
-            }
-            .switch {
-                width: 70px;
-                height: 38px;
-            }
-            .slider:before {
-                height: 30px;
-                width: 30px;
-            }
-            input:checked + .slider:before {
-                transform: translateX(32px);
-            }
-            .status-text {
-                font-size: 1.3rem;
-            }
+        .log-area {
+            background: #07121cee;
+            border-radius: 28px;
+            padding: 12px 16px;
+            font-family: 'Monaco', monospace;
+            font-size: 0.7rem;
+            color: #b0f0ff;
+            margin-top: 24px;
+            border-left: 4px solid #2ecc71;
+            word-break: break-word;
+            max-height: 150px;
+            overflow-y: auto;
         }
 
-        footer {
+        button {
+            background: #2c3e50;
+            border: none;
+            color: white;
+            border-radius: 40px;
+            padding: 6px 16px;
             font-size: 0.7rem;
-            text-align: center;
-            margin-top: 1rem;
-            color: #aab7c4;
+            margin-top: 12px;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.96);
+        }
+
+        @media (max-width: 520px) {
+            .control-panel { gap: 1.2rem; }
+            .ball { width: 58px; height: 58px; }
+            .switch { width: 74px; height: 40px; }
+            .slider:before { height: 32px; width: 32px; }
+            input:checked + .slider:before { transform: translateX(34px); }
+            .status-text { font-size: 1.4rem; }
         }
     </style>
 </head>
 <body>
 
 <div class="glass-card">
-    <div class="container">
-        <!-- Painel principal: switch + bola -->
-        <div class="control-panel">
-            <!-- Botão deslizante (toggle) -->
-            <label class="switch" id="toggleLabel">
-                <input type="checkbox" id="toggleSwitchInput">
-                <span class="slider round"></span>
-            </label>
-
-            <!-- Bola indicadora de estado ao lado -->
-            <div id="statusBall" class="ball ball-off"></div>
-        </div>
-
-        <!-- Área de status textual -->
-        <div class="status-area">
-            <div class="status-text">
-                <span id="stateLabel">Desligado</span>
-                <span id="ledBadge" class="status-badge badge-off"></span>
-            </div>
-        </div>
-
-        <!-- Informações em tempo real + conexão Firebase -->
-        <div class="sync-info">
-            <span class="live-dot"></span>
-            <span>sincronização em tempo real • Firebase</span>
-        </div>
-        <footer>⚡ O estado é compartilhado entre todos os dispositivos em tempo real</footer>
+    <div class="control-panel">
+        <label class="switch">
+            <input type="checkbox" id="toggleSwitch">
+            <span class="slider"></span>
+        </label>
+        <div id="indicatorBall" class="ball"></div>
     </div>
+
+    <div class="status-area">
+        <div class="status-text">
+            <span id="stateLabel">Desligado</span>
+            <div id="ledBadge" class="badge-led"></div>
+        </div>
+    </div>
+
+    <div class="sync-info">
+        <div class="live-dot"></div>
+        <span>🔥 Sincronização em tempo real • Cloud Firestore</span>
+    </div>
+
+    <div class="log-area" id="liveLog">
+        ✅ Aguardando conexão com Firestore...
+    </div>
+    <button id="forceCheckBtn">🔄 Verificar estado atual</button>
 </div>
 
-<!-- Importação do Firebase SDK modular (v10) utilizando ES modules -->
 <script type="module">
-    // ----- CONFIGURAÇÃO DO FIREBASE (FORNECIDA PELO USUÁRIO) -----
+    // ========= CONFIGURAÇÃO DO FIREBASE (USANDO FIRESTORE) =========
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getFirestore, doc, onSnapshot, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
         authDomain: "testbotao.firebaseapp.com",
-        databaseURL: "https://testbotao-default-rtdb.firebaseio.com",
+        databaseURL: "https://testbotao-default-rtdb.firebaseio.com",  // (opcional, não usado)
         projectId: "testbotao",
         storageBucket: "testbotao.firebasestorage.app",
         messagingSenderId: "940068631746",
         appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
     };
 
-    // Inicializa Firebase
+    // Inicializar Firebase e Firestore
     const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    // Referência no Realtime Database: 'toggleState' (valor booleano)
-    const stateRef = ref(database, 'toggleState');
+    const db = getFirestore(app);
+    
+    // Referência para o documento: coleção "toggle", documento "estado"
+    const estadoDocRef = doc(db, "toggle", "estado");
 
-    // ----- Elementos do DOM -----
-    const toggleCheckbox = document.getElementById('toggleSwitchInput');
-    const ballElement = document.getElementById('statusBall');
+    // Elementos da interface
+    const toggleCheckbox = document.getElementById('toggleSwitch');
+    const ballDiv = document.getElementById('indicatorBall');
     const stateLabelSpan = document.getElementById('stateLabel');
     const ledBadge = document.getElementById('ledBadge');
+    const logDiv = document.getElementById('liveLog');
 
-    // Flag para controle de atualização interna (evita loop infinito)
-    let internalUpdating = false;
-    // Variável para armazenar o estado atual (booleano)
-    let currentState = false;  // false = desligado, true = ligado
+    // Variáveis de controle
+    let isInternalUpdate = false;      // impede loop ao atualizar via Firestore
+    let currentState = false;          // estado real sincronizado
 
-    // --- Função que atualiza a interface (bola, texto, checkbox) de acordo com o estado (true/false) ---
-    function updateUIByState(isOn) {
-        // Atualizar variável de controle
-        currentState = isOn;
-        
-        // 1. Atualizar o checkbox (sem disparar evento 'change' indesejado)
-        if (toggleCheckbox.checked !== isOn) {
-            toggleCheckbox.checked = isOn;
+    // Função para adicionar logs no painel (com hora)
+    function addLog(msg, isError = false) {
+        const time = new Date().toLocaleTimeString();
+        const prefix = isError ? '❌' : '📡';
+        const logMessage = `[${time}] ${prefix} ${msg}`;
+        const newEntry = document.createElement('div');
+        newEntry.textContent = logMessage;
+        logDiv.prepend(newEntry);  // mais recente no topo
+        // manter no máximo 12 linhas
+        while (logDiv.children.length > 12) logDiv.removeChild(logDiv.lastChild);
+        console.log(logMessage);
+        if (isError) {
+            // destaque visual no log
+            newEntry.style.color = "#ffaa99";
+        }
+    }
+
+    // Atualiza toda a interface com base no estado (true = ligado/verde)
+    function updateUI(estado) {
+        // Atualiza checkbox sem disparar evento 'change'
+        if (toggleCheckbox.checked !== estado) {
+            toggleCheckbox.checked = estado;
         }
         
-        // 2. Atualizar a bola (cor e classes)
-        if (isOn) {
-            ballElement.classList.remove('ball-off');
-            ballElement.classList.add('ball-on');
+        // Bola e estilos
+        if (estado) {
+            ballDiv.classList.add('ball-on');
             stateLabelSpan.innerText = 'Ligado';
-            ledBadge.className = 'status-badge badge-on';
-            // Pequeno efeito sutil (sem pulso excessivo)
+            ledBadge.classList.add('on');
+            ledBadge.style.backgroundColor = '#2ecc71';
         } else {
-            ballElement.classList.remove('ball-on');
-            ballElement.classList.add('ball-off');
+            ballDiv.classList.remove('ball-on');
             stateLabelSpan.innerText = 'Desligado';
-            ledBadge.className = 'status-badge badge-off';
+            ledBadge.classList.remove('on');
+            ledBadge.style.backgroundColor = '#7f8c8d';
         }
+        currentState = estado;
     }
 
-    // Função auxiliar para dar pequeno feedback visual na bola (quando alterada pelo usuário)
-    function pulseBall() {
-        ballElement.classList.add('active-pulse');
-        setTimeout(() => {
-            ballElement.classList.remove('active-pulse');
-        }, 200);
-    }
-
-    // --- Escuta alterações no Firebase em tempo real ---
-    onValue(stateRef, (snapshot) => {
-        const valueFromFirebase = snapshot.val();
-        let newState = false; // padrão desligado
-        
-        // Define o novo estado: se o snapshot existe e é booleano, usa; senão, inicializa como false
-        if (valueFromFirebase !== null && typeof valueFromFirebase === 'boolean') {
-            newState = valueFromFirebase;
-        } else {
-            // Primeira execução OU valor inválido: seta o estado padrão "false" no Firebase
-            if (valueFromFirebase === null) {
-                // Não existe dado ainda, vamos inicializar com false (desligado)
-                set(stateRef, false).catch(err => console.error("Erro ao inicializar estado:", err));
-                newState = false;
-            } else {
-                // Se por algum motivo o valor não for booleano, redefinimos
-                console.warn("Valor inesperado no Firebase, resetando para false", valueFromFirebase);
-                set(stateRef, false);
-                newState = false;
+    // --- LISTENER EM TEMPO REAL (Firestore onSnapshot) ---
+    // Esse listener será chamado sempre que o documento mudar no servidor (outras abas, dispositivos)
+    onSnapshot(estadoDocRef, (docSnapshot) => {
+        if (docSnapshot.exists()) {
+            const data = docSnapshot.data();
+            const estadoFirestore = data.ligado === true;   // garantia booleano
+            addLog(`Documento lido: ligado = ${estadoFirestore}`);
+            
+            if (currentState !== estadoFirestore) {
+                isInternalUpdate = true;
+                updateUI(estadoFirestore);
+                isInternalUpdate = false;
+                addLog(`🔄 Sincronizado: estado alterado para ${estadoFirestore ? "LIGADO (verde)" : "DESLIGADO (cinza)"}`);
+                // efeito visual extra na bola
+                ballDiv.style.transform = 'scale(1.02)';
+                setTimeout(() => { ballDiv.style.transform = ''; }, 150);
             }
-        }
-        
-        // Se o estado for diferente do atual (ou primeira carga), atualiza UI
-        if (currentState !== newState) {
-            // Marca que estamos atualizando internamente para não disparar escrita em loop
-            internalUpdating = true;
-            updateUIByState(newState);
-            internalUpdating = false;
         } else {
-            // Garantir consistência visual (caso o UI esteja dessincronizado)
-            if ((newState && !ballElement.classList.contains('ball-on')) || (!newState && ballElement.classList.contains('ball-on'))) {
-                internalUpdating = true;
-                updateUIByState(newState);
-                internalUpdating = false;
+            // Documento não existe: vamos criar com estado inicial = false (desligado)
+            addLog("Documento 'toggle/estado' não encontrado. Criando com valor: false (desligado)");
+            setDoc(estadoDocRef, { ligado: false })
+                .then(() => addLog("✅ Documento criado com estado desligado."))
+                .catch(err => addLog(`Erro ao criar documento: ${err.message}`, true));
+            // Enquanto isso, mantemos UI desligada (já está)
+            if (currentState !== false) {
+                isInternalUpdate = true;
+                updateUI(false);
+                isInternalUpdate = false;
             }
         }
     }, (error) => {
-        console.error("Erro ao ler dados do Firebase:", error);
-        // Mostrar no status que há erro de conexão (opcional)
-        const syncDiv = document.querySelector('.sync-info');
-        if (syncDiv) {
-            syncDiv.style.backgroundColor = "rgba(180, 60, 50, 0.6)";
-            syncDiv.innerHTML = '<span style="color:#ffb3ba;">⚠️ Erro de conexão com Firebase</span>';
+        addLog(`ERRO no listener do Firestore: ${error.message}`, true);
+        addLog("Verifique as regras de segurança e se o Firestore está ativo no projeto.", true);
+    });
+
+    // --- Evento de mudança MANUAL do toggle (usuário clicou) ---
+    toggleCheckbox.addEventListener('change', async () => {
+        if (isInternalUpdate) return;
+        
+        const novoEstado = toggleCheckbox.checked;
+        addLog(`👆 Usuário alternou switch para: ${novoEstado ? "LIGAR" : "DESLIGAR"}`);
+        
+        // feedback visual na bola
+        ballDiv.style.transform = 'scale(0.95)';
+        setTimeout(() => { ballDiv.style.transform = ''; }, 120);
+        
+        try {
+            // Atualiza o Firestore (isso vai disparar o onSnapshot em todas as abas)
+            await setDoc(estadoDocRef, { ligado: novoEstado });
+            addLog(`✅ Estado enviado ao Firestore: ${novoEstado}`);
+            // Não preciso chamar updateUI aqui, o próprio onSnapshot vai refletir.
+            // Mas por consistência, já atualizamos localmente (evita delay)
+            if (currentState !== novoEstado) {
+                isInternalUpdate = true;
+                updateUI(novoEstado);
+                isInternalUpdate = false;
+            }
+        } catch (err) {
+            addLog(`Falha ao salvar no Firestore: ${err.message}`, true);
+            // Reverte o checkbox para o estado sincronizado anterior
+            isInternalUpdate = true;
+            toggleCheckbox.checked = currentState;
+            isInternalUpdate = false;
+            alert("Erro ao sincronizar com Firestore. Veja o console/log.");
         }
     });
 
-    // --- Evento disparado quando o usuário clica/interage manualmente no toggle ---
-    toggleCheckbox.addEventListener('change', (event) => {
-        // Se estamos atualizando via Firebase, ignora para não criar loop.
-        if (internalUpdating) return;
-        
-        // Captura o novo estado após o clique
-        const newLocalState = toggleCheckbox.checked;
-        // Adiciona um efeito suave na bola para feedback tátil
-        pulseBall();
-        
-        // Atualiza o Firebase com o novo estado (isso irá disparar onValue em todos os clientes)
-        set(stateRef, newLocalState)
-            .then(() => {
-                // Sucesso: o Firebase já vai refletir a mudança.
-                // O onValue vai chamar updateUIByState, que sincronizará qualquer detalhe.
-                // Não precisamos atualizar UI manualmente aqui, pois o listener fará.
-                // Mas garantimos que o estado local está correto.
-                if (currentState !== newLocalState) {
-                    // Pequena segurança: Se o Firebase demorar, o UI já está correto pelo checkbox.
-                    // Mas o onValue fará o sync final.
-                }
-            })
-            .catch((error) => {
-                console.error("Erro ao salvar estado no Firebase:", error);
-                // Em caso de erro, reverter o checkbox para o estado anterior (currentState)
-                internalUpdating = true;
-                toggleCheckbox.checked = currentState;
-                internalUpdating = false;
-                // Notifica o usuário com uma pequena dica visual no card
-                const statusDiv = document.querySelector('.status-area');
-                const originalText = stateLabelSpan.innerText;
-                stateLabelSpan.innerText = "Erro!";
-                setTimeout(() => {
-                    if (stateLabelSpan.innerText === "Erro!") {
-                        updateUIByState(currentState);
-                    }
-                }, 800);
-                alert("Falha na conexão com o banco de dados. Verifique sua internet.");
-            });
-    });
-
-    // Bônus: Se o usuário clicar na bola (interação opcional) também alterna o estado (para melhor usabilidade)
-    ballElement.addEventListener('click', () => {
-        if (internalUpdating) return;
+    // Clique na bola também alterna o estado (UX extra)
+    ballDiv.addEventListener('click', async () => {
+        if (isInternalUpdate) return;
         const novoEstado = !currentState;
-        pulseBall(); // feedback visual
-        // Altera o Firebase, que propaga a mudança (o checkbox será marcado pelo listener)
-        set(stateRef, novoEstado).catch(err => console.error("Falha ao alternar via bola:", err));
+        addLog(`🎯 Clique na bola → alternar para ${novoEstado ? "Ligado" : "Desligado"}`);
+        ballDiv.style.transform = 'scale(0.92)';
+        setTimeout(() => { ballDiv.style.transform = ''; }, 150);
+        try {
+            await setDoc(estadoDocRef, { ligado: novoEstado });
+        } catch (err) {
+            addLog(`Erro ao alternar via bola: ${err.message}`, true);
+        }
     });
 
-    // Inicializa a UI com estado "desligado" (cinza) enquanto aguarda primeira resposta do Firebase,
-    // mas a primeira resposta do onValue chamará updateUIByState com o valor real.
-    // Porém garantimos estado inicial desligado (combina com requisito: estado inicial desligado)
-    // O Firebase quando vazio setamos false, e o onValue aplica. Enquanto isso, a UI local fica desligada.
-    (function initializeLocal() {
-        // definir valores padrão até o Firebase responder
-        internalUpdating = true;
-        toggleCheckbox.checked = false;
-        ballElement.classList.remove('ball-on');
-        ballElement.classList.add('ball-off');
-        stateLabelSpan.innerText = 'Desligado';
-        ledBadge.className = 'status-badge badge-off';
-        currentState = false;
-        internalUpdating = false;
-    })();
-
-    // Opcional: ao carregar a página, verifica se o Firebase já tem um valor e já sincroniza.
-    // O onValue cuida disso. Mas adicionamos um watch para quando o documento estiver totalmente carregado,
-    // exibir mensagem de conexão saudável.
-    window.addEventListener('load', () => {
-        // Valida se a conexão com Firebase está ativa (pode ser verificado pelo próprio listener)
-        console.log("App inicializado - Monitorando mudanças em tempo real");
-        // Pequeno feedback visual: a bolinha verde "live-dot" já está pulsando via CSS.
+    // Botão de verificação manual (útil para debug)
+    document.getElementById('forceCheckBtn').addEventListener('click', async () => {
+        addLog("🔍 Verificando estado atual no Firestore...");
+        try {
+            const snap = await getDoc(estadoDocRef);
+            if (snap.exists()) {
+                const val = snap.data().ligado;
+                addLog(`Estado atual no servidor: ${val ? "LIGADO" : "DESLIGADO"}`);
+                if (val !== currentState) {
+                    addLog("⚠️ Detectada diferença, sincronizando UI...");
+                    updateUI(val);
+                }
+            } else {
+                addLog("Documento ainda não existe. Criando com false...");
+                await setDoc(estadoDocRef, { ligado: false });
+                updateUI(false);
+            }
+        } catch (err) {
+            addLog(`Erro na verificação: ${err.message}`, true);
+        }
     });
+
+    // --- Inicialização com estado DESLIGADO (cinza) antes do Firestore responder ---
+    // Isso atende ao requisito "estado inicial deve ser desligado"
+    updateUI(false);
+    addLog("⚙️ UI inicial = DESLIGADO (bola cinza). Aguardando conexão com Firestore...");
+    addLog("💡 Dica: abra outra aba/janela com este mesmo arquivo para testar sincronia em tempo real.");
 </script>
 </body>
 </html>
