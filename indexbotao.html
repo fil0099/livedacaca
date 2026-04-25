@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Firestore Tempo Real: Botão + Chat + Jogo da Velha Multiplayer</title>
+    <title>xxFirestore Tempo Real: Botão + Chat + Jogo da Velha Multiplayer</title>
     <style>
         * {
             margin: 0;
@@ -38,7 +38,6 @@
             box-shadow: 0 20px 35px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
         }
 
-        /* toggle + bola */
         .toggle-panel {
             display: flex;
             align-items: center;
@@ -102,7 +101,6 @@
         .led { width: 16px; height: 16px; border-radius: 50%; background: #7f8c8d; }
         .led.on { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
 
-        /* chat */
         .chat-messages {
             background: #071a1fe0;
             border-radius: 28px;
@@ -135,7 +133,6 @@
         .chat-input-row input { flex: 1; }
         .chat-input-row button { background: #2ecc71; color: #071a1f; font-weight: bold; cursor: pointer; }
 
-        /* JOGO DA VELHA */
         .game-title {
             font-size: 1.6rem;
             font-weight: bold;
@@ -165,7 +162,7 @@
             box-shadow: 0 6px 0 #031016;
         }
         .cell:active { transform: scale(0.96); }
-        .cell.disabled { cursor: not-allowed; opacity: 0.7; }
+        .cell.disabled { cursor: not-allowed; opacity: 0.6; }
         .turn-indicator {
             background: #03101680;
             border-radius: 40px;
@@ -211,6 +208,15 @@
             0% { opacity: 0.4; transform: scale(0.8);}
             100% { opacity: 1; transform: scale(1.2);}
         }
+        .warning-box {
+            background: #ff980030;
+            border-left: 4px solid #ff9800;
+            padding: 8px 12px;
+            margin-top: 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            color: #ffdd99;
+        }
         @media (max-width: 860px) {
             .dashboard { grid-template-columns: 1fr; }
             .ball { width: 58px; height: 58px; }
@@ -223,7 +229,7 @@
 <body>
 <div class="dashboard">
     
-    <!-- CARD 1: TOGGLE + BOLA (Firestore sync) -->
+    <!-- CARD 1: TOGGLE + BOLA -->
     <div class="card">
         <div class="toggle-panel">
             <label class="switch">
@@ -241,7 +247,7 @@
         <div class="sync-info"><div class="pulse-dot"></div>⚡ Botão sincronizado via Firestore</div>
     </div>
 
-    <!-- CARD 2: CHAT SIMPLES (Firestore coleção /chat) -->
+    <!-- CARD 2: CHAT -->
     <div class="card">
         <h3 style="color:#c7f0e0; margin-bottom: 12px; display: flex; gap: 8px;">💬 Chat ao vivo <span class="pulse-dot"></span></h3>
         <div id="chatMessagesList" class="chat-messages"><div style="text-align:center;">Carregando...</div></div>
@@ -253,7 +259,7 @@
         <div class="sync-info">📡 Chat em tempo real (Firestore /chat)</div>
     </div>
 
-    <!-- CARD 3: JOGO DA VELHA MULTIPLAYER (TEMPO REAL) -->
+    <!-- CARD 3: JOGO DA VELHA MULTIPLAYER -->
     <div class="card">
         <div class="game-title">🎮 Jogo da Velha - Multiplayer</div>
         <div class="turn-indicator" id="turnIndicator">Aguardando partida...</div>
@@ -261,11 +267,13 @@
         <button class="reset-btn" id="resetGameBtn">🔄 Reiniciar Jogo (todos)</button>
         <div id="winnerMessage" class="winner-marker"></div>
         <div class="sync-info">🌍 Sincronizado em tempo real • Jogue contra outra pessoa em qualquer aba</div>
+        <div class="warning-box" id="permissionWarning" style="display:none;">
+            ⚠️ Erro de permissão: você precisa adicionar a regra <code>match /ticTacToe/{document} { allow read, write: if true; }</code> no Firestore.
+        </div>
     </div>
 </div>
 
 <script type="module">
-    // ======================= FIREBASE CONFIG (FIRESTORE) =======================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc, collection, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -281,7 +289,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ************ PARTE 1: TOGGLE + BOLA ************
+    // ========= 1. TOGGLE + BOLA =========
     const estadoDocRef = doc(db, "toggle", "estado");
     const toggleCheckbox = document.getElementById('toggleSwitch');
     const ballDiv = document.getElementById('indicatorBall');
@@ -340,7 +348,7 @@
     });
     updateToggleUI(false);
 
-    // ************ PARTE 2: CHAT (Firestore) ************
+    // ========= 2. CHAT =========
     const messagesContainer = document.getElementById('chatMessagesList');
     const userNameInput = document.getElementById('chatUserName');
     const messageInput = document.getElementById('chatMessageInput');
@@ -388,12 +396,13 @@
     sendBtn.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 
-    // ************ PARTE 3: JOGO DA VELHA EM TEMPO REAL (FIRESTORE) ************
-    const gameDocRef = doc(db, "ticTacToe", "partida");  // coleção 'ticTacToe', documento 'partida'
+    // ========= 3. JOGO DA VELHA EM TEMPO REAL (Firestore) =========
+    const gameDocRef = doc(db, "ticTacToe", "partida");
     const boardContainer = document.getElementById('board');
     const turnIndicator = document.getElementById('turnIndicator');
     const winnerMsgDiv = document.getElementById('winnerMessage');
     const resetBtn = document.getElementById('resetGameBtn');
+    const permissionWarning = document.getElementById('permissionWarning');
 
     let localBoardState = ['', '', '', '', '', '', '', '', ''];
     let localCurrentPlayer = 'X';
@@ -408,8 +417,7 @@
             if (symbol === 'X') cells[i].innerText = '❌';
             else if (symbol === 'O') cells[i].innerText = '⭕';
             else cells[i].innerText = '';
-            // habilita/desabilita clique visual
-            if (!localGameActive || localWinner !== null || localBoardState[i] !== '' || localCurrentPlayer !== (getMyAssumedPlayer())) {
+            if (!localGameActive || localWinner !== null || localBoardState[i] !== '' || localCurrentPlayer !== (localGameActive ? localCurrentPlayer : null)) {
                 cells[i].classList.add('disabled');
             } else {
                 cells[i].classList.remove('disabled');
@@ -417,18 +425,11 @@
         }
     }
 
-    // Função auxiliar para saber quem é o próximo jogador (apenas exibição)
-    function getMyAssumedPlayer() {
-        // Não importa o "dono", apenas mostramos o turno atual real
-        return localCurrentPlayer;
-    }
-
     function updateGameStatusFromFirestore(data) {
         localBoardState = [...data.board];
         localCurrentPlayer = data.currentPlayer;
         localGameActive = data.gameActive;
         localWinner = data.winner || null;
-
         if (localWinner === 'X') {
             turnIndicator.innerText = '🏆 Vitória do ❌ (X) !';
             winnerMsgDiv.innerText = 'Jogador X venceu! Reinicie para nova partida.';
@@ -445,28 +446,6 @@
         renderBoardUI();
     }
 
-    // Listener em tempo real do Firestore para o jogo da velha
-    onSnapshot(gameDocRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const data = snapshot.data();
-            if (data.board && Array.isArray(data.board) && data.currentPlayer) {
-                isUpdatingFromFirestore = true;
-                updateGameStatusFromFirestore(data);
-                isUpdatingFromFirestore = false;
-            } else {
-                // documento corrompido, recriar estado padrão
-                console.warn("Estrutura inválida, recriando");
-                initializeGameInFirestore();
-            }
-        } else {
-            // primeira vez: criar documento com estado inicial (X começa, tabuleiro vazio)
-            initializeGameInFirestore();
-        }
-    }, (err) => {
-        console.error("Erro no listener do jogo:", err);
-        turnIndicator.innerText = "Erro de conexão com Firestore";
-    });
-
     async function initializeGameInFirestore() {
         const initialData = {
             board: ['', '', '', '', '', '', '', '', ''],
@@ -477,31 +456,49 @@
         };
         try {
             await setDoc(gameDocRef, initialData);
+            permissionWarning.style.display = 'none';
         } catch (err) {
             console.error("Erro ao inicializar jogo:", err);
-            turnIndicator.innerText = "Erro: verifique regras Firestore para coleção ticTacToe";
+            if (err.code === 'permission-denied') {
+                permissionWarning.style.display = 'block';
+                turnIndicator.innerText = "Erro de permissão! Adicione a regra do Firestore para /ticTacToe";
+            } else {
+                turnIndicator.innerText = "Erro ao conectar ao Firestore.";
+            }
         }
     }
 
-    // Função para fazer jogada e salvar no Firestore (somente se for a vez do jogador e jogo ativo)
+    onSnapshot(gameDocRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data.board && Array.isArray(data.board) && data.currentPlayer) {
+                isUpdatingFromFirestore = true;
+                updateGameStatusFromFirestore(data);
+                isUpdatingFromFirestore = false;
+                permissionWarning.style.display = 'none';
+            } else {
+                initializeGameInFirestore();
+            }
+        } else {
+            initializeGameInFirestore();
+        }
+    }, (err) => {
+        console.error("Listener erro:", err);
+        if (err.code === 'permission-denied') {
+            permissionWarning.style.display = 'block';
+            turnIndicator.innerText = "Sem permissão: adicione regra /ticTacToe no Firestore";
+        }
+    });
+
     async function makeMove(index) {
         if (isUpdatingFromFirestore) return;
-        // dados atuais do Firestore? Mas usamos localBoardState que está sincronizado
-        if (!localGameActive) return;
-        if (localWinner !== null) return;
+        if (!localGameActive || localWinner !== null) return;
         if (localBoardState[index] !== '') return;
-        // turno
         const currentPlayerFromSync = localCurrentPlayer;
-        // quem está jogando? Como não temos login, qualquer um pode jogar se for a vez correta.
-        // Mas evitamos duplicidade: apenas permitimos se o jogo está ativo e celula vazia e é a vez do jogador atual.
-        // Sim, qualquer aba pode jogar na vez do jogador atual. Isso é multiplayer real.
-        
         const newBoard = [...localBoardState];
         newBoard[index] = currentPlayerFromSync;
-        
         let winner = null;
         let gameActiveLocal = true;
-        // verificar vitória
         const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
         let hasWinner = false;
         for (let pattern of winPatterns) {
@@ -519,7 +516,6 @@
             gameActiveLocal = false;
             winner = 'empate';
         }
-        
         const nextPlayer = (currentPlayerFromSync === 'X') ? 'O' : 'X';
         const updatedData = {
             board: newBoard,
@@ -528,16 +524,19 @@
             winner: winner,
             lastUpdate: serverTimestamp()
         };
-        
         try {
             await setDoc(gameDocRef, updatedData);
         } catch (err) {
             console.error("Erro ao registrar jogada:", err);
-            alert("Falha ao realizar jogada. Verifique regras do Firestore (coleção ticTacToe).");
+            if (err.code === 'permission-denied') {
+                permissionWarning.style.display = 'block';
+                alert("Permissão negada: adicione a regra do Firestore para coleção ticTacToe");
+            } else {
+                alert("Falha ao realizar jogada: " + err.message);
+            }
         }
     }
 
-    // reset global: limpar tabuleiro e recomeçar
     async function resetGameGlobal() {
         if (isUpdatingFromFirestore) return;
         const resetData = {
@@ -551,11 +550,10 @@
             await setDoc(gameDocRef, resetData);
         } catch (err) {
             console.error("Erro reset:", err);
-            alert("Erro ao reiniciar partida.");
+            alert("Erro ao reiniciar partida. Verifique as regras do Firestore.");
         }
     }
 
-    // criar UI do tabuleiro com event listeners
     function createBoardUI() {
         boardContainer.innerHTML = '';
         for (let i = 0; i < 9; i++) {
@@ -574,13 +572,6 @@
 
     resetBtn.addEventListener('click', resetGameGlobal);
     createBoardUI();
-
-    // se demorar para inicializar, mostrar mensagem
-    setTimeout(() => {
-        if (localBoardState.every(c => c === '') && localGameActive) {
-            turnIndicator.innerText = "Aguardando partida... Clique no tabuleiro se for sua vez (X começa)";
-        }
-    }, 500);
 </script>
 </body>
 </html>
