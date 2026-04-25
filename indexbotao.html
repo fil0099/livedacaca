@@ -610,6 +610,7 @@
     </div>
   </div>
 
+  
   <script>
     // ========== FIREBASE ==========
     const firebaseConfig = {
@@ -624,6 +625,13 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
+    // ========== CONFIGURAÇÃO DAS SALAS ==========
+    const ROOMS = [
+      { id: "sala1", name: "Sala 1" },
+      { id: "sala2", name: "Sala 2" },
+      { id: "sala3", name: "Sala 3" }
+    ];
+
     // ========== JOGO ==========
     const imgs = [
       "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
@@ -633,15 +641,40 @@
     ];
     const colors = ["red", "blue", "green", "yellow"];
     const colorMap = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#eab308" };
+    const STALE_SLOT_MS = 18000;
 
     let gameState = {
-      roomMode: false, roomId: null, myName: "Você", roomMembers: [],
-      deck: [], players: [[],[],[],[]], topCard: null, turn: 0, penalty: 0, gameRunning: false, botTimer: null,
+      roomMode: false,
+      roomId: null,
+      myName: "Você",
       myId: Math.random().toString(36).substr(2, 8),
-      musicAudio: null, musicPlaying: false, musicVolume: 0.7, masterVolume: 1, micVolume: 1, audioEnabled: false, micEnabled: false,
-      micStream: null, micAudioContext: null, micGain: null, trackIndex: 0,
-      roomPlaylist: [], robotPlaylist: []
+      mySlot: null,
+      roomState: null,
+      roomHeartbeat: null,
+      roomListeners: [],
+      roomMembers: [],
+      deck: [],
+      players: [[],[],[],[]],
+      topCard: null,
+      turn: 0,
+      penalty: 0,
+      gameRunning: false,
+      botTimer: null,
+      musicAudio: null,
+      musicPlaying: false,
+      musicVolume: 0.7,
+      masterVolume: 1,
+      micVolume: 1,
+      audioEnabled: false,
+      micEnabled: false,
+      micStream: null,
+      micAudioContext: null,
+      micGain: null,
+      trackIndex: 0,
+      roomPlaylist: [],
+      robotPlaylist: []
     };
+
     const DEFAULT_PLAYLIST = [
       "https://raw.githubusercontent.com/fil0099/livedacaca/main/music_for_video-just-relax-11157.mp3",
       "https://raw.githubusercontent.com/fil0099/livedacaca/main/sigmamusicart-jazz-lounge-relaxing-background-music-514554.mp3",
@@ -650,36 +683,365 @@
     gameState.roomPlaylist = [...DEFAULT_PLAYLIST];
     gameState.robotPlaylist = [...DEFAULT_PLAYLIST];
 
-    let roomsList = [
-      { id: "sala1", name: "Sala 1", locked: false },
-      { id: "sala2", name: "Sala 2", locked: false },
-      { id: "sala3", name: "Sala 3", locked: false }
-    ];
+    let lobbyRoomUnsubs = [];
+    let activeRoomUnsubs = [];
+
+    function shuffle(array){
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function createCard(){
+      const r = Math.random();
+      let value = Math.floor(Math.random() * 10).toString();
+      if(r < 0.12) value = "+2";
+      else if(r < 0.18) value = "+4";
+      return {
+        color: colors[Math.floor(Math.random() * colors.length)],
+        value,
+        img: imgs[Math.floor(Math.random() * imgs.length)]
+      };
+    }
+
+    function createFreshDeck(){
+      const deck = [];
+      for(let i = 0; i < 100; i++) deck.push(createCard());
+      return shuffle(deck);
+    }
+
+    function emptyRoomSlots(){
+      return { 1: null, 2: null, 3: null, 4: null };
+    }
+
+    function emptyRoomHands(){
+      return { 1: [], 2: [], 3: [], 4: [] };
+    }
+
+    function createFreshRoomState(){
+      const deck = createFreshDeck();
+      const hands = emptyRoomHands();
+      for(let slot = 1; slot <= 4; slot++){
+        for(let i = 0; i < 6; i++) hands[slot].push(deck.pop());
+      }
+      return {
+        slots: emptyRoomSlots(),
+        hands,
+        deck,
+        topCard: deck.pop(),
+        turn: 1,
+        penalty: 0,
+        gameRunning: true,
+        winnerSlot: null,
+        startedAt: Date.now(),
+        updatedAt: Date.now()
+      };
+    }
+
+    function normalizeSharedState(raw){
+      const state = raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : {};
+      const slots = emptyRoomSlots();
+      const hands = emptyRoomHands();
+
+      if(state.slots && typeof state.slots === 'object'){
+        for(let slot = 1; slot <= 4; slot++) slots[slot] = state.slots[slot] ?? null;
+      }
+      if(Array.isArray(state.players)){
+        for(let slot = 1; slot <= 4; slot++) slots[slot] = state.players[slot - 1] ?? slots[slot];
+      }
+      if(state.hands && typeof state.hands === 'object'){
+        for(let slot = 1; slot <= 4; slot++){
+          if(Array.isArray(state.hands[slot])) hands[slot] = state.hands[slot].slice();
+        }
+      }
+      if(Array.isArray(state.playersHands)){
+        for(let slot = 1; slot <= 4; slot++){
+          if(Array.isArray(state.playersHands[slot - 1])) hands[slot] = state.playersHands[slot - 1].slice();
+        }
+      }
+
+      return {
+        slots,
+        hands,
+        deck: Array.isArray(state.deck) ? state.deck.slice() : [],
+        topCard: state.topCard || null,
+        turn: Number.isFinite(state.turn) ? state.turn : 1,
+        penalty: Number.isFinite(state.penalty) ? state.penalty : 0,
+        gameRunning: state.gameRunning !== undefined ? !!state.gameRunning : false,
+        winnerSlot: Number.isFinite(state.winnerSlot) ? state.winnerSlot : null,
+        startedAt: state.startedAt || null,
+        updatedAt: state.updatedAt || null
+      };
+    }
+
+    function slotIsActive(slotData){
+      if(!slotData || !slotData.id) return false;
+      if(!slotData.lastSeen) return true;
+      return (Date.now() - slotData.lastSeen) < STALE_SLOT_MS;
+    }
+
+    function cleanupStaleSlots(state){
+      for(let slot = 1; slot <= 4; slot++){
+        if(state.slots[slot] && !slotIsActive(state.slots[slot])){
+          state.slots[slot] = null;
+        }
+      }
+      return state;
+    }
+
+    function firstOccupiedSlot(state){
+      for(let slot = 1; slot <= 4; slot++) if(state.slots[slot]) return slot;
+      return null;
+    }
+
+    function nextOccupiedSlot(state, fromSlot){
+      for(let step = 1; step <= 4; step++){
+        const slot = ((fromSlot - 1 + step) % 4) + 1;
+        if(state.slots[slot]) return slot;
+      }
+      return fromSlot;
+    }
+
+    function normalizeTurn(state){
+      const current = state.turn || 1;
+      if(state.slots[current]) return current;
+      const next = nextOccupiedSlot(state, current);
+      return next || current;
+    }
+
+    function drawFromDeckShared(state){
+      if(!state.deck || state.deck.length === 0){
+        state.deck = createFreshDeck();
+      }
+      return state.deck.pop();
+    }
+
+    function canPlay(c, topCard){
+      if(!topCard) return true;
+      if(c.value === "+4") return true;
+      if(c.value === "+2") return c.color === topCard.color || topCard.value === "+2";
+      return c.color === topCard.color || c.value === topCard.value;
+    }
+
+    function getPlayerName(slot){
+      if(gameState.roomMode && gameState.roomState && gameState.roomState.slots[slot] && gameState.roomState.slots[slot].name){
+        return gameState.roomState.slots[slot].name;
+      }
+      if(!gameState.roomMode && slot === 1) return gameState.myName;
+      return `Jogador ${slot}`;
+    }
 
     function renderLobbyRooms(){
       const container = document.getElementById("roomsList");
       if(!container) return;
       container.innerHTML = "";
-      roomsList.forEach(room => {
+      ROOMS.forEach(room => {
+        const roomState = room.state ? normalizeSharedState(room.state) : null;
+        const occupied = roomState ? Object.values(roomState.slots).filter(Boolean).length : 0;
+        const isFull = occupied >= 4;
+        const statusText = roomState ? (roomState.gameRunning ? "Partida ativa" : "Sala pronta") : "Aguardando primeiro jogador";
         const div = document.createElement("div");
         div.className = "room-card";
-        div.innerHTML = `<div class="room-head"><strong>${escapeHtml(room.name)}</strong><span class="room-tag">Aberta</span></div><div class="room-actions"><button class="btn secondary" onclick="joinRoom('${room.id}')">Entrar</button></div>`;
+        div.innerHTML = `
+          <div class="room-head">
+            <strong>${escapeHtml(room.name)}</strong>
+            <span class="room-tag">${occupied}/4</span>
+          </div>
+          <small>${escapeHtml(statusText)}</small>
+          <div class="room-actions">
+            <button class="btn secondary" ${isFull ? 'disabled' : ''} onclick="joinRoom('${room.id}')">${isFull ? 'Sala cheia' : 'Entrar'}</button>
+          </div>
+        `;
         container.appendChild(div);
       });
     }
 
-    function joinRoom(roomId){
+    function stopRoomSubscriptions(){
+      activeRoomUnsubs.forEach(fn => { try { fn(); } catch(e) {} });
+      activeRoomUnsubs = [];
+    }
+
+    function stopLobbySubscriptions(){
+      lobbyRoomUnsubs.forEach(fn => { try { fn(); } catch(e) {} });
+      lobbyRoomUnsubs = [];
+    }
+
+    function stopRoomHeartbeat(){
+      if(gameState.roomHeartbeat){
+        clearInterval(gameState.roomHeartbeat);
+        gameState.roomHeartbeat = null;
+      }
+    }
+
+    function closeRoomSession(){
+      stopRoomHeartbeat();
+      stopRoomSubscriptions();
+      gameState.roomState = null;
+      gameState.roomId = null;
+      gameState.mySlot = null;
+    }
+
+    async function ensureRoomDoc(roomId){
+      const ref = db.collection('rooms').doc(roomId);
+      const snap = await ref.get();
+      if(!snap.exists){
+        await ref.set({
+          roomId,
+          roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
+          state: createFreshRoomState(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    async function joinRoom(roomId){
       let userName = document.getElementById("roomName").value.trim();
       if(!userName) userName = document.getElementById("playerName").value.trim();
       if(!userName) userName = "Jogador";
-      gameState.myName = userName.slice(0,18);
+      userName = userName.slice(0, 18);
+
+      gameState.myName = userName;
       gameState.roomMode = true;
       gameState.roomId = roomId;
-      gameState.roomMembers = [{name:"Jogador 2"},{name:"Jogador 3"},{name:"Jogador 4"}];
+      gameState.mySlot = null;
+
       showGame();
-      initGame();
-      initRoomChat(roomId);
       applyModeUI();
+      renderGame();
+
+      try {
+        await ensureRoomDoc(roomId);
+        const roomRef = db.collection('rooms').doc(roomId);
+        const joined = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error("Sala não encontrada");
+          const data = snap.data() || {};
+          let state = normalizeSharedState(data.state);
+          state = cleanupStaleSlots(state);
+
+          let existingSlot = null;
+          for(let slot = 1; slot <= 4; slot++){
+            const s = state.slots[slot];
+            if(s && s.id === gameState.myId){
+              existingSlot = slot;
+              break;
+            }
+          }
+
+          let chosenSlot = existingSlot;
+          if(chosenSlot === null){
+            for(let slot = 1; slot <= 4; slot++){
+              if(!state.slots[slot]){
+                chosenSlot = slot;
+                break;
+              }
+            }
+          }
+          if(chosenSlot === null) throw new Error("Sala cheia");
+
+          state.slots[chosenSlot] = {
+            id: gameState.myId,
+            name: userName,
+            joinedAt: Date.now(),
+            lastSeen: Date.now()
+          };
+
+          state.turn = normalizeTurn(state);
+          state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
+          if(!state.topCard){
+            state = createFreshRoomState();
+            state.slots[chosenSlot] = {
+              id: gameState.myId,
+              name: userName,
+              joinedAt: Date.now(),
+              lastSeen: Date.now()
+            };
+          }
+
+          tx.set(roomRef, {
+            roomId,
+            roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
+            state,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          return { slot: chosenSlot };
+        });
+
+        gameState.mySlot = joined.slot;
+        subscribeRoom(roomId);
+        startRoomHeartbeat();
+        initRoomChat(roomId);
+        renderGame();
+      } catch(err){
+        console.error(err);
+        alert(err.message || "Não foi possível entrar na sala.");
+        backToLobby();
+      }
+    }
+
+    function subscribeRoom(roomId){
+      stopRoomSubscriptions();
+      const roomRef = db.collection('rooms').doc(roomId);
+      const unsub = roomRef.onSnapshot(snapshot => {
+        if(!snapshot.exists) return;
+        const data = snapshot.data() || {};
+        const state = cleanupStaleSlots(normalizeSharedState(data.state));
+        gameState.roomState = state;
+        if(gameState.myId){
+          for(let slot = 1; slot <= 4; slot++){
+            if(state.slots[slot] && state.slots[slot].id === gameState.myId){
+              gameState.mySlot = slot;
+            }
+          }
+        }
+        renderGame();
+      }, err => {
+        console.error("Erro ao ouvir sala:", err);
+      });
+      roomDocUnsubs.push(unsub);
+    }
+
+    function startRoomHeartbeat(){
+      stopRoomHeartbeat();
+      gameState.roomHeartbeat = setInterval(() => {
+        if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+        const pathBase = `state.slots.${gameState.mySlot}`;
+        db.collection('rooms').doc(gameState.roomId).update({
+          [`${pathBase}.id`]: gameState.myId,
+          [`${pathBase}.name`]: gameState.myName,
+          [`${pathBase}.lastSeen`]: Date.now()
+        }).catch(() => {});
+      }, 7000);
+    }
+
+    async function leaveCurrentRoom(){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      const roomId = gameState.roomId;
+      const mySlot = gameState.mySlot;
+      const myId = gameState.myId;
+      const roomRef = db.collection('rooms').doc(roomId);
+      stopRoomHeartbeat();
+      try {
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) return;
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          if(state.slots[mySlot] && state.slots[mySlot].id === myId){
+            state.slots[mySlot] = null;
+            if(state.turn === mySlot) state.turn = normalizeTurn(state);
+            tx.update(roomRef, {
+              state,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        });
+      } catch(e) {
+        console.warn("Não foi possível liberar a sala imediatamente:", e);
+      }
+      stopRoomSubscriptions();
     }
 
     function joinRobots(){
@@ -687,8 +1049,7 @@
       if(!userName) userName = "Você";
       gameState.myName = userName.slice(0,18);
       gameState.roomMode = false;
-      gameState.roomId = null;
-      gameState.roomMembers = [];
+      closeRoomSession();
       showGame();
       initGame();
       initOfflineChat();
@@ -718,72 +1079,280 @@
       document.getElementById("chatPanel").style.display = "flex";
     }
 
-    function backToLobby(){
+    async function backToLobby(){
       clearTimeout(gameState.botTimer);
+      await leaveCurrentRoom();
       gameState.roomMode = false;
-      gameState.roomId = null;
-      if(window.chatUnsubscribe) window.chatUnsubscribe();
       document.getElementById("table").style.display = "none";
       document.getElementById("endScreen").style.display = "none";
       document.getElementById("lobbyScreen").style.display = "flex";
       document.getElementById("chatPanel").style.display = "none";
       renderLobbyRooms();
+      bootstrapLobbyRooms();
+      closeRoomSession();
     }
 
     function initGame(){
       clearTimeout(gameState.botTimer);
-      gameState.deck = []; gameState.players = [[],[],[],[]]; gameState.penalty=0; gameState.turn=0; gameState.gameRunning=true;
-      for(let i=0;i<100;i++) gameState.deck.push(createCard());
-      for(let p=0;p<4;p++) for(let i=0;i<6;i++) gameState.players[p].push(drawFromDeck());
-      gameState.topCard = drawFromDeck();
+      gameState.deck = [];
+      gameState.players = [[],[],[],[]];
+      gameState.penalty = 0;
+      gameState.turn = 0;
+      gameState.gameRunning = true;
+      for(let i = 0; i < 100; i++) gameState.deck.push(createCard());
+      for(let p = 0; p < 4; p++) for(let i = 0; i < 6; i++) gameState.players[p].push(drawFromDeckOffline());
+      gameState.topCard = drawFromDeckOffline();
       renderGame();
-      if(!gameState.roomMode) scheduleBotTurn();
+      scheduleBotTurn();
     }
 
-    function createCard(){
-      const r=Math.random(); let value=Math.floor(Math.random()*10).toString();
-      if(r<0.12) value="+2"; else if(r<0.18) value="+4";
-      return { color: colors[Math.floor(Math.random()*colors.length)], value, img: imgs[Math.floor(Math.random()*imgs.length)] };
+    function drawFromDeckOffline(){
+      if(gameState.deck.length === 0) for(let i = 0; i < 60; i++) gameState.deck.push(createCard());
+      return gameState.deck.pop();
     }
-    function drawFromDeck(){ if(gameState.deck.length===0) for(let i=0;i<60;i++) gameState.deck.push(createCard()); return gameState.deck.pop(); }
-    function canPlay(c){ if(!gameState.topCard) return true; if(c.value==="+4") return true; if(c.value==="+2") return c.color===gameState.topCard.color || gameState.topCard.value==="+2"; return c.color===gameState.topCard.color || c.value===gameState.topCard.value; }
-    function playCard(i){ if(!gameState.gameRunning || gameState.turn!==0 || gameState.penalty>0) return; const c=gameState.players[0][i]; if(!canPlay(c)) return; applyCard(c); gameState.players[0].splice(i,1); renderGame(); nextTurn(); }
-    function applyCard(c){ gameState.topCard=c; if(c.value==="+2") gameState.penalty+=2; if(c.value==="+4") gameState.penalty+=4; }
-    function drawCard(){ if(!gameState.gameRunning || gameState.turn!==0 || gameState.penalty>0) return; gameState.players[0].push(drawFromDeck()); renderGame(); nextTurn(); }
-    function nextTurn(){ if(checkWin()) return; gameState.turn=(gameState.turn+1)%4; renderGame(); clearTimeout(gameState.botTimer); if(!gameState.roomMode) gameState.botTimer=setTimeout(resolveTurn,220); }
-    function resolveTurn(){ if(!gameState.gameRunning) return; if(gameState.penalty>0){ for(let i=0;i<gameState.penalty;i++) gameState.players[gameState.turn].push(drawFromDeck()); gameState.penalty=0; renderGame(); nextTurn(); return; } if(!gameState.roomMode && gameState.turn!==0) botTurn(); }
-    function botTurn(){ clearTimeout(gameState.botTimer); gameState.botTimer=setTimeout(()=>{ if(!gameState.gameRunning || gameState.turn===0) return; const hand=gameState.players[gameState.turn]; const idx=hand.findIndex(c=>canPlay(c)); if(idx!==-1){ applyCard(hand[idx]); hand.splice(idx,1); } else { hand.push(drawFromDeck()); } renderGame(); nextTurn(); }, 1200+Math.random()*800); }
-    function scheduleBotTurn(){ clearTimeout(gameState.botTimer); gameState.botTimer=setTimeout(resolveTurn,160); }
-    function checkWin(){ for(let i=0;i<4;i++) if(gameState.players[i].length===0){ gameState.gameRunning=false; document.getElementById("table").style.display="none"; document.getElementById("endScreen").style.display="flex"; document.getElementById("winnerText").innerHTML=i===0?"Você venceu!":`${getPlayerName(i)} venceu!`; return true; } return false; }
-    function getPlayerName(idx){ if(idx===0) return gameState.myName; if(gameState.roomMode && gameState.roomMembers[idx-1]) return gameState.roomMembers[idx-1].name; return `Robô ${idx}`; }
+
+    function drawFromDeck(){
+      return gameState.roomMode ? null : drawFromDeckOffline();
+    }
+
+    function canPlayOffline(c){
+      if(!gameState.topCard) return true;
+      if(c.value === "+4") return true;
+      if(c.value === "+2") return c.color === gameState.topCard.color || gameState.topCard.value === "+2";
+      return c.color === gameState.topCard.color || c.value === gameState.topCard.value;
+    }
+
+    function playCard(i){
+      if(gameState.roomMode) return playRoomCard(i);
+      if(!gameState.gameRunning || gameState.turn !== 0 || gameState.penalty > 0) return;
+      const c = gameState.players[0][i];
+      if(!canPlayOffline(c)) return;
+      applyCardOffline(c);
+      gameState.players[0].splice(i, 1);
+      renderGame();
+      nextTurnOffline();
+    }
+
+    function playRoomCard(i){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      performRoomAction({ type: 'play', index: i });
+    }
+
+    function applyCardOffline(c){
+      gameState.topCard = c;
+      if(c.value === "+2") gameState.penalty += 2;
+      if(c.value === "+4") gameState.penalty += 4;
+    }
+
+    function drawCard(){
+      if(gameState.roomMode) return drawRoomCard();
+      if(!gameState.gameRunning || gameState.turn !== 0 || gameState.penalty > 0) return;
+      gameState.players[0].push(drawFromDeckOffline());
+      renderGame();
+      nextTurnOffline();
+    }
+
+    function drawRoomCard(){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      performRoomAction({ type: 'draw' });
+    }
+
+    function nextTurnOffline(){
+      if(checkWinOffline()) return;
+      gameState.turn = (gameState.turn + 1) % 4;
+      renderGame();
+      clearTimeout(gameState.botTimer);
+      gameState.botTimer = setTimeout(resolveTurnOffline, 220);
+    }
+
+    function resolveTurnOffline(){
+      if(!gameState.gameRunning) return;
+      if(gameState.penalty > 0){
+        for(let i = 0; i < gameState.penalty; i++) gameState.players[gameState.turn].push(drawFromDeckOffline());
+        gameState.penalty = 0;
+        renderGame();
+        nextTurnOffline();
+        return;
+      }
+      if(!gameState.roomMode && gameState.turn !== 0) botTurn();
+    }
+
+    function botTurn(){
+      clearTimeout(gameState.botTimer);
+      gameState.botTimer = setTimeout(() => {
+        if(!gameState.gameRunning || gameState.turn === 0) return;
+        const hand = gameState.players[gameState.turn];
+        const idx = hand.findIndex(c => canPlayOffline(c));
+        if(idx !== -1){
+          applyCardOffline(hand[idx]);
+          hand.splice(idx, 1);
+        } else {
+          hand.push(drawFromDeckOffline());
+        }
+        renderGame();
+        nextTurnOffline();
+      }, 1200 + Math.random() * 800);
+    }
+
+    function scheduleBotTurn(){
+      clearTimeout(gameState.botTimer);
+      gameState.botTimer = setTimeout(resolveTurnOffline, 160);
+    }
+
+    function checkWinOffline(){
+      for(let i = 0; i < 4; i++){
+        if(gameState.players[i].length === 0){
+          gameState.gameRunning = false;
+          document.getElementById("table").style.display = "none";
+          document.getElementById("endScreen").style.display = "flex";
+          document.getElementById("winnerText").innerHTML = i === 0 ? "Você venceu!" : `${getPlayerName(i + 1)} venceu!`;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function performRoomAction(action){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      const roomRef = db.collection('rooms').doc(gameState.roomId);
+      db.runTransaction(async (tx) => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists) throw new Error("Sala não encontrada");
+        const data = snap.data() || {};
+        let state = cleanupStaleSlots(normalizeSharedState(data.state));
+
+        if(!state.slots[gameState.mySlot] || state.slots[gameState.mySlot].id !== gameState.myId){
+          throw new Error("Você não está mais nessa sala");
+        }
+
+        state.turn = normalizeTurn(state);
+        if(state.turn !== gameState.mySlot) throw new Error("Não é sua vez");
+        if(!state.gameRunning) throw new Error("A partida já terminou");
+
+        const hand = state.hands[gameState.mySlot] || (state.hands[gameState.mySlot] = []);
+
+        if(action.type === 'draw'){
+          if(state.penalty > 0){
+            for(let i = 0; i < state.penalty; i++) hand.push(drawFromDeckShared(state));
+            state.penalty = 0;
+          } else {
+            hand.push(drawFromDeckShared(state));
+          }
+          state.turn = nextOccupiedSlot(state, gameState.mySlot);
+        }
+
+        if(action.type === 'play'){
+          const card = hand[action.index];
+          if(!card) throw new Error("Carta inválida");
+          if(!canPlay(card, state.topCard)) throw new Error("Essa carta não pode ser jogada agora");
+          state.topCard = card;
+          hand.splice(action.index, 1);
+          if(card.value === "+2") state.penalty += 2;
+          if(card.value === "+4") state.penalty += 4;
+          if(hand.length === 0){
+            state.gameRunning = false;
+            state.winnerSlot = gameState.mySlot;
+          } else {
+            state.turn = nextOccupiedSlot(state, gameState.mySlot);
+          }
+        }
+
+        state.updatedAt = Date.now();
+        tx.update(roomRef, {
+          state,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }).catch(err => {
+        console.error(err);
+        alert(err.message || "Não foi possível atualizar a sala.");
+      });
+    }
+
+    function checkWinRoom(state){
+      if(!state) return false;
+      if(state.gameRunning) return false;
+      return state.winnerSlot !== null;
+    }
+
     function renderGame(){
+      if(gameState.roomMode){
+        const state = gameState.roomState;
+        if(!state){
+          document.getElementById("statusNote").textContent = "Entrando na sala...";
+          return;
+        }
+
+        if(checkWinRoom(state)){
+          document.getElementById("table").style.display = "none";
+          document.getElementById("endScreen").style.display = "flex";
+          document.getElementById("winnerText").innerHTML = `${getPlayerName(state.winnerSlot)} venceu!`;
+          return;
+        }
+
+        document.getElementById("table").style.display = "block";
+        document.getElementById("endScreen").style.display = "none";
+
+        const currentTurn = normalizeTurn(state);
+        const turnName = getPlayerName(currentTurn);
+        const hudTurn = document.getElementById("hudTurn");
+        hudTurn.querySelector('span:last-child').textContent = currentTurn === gameState.mySlot ? "Sua vez" : `Vez de ${turnName}`;
+
+        document.getElementById("discardPile").innerHTML = state.topCard ? `<div class="card" data-value="${state.topCard.value}" style="background-image:url('${state.topCard.img}'); border-color:${colorMap[state.topCard.color]}"></div>` : '';
+        document.getElementById("statusNote").textContent = state.penalty > 0 ? `Punição ativa: compre ${state.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
+
+        for(let slot = 1; slot <= 4; slot++){
+          const h = document.getElementById(`p${slot}`);
+          const slotName = getPlayerName(slot);
+          const hand = state.hands[slot] || [];
+          h.querySelector('.info').innerHTML = `<span>${escapeHtml(slotName)}${gameState.mySlot === slot ? ' (você)' : ''}</span><small>${hand.length}</small>`;
+          const cardsEl = h.querySelector('.cards');
+          if(gameState.mySlot === slot){
+            cardsEl.innerHTML = hand.map((c, i) => `<div class="card ${canPlay(c, state.topCard) ? 'playable' : ''}" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`).join('');
+          } else {
+            cardsEl.innerHTML = Array(hand.length).fill('<div class="card back"></div>').join('');
+          }
+        }
+        return;
+      }
+
+      if(!gameState.gameRunning) return;
       document.getElementById("discardPile").innerHTML = gameState.topCard ? `<div class="card" data-value="${gameState.topCard.value}" style="background-image:url('${gameState.topCard.img}'); border-color:${colorMap[gameState.topCard.color]}"></div>` : '';
-      document.getElementById("hudTurn").querySelector('span:last-child').textContent = gameState.turn===0?"Sua vez":`Vez de ${getPlayerName(gameState.turn)}`;
-      const p1=document.getElementById("p1"); p1.querySelector('.info').innerHTML=`<span>${getPlayerName(0)}</span><small>${gameState.players[0].length}</small>`;
-      p1.querySelector('.cards').innerHTML=gameState.players[0].map((c,i)=>`<div class="card ${canPlay(c)?'playable':''}" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`).join('');
-      for(let i=1;i<=3;i++){ const h=document.getElementById(`p${i+1}`); h.querySelector('.info').innerHTML=`<span>${getPlayerName(i)}</span><small>${gameState.players[i].length}</small>`; h.querySelector('.cards').innerHTML=Array(gameState.players[i].length).fill('<div class="card back"></div>').join(''); }
+      document.getElementById("hudTurn").querySelector('span:last-child').textContent = gameState.turn === 0 ? "Sua vez" : `Vez de ${getPlayerName(gameState.turn + 1)}`;
+      const p1 = document.getElementById("p1");
+      p1.querySelector('.info').innerHTML = `<span>${getPlayerName(1)}</span><small>${gameState.players[0].length}</small>`;
+      p1.querySelector('.cards').innerHTML = gameState.players[0].map((c, i) => `<div class="card ${canPlayOffline(c) ? 'playable' : ''}" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`).join('');
+      for(let i = 1; i <= 3; i++){
+        const h = document.getElementById(`p${i + 1}`);
+        h.querySelector('.info').innerHTML = `<span>${getPlayerName(i + 1)}</span><small>${gameState.players[i].length}</small>`;
+        h.querySelector('.cards').innerHTML = Array(gameState.players[i].length).fill('<div class="card back"></div>').join('');
+      }
+      document.getElementById("statusNote").textContent = gameState.penalty > 0 ? `Punição ativa: compre ${gameState.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
     }
 
     // ========== MÚSICA E ÁUDIO ==========
     function setupMusic(){
-      if(!gameState.musicAudio){ gameState.musicAudio=new Audio(); gameState.musicAudio.loop=false; gameState.musicAudio.addEventListener("ended",()=>nextTrack(true)); }
-      const pl=gameState.roomMode?gameState.roomPlaylist:gameState.robotPlaylist;
-      if(pl.length) gameState.musicAudio.src=pl[gameState.trackIndex%pl.length];
-      gameState.musicAudio.volume=gameState.musicVolume*gameState.masterVolume;
+      if(!gameState.musicAudio){
+        gameState.musicAudio = new Audio();
+        gameState.musicAudio.loop = false;
+        gameState.musicAudio.addEventListener("ended", () => nextTrack(true));
+      }
+      const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist;
+      if(pl.length) gameState.musicAudio.src = pl[gameState.trackIndex % pl.length];
+      gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
       document.getElementById("musicDisc").classList.remove("playing");
     }
-    function playMusic(){ if(!gameState.musicAudio) setupMusic(); if(gameState.musicAudio && gameState.musicAudio.src){ gameState.musicPlaying=true; document.getElementById("musicDisc").classList.add("playing"); gameState.musicAudio.play().catch(()=>{}); } }
-    function pauseMusic(){ if(gameState.musicAudio){ gameState.musicPlaying=false; gameState.musicAudio.pause(); document.getElementById("musicDisc").classList.remove("playing"); } }
-    function toggleMusic(){ gameState.musicPlaying?pauseMusic():playMusic(); }
-    function nextTrack(auto=false){ const pl=gameState.roomMode?gameState.roomPlaylist:gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex=(gameState.trackIndex+1)%pl.length; setupMusic(); if(gameState.musicPlaying||auto) playMusic(); }
-    function prevTrack(){ const pl=gameState.roomMode?gameState.roomPlaylist:gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex=(gameState.trackIndex-1+pl.length)%pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
-    function setMusicVolume(v){ gameState.musicVolume=v/100; if(gameState.musicAudio) gameState.musicAudio.volume=gameState.musicVolume*gameState.masterVolume; }
-    function setMasterVolume(v){ gameState.masterVolume=v/100; if(gameState.musicAudio) gameState.musicAudio.volume=gameState.musicVolume*gameState.masterVolume; if(gameState.micGain) gameState.micGain.gain.value=gameState.micVolume; }
-    function setMicVolume(v){ gameState.micVolume=v/100; if(gameState.micGain) gameState.micGain.gain.value=gameState.micVolume; }
+    function playMusic(){ if(!gameState.musicAudio) setupMusic(); if(gameState.musicAudio && gameState.musicAudio.src){ gameState.musicPlaying = true; document.getElementById("musicDisc").classList.add("playing"); gameState.musicAudio.play().catch(()=>{}); } }
+    function pauseMusic(){ if(gameState.musicAudio){ gameState.musicPlaying = false; gameState.musicAudio.pause(); document.getElementById("musicDisc").classList.remove("playing"); } }
+    function toggleMusic(){ gameState.musicPlaying ? pauseMusic() : playMusic(); }
+    function nextTrack(auto=false){ const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex + 1) % pl.length; setupMusic(); if(gameState.musicPlaying || auto) playMusic(); }
+    function prevTrack(){ const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
+    function setMusicVolume(v){ gameState.musicVolume = v / 100; if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume; }
+    function setMasterVolume(v){ gameState.masterVolume = v / 100; if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume; if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume; }
+    function setMicVolume(v){ gameState.micVolume = v / 100; if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume; }
     async function toggleMic(){
-      gameState.micEnabled=!gameState.micEnabled; document.getElementById("micBtn").textContent=gameState.micEnabled?"Mic: ligado":"Mic: desligado";
-      if(gameState.micEnabled){ try{ gameState.micStream=await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext=new (window.AudioContext||window.webkitAudioContext)(); const src=gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain=gameState.micAudioContext.createGain(); const mon=gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value=gameState.micVolume; mon.gain.value=gameState.audioEnabled?gameState.masterVolume:0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled=false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream=null; } }
-    function toggleAudio(){ gameState.audioEnabled=!gameState.audioEnabled; document.getElementById("audioBtn").textContent=gameState.audioEnabled?"Áudio: ligado":"Áudio: desligado"; }
+      gameState.micEnabled = !gameState.micEnabled; document.getElementById("micBtn").textContent = gameState.micEnabled ? "Mic: ligado" : "Mic: desligado";
+      if(gameState.micEnabled){ try{ gameState.micStream = await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext = new (window.AudioContext||window.webkitAudioContext)(); const src = gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain = gameState.micAudioContext.createGain(); const mon = gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value = gameState.micVolume; mon.gain.value = gameState.audioEnabled ? gameState.masterVolume : 0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled = false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream = null; } }
+    function toggleAudio(){ gameState.audioEnabled = !gameState.audioEnabled; document.getElementById("audioBtn").textContent = gameState.audioEnabled ? "Áudio: ligado" : "Áudio: desligado"; }
 
     // ========== CHAT ==========
     function initRoomChat(roomId){
@@ -791,18 +1360,18 @@
       const q = db.collection('chat').where('roomId', '==', roomId);
       window.chatUnsubscribe = q.onSnapshot(snapshot => {
         const msgs = [];
-        snapshot.forEach(doc => { 
-          const d=doc.data(); 
-          msgs.push({ 
-            id: doc.id, 
-            author: d.author || "Anônimo", 
-            message: d.message || "", 
-            timestamp: d.timestamp?.toDate?.() || new Date() 
-          }); 
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          msgs.push({
+            id: doc.id,
+            author: d.author || "Anônimo",
+            message: d.message || "",
+            timestamp: d.timestamp?.toDate?.() || new Date()
+          });
         });
         msgs.sort((a,b) => a.timestamp - b.timestamp);
         renderChatMessages(msgs);
-      }, err => { 
+      }, err => {
         console.error("Erro no chat:", err);
         document.getElementById("chatMessagesList").innerHTML = `<div style="text-align:center;color:red;">Erro no chat: ${err.message}</div>`;
       });
@@ -820,7 +1389,7 @@
       const stored = localStorage.getItem("cartas_offline_chat");
       let msgs = stored ? JSON.parse(stored) : [];
       msgs.push({ id:Date.now().toString(), author, message, timestamp:new Date() });
-      if(msgs.length>50) msgs=msgs.slice(-50);
+      if(msgs.length > 50) msgs = msgs.slice(-50);
       localStorage.setItem("cartas_offline_chat", JSON.stringify(msgs));
       msgs.sort((a,b) => a.timestamp - b.timestamp);
       renderChatMessages(msgs);
@@ -835,19 +1404,19 @@
         return;
       }
       if(gameState.roomMode && gameState.roomId){
-        try { 
-          await db.collection('chat').add({ 
-            roomId: gameState.roomId, 
-            author: author, 
-            message: msg, 
-            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
-          }); 
-        } catch(e){ 
-          console.error(e); 
-          alert("Erro ao enviar mensagem: " + e.message); 
+        try {
+          await db.collection('chat').add({
+            roomId: gameState.roomId,
+            author: author,
+            message: msg,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch(e){
+          console.error(e);
+          alert("Erro ao enviar mensagem: " + e.message);
         }
-      } else { 
-        saveOfflineMessage(author, msg); 
+      } else {
+        saveOfflineMessage(author, msg);
       }
       document.getElementById("chatMessageInput").value = "";
     }
@@ -855,7 +1424,7 @@
     function renderChatMessages(messages){
       const container = document.getElementById("chatMessagesList");
       if(!container) return;
-      if(messages.length===0){ container.innerHTML='<div style="text-align:center; color:var(--muted);">Nenhuma mensagem ainda.</div>'; return; }
+      if(messages.length === 0){ container.innerHTML = '<div style="text-align:center; color:var(--muted);">Nenhuma mensagem ainda.</div>'; return; }
       container.innerHTML = "";
       messages.forEach(msg => {
         const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -886,15 +1455,33 @@
       document.body.setAttribute("data-theme", saved);
       document.getElementById("themeToggle").checked = saved === "dark";
     }
-    function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+    function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
 
     document.getElementById("sendChatBtn")?.addEventListener("click", sendMessage);
-    document.getElementById("chatMessageInput")?.addEventListener("keypress", e=>{ if(e.key==="Enter") sendMessage(); });
+    document.getElementById("chatMessageInput")?.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-    window.onload = () => {
+    window.addEventListener('beforeunload', () => {
+      stopRoomHeartbeat();
+      if(gameState.roomMode) leaveCurrentRoom();
+    });
+
+    async function bootstrapLobbyRooms(){
+      stopLobbySubscriptions();
+      lobbyRoomUnsubs = ROOMS.map(room => db.collection('rooms').doc(room.id).onSnapshot(snapshot => {
+        room.state = snapshot.exists ? snapshot.data().state : null;
+        renderLobbyRooms();
+      }, () => {
+        room.state = null;
+        renderLobbyRooms();
+      }));
+    }
+
+    window.onload = async () => {
       loadTheme();
       renderLobbyRooms();
+      bootstrapLobbyRooms();
     };
   </script>
+
 </body>
 </html>
