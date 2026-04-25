@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartaxs - Jogo Multiplayer com Chat</title>
+  <title>Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -371,7 +371,7 @@
     }
     .card.back::after{ content:""; }
 
-    /* ========== CHAT CORRIGIDO ========== */
+    /* ========== CHAT CORRIGIDO (SEM ÍNDICE) ========== */
     .chat-panel{
       position:fixed;
       right:16px; bottom:16px;
@@ -485,13 +485,6 @@
       width:auto;
       max-height:none;
     }
-    .admin-badge{
-      font-size:0.65rem;
-      background:rgba(14,165,233,0.2);
-      padding:2px 6px;
-      border-radius:10px;
-      margin-left:6px;
-    }
 
     @media (max-width: 920px){
       .rooms{ grid-template-columns:1fr; }
@@ -594,7 +587,7 @@
     </div>
   </div>
 
-  <!-- CHAT SIMPLES CORRIGIDO -->
+  <!-- CHAT CORRIGIDO (FUNCIONAL SEM ÍNDICE) -->
   <div id="chatPanel" class="chat-panel" style="display:none">
     <div class="chat-header">
       <strong>💬 Chat da sala</strong>
@@ -773,24 +766,43 @@
       if(gameState.micEnabled){ try{ gameState.micStream=await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext=new (window.AudioContext||window.webkitAudioContext)(); const src=gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain=gameState.micAudioContext.createGain(); const mon=gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value=gameState.micVolume; mon.gain.value=gameState.audioEnabled?gameState.masterVolume:0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled=false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream=null; } }
     function toggleAudio(){ gameState.audioEnabled=!gameState.audioEnabled; document.getElementById("audioBtn").textContent=gameState.audioEnabled?"Áudio: ligado":"Áudio: desligado"; }
 
-    // ========== CHAT CORRIGIDO (FUNCIONAL) ==========
+    // ========== CHAT CORRIGIDO (SEM ORDERBY NO FIRESTORE) ==========
     let currentChatUserName = "Anônimo";
     function updateChatUserName(){ let n=document.getElementById("chatUserName").value.trim(); if(n==="") n="Anônimo"; currentChatUserName=n.slice(0,20); document.getElementById("chatUserName").value=currentChatUserName; }
 
     function initRoomChat(roomId){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
-      const q = db.collection('chat').where('roomId', '==', roomId).orderBy('timestamp', 'asc');
+      // Consulta sem orderBy para evitar necessidade de índice composto
+      const q = db.collection('chat').where('roomId', '==', roomId);
       window.chatUnsubscribe = q.onSnapshot(snapshot => {
         const msgs = [];
-        snapshot.forEach(doc => { const d=doc.data(); msgs.push({ id:doc.id, author:d.author||"Anônimo", message:d.message||"", timestamp:d.timestamp?.toDate?.()||new Date() }); });
+        snapshot.forEach(doc => { 
+          const d=doc.data(); 
+          msgs.push({ 
+            id: doc.id, 
+            author: d.author || "Anônimo", 
+            message: d.message || "", 
+            timestamp: d.timestamp?.toDate?.() || new Date() 
+          }); 
+        });
+        // Ordena no cliente por timestamp (mais antigo primeiro)
+        msgs.sort((a,b) => a.timestamp - b.timestamp);
         renderChatMessages(msgs);
-      }, err => { console.error("Erro chat:",err); document.getElementById("chatMessagesList").innerHTML='<div style="text-align:center;color:red;">Erro no chat. Verifique regras do Firestore.</div>'; });
+      }, err => { 
+        console.error("Erro detalhado do chat:", err);
+        let errorMsg = "Erro no chat. ";
+        if(err.code === "permission-denied") errorMsg += "Permissão negada. Verifique as regras do Firestore.";
+        else if(err.code === "failed-precondition") errorMsg += "Índice ausente. O chat está usando ordenação local, mas a consulta pode estar lenta.";
+        else errorMsg += err.message;
+        document.getElementById("chatMessagesList").innerHTML = `<div style="text-align:center;color:red;">${errorMsg}</div>`;
+      });
     }
 
     function initOfflineChat(){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
       const stored = localStorage.getItem("cartas_offline_chat");
       let msgs = stored ? JSON.parse(stored) : [];
+      msgs.sort((a,b) => a.timestamp - b.timestamp);
       renderChatMessages(msgs);
     }
 
@@ -800,6 +812,7 @@
       msgs.push({ id:Date.now().toString(), author, message, timestamp:new Date() });
       if(msgs.length>50) msgs=msgs.slice(-50);
       localStorage.setItem("cartas_offline_chat", JSON.stringify(msgs));
+      msgs.sort((a,b) => a.timestamp - b.timestamp);
       renderChatMessages(msgs);
     }
 
@@ -810,15 +823,26 @@
       if(author === "Anônimo" && gameState.myName !== "Você") author = gameState.myName;
       if(author === "Anônimo"){ alert("Por favor, defina seu nome no campo acima."); return; }
       if(gameState.roomMode && gameState.roomId){
-        try { await db.collection('chat').add({ roomId:gameState.roomId, author, message:msg, timestamp:firebase.firestore.FieldValue.serverTimestamp() }); }
-        catch(e){ console.error(e); alert("Erro ao enviar mensagem. Verifique as regras do Firestore."); }
-      } else { saveOfflineMessage(author, msg); }
+        try { 
+          await db.collection('chat').add({ 
+            roomId: gameState.roomId, 
+            author: author, 
+            message: msg, 
+            timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+          }); 
+        } catch(e){ 
+          console.error(e); 
+          alert("Erro ao enviar mensagem: " + e.message); 
+        }
+      } else { 
+        saveOfflineMessage(author, msg); 
+      }
       document.getElementById("chatMessageInput").value = "";
     }
 
     async function deleteMessage(messageId){
       if(!confirm("Excluir esta mensagem?")) return;
-      try { await db.collection('chat').doc(messageId).delete(); } catch(e){ alert("Erro ao excluir"); }
+      try { await db.collection('chat').doc(messageId).delete(); } catch(e){ alert("Erro ao excluir: "+e.message); }
     }
 
     async function deleteUserMessages(userName){
@@ -841,7 +865,7 @@
         const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
         const div = document.createElement("div");
         div.className = "chat-message";
-        const adminBtns = (gameState.isAdmin) ? `<div class="message-actions"><button class="btn secondary small" onclick="deleteMessage('${msg.id}')">Excluir</button><button class="btn secondary small" onclick="deleteUserMessages('${escapeHtml(msg.author)}')">Excluir usuário</button></div>` : '';
+        const adminBtns = (gameState.isAdmin && gameState.roomMode) ? `<div class="message-actions"><button class="btn secondary small" onclick="deleteMessage('${msg.id}')">Excluir</button><button class="btn secondary small" onclick="deleteUserMessages('${escapeHtml(msg.author)}')">Excluir usuário</button></div>` : '';
         div.innerHTML = `
           <div class="message-header"><span class="message-author">${escapeHtml(msg.author)}</span><span class="message-time">${time}</span></div>
           <div class="message-text">${escapeHtml(msg.message)}</div>
