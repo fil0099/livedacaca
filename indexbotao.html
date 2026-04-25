@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>llCartas - Jogo Multiplayer com Chat</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -359,6 +359,7 @@
     .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; justify-self:center; }
 
     .center-card-row{ display:flex; align-items:center; gap:14px; justify-content:center; }
+    .seat-actions{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
     .pile{
       width:var(--card-w); height:var(--card-h); border-radius:16px; border:1px solid var(--stroke);
       background:var(--panel-strong);
@@ -585,6 +586,10 @@
             <div id="discardPile" class="pile discard"></div>
           </div>
           <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre</div>
+          <div class="seat-actions">
+            <button id="seatDownBtn" class="btn secondary mini-toggle" onclick="leaveSeat()">Descer</button>
+            <button id="seatUpBtn" class="btn secondary mini-toggle" onclick="takeSeat()">Subir</button>
+          </div>
           <button class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
         <!-- Jogador 2 na direita -->
@@ -724,7 +729,7 @@
       const deck = createFreshDeck();
       const hands = emptyRoomHands();
       for(let slot = 1; slot <= 4; slot++){
-        for(let i = 0; i < 6; i++) hands[slot].push(deck.pop());
+        for(let i = 0; i < 7; i++) hands[slot].push(deck.pop());
       }
       return {
         slots: emptyRoomSlots(),
@@ -734,7 +739,7 @@
         turn: 1,
         penalty: 0,
         gameRunning: true,
-        locked: false,
+        seatingOpen: true,
         winnerSlot: null,
         startedAt: Date.now(),
         updatedAt: Date.now()
@@ -771,7 +776,7 @@
         turn: Number.isFinite(state.turn) ? state.turn : 1,
         penalty: Number.isFinite(state.penalty) ? state.penalty : 0,
         gameRunning: state.gameRunning !== undefined ? !!state.gameRunning : false,
-        locked: state.locked !== undefined ? !!state.locked : false,
+        seatingOpen: state.seatingOpen !== undefined ? !!state.seatingOpen : true,
         winnerSlot: Number.isFinite(state.winnerSlot) ? state.winnerSlot : null,
         startedAt: state.startedAt || null,
         updatedAt: state.updatedAt || null
@@ -813,6 +818,17 @@
       return next || current;
     }
 
+    function getFirstVacantSlot(state){
+      for(let slot = 1; slot <= 4; slot++){
+        if(!state.slots[slot]) return slot;
+      }
+      return null;
+    }
+
+    function anyVacantSlot(state){
+      return getFirstVacantSlot(state) !== null;
+    }
+
     function drawFromDeckShared(state){
       if(!state.deck || state.deck.length === 0){
         state.deck = createFreshDeck();
@@ -844,7 +860,7 @@
         const occupied = roomState ? Object.values(roomState.slots).filter(Boolean).length : 0;
         const isFull = occupied >= 4;
         const statusText = roomState ? (roomState.gameRunning ? "Partida ativa" : "Sala pronta") : "Aguardando primeiro jogador";
-        const buttonText = roomState && (roomState.locked || isFull) ? "Assistir" : "Entrar";
+        const joinLabel = roomState && roomState.seatingOpen === false ? "Assistir" : "Entrar";
         const div = document.createElement("div");
         div.className = "room-card";
         div.innerHTML = `
@@ -854,7 +870,7 @@
           </div>
           <small>${escapeHtml(statusText)}</small>
           <div class="room-actions">
-            <button class="btn secondary" onclick="joinRoom('${room.id}')">${buttonText}</button>
+            <button class="btn secondary" onclick="joinRoom('${room.id}')">${joinLabel}</button>
           </div>
         `;
         container.appendChild(div);
@@ -934,16 +950,9 @@
           }
 
           let chosenSlot = existingSlot;
-          const roomLocked = !!state.locked || Object.values(state.slots).filter(Boolean).length >= 4;
-          if(chosenSlot === null && !roomLocked){
-            for(let slot = 1; slot <= 4; slot++){
-              if(!state.slots[slot]){
-                chosenSlot = slot;
-                break;
-              }
-            }
+          if(chosenSlot === null && state.seatingOpen !== false){
+            chosenSlot = getFirstVacantSlot(state);
           }
-
           if(chosenSlot !== null){
             state.slots[chosenSlot] = {
               id: gameState.myId,
@@ -953,10 +962,13 @@
             };
           }
 
+          const occupiedAfterJoin = Object.values(state.slots).filter(Boolean).length;
+          if(occupiedAfterJoin >= 4){
+            state.seatingOpen = false;
+          }
+
           state.turn = normalizeTurn(state);
           state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
-          state.locked = state.locked || Object.values(state.slots).filter(Boolean).length >= 4;
-
           if(!state.topCard && chosenSlot !== null){
             state = createFreshRoomState();
             state.slots[chosenSlot] = {
@@ -1051,6 +1063,84 @@
       stopRoomSubscriptions();
     }
 
+    async function leaveSeat(){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      const roomId = gameState.roomId;
+      const mySlot = gameState.mySlot;
+      const myId = gameState.myId;
+      const roomRef = db.collection('rooms').doc(roomId);
+      stopRoomHeartbeat();
+      try {
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error("Sala não encontrada");
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          if(state.slots[mySlot] && state.slots[mySlot].id === myId){
+            state.slots[mySlot] = null;
+            if(state.turn === mySlot) state.turn = normalizeTurn(state);
+            tx.update(roomRef, {
+              state,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+        });
+        gameState.mySlot = null;
+        renderGame();
+      } catch(e) {
+        console.warn("Não foi possível sair da mesa:", e);
+        alert(e.message || "Não foi possível sair da mesa.");
+      }
+    }
+
+    async function takeSeat(){
+      if(!gameState.roomMode || !gameState.roomId || gameState.mySlot) return;
+      const roomId = gameState.roomId;
+      const roomRef = db.collection('rooms').doc(roomId);
+      try {
+        const result = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error("Sala não encontrada");
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+
+          let existingSlot = null;
+          for(let slot = 1; slot <= 4; slot++){
+            const s = state.slots[slot];
+            if(s && s.id === gameState.myId){
+              existingSlot = slot;
+              break;
+            }
+          }
+
+          let chosenSlot = existingSlot ?? getFirstVacantSlot(state);
+          if(chosenSlot === null) throw new Error("Não há lugar vazio na mesa");
+
+          state.slots[chosenSlot] = {
+            id: gameState.myId,
+            name: gameState.myName,
+            joinedAt: Date.now(),
+            lastSeen: Date.now()
+          };
+          if(Object.values(state.slots).filter(Boolean).length >= 4){
+            state.seatingOpen = false;
+          }
+          state.turn = normalizeTurn(state);
+          tx.update(roomRef, {
+            state,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          return chosenSlot;
+        });
+        gameState.mySlot = result;
+        startRoomHeartbeat();
+        renderGame();
+      } catch(e) {
+        console.warn("Não foi possível subir para a mesa:", e);
+        alert(e.message || "Não foi possível subir para a mesa.");
+      }
+    }
+
     function joinRobots(){
       let userName = document.getElementById("playerName").value.trim();
       if(!userName) userName = "Você";
@@ -1107,7 +1197,7 @@
       gameState.turn = 0;
       gameState.gameRunning = true;
       for(let i = 0; i < 100; i++) gameState.deck.push(createCard());
-      for(let p = 0; p < 4; p++) for(let i = 0; i < 6; i++) gameState.players[p].push(drawFromDeckOffline());
+      for(let p = 0; p < 4; p++) for(let i = 0; i < 7; i++) gameState.players[p].push(drawFromDeckOffline());
       gameState.topCard = drawFromDeckOffline();
       renderGame();
       scheduleBotTurn();
@@ -1281,11 +1371,30 @@
       return state.winnerSlot !== null;
     }
 
+    function updateSeatControls(state){
+      const downBtn = document.getElementById("seatDownBtn");
+      const upBtn = document.getElementById("seatUpBtn");
+      if(!downBtn || !upBtn) return;
+
+      if(!gameState.roomMode || !state){
+        downBtn.style.display = "none";
+        upBtn.style.display = "none";
+        return;
+      }
+
+      const hasVacancy = anyVacantSlot(state);
+      const seated = !!gameState.mySlot;
+
+      downBtn.style.display = seated ? "" : "none";
+      upBtn.style.display = !seated && hasVacancy ? "" : "none";
+    }
+
     function renderGame(){
       if(gameState.roomMode){
         const state = gameState.roomState;
         if(!state){
           document.getElementById("statusNote").textContent = "Entrando na sala...";
+          updateSeatControls(null);
           return;
         }
 
@@ -1299,13 +1408,14 @@
         document.getElementById("table").style.display = "block";
         document.getElementById("endScreen").style.display = "none";
 
+        updateSeatControls(state);
         const currentTurn = normalizeTurn(state);
         const turnName = getPlayerName(currentTurn);
         const hudTurn = document.getElementById("hudTurn");
-        hudTurn.querySelector('span:last-child').textContent = gameState.mySlot && currentTurn === gameState.mySlot ? "Sua vez" : `Vez de ${turnName}`;
+        hudTurn.querySelector('span:last-child').textContent = currentTurn === gameState.mySlot ? "Sua vez" : `Vez de ${turnName}`;
 
         document.getElementById("discardPile").innerHTML = state.topCard ? `<div class="card" data-value="${state.topCard.value}" style="background-image:url('${state.topCard.img}'); border-color:${colorMap[state.topCard.color]}"></div>` : '';
-        document.getElementById("statusNote").textContent = gameState.mySlot ? (state.penalty > 0 ? `Punição ativa: compre ${state.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre") : "Você está assistindo esta sala. O chat continua liberado.";
+        document.getElementById("statusNote").textContent = state.penalty > 0 ? `Punição ativa: compre ${state.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
 
         const displayOrder = [];
         const usedSlots = new Set();
@@ -1314,7 +1424,6 @@
           usedSlots.add(slot);
           displayOrder.push(slot);
         };
-
         if(gameState.mySlot){
           pushSlot(gameState.mySlot);
           for(let step = 1; step <= 4; step++){
@@ -1322,7 +1431,7 @@
             pushSlot(slot);
           }
         } else {
-          [1, 2, 4, 3].forEach(pushSlot);
+          for(let slot = 1; slot <= 4; slot++) pushSlot(slot);
         }
 
         const displayIds = ["p1", "p2", "p4", "p3"]; // baixo, direita, topo, esquerda
