@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>aaaartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -336,6 +336,12 @@
       gap:4px;
       max-width:100%;
     }
+
+    .player-top .cards{
+      gap:4px;
+      max-width:100%;
+    }
+    .player-top .card,
     .player-left .card,
     .player-right .card{
       width:clamp(34px, 3.2vw, 48px);
@@ -343,6 +349,7 @@
       transform: none;
       transform-origin:center;
     }
+    .player-top .card:hover,
     .player-left .card:hover,
     .player-right .card:hover{
       transform: translateY(-3px) scale(1.02);
@@ -836,6 +843,18 @@
       return state.deck.pop();
     }
 
+    function ensureOccupiedHandsHaveSeven(state){
+      for(let slot = 1; slot <= 4; slot++){
+        if(state.slots[slot]){
+          if(!Array.isArray(state.hands[slot])) state.hands[slot] = [];
+          while(state.hands[slot].length < 7){
+            state.hands[slot].push(drawFromDeckShared(state));
+          }
+        }
+      }
+      return state;
+    }
+
     function canPlay(c, topCard){
       if(!topCard) return true;
       if(c.value === "+4") return true;
@@ -979,6 +998,8 @@
             };
           }
 
+          state = ensureOccupiedHandsHaveSeven(state);
+
           tx.set(roomRef, {
             roomId,
             roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
@@ -1008,6 +1029,20 @@
         const data = snapshot.data() || {};
         const state = cleanupStaleSlots(normalizeSharedState(data.state));
         gameState.roomState = state;
+        const needsRefill = Object.keys(state.slots).some(slot => state.slots[slot] && (!Array.isArray(state.hands[slot]) || state.hands[slot].length < 7));
+        if(needsRefill){
+          db.runTransaction(async (tx) => {
+            const freshSnap = await tx.get(roomRef);
+            if(!freshSnap.exists) return;
+            const freshData = freshSnap.data() || {};
+            let freshState = cleanupStaleSlots(normalizeSharedState(freshData.state));
+            freshState = ensureOccupiedHandsHaveSeven(freshState);
+            tx.update(roomRef, {
+              state: freshState,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }).catch(() => {});
+        }
         if(gameState.myId){
           for(let slot = 1; slot <= 4; slot++){
             if(state.slots[slot] && state.slots[slot].id === gameState.myId){
@@ -1125,6 +1160,7 @@
           if(Object.values(state.slots).filter(Boolean).length >= 4){
             state.seatingOpen = false;
           }
+          state = ensureOccupiedHandsHaveSeven(state);
           state.turn = normalizeTurn(state);
           tx.update(roomRef, {
             state,
