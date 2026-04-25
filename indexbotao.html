@@ -3,136 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Controle em Tempo Real - Firestore</title>
+    <title>Firebase Multi-App</title>
     <style>
         :root {
-            --bg-color: #f4f7f6;
-            --card-bg: #ffffff;
-            --off-color: #888888;
-            --on-color: #2ecc71;
-            --toggle-bg: #dcdde1;
-            --toggle-active: #3498db;
+            --primary: #3498db;
+            --success: #2ecc71;
+            --bg: #f0f2f5;
+            --text: #2f3640;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
             display: flex;
+            flex-wrap: wrap;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            gap: 20px;
+            padding: 20px;
             margin: 0;
+            color: var(--text);
         }
 
-        .container {
-            background-color: var(--card-bg);
-            padding: 2rem;
+        .card {
+            background: white;
+            padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 320px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
-            min-width: 250px;
         }
 
-        h2 {
-            margin: 0;
-            color: #2f3640;
-            font-size: 1.2rem;
-        }
+        /* --- Estilo Botão --- */
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; margin: 15px 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        .ball { width: 20px; height: 20px; border-radius: 50%; background: gray; transition: 0.3s; }
+        .ball.on { background: var(--success); box-shadow: 0 0 10px var(--success); }
 
-        /* Estilo do Botão Deslizante (Switch) */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
+        /* --- Estilo Chat --- */
+        #chat-messages { width: 100%; height: 200px; overflow-y: auto; border: 1px solid #eee; margin-bottom: 10px; padding: 5px; font-size: 14px; display: flex; flex-direction: column; }
+        .msg { background: #e1ffc7; padding: 5px 10px; border-radius: 10px; margin: 2px 0; align-self: flex-start; max-width: 80%; }
+        input[type="text"] { width: 80%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
 
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--toggle-bg);
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: var(--toggle-active);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        /* Indicador de Status (Bola) */
-        .status-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .indicator-ball {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background-color: var(--off-color);
-            transition: background-color 0.3s, box-shadow 0.3s;
-        }
-
-        .indicator-ball.active {
-            background-color: var(--on-color);
-            box-shadow: 0 0 10px var(--on-color);
-        }
-
-        .status-text {
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: #57606f;
-        }
+        /* --- Estilo Jogo da Velha --- */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top: 10px; }
+        .cell { width: 60px; height: 60px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; border-radius: 8px; }
+        .cell:hover { background: #ddd; }
+        button#reset-game { margin-top: 10px; padding: 5px 15px; cursor: pointer; border: none; background: var(--primary); color: white; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>Controle Remoto</h2>
-        
+    <div class="card">
+        <h3>Controle Remoto</h3>
         <label class="switch">
-            <input type="checkbox" id="toggleSwitch">
+            <input type="checkbox" id="toggleBtn">
             <span class="slider"></span>
         </label>
+        <div style="display:flex; align-items:center; gap:10px">
+            <div id="statusBall" class="ball"></div>
+            <span id="statusTxt">Desligado</span>
+        </div>
+    </div>
 
-        <div class="status-container">
-            <div id="ball" class="indicator-ball"></div>
-            <span id="statusText" class="status-text">DESLIGADO</span>
+    <div class="card">
+        <h3>Jogo da Velha</h3>
+        <div id="game-info">Turno: <b id="turn">X</b></div>
+        <div class="grid" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        <button id="reset-game">Resetar Jogo</button>
+    </div>
+
+    <div class="card">
+        <h3>Chat Global</h3>
+        <div id="chat-messages"></div>
+        <div style="width: 100%; display: flex; gap: 5px;">
+            <input type="text" id="chatInput" placeholder="Mensagem...">
+            <button id="sendBtn">➤</button>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, addDoc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
 
-        // Sua configuração do Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
             authDomain: "testbotao.firebaseapp.com",
@@ -143,53 +111,79 @@
             appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
         };
 
-        // Inicializa Firebase e Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Referência ao documento específico no Firestore (conforme suas regras)
-        // Coleção: toggle | Documento: estado
-        const docRef = doc(db, "toggle", "estado");
+        // --- LÓGICA BOTÃO ---
+        const btnDoc = doc(db, "toggle", "estado");
+        const toggleBtn = document.getElementById('toggleBtn');
+        const statusBall = document.getElementById('statusBall');
+        const statusTxt = document.getElementById('statusTxt');
 
-        const toggleSwitch = document.getElementById('toggleSwitch');
-        const ball = document.getElementById('ball');
-        const statusText = document.getElementById('statusText');
-
-        // 1. ESCUTAR MUDANÇAS EM TEMPO REAL (Firestore -> UI)
-        onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                updateUI(data.ligado);
-            } else {
-                // Se o documento não existir, força estado inicial desligado
-                updateUI(false);
-            }
+        toggleBtn.onclick = () => setDoc(btnDoc, { ligado: toggleBtn.checked }, { merge: true });
+        
+        onSnapshot(btnDoc, (s) => {
+            const isOn = s.data()?.ligado || false;
+            toggleBtn.checked = isOn;
+            statusBall.className = isOn ? 'ball on' : 'ball';
+            statusTxt.innerText = isOn ? 'Ligado' : 'Desligado';
         });
 
-        // 2. ATUALIZAR INTERFACE
-        function updateUI(isLigado) {
-            toggleSwitch.checked = isLigado;
-            if (isLigado) {
-                ball.classList.add('active');
-                statusText.innerText = "LIGADO";
-                statusText.style.color = "#2ecc71";
-            } else {
-                ball.classList.remove('active');
-                statusText.innerText = "DESLIGADO";
-                statusText.style.color = "#888888";
-            }
-        }
+        // --- LÓGICA CHAT ---
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatBox = document.getElementById('chat-messages');
 
-        // 3. ENVIAR MUDANÇAS PARA O FIRESTORE (UI -> Firestore)
-        toggleSwitch.addEventListener('change', async (e) => {
-            const novoEstado = e.target.checked;
-            try {
-                // Usamos merge: true para garantir que o documento seja criado se não existir
-                await setDoc(docRef, { ligado: novoEstado }, { merge: true });
-            } catch (error) {
-                console.error("Erro ao atualizar Firestore:", error);
-            }
+        const sendMsg = async () => {
+            if(!chatInput.value.trim()) return;
+            await addDoc(collection(db, "chat"), {
+                text: chatInput.value,
+                time: Date.now()
+            });
+            chatInput.value = '';
+        };
+        sendBtn.onclick = sendMsg;
+        chatInput.onkeypress = (e) => e.key === 'Enter' && sendMsg();
+
+        onSnapshot(query(collection(db, "chat"), orderBy("time", "desc"), limit(20)), (s) => {
+            chatBox.innerHTML = '';
+            s.docs.reverse().forEach(d => {
+                const div = document.createElement('div');
+                div.className = 'msg';
+                div.textContent = d.data().text;
+                chatBox.appendChild(div);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
+
+        // --- LÓGICA JOGO DA VELHA ---
+        const gameDoc = doc(db, "jogos", "velha");
+        const cells = document.querySelectorAll('.cell');
+        const turnTxt = document.getElementById('turn');
+        let currentBoard = Array(9).fill("");
+        let currentTurn = "X";
+
+        onSnapshot(gameDoc, (s) => {
+            const data = s.data() || { board: Array(9).fill(""), turn: "X" };
+            currentBoard = data.board;
+            currentTurn = data.turn;
+            turnTxt.innerText = currentTurn;
+            cells.forEach((c, i) => c.innerText = currentBoard[i]);
+        });
+
+        cells.forEach(cell => {
+            cell.onclick = async () => {
+                const i = cell.dataset.index;
+                if(currentBoard[i] !== "") return;
+                currentBoard[i] = currentTurn;
+                const nextTurn = currentTurn === "X" ? "O" : "X";
+                await setDoc(gameDoc, { board: currentBoard, turn: nextTurn });
+            };
+        });
+
+        document.getElementById('reset-game').onclick = () => {
+            setDoc(gameDoc, { board: Array(9).fill(""), turn: "X" });
+        };
     </script>
 </body>
 </html>
