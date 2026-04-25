@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xCartas - Jogo Multiplayer com Chat</title>
+  <title>xeeCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -541,7 +541,9 @@
         </div>
       </div>
       <div class="board" id="gameBoard">
-        <div id="p2" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
+        <!-- Jogador 4 no topo (à sua frente) -->
+        <div id="p4" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
+        <!-- Jogador 3 na lateral esquerda -->
         <div id="p3" class="hand side player-left"><div class="info"></div><div class="cards"></div></div>
         <div class="center-area">
           <div class="center-card-row">
@@ -551,7 +553,9 @@
           <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre</div>
           <button class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
-        <div id="p4" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
+        <!-- Jogador 2 na lateral direita -->
+        <div id="p2" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
+        <!-- Suas cartas (jogador 1) embaixo, no centro -->
         <div id="p1" class="hand player-bottom"><div class="info"></div><div class="cards"></div></div>
       </div>
     </div>
@@ -663,7 +667,7 @@
       const theme = document.getElementById("themeSwitch");
 
       if (gameState.roomMode) {
-        // Multiplayer: esconde música, áudio e tema (mantém as cartas de todos os jogadores)
+        // Multiplayer: esconde música, áudio e tema
         if(music) music.style.display = "none";
         if(voice) voice.style.display = "none";
         if(theme) theme.style.display = "none";
