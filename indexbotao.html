@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartas - Jogo Multiplayer com Chat</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -296,7 +296,7 @@
       min-height:0;
       /* Garante que o layout nunca empilhe */
       grid-auto-flow: row;
-      padding-top:10px;
+      padding-top:6px;
     }
 
     .hand{
@@ -329,9 +329,23 @@
 
     .player-left .cards,
     .player-right .cards{
-      flex-direction:column;
-      flex-wrap:nowrap;
+      flex-direction:row;
+      flex-wrap:wrap;
       align-items:center;
+      justify-content:center;
+      gap:4px;
+      max-width:100%;
+    }
+    .player-left .card,
+    .player-right .card{
+      width:clamp(34px, 3.2vw, 48px);
+      height:calc(clamp(34px, 3.2vw, 48px) * 1.42);
+      transform: none;
+      transform-origin:center;
+    }
+    .player-left .card:hover,
+    .player-right .card:hover{
+      transform: translateY(-3px) scale(1.02);
     }
 
     .player-top{ grid-column:1 / 4; grid-row:1; align-self:start; justify-self:center; }
