@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>🔥 Sync + Chat + Jogo da Velha | Firebase Firestore</title>
+    <title>Firestore Tempo Real: Botão + Chat + Jogo da Velha Multiplayer</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
 
         body {
-            background: linear-gradient(145deg, #071a1f 0%, #102b33 100%);
+            background: linear-gradient(145deg, #071e24 0%, #0f2f38 100%);
             min-height: 100vh;
             padding: 30px 20px;
             font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
@@ -21,9 +21,8 @@
             align-items: center;
         }
 
-        /* Container principal GRID */
         .dashboard {
-            max-width: 1300px;
+            max-width: 1400px;
             width: 100%;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
@@ -31,14 +30,12 @@
             align-items: start;
         }
 
-        /* Cards estilo glassmorphism */
         .card {
-            background: rgba(15, 30, 38, 0.75);
+            background: rgba(15, 30, 38, 0.8);
             backdrop-filter: blur(12px);
             border-radius: 48px;
-            padding: 1.5rem 1.8rem;
+            padding: 1.5rem;
             box-shadow: 0 20px 35px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
-            transition: all 0.2s;
         }
 
         /* toggle + bola */
@@ -50,7 +47,7 @@
             flex-wrap: wrap;
             background: rgba(0,0,0,0.35);
             border-radius: 80px;
-            padding: 1.2rem 1.8rem;
+            padding: 1rem 1.8rem;
             margin-bottom: 1rem;
         }
         .switch {
@@ -60,29 +57,20 @@
             height: 48px;
             cursor: pointer;
         }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+        .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background-color: #4a5b6e;
             border-radius: 48px;
-            transition: 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: 0.2s;
             box-shadow: inset 0 1px 3px #00000055, 0 1px 2px #ffffff44;
         }
         .slider:before {
             position: absolute;
             content: "";
-            height: 40px;
-            width: 40px;
-            left: 4px;
-            bottom: 4px;
+            height: 40px; width: 40px;
+            left: 4px; bottom: 4px;
             background-color: white;
             border-radius: 50%;
             transition: 0.2s;
@@ -92,17 +80,13 @@
         input:checked + .slider:before { transform: translateX(44px); }
 
         .ball {
-            width: 76px;
-            height: 76px;
+            width: 76px; height: 76px;
             border-radius: 50%;
             background-color: #95a5a6;
-            transition: background-color 0.15s, transform 0.1s, box-shadow 0.2s;
+            transition: background-color 0.15s, transform 0.1s;
             box-shadow: 0 8px 18px rgba(0,0,0,0.4), inset 0 1px 3px rgba(255,255,255,0.6);
         }
-        .ball.ball-on {
-            background-color: #2ecc71;
-            box-shadow: 0 0 18px rgba(46, 204, 113, 0.7);
-        }
+        .ball.ball-on { background-color: #2ecc71; box-shadow: 0 0 18px #2ecc71; }
         .status-badge {
             text-align: center;
             background: #00000066;
@@ -115,20 +99,15 @@
             color: white;
             font-size: 1.3rem;
         }
-        .led {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #7f8c8d;
-        }
+        .led { width: 16px; height: 16px; border-radius: 50%; background: #7f8c8d; }
         .led.on { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
 
-        /* CHAT */
+        /* chat */
         .chat-messages {
             background: #071a1fe0;
             border-radius: 28px;
             padding: 12px;
-            height: 280px;
+            height: 260px;
             overflow-y: auto;
             margin-bottom: 12px;
             display: flex;
@@ -169,7 +148,7 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             max-width: 320px;
-            margin: 0 auto 24px auto;
+            margin: 0 auto 20px auto;
         }
         .cell {
             background: #0c242e;
@@ -183,10 +162,10 @@
             color: #d9f0ec;
             cursor: pointer;
             transition: 0.1s linear;
-            box-shadow: 0 8px 0 #031016;
-            font-family: 'Segoe UI', system-ui;
+            box-shadow: 0 6px 0 #031016;
         }
         .cell:active { transform: scale(0.96); }
+        .cell.disabled { cursor: not-allowed; opacity: 0.7; }
         .turn-indicator {
             background: #03101680;
             border-radius: 40px;
@@ -207,16 +186,8 @@
             cursor: pointer;
             width: 100%;
             font-weight: bold;
-            transition: 0.1s;
         }
-        .reset-btn:active { transform: scale(0.97); background: #1f4555; }
-        .winner-marker {
-            text-align: center;
-            margin-top: 8px;
-            font-size: 1rem;
-            color: #f2c94c;
-        }
-
+        .winner-marker { text-align: center; margin-top: 10px; font-size: 0.9rem; color: #f2c94c; }
         .sync-info {
             display: flex;
             align-items: center;
@@ -231,8 +202,7 @@
             width: fit-content;
         }
         .pulse-dot {
-            width: 10px;
-            height: 10px;
+            width: 10px; height: 10px;
             background: #2ecc71;
             border-radius: 50%;
             animation: pulse 1.2s infinite;
@@ -268,49 +238,36 @@
                 <div id="ledBadge" class="led"></div>
             </div>
         </div>
-        <div class="sync-info">
-            <div class="pulse-dot"></div>
-            <span>⚡ Botão sincronizado via Firestore (tempo real)</span>
-        </div>
+        <div class="sync-info"><div class="pulse-dot"></div>⚡ Botão sincronizado via Firestore</div>
     </div>
 
     <!-- CARD 2: CHAT SIMPLES (Firestore coleção /chat) -->
     <div class="card">
-        <h3 style="color:#c7f0e0; margin-bottom: 12px; display: flex; gap: 8px;">💬 Chat ao vivo <span class="pulse-dot" style="margin-top: 5px;"></span></h3>
-        <div id="chatMessagesList" class="chat-messages">
-            <div style="text-align:center; color:#a0c0d0;">Carregando mensagens...</div>
-        </div>
-        <div style="margin-bottom: 6px;">
-            <input type="text" id="chatUserName" placeholder="Seu nome (opcional)" maxlength="30" value="Anônimo" style="width:100%; background:#102a33; border: none; padding: 8px 14px; border-radius: 40px; color:white;">
-        </div>
+        <h3 style="color:#c7f0e0; margin-bottom: 12px; display: flex; gap: 8px;">💬 Chat ao vivo <span class="pulse-dot"></span></h3>
+        <div id="chatMessagesList" class="chat-messages"><div style="text-align:center;">Carregando...</div></div>
+        <input type="text" id="chatUserName" placeholder="Seu nome" maxlength="30" value="Anônimo" style="width:100%; background:#102a33; border: none; padding: 8px 14px; border-radius: 40px; margin-bottom:8px; color:white;">
         <div class="chat-input-row">
             <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." maxlength="200">
             <button id="sendMessageBtn">Enviar</button>
         </div>
-        <div class="sync-info" style="margin-top: 12px;">
-            <span>📡 Chat em tempo real (Firestore /chat)</span>
-        </div>
+        <div class="sync-info">📡 Chat em tempo real (Firestore /chat)</div>
     </div>
 
-    <!-- CARD 3: JOGO DA VELHA (Tic-Tac-Toe) simples -->
+    <!-- CARD 3: JOGO DA VELHA MULTIPLAYER (TEMPO REAL) -->
     <div class="card">
-        <div class="game-title">🎮 Jogo da Velha</div>
-        <div class="turn-indicator" id="turnIndicator">Vez do ❌ (X)</div>
-        <div class="board" id="board">
-            <!-- 9 células geradas via JS, mas vou estruturar com divs interativas -->
-        </div>
-        <button class="reset-btn" id="resetGameBtn">🔄 Reiniciar Partida</button>
+        <div class="game-title">🎮 Jogo da Velha - Multiplayer</div>
+        <div class="turn-indicator" id="turnIndicator">Aguardando partida...</div>
+        <div class="board" id="board"></div>
+        <button class="reset-btn" id="resetGameBtn">🔄 Reiniciar Jogo (todos)</button>
         <div id="winnerMessage" class="winner-marker"></div>
-        <div class="sync-info" style="margin-top: 16px;">
-            <span>🎲 Modo local: jogue contra outro jogador no mesmo dispositivo</span>
-        </div>
+        <div class="sync-info">🌍 Sincronizado em tempo real • Jogue contra outra pessoa em qualquer aba</div>
     </div>
 </div>
 
 <script type="module">
     // ======================= FIREBASE CONFIG (FIRESTORE) =======================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, onSnapshot, setDoc, collection, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
@@ -350,8 +307,7 @@
 
     onSnapshot(estadoDocRef, (snap) => {
         if (snap.exists()) {
-            const data = snap.data();
-            const serverState = data.ligado === true;
+            const serverState = snap.data().ligado === true;
             if (currentToggleState !== serverState) {
                 isInternalUpdate = true;
                 updateToggleUI(serverState);
@@ -373,12 +329,8 @@
         try {
             await setDoc(estadoDocRef, { ligado: novo });
             if (currentToggleState !== novo) updateToggleUI(novo);
-        } catch (err) {
-            console.error("Erro toggle", err);
-            toggleCheckbox.checked = currentToggleState;
-        }
+        } catch (err) { console.error(err); toggleCheckbox.checked = currentToggleState; }
     });
-
     ballDiv.addEventListener('click', async () => {
         if (isInternalUpdate) return;
         const novo = !currentToggleState;
@@ -386,7 +338,7 @@
         setTimeout(() => { ballDiv.style.transform = ''; }, 150);
         try { await setDoc(estadoDocRef, { ligado: novo }); } catch(e) { alert("erro toggle"); }
     });
-    updateToggleUI(false); // estado inicial desligado
+    updateToggleUI(false);
 
     // ************ PARTE 2: CHAT (Firestore) ************
     const messagesContainer = document.getElementById('chatMessagesList');
@@ -396,21 +348,9 @@
     const chatCollection = collection(db, "chat");
     const chatQuery = query(chatCollection, orderBy("timestamp", "asc"));
 
-    function escapeHtml(str) {
-        if(!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if(m === '&') return '&amp;';
-            if(m === '<') return '&lt;';
-            if(m === '>') return '&gt;';
-            return m;
-        });
-    }
-
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
     function renderChat(messages) {
-        if (!messages.length) {
-            messagesContainer.innerHTML = '<div style="text-align:center; color:#a0c0d0;">✨ Nenhuma mensagem ainda. Envie uma!</div>';
-            return;
-        }
+        if (!messages.length) { messagesContainer.innerHTML = '<div style="text-align:center; color:#a0c0d0;">✨ Nenhuma mensagem</div>'; return; }
         let html = '';
         messages.forEach(msg => {
             const nome = escapeHtml(msg.nome) || 'Anônimo';
@@ -421,151 +361,226 @@
         messagesContainer.innerHTML = html;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-
     let currentMessages = [];
     onSnapshot(chatQuery, (snapshot) => {
         const msgs = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            msgs.push({
-                id: doc.id,
-                nome: data.nome || 'Anônimo',
-                texto: data.texto || '',
-                horario: data.timestamp?.toDate?.() || new Date()
-            });
+            msgs.push({ id: doc.id, nome: data.nome || 'Anônimo', texto: data.texto || '', horario: data.timestamp?.toDate?.() || new Date() });
         });
-        msgs.sort((a,b) => (a.horario - b.horario));
+        msgs.sort((a,b) => a.horario - b.horario);
         currentMessages = msgs;
         renderChat(msgs);
-    }, err => {
-        console.error("Chat error", err);
-        messagesContainer.innerHTML = '<div style="color:#ffaa88;">⚠️ Erro no chat (verifique regras Firestore).</div>';
-    });
+    }, err => console.error("Chat error", err));
 
     async function sendMessage() {
-        let nome = userNameInput.value.trim();
-        if (nome === "") nome = "Anônimo";
+        let nome = userNameInput.value.trim(); if (nome === "") nome = "Anônimo";
         if (nome.length > 30) nome = nome.substring(0,30);
         const texto = messageInput.value.trim();
         if (texto === "") return alert("Digite uma mensagem");
-        sendBtn.disabled = true;
-        sendBtn.textContent = "Enviando...";
+        sendBtn.disabled = true; sendBtn.textContent = "Enviando...";
         try {
-            await addDoc(chatCollection, {
-                nome: nome,
-                texto: texto,
-                timestamp: serverTimestamp()
-            });
+            await addDoc(chatCollection, { nome, texto, timestamp: serverTimestamp() });
             messageInput.value = "";
             messageInput.focus();
-        } catch(err) {
-            alert("Erro ao enviar mensagem: "+err.message);
-        } finally {
-            sendBtn.disabled = false;
-            sendBtn.textContent = "Enviar";
-        }
+        } catch(err) { alert("Erro: "+err.message); } finally { sendBtn.disabled = false; sendBtn.textContent = "Enviar"; }
     }
     sendBtn.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 
-    // ************ PARTE 3: JOGO DA VELHA (simples, local) ************
-    const boardElement = document.getElementById('board');
+    // ************ PARTE 3: JOGO DA VELHA EM TEMPO REAL (FIRESTORE) ************
+    const gameDocRef = doc(db, "ticTacToe", "partida");  // coleção 'ticTacToe', documento 'partida'
+    const boardContainer = document.getElementById('board');
     const turnIndicator = document.getElementById('turnIndicator');
     const winnerMsgDiv = document.getElementById('winnerMessage');
     const resetBtn = document.getElementById('resetGameBtn');
 
-    let boardState = ['', '', '', '', '', '', '', '', ''];
-    let currentPlayer = 'X';   // X começa
-    let gameActive = true;
+    let localBoardState = ['', '', '', '', '', '', '', '', ''];
+    let localCurrentPlayer = 'X';
+    let localGameActive = true;
+    let localWinner = null;
+    let isUpdatingFromFirestore = false;
 
-    // símbolos visuais: X e O
-    function renderBoard() {
+    function renderBoardUI() {
         const cells = document.querySelectorAll('.cell');
         for (let i = 0; i < 9; i++) {
-            cells[i].innerText = boardState[i] === 'X' ? '❌' : (boardState[i] === 'O' ? '⭕' : '');
-            // também armazenamos data-value para verificação
-        }
-    }
-
-    function checkWinner() {
-        const winPatterns = [
-            [0,1,2], [3,4,5], [6,7,8],
-            [0,3,6], [1,4,7], [2,5,8],
-            [0,4,8], [2,4,6]
-        ];
-        for (let pattern of winPatterns) {
-            const [a,b,c] = pattern;
-            if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
-                return boardState[a];
+            const symbol = localBoardState[i];
+            if (symbol === 'X') cells[i].innerText = '❌';
+            else if (symbol === 'O') cells[i].innerText = '⭕';
+            else cells[i].innerText = '';
+            // habilita/desabilita clique visual
+            if (!localGameActive || localWinner !== null || localBoardState[i] !== '' || localCurrentPlayer !== (getMyAssumedPlayer())) {
+                cells[i].classList.add('disabled');
+            } else {
+                cells[i].classList.remove('disabled');
             }
         }
-        if (boardState.every(cell => cell !== '')) return 'empate';
-        return null;
     }
 
-    function updateGameStatus() {
-        const winner = checkWinner();
-        if (winner === 'X') {
-            gameActive = false;
-            turnIndicator.innerText = '🏆 Jogador ❌ (X) venceu!';
-            winnerMsgDiv.innerText = '🎉 Vitória do X! Clique em reiniciar.';
-        } else if (winner === 'O') {
-            gameActive = false;
-            turnIndicator.innerText = '🏆 Jogador ⭕ (O) venceu!';
-            winnerMsgDiv.innerText = '🎉 Vitória do O! Reinicie o jogo.';
-        } else if (winner === 'empate') {
-            gameActive = false;
+    // Função auxiliar para saber quem é o próximo jogador (apenas exibição)
+    function getMyAssumedPlayer() {
+        // Não importa o "dono", apenas mostramos o turno atual real
+        return localCurrentPlayer;
+    }
+
+    function updateGameStatusFromFirestore(data) {
+        localBoardState = [...data.board];
+        localCurrentPlayer = data.currentPlayer;
+        localGameActive = data.gameActive;
+        localWinner = data.winner || null;
+
+        if (localWinner === 'X') {
+            turnIndicator.innerText = '🏆 Vitória do ❌ (X) !';
+            winnerMsgDiv.innerText = 'Jogador X venceu! Reinicie para nova partida.';
+        } else if (localWinner === 'O') {
+            turnIndicator.innerText = '🏆 Vitória do ⭕ (O) !';
+            winnerMsgDiv.innerText = 'Jogador O venceu! Reinicie.';
+        } else if (!localGameActive && localWinner === 'empate') {
             turnIndicator.innerText = '🤝 Empate!';
-            winnerMsgDiv.innerText = 'Deu velha! Reinicie para jogar novamente.';
+            winnerMsgDiv.innerText = 'Deu velha! Reinicie o jogo.';
         } else {
-            // jogo ativo
-            gameActive = true;
-            turnIndicator.innerText = `Vez do ${currentPlayer === 'X' ? '❌ (X)' : '⭕ (O)'}`;
+            turnIndicator.innerText = `Vez do ${localCurrentPlayer === 'X' ? '❌ (X)' : '⭕ (O)'}`;
             winnerMsgDiv.innerText = '';
         }
+        renderBoardUI();
     }
 
-    function handleCellClick(index) {
-        if (!gameActive) return;
-        if (boardState[index] !== '') return;
-        // realiza jogada
-        boardState[index] = currentPlayer;
-        renderBoard();
-        const winner = checkWinner();
-        if (winner === 'X' || winner === 'O' || winner === 'empate') {
-            updateGameStatus();
-            return;
+    // Listener em tempo real do Firestore para o jogo da velha
+    onSnapshot(gameDocRef, (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.data();
+            if (data.board && Array.isArray(data.board) && data.currentPlayer) {
+                isUpdatingFromFirestore = true;
+                updateGameStatusFromFirestore(data);
+                isUpdatingFromFirestore = false;
+            } else {
+                // documento corrompido, recriar estado padrão
+                console.warn("Estrutura inválida, recriando");
+                initializeGameInFirestore();
+            }
+        } else {
+            // primeira vez: criar documento com estado inicial (X começa, tabuleiro vazio)
+            initializeGameInFirestore();
         }
-        // alterna jogador
-        currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
-        updateGameStatus();
-        renderBoard(); // garante mostragem
+    }, (err) => {
+        console.error("Erro no listener do jogo:", err);
+        turnIndicator.innerText = "Erro de conexão com Firestore";
+    });
+
+    async function initializeGameInFirestore() {
+        const initialData = {
+            board: ['', '', '', '', '', '', '', '', ''],
+            currentPlayer: 'X',
+            gameActive: true,
+            winner: null,
+            lastUpdate: serverTimestamp()
+        };
+        try {
+            await setDoc(gameDocRef, initialData);
+        } catch (err) {
+            console.error("Erro ao inicializar jogo:", err);
+            turnIndicator.innerText = "Erro: verifique regras Firestore para coleção ticTacToe";
+        }
     }
 
-    function resetGame() {
-        boardState = ['', '', '', '', '', '', '', '', ''];
-        currentPlayer = 'X';
-        gameActive = true;
-        renderBoard();
-        updateGameStatus();
-        winnerMsgDiv.innerText = '';
+    // Função para fazer jogada e salvar no Firestore (somente se for a vez do jogador e jogo ativo)
+    async function makeMove(index) {
+        if (isUpdatingFromFirestore) return;
+        // dados atuais do Firestore? Mas usamos localBoardState que está sincronizado
+        if (!localGameActive) return;
+        if (localWinner !== null) return;
+        if (localBoardState[index] !== '') return;
+        // turno
+        const currentPlayerFromSync = localCurrentPlayer;
+        // quem está jogando? Como não temos login, qualquer um pode jogar se for a vez correta.
+        // Mas evitamos duplicidade: apenas permitimos se o jogo está ativo e celula vazia e é a vez do jogador atual.
+        // Sim, qualquer aba pode jogar na vez do jogador atual. Isso é multiplayer real.
+        
+        const newBoard = [...localBoardState];
+        newBoard[index] = currentPlayerFromSync;
+        
+        let winner = null;
+        let gameActiveLocal = true;
+        // verificar vitória
+        const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        let hasWinner = false;
+        for (let pattern of winPatterns) {
+            const [a,b,c] = pattern;
+            if (newBoard[a] && newBoard[a] === newBoard[b] && newBoard[a] === newBoard[c]) {
+                winner = newBoard[a];
+                hasWinner = true;
+                gameActiveLocal = false;
+                break;
+            }
+        }
+        let isDraw = false;
+        if (!hasWinner && newBoard.every(cell => cell !== '')) {
+            isDraw = true;
+            gameActiveLocal = false;
+            winner = 'empate';
+        }
+        
+        const nextPlayer = (currentPlayerFromSync === 'X') ? 'O' : 'X';
+        const updatedData = {
+            board: newBoard,
+            currentPlayer: hasWinner ? currentPlayerFromSync : (isDraw ? currentPlayerFromSync : nextPlayer),
+            gameActive: gameActiveLocal,
+            winner: winner,
+            lastUpdate: serverTimestamp()
+        };
+        
+        try {
+            await setDoc(gameDocRef, updatedData);
+        } catch (err) {
+            console.error("Erro ao registrar jogada:", err);
+            alert("Falha ao realizar jogada. Verifique regras do Firestore (coleção ticTacToe).");
+        }
     }
 
+    // reset global: limpar tabuleiro e recomeçar
+    async function resetGameGlobal() {
+        if (isUpdatingFromFirestore) return;
+        const resetData = {
+            board: ['', '', '', '', '', '', '', '', ''],
+            currentPlayer: 'X',
+            gameActive: true,
+            winner: null,
+            lastUpdate: serverTimestamp()
+        };
+        try {
+            await setDoc(gameDocRef, resetData);
+        } catch (err) {
+            console.error("Erro reset:", err);
+            alert("Erro ao reiniciar partida.");
+        }
+    }
+
+    // criar UI do tabuleiro com event listeners
     function createBoardUI() {
-        boardElement.innerHTML = '';
+        boardContainer.innerHTML = '';
         for (let i = 0; i < 9; i++) {
             const cell = document.createElement('div');
             cell.classList.add('cell');
-            cell.setAttribute('data-index', i);
-            cell.addEventListener('click', () => handleCellClick(i));
-            boardElement.appendChild(cell);
+            cell.setAttribute('data-idx', i);
+            cell.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(cell.getAttribute('data-idx'));
+                makeMove(idx);
+            });
+            boardContainer.appendChild(cell);
         }
-        renderBoard();
+        renderBoardUI();
     }
 
-    resetBtn.addEventListener('click', resetGame);
+    resetBtn.addEventListener('click', resetGameGlobal);
     createBoardUI();
-    updateGameStatus();
+
+    // se demorar para inicializar, mostrar mensagem
+    setTimeout(() => {
+        if (localBoardState.every(c => c === '') && localGameActive) {
+            turnIndicator.innerText = "Aguardando partida... Clique no tabuleiro se for sua vez (X começa)";
+        }
+    }, 500);
 </script>
 </body>
 </html>
