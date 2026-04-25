@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xeeCartas - Jogo Multiplayer com Chat</title>
+  <title>Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -294,6 +294,8 @@
       grid-template-rows: 1fr 1.1fr 1fr;
       gap:12px;
       min-height:0;
+      /* Garante que o layout nunca empilhe */
+      grid-auto-flow: row;
     }
 
     .hand{
@@ -459,14 +461,10 @@
       max-height:none;
     }
 
+    /* Remove a quebra de layout em telas menores – mantém sempre 3 colunas */
     @media (max-width: 920px){
       .rooms{ grid-template-columns:1fr; }
-      .board{ grid-template-columns: 1fr; grid-template-rows:auto auto auto auto auto; }
-      .player-top{ grid-column:1; grid-row:1; }
-      .center-area{ grid-column:1; grid-row:2; }
-      .player-left{ grid-column:1; grid-row:3; }
-      .player-right{ grid-column:1; grid-row:4; }
-      .player-bottom{ grid-column:1; grid-row:5; }
+      /* NÃO altera mais o .board – ele permanece com 3 colunas e 3 linhas */
       .chat-panel{ position:relative; right:auto; bottom:auto; width:auto; margin-top:12px; }
     }
   </style>
@@ -541,9 +539,9 @@
         </div>
       </div>
       <div class="board" id="gameBoard">
-        <!-- Jogador 4 no topo (à sua frente) -->
+        <!-- Jogador 4 no topo -->
         <div id="p4" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
-        <!-- Jogador 3 na lateral esquerda -->
+        <!-- Jogador 3 na esquerda -->
         <div id="p3" class="hand side player-left"><div class="info"></div><div class="cards"></div></div>
         <div class="center-area">
           <div class="center-card-row">
@@ -553,7 +551,7 @@
           <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre</div>
           <button class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
-        <!-- Jogador 2 na lateral direita -->
+        <!-- Jogador 2 na direita -->
         <div id="p2" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
         <!-- Suas cartas (jogador 1) embaixo, no centro -->
         <div id="p1" class="hand player-bottom"><div class="info"></div><div class="cards"></div></div>
@@ -667,12 +665,10 @@
       const theme = document.getElementById("themeSwitch");
 
       if (gameState.roomMode) {
-        // Multiplayer: esconde música, áudio e tema
         if(music) music.style.display = "none";
         if(voice) voice.style.display = "none";
         if(theme) theme.style.display = "none";
       } else {
-        // Robôs: mostra tudo
         if(music) music.style.display = "";
         if(voice) voice.style.display = "";
         if(theme) theme.style.display = "";
