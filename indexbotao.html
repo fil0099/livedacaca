@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartas - Jogo Multiplayer com Chat</title>
+  <title>xCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -289,7 +289,8 @@
 
     .board{
       position:relative; width:100%; height:100%;
-      display:grid; grid-template-columns: 1fr 1.2fr 1fr;
+      display:grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
       grid-template-rows: 1fr 1.1fr 1fr;
       gap:12px;
       min-height:0;
@@ -371,7 +372,7 @@
     }
     .card.back::after{ content:""; }
 
-    /* ========== CHAT SIMPLES ========== */
+    /* ========== CHAT ========== */
     .chat-panel{
       position:fixed;
       right:16px; bottom:16px;
@@ -512,7 +513,6 @@
           <div class="header-inline">
             <button class="btn secondary mini-toggle" onclick="backToLobby()">Voltar</button>
             <strong>Cartas</strong>
-            <!-- Player de música (visível apenas no modo robô) -->
             <div id="musicPlayer" class="music-player">
               <div class="music-row">
                 <button class="btn secondary music-btn" onclick="prevTrack()">&lt;</button>
@@ -527,7 +527,6 @@
           <small>Combine cor ou valor e zere sua mão</small>
         </div>
         <div class="hud-right">
-          <!-- Controles de áudio/mic (visível apenas no modo robô) -->
           <div id="voiceGroup" class="voice-group">
             <button id="audioBtn" class="btn secondary mini-toggle" onclick="toggleAudio()">Áudio: desligado</button>
             <button id="micBtn" class="btn secondary mini-toggle" onclick="toggleMic()">Mic: desligado</button>
@@ -535,14 +534,13 @@
             <label class="tiny-control"><span>Som</span><input id="masterVolume" type="range" min="0" max="100" value="100" oninput="setMasterVolume(this.value)" /></label>
           </div>
           <div id="hudTurn" class="turn-badge"><span class="turn-dot"></span><span>Sua vez</span></div>
-          <!-- Tema (visível apenas no modo robô) -->
           <label id="themeSwitch" class="theme-switch">
             <span>Claro/Escuro</span>
             <span class="switch"><input id="themeToggle" type="checkbox" onchange="toggleTheme()" /><span class="slider"></span></span>
           </label>
         </div>
       </div>
-      <div class="board">
+      <div class="board" id="gameBoard">
         <div id="p2" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
         <div id="p3" class="hand side player-left"><div class="info"></div><div class="cards"></div></div>
         <div class="center-area">
@@ -559,7 +557,7 @@
     </div>
   </div>
 
-  <!-- CHAT (funciona em ambos modos, mas multiplayer via Firestore) -->
+  <!-- CHAT -->
   <div id="chatPanel" class="chat-panel" style="display:none">
     <div class="chat-header">
       <strong>💬 Chat</strong>
@@ -588,7 +586,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // ========== JOGO (CÓDIGO ORIGINAL) ==========
+    // ========== JOGO ==========
     const imgs = [
       "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
       "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
@@ -643,7 +641,7 @@
       showGame();
       initGame();
       initRoomChat(roomId);
-      applyModeUI(); // esconde controles extras no multiplayer
+      applyModeUI();
     }
 
     function joinRobots(){
@@ -656,15 +654,16 @@
       showGame();
       initGame();
       initOfflineChat();
-      applyModeUI(); // mostra controles extras no modo robô
+      applyModeUI();
     }
 
     function applyModeUI(){
       const music = document.getElementById("musicPlayer");
       const voice = document.getElementById("voiceGroup");
       const theme = document.getElementById("themeSwitch");
+
       if (gameState.roomMode) {
-        // Multiplayer: esconde música, áudio e tema
+        // Multiplayer: esconde música, áudio e tema (mantém as cartas de todos os jogadores)
         if(music) music.style.display = "none";
         if(voice) voice.style.display = "none";
         if(theme) theme.style.display = "none";
@@ -729,7 +728,7 @@
       for(let i=1;i<=3;i++){ const h=document.getElementById(`p${i+1}`); h.querySelector('.info').innerHTML=`<span>${getPlayerName(i)}</span><small>${gameState.players[i].length}</small>`; h.querySelector('.cards').innerHTML=Array(gameState.players[i].length).fill('<div class="card back"></div>').join(''); }
     }
 
-    // ========== MÚSICA E ÁUDIO (apenas usados no modo robô) ==========
+    // ========== MÚSICA E ÁUDIO ==========
     function setupMusic(){
       if(!gameState.musicAudio){ gameState.musicAudio=new Audio(); gameState.musicAudio.loop=false; gameState.musicAudio.addEventListener("ended",()=>nextTrack(true)); }
       const pl=gameState.roomMode?gameState.roomPlaylist:gameState.robotPlaylist;
@@ -750,7 +749,7 @@
       if(gameState.micEnabled){ try{ gameState.micStream=await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext=new (window.AudioContext||window.webkitAudioContext)(); const src=gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain=gameState.micAudioContext.createGain(); const mon=gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value=gameState.micVolume; mon.gain.value=gameState.audioEnabled?gameState.masterVolume:0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled=false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream=null; } }
     function toggleAudio(){ gameState.audioEnabled=!gameState.audioEnabled; document.getElementById("audioBtn").textContent=gameState.audioEnabled?"Áudio: ligado":"Áudio: desligado"; }
 
-    // ========== CHAT (MULTIPLAYER OU OFFLINE) ==========
+    // ========== CHAT ==========
     function initRoomChat(roomId){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
       const q = db.collection('chat').where('roomId', '==', roomId);
