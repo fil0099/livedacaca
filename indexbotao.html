@@ -2,13 +2,13 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cartas - Jogo Multiplayer com Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>xxCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <style>
-    /* ========== ESTILOS COMPLETOS ORIGINAIS ========== */
+    /* ========== ESTILOS COMPLETOS ORIGINAIS (com ajustes de layout das cartas) ========== */
     :root{
       --bg1:#eef2ff;
       --bg2:#f8fafc;
@@ -287,37 +287,89 @@
     .tiny-control span{ font-size:.73rem; font-weight:800; color:var(--muted); }
     .tiny-control input[type="range"]{ width:64px; accent-color: var(--accent-2); }
 
+    /* ========== LAYOUT DO TABULEIRO - AJUSTADO PARA ORGANIZAR AS CARTAS ========== */
     .board{
-      position:relative; width:100%; height:100%;
-      display:grid; grid-template-columns: 1fr 1.2fr 1fr;
-      grid-template-rows: 1fr 1.1fr 1fr;
-      gap:12px;
-      min-height:0;
+      position:relative;
+      width:100%;
+      height:100%;
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 8px;
+      align-items: center;
+      justify-items: center;
     }
 
+    /* Cada mão (jogador) */
     .hand{
-      min-width:0;
-      display:flex; flex-direction:column; gap:8px;
-      padding:10px;
-      overflow:hidden;
+      width: 100%;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      background: rgba(0,0,0,0.15);
+      border-radius: 20px;
+      backdrop-filter: blur(4px);
+      overflow-x: auto;
+      overflow-y: hidden;
     }
     .hand .info{
-      display:flex; align-items:center; gap:8px;
-      font-size:.88rem; font-weight:800;
-      color:var(--text);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: bold;
+      padding: 0 6px;
     }
-    .hand .info small{ color:var(--muted); font-weight:700; }
-    .cards{ display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start; }
+    .hand .cards{
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+      align-items: center;
+    }
 
-    .player-top{ grid-column:1 / 4; grid-row:1; align-self:start; }
-    .player-left{ grid-column:1; grid-row:2; align-self:center; }
-    .player-right{ grid-column:3; grid-row:2; align-self:center; }
-    .center-area{
-      grid-column:2; grid-row:2;
-      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
-      min-height:0;
+    /* Cartas do jogador atual (grandes) */
+    .player-bottom .cards .card{
+      width: var(--card-w);
+      height: var(--card-h);
     }
-    .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; }
+    /* Cartas dos adversários (menores) */
+    .player-top .cards .card,
+    .player-left .cards .card,
+    .player-right .cards .card{
+      width: var(--card-small-w);
+      height: var(--card-small-h);
+    }
+
+    /* Posicionamento no grid */
+    .player-top    { grid-row: 1; grid-column: 2; align-self: start; justify-self: center; width: auto; max-width: 90%; }
+    .player-left   { grid-row: 2; grid-column: 1; align-self: center; justify-self: start; width: auto; max-width: 95%; }
+    .center-area   { grid-row: 2; grid-column: 2; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .player-right  { grid-row: 2; grid-column: 3; align-self: center; justify-self: end; width: auto; max-width: 95%; }
+    .player-bottom { grid-row: 3; grid-column: 1 / span 3; align-self: end; justify-self: center; width: 100%; max-width: 100%; }
+
+    /* Ajuste para as mãos laterais não ficarem muito largas */
+    .player-left .cards, .player-right .cards{
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+    /* Para telas pequenas, mantém responsivo */
+    @media (max-width: 860px){
+      .board{
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto auto;
+      }
+      .player-top    { grid-row: 1; grid-column: 1; }
+      .player-left   { grid-row: 2; grid-column: 1; align-self: center; }
+      .center-area   { grid-row: 3; grid-column: 1; }
+      .player-right  { grid-row: 4; grid-column: 1; align-self: center; }
+      .player-bottom { grid-row: 5; grid-column: 1; }
+    }
 
     .center-card-row{ display:flex; align-items:center; gap:14px; justify-content:center; }
     .pile{
@@ -334,44 +386,38 @@
       max-width: 340px;
     }
 
+    /* Estilo das cartas */
     .card{
-      width:var(--card-w);
-      height:var(--card-h);
-      border-radius:16px;
       position:relative;
-      border:2px solid rgba(255,255,255,.25);
       background-size:cover;
       background-position:center;
-      box-shadow:0 10px 22px rgba(15,23,42,.18);
-      transform:translateY(0) scale(1);
-      transition: transform .16s ease, box-shadow .16s ease;
+      border-radius:12px;
+      border:2px solid rgba(255,255,255,.25);
+      box-shadow:0 8px 14px rgba(0,0,0,.2);
+      transition: transform 0.1s ease;
+      cursor:pointer;
       overflow:hidden;
-      user-select:none;
     }
     .card::after{
       content: attr(data-value);
       position:absolute;
-      top:6px; left:6px;
-      padding:4px 6px;
-      border-radius:999px;
-      font-size:.72rem;
-      font-weight:900;
+      top:4px; left:4px;
+      padding:2px 6px;
+      border-radius:20px;
+      font-size:0.7rem;
+      font-weight:bold;
+      background:rgba(0,0,0,0.6);
       color:white;
-      background:rgba(15,23,42,.64);
-      backdrop-filter: blur(4px);
-      min-width: 20px;
-      text-align:center;
+      backdrop-filter: blur(2px);
     }
-    .card:hover{ transform:translateY(-4px) scale(1.02); cursor:pointer; }
-    .card.playable{ transform: translateY(-8px) scale(1.04); box-shadow:0 18px 34px rgba(15,23,42,.26); }
+    .card.playable:hover{ transform: scale(1.02) translateY(-4px); }
     .card.back{
-      background: linear-gradient(135deg, #0f172a, #334155);
-      border:2px solid rgba(255,255,255,.12);
-      cursor:default;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border:1px solid #475569;
     }
-    .card.back::after{ content:""; }
+    .card.back::after{ content: "?"; text-align:center; left: 50%; top: 50%; transform:translate(-50%,-50%); font-size:1.2rem; background: none; }
 
-    /* ========== CHAT SIMPLES (SEM CAMPO ANÔNIMO) ========== */
+    /* ========== CHAT (sem alterações) ========== */
     .chat-panel{
       position:fixed;
       right:16px; bottom:16px;
@@ -463,15 +509,7 @@
       width:auto;
       max-height:none;
     }
-
     @media (max-width: 920px){
-      .rooms{ grid-template-columns:1fr; }
-      .board{ grid-template-columns: 1fr; grid-template-rows:auto auto auto auto auto; }
-      .player-top{ grid-column:1; grid-row:1; }
-      .center-area{ grid-column:1; grid-row:2; }
-      .player-left{ grid-column:1; grid-row:3; }
-      .player-right{ grid-column:1; grid-row:4; }
-      .player-bottom{ grid-column:1; grid-row:5; }
       .chat-panel{ position:relative; right:auto; bottom:auto; width:auto; margin-top:12px; }
     }
   </style>
@@ -550,7 +588,7 @@
       </div>
       <div class="board">
         <div id="p2" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
-        <div id="p3" class="hand side player-left"><div class="info"></div><div class="cards"></div></div>
+        <div id="p3" class="hand player-left"><div class="info"></div><div class="cards"></div></div>
         <div class="center-area">
           <div class="center-card-row">
             <div id="drawPile" class="pile draw"></div>
@@ -559,13 +597,13 @@
           <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre</div>
           <button class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
-        <div id="p4" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
+        <div id="p4" class="hand player-right"><div class="info"></div><div class="cards"></div></div>
         <div id="p1" class="hand player-bottom"><div class="info"></div><div class="cards"></div></div>
       </div>
     </div>
   </div>
 
-  <!-- CHAT SIMPLES (SEM CAMPO ANÔNIMO) -->
+  <!-- CHAT -->
   <div id="chatPanel" class="chat-panel" style="display:none">
     <div class="chat-header">
       <strong>💬 Chat da sala</strong>
@@ -713,8 +751,14 @@
       document.getElementById("discardPile").innerHTML = gameState.topCard ? `<div class="card" data-value="${gameState.topCard.value}" style="background-image:url('${gameState.topCard.img}'); border-color:${colorMap[gameState.topCard.color]}"></div>` : '';
       document.getElementById("hudTurn").querySelector('span:last-child').textContent = gameState.turn===0?"Sua vez":`Vez de ${getPlayerName(gameState.turn)}`;
       const p1=document.getElementById("p1"); p1.querySelector('.info').innerHTML=`<span>${getPlayerName(0)}</span><small>${gameState.players[0].length}</small>`;
-      p1.querySelector('.cards').innerHTML=gameState.players[0].map((c,i)=>`<div class="card ${canPlay(c)?'playable':''}" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`).join('');
-      for(let i=1;i<=3;i++){ const h=document.getElementById(`p${i+1}`); h.querySelector('.info').innerHTML=`<span>${getPlayerName(i)}</span><small>${gameState.players[i].length}</small>`; h.querySelector('.cards').innerHTML=Array(gameState.players[i].length).fill('<div class="card back"></div>').join(''); }
+      p1.querySelector('.cards').innerHTML=gameState.players[0].map((c,i)=>`<div class="card playable" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`).join('');
+      for(let i=1;i<=3;i++){ 
+        const h=document.getElementById(`p${i+1}`); 
+        const playerCards = gameState.players[i];
+        h.querySelector('.info').innerHTML=`<span>${getPlayerName(i)}</span><small>${playerCards.length}</small>`;
+        // exibir cartas menores para adversários
+        h.querySelector('.cards').innerHTML=playerCards.map(()=>`<div class="card back" style="width: var(--card-small-w); height: var(--card-small-h);"></div>`).join('');
+      }
     }
 
     // ========== MÚSICA E ÁUDIO ==========
@@ -738,7 +782,7 @@
       if(gameState.micEnabled){ try{ gameState.micStream=await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext=new (window.AudioContext||window.webkitAudioContext)(); const src=gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain=gameState.micAudioContext.createGain(); const mon=gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value=gameState.micVolume; mon.gain.value=gameState.audioEnabled?gameState.masterVolume:0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled=false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream=null; } }
     function toggleAudio(){ gameState.audioEnabled=!gameState.audioEnabled; document.getElementById("audioBtn").textContent=gameState.audioEnabled?"Áudio: ligado":"Áudio: desligado"; }
 
-    // ========== CHAT SIMPLES (NOME FIXO DO JOGADOR) ==========
+    // ========== CHAT ==========
     function initRoomChat(roomId){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
       const q = db.collection('chat').where('roomId', '==', roomId);
