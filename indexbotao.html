@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>xFirebase Sync: Botão + Chat em Tempo Real</title>
+    <title>🔥 Sync + Chat + Jogo da Velha | Firebase Firestore</title>
     <style>
         * {
             margin: 0;
@@ -12,40 +12,47 @@
         }
 
         body {
-            background: linear-gradient(145deg, #0a1a1f 0%, #1a2f3a 100%);
+            background: linear-gradient(145deg, #071a1f 0%, #102b33 100%);
             min-height: 100vh;
+            padding: 30px 20px;
+            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
-            padding: 20px;
         }
 
-        /* Card principal */
-        .main-card {
-            background: rgba(15, 28, 35, 0.85);
-            backdrop-filter: blur(14px);
-            border-radius: 48px;
-            padding: 1.8rem;
+        /* Container principal GRID */
+        .dashboard {
+            max-width: 1300px;
             width: 100%;
-            max-width: 750px;
-            box-shadow: 0 30px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+            gap: 24px;
+            align-items: start;
         }
 
-        /* Seção do toggle + bola */
-        .toggle-section {
-            background: rgba(0, 0, 0, 0.3);
+        /* Cards estilo glassmorphism */
+        .card {
+            background: rgba(15, 30, 38, 0.75);
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            padding: 1.5rem 1.8rem;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+            transition: all 0.2s;
+        }
+
+        /* toggle + bola */
+        .toggle-panel {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            background: rgba(0,0,0,0.35);
             border-radius: 80px;
             padding: 1.2rem 1.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
         }
-
-        /* TOGGLE SWITCH */
         .switch {
             position: relative;
             display: inline-block;
@@ -53,13 +60,11 @@
             height: 48px;
             cursor: pointer;
         }
-
         .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
         .slider {
             position: absolute;
             top: 0;
@@ -71,7 +76,6 @@
             transition: 0.2s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             box-shadow: inset 0 1px 3px #00000055, 0 1px 2px #ffffff44;
         }
-
         .slider:before {
             position: absolute;
             content: "";
@@ -84,16 +88,9 @@
             transition: 0.2s;
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
+        input:checked + .slider { background-color: #2ecc71; }
+        input:checked + .slider:before { transform: translateX(44px); }
 
-        input:checked + .slider {
-            background-color: #2ecc71;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(44px);
-        }
-
-        /* BOLA */
         .ball {
             width: 76px;
             height: 76px;
@@ -102,235 +99,216 @@
             transition: background-color 0.15s, transform 0.1s, box-shadow 0.2s;
             box-shadow: 0 8px 18px rgba(0,0,0,0.4), inset 0 1px 3px rgba(255,255,255,0.6);
         }
-
         .ball.ball-on {
             background-color: #2ecc71;
             box-shadow: 0 0 18px rgba(46, 204, 113, 0.7);
         }
-
-        .status-area {
+        .status-badge {
             text-align: center;
             background: #00000066;
             border-radius: 60px;
             padding: 8px 16px;
-            margin-bottom: 24px;
-            display: inline-block;
-            width: auto;
-        }
-
-        .status-text {
-            font-size: 1.4rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
             font-weight: bold;
             color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+            font-size: 1.3rem;
         }
-
-        .badge-led {
-            width: 18px;
-            height: 18px;
-            border-radius: 18px;
-            background-color: #7f8c8d;
-            transition: 0.1s;
-        }
-
-        .badge-led.on {
-            background-color: #2ecc71;
-            box-shadow: 0 0 8px #2ecc71;
-        }
-
-        /* CHAT SECTION */
-        .chat-container {
-            margin-top: 2rem;
-            background: rgba(0, 0, 0, 0.35);
-            border-radius: 36px;
-            padding: 1.2rem;
-            backdrop-filter: blur(4px);
-        }
-
-        .chat-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }
-
-        .chat-header h3 {
-            color: #c7f0e0;
-            font-weight: 500;
-            letter-spacing: 1px;
-        }
-
-        .live-dot-chat {
-            width: 10px;
-            height: 10px;
-            background-color: #2ecc71;
+        .led {
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
-            animation: pulseGreen 1.2s infinite;
+            background: #7f8c8d;
         }
+        .led.on { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
 
-        /* Mensagens */
-        .messages-area {
-            background: #07161fe0;
+        /* CHAT */
+        .chat-messages {
+            background: #071a1fe0;
             border-radius: 28px;
             padding: 12px;
             height: 280px;
             overflow-y: auto;
+            margin-bottom: 12px;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            margin-bottom: 16px;
-            font-size: 0.9rem;
         }
-
-        .message-bubble {
-            background: #1e2f3a;
+        .msg-bubble {
+            background: #1e3542;
             padding: 8px 14px;
             border-radius: 24px;
             max-width: 85%;
-            width: fit-content;
             color: #eef4ff;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
             word-break: break-word;
         }
-
-        .message-bubble strong {
-            color: #a5f0c0;
-            font-weight: 600;
-        }
-
-        .message-time {
-            font-size: 0.65rem;
-            color: #8aaec0;
-            margin-left: 12px;
-        }
-
-        /* formulário chat */
-        .chat-input-area {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .chat-input-area input, .chat-input-area button {
-            padding: 12px 16px;
+        .msg-bubble strong { color: #a5f0c0; }
+        .msg-time { font-size: 0.65rem; color: #8aaec0; margin-left: 10px; }
+        .chat-input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+        .chat-input-row input, .chat-input-row button {
+            padding: 10px 16px;
             border-radius: 60px;
             border: none;
-            font-size: 0.9rem;
-            background: #0f222d;
+            background: #102a33;
             color: white;
         }
+        .chat-input-row input { flex: 1; }
+        .chat-input-row button { background: #2ecc71; color: #071a1f; font-weight: bold; cursor: pointer; }
 
-        .chat-input-area input {
-            flex: 1;
-            background: #10252e;
-            border: 1px solid #2c5a6e;
-        }
-
-        .chat-input-area input::placeholder {
-            color: #8caebb;
-        }
-
-        .chat-input-area button {
-            background: #2ecc71;
-            color: #0a1a1f;
+        /* JOGO DA VELHA */
+        .game-title {
+            font-size: 1.6rem;
             font-weight: bold;
-            cursor: pointer;
-            transition: 0.1s;
-            padding: 12px 24px;
+            color: #e2f0e6;
+            text-align: center;
+            margin-bottom: 20px;
         }
-
-        .chat-input-area button:active {
-            transform: scale(0.96);
-        }
-
-        .name-row {
-            display: flex;
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
-            margin-bottom: 12px;
+            max-width: 320px;
+            margin: 0 auto 24px auto;
         }
-
-        .name-row input {
-            flex: 1;
-            background: #10252e;
-            border: 1px solid #2c5a6e;
+        .cell {
+            background: #0c242e;
+            aspect-ratio: 1 / 1;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #d9f0ec;
+            cursor: pointer;
+            transition: 0.1s linear;
+            box-shadow: 0 8px 0 #031016;
+            font-family: 'Segoe UI', system-ui;
+        }
+        .cell:active { transform: scale(0.96); }
+        .turn-indicator {
+            background: #03101680;
+            border-radius: 40px;
+            padding: 10px 16px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 20px;
+        }
+        .reset-btn {
+            background: #2c5a6e;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            padding: 10px 20px;
+            border-radius: 60px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            transition: 0.1s;
+        }
+        .reset-btn:active { transform: scale(0.97); background: #1f4555; }
+        .winner-marker {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 1rem;
+            color: #f2c94c;
         }
 
         .sync-info {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            margin: 12px auto 0;
-            font-size: 0.75rem;
-            color: #b0d4e8;
-            background: #05161f80;
-            padding: 6px 14px;
+            gap: 8px;
+            font-size: 0.7rem;
+            color: #b0e0f0;
+            margin-top: 15px;
+            background: #03161e80;
+            padding: 6px 12px;
             border-radius: 40px;
             width: fit-content;
         }
-
-        @keyframes pulseGreen {
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: #2ecc71;
+            border-radius: 50%;
+            animation: pulse 1.2s infinite;
+        }
+        @keyframes pulse {
             0% { opacity: 0.4; transform: scale(0.8);}
             100% { opacity: 1; transform: scale(1.2);}
         }
-
-        @media (max-width: 550px) {
-            .toggle-section { gap: 1.2rem; }
+        @media (max-width: 860px) {
+            .dashboard { grid-template-columns: 1fr; }
             .ball { width: 58px; height: 58px; }
             .switch { width: 74px; height: 40px; }
             .slider:before { height: 32px; width: 32px; }
             input:checked + .slider:before { transform: translateX(34px); }
-            .chat-input-area { flex-direction: column; }
         }
     </style>
 </head>
 <body>
-<div class="main-card">
-    <!-- SEÇÃO BOTÃO DESLIZANTE + BOLA -->
-    <div class="toggle-section">
-        <label class="switch">
-            <input type="checkbox" id="toggleSwitch">
-            <span class="slider"></span>
-        </label>
-        <div id="indicatorBall" class="ball"></div>
-    </div>
-    <div style="display: flex; justify-content: center;">
-        <div class="status-area">
-            <div class="status-text">
+<div class="dashboard">
+    
+    <!-- CARD 1: TOGGLE + BOLA (Firestore sync) -->
+    <div class="card">
+        <div class="toggle-panel">
+            <label class="switch">
+                <input type="checkbox" id="toggleSwitch">
+                <span class="slider"></span>
+            </label>
+            <div id="indicatorBall" class="ball"></div>
+        </div>
+        <div style="text-align: center;">
+            <div class="status-badge">
                 <span id="stateLabel">Desligado</span>
-                <div id="ledBadge" class="badge-led"></div>
+                <div id="ledBadge" class="led"></div>
             </div>
+        </div>
+        <div class="sync-info">
+            <div class="pulse-dot"></div>
+            <span>⚡ Botão sincronizado via Firestore (tempo real)</span>
         </div>
     </div>
 
-    <!-- CHAT SIMPLES EM TEMPO REAL -->
-    <div class="chat-container">
-        <div class="chat-header">
-            <div class="live-dot-chat"></div>
-            <h3>📢 Chat ao vivo (Firestore)</h3>
-        </div>
-        <div class="messages-area" id="chatMessagesList">
+    <!-- CARD 2: CHAT SIMPLES (Firestore coleção /chat) -->
+    <div class="card">
+        <h3 style="color:#c7f0e0; margin-bottom: 12px; display: flex; gap: 8px;">💬 Chat ao vivo <span class="pulse-dot" style="margin-top: 5px;"></span></h3>
+        <div id="chatMessagesList" class="chat-messages">
             <div style="text-align:center; color:#a0c0d0;">Carregando mensagens...</div>
         </div>
-        <div class="name-row">
-            <input type="text" id="chatUserName" placeholder="Seu nome (opcional)" maxlength="30" value="Anônimo">
+        <div style="margin-bottom: 6px;">
+            <input type="text" id="chatUserName" placeholder="Seu nome (opcional)" maxlength="30" value="Anônimo" style="width:100%; background:#102a33; border: none; padding: 8px 14px; border-radius: 40px; color:white;">
         </div>
-        <div class="chat-input-area">
+        <div class="chat-input-row">
             <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." maxlength="200">
             <button id="sendMessageBtn">Enviar</button>
         </div>
-        <div class="sync-info">
-            <span>⚡ Sincronia em tempo real • Firebase Firestore (coleção /chat)</span>
+        <div class="sync-info" style="margin-top: 12px;">
+            <span>📡 Chat em tempo real (Firestore /chat)</span>
+        </div>
+    </div>
+
+    <!-- CARD 3: JOGO DA VELHA (Tic-Tac-Toe) simples -->
+    <div class="card">
+        <div class="game-title">🎮 Jogo da Velha</div>
+        <div class="turn-indicator" id="turnIndicator">Vez do ❌ (X)</div>
+        <div class="board" id="board">
+            <!-- 9 células geradas via JS, mas vou estruturar com divs interativas -->
+        </div>
+        <button class="reset-btn" id="resetGameBtn">🔄 Reiniciar Partida</button>
+        <div id="winnerMessage" class="winner-marker"></div>
+        <div class="sync-info" style="margin-top: 16px;">
+            <span>🎲 Modo local: jogue contra outro jogador no mesmo dispositivo</span>
         </div>
     </div>
 </div>
 
 <script type="module">
-    // ========= CONFIGURAÇÃO FIREBASE (FIRESTORE) =========
+    // ======================= FIREBASE CONFIG (FIRESTORE) =======================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, doc, onSnapshot, setDoc, getDoc, collection, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -343,11 +321,10 @@
         messagingSenderId: "940068631746",
         appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    
-    // ---------- PARTE 1: BOTÃO TOGGLE + BOLA (coleção "toggle", doc "estado") ----------
+
+    // ************ PARTE 1: TOGGLE + BOLA ************
     const estadoDocRef = doc(db, "toggle", "estado");
     const toggleCheckbox = document.getElementById('toggleSwitch');
     const ballDiv = document.getElementById('indicatorBall');
@@ -355,7 +332,7 @@
     const ledBadge = document.getElementById('ledBadge');
 
     let isInternalUpdate = false;
-    let currentToggleState = false;  // false = desligado
+    let currentToggleState = false;
 
     function updateToggleUI(estado) {
         if (toggleCheckbox.checked !== estado) toggleCheckbox.checked = estado;
@@ -363,17 +340,14 @@
             ballDiv.classList.add('ball-on');
             stateLabelSpan.innerText = 'Ligado';
             ledBadge.classList.add('on');
-            ledBadge.style.backgroundColor = '#2ecc71';
         } else {
             ballDiv.classList.remove('ball-on');
             stateLabelSpan.innerText = 'Desligado';
             ledBadge.classList.remove('on');
-            ledBadge.style.backgroundColor = '#7f8c8d';
         }
         currentToggleState = estado;
     }
 
-    // Listener toggle (Firestore)
     onSnapshot(estadoDocRef, (snap) => {
         if (snap.exists()) {
             const data = snap.data();
@@ -382,180 +356,216 @@
                 isInternalUpdate = true;
                 updateToggleUI(serverState);
                 isInternalUpdate = false;
-                // feedback visual na bola
                 ballDiv.style.transform = 'scale(1.02)';
                 setTimeout(() => { ballDiv.style.transform = ''; }, 150);
             }
         } else {
-            // Criar documento com estado false (desligado)
-            setDoc(estadoDocRef, { ligado: false })
-                .catch(err => console.warn("Erro criar toggle:", err));
-            if (currentToggleState !== false) {
-                isInternalUpdate = true;
-                updateToggleUI(false);
-                isInternalUpdate = false;
-            }
+            setDoc(estadoDocRef, { ligado: false }).catch(e => console.warn(e));
+            if (currentToggleState !== false) updateToggleUI(false);
         }
-    }, (err) => console.error("Erro listener toggle:", err));
+    });
 
-    // Evento manual do toggle
     toggleCheckbox.addEventListener('change', async () => {
         if (isInternalUpdate) return;
-        const novoEstado = toggleCheckbox.checked;
+        const novo = toggleCheckbox.checked;
         ballDiv.style.transform = 'scale(0.95)';
         setTimeout(() => { ballDiv.style.transform = ''; }, 120);
         try {
-            await setDoc(estadoDocRef, { ligado: novoEstado });
-            if (currentToggleState !== novoEstado) {
-                isInternalUpdate = true;
-                updateToggleUI(novoEstado);
-                isInternalUpdate = false;
-            }
+            await setDoc(estadoDocRef, { ligado: novo });
+            if (currentToggleState !== novo) updateToggleUI(novo);
         } catch (err) {
-            console.error("Erro salvar toggle:", err);
-            isInternalUpdate = true;
+            console.error("Erro toggle", err);
             toggleCheckbox.checked = currentToggleState;
-            isInternalUpdate = false;
-            alert("Erro ao sincronizar estado do botão.");
         }
     });
 
-    // Clique na bola alternativa
     ballDiv.addEventListener('click', async () => {
         if (isInternalUpdate) return;
-        const novoEstado = !currentToggleState;
+        const novo = !currentToggleState;
         ballDiv.style.transform = 'scale(0.92)';
         setTimeout(() => { ballDiv.style.transform = ''; }, 150);
-        try {
-            await setDoc(estadoDocRef, { ligado: novoEstado });
-        } catch (err) {
-            alert("Falha ao alternar via bola");
-        }
+        try { await setDoc(estadoDocRef, { ligado: novo }); } catch(e) { alert("erro toggle"); }
     });
+    updateToggleUI(false); // estado inicial desligado
 
-    // Inicializa toggle com desligado (até sincronizar)
-    updateToggleUI(false);
-
-    // ---------- PARTE 2: CHAT SIMPLES (coleção "chat", cada mensagem como documento) ----------
+    // ************ PARTE 2: CHAT (Firestore) ************
     const messagesContainer = document.getElementById('chatMessagesList');
     const userNameInput = document.getElementById('chatUserName');
     const messageInput = document.getElementById('chatMessageInput');
     const sendBtn = document.getElementById('sendMessageBtn');
+    const chatCollection = collection(db, "chat");
+    const chatQuery = query(chatCollection, orderBy("timestamp", "asc"));
 
-    // Referência à coleção chat, ordenada por timestamp crescente (mais antigas primeiro)
-    const chatCollectionRef = collection(db, "chat");
-    const chatQuery = query(chatCollectionRef, orderBy("timestamp", "asc"));
+    function escapeHtml(str) {
+        if(!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if(m === '&') return '&amp;';
+            if(m === '<') return '&lt;';
+            if(m === '>') return '&gt;';
+            return m;
+        });
+    }
 
-    // Função para renderizar mensagens
-    function renderMessages(messagesArray) {
-        if (!messagesContainer) return;
-        if (messagesArray.length === 0) {
-            messagesContainer.innerHTML = '<div style="text-align:center; color:#a0c0d0;">✨ Nenhuma mensagem. Seja o primeiro a enviar!</div>';
+    function renderChat(messages) {
+        if (!messages.length) {
+            messagesContainer.innerHTML = '<div style="text-align:center; color:#a0c0d0;">✨ Nenhuma mensagem ainda. Envie uma!</div>';
             return;
         }
         let html = '';
-        for (const msg of messagesArray) {
-            const nome = msg.nome || 'Anônimo';
-            const texto = msg.texto || '';
-            const horario = msg.horario ? new Date(msg.horario).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-            html += `
-                <div class="message-bubble">
-                    <strong>${escapeHtml(nome)}</strong> <span class="message-time">${horario}</span><br>
-                    ${escapeHtml(texto)}
-                </div>
-            `;
-        }
+        messages.forEach(msg => {
+            const nome = escapeHtml(msg.nome) || 'Anônimo';
+            const texto = escapeHtml(msg.texto);
+            const time = msg.horario ? new Date(msg.horario).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+            html += `<div class="msg-bubble"><strong>${nome}</strong> <span class="msg-time">${time}</span><br>${texto}</div>`;
+        });
         messagesContainer.innerHTML = html;
-        // Auto scroll para o final
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    // Escape simples para evitar XSS
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
-        });
-    }
-
-    // Listener em tempo real do chat (onSnapshot)
     let currentMessages = [];
     onSnapshot(chatQuery, (snapshot) => {
         const msgs = [];
-        snapshot.docChanges().forEach((change) => {
-            // para cada documento alterado, adicionamos na lista ordenada
-        });
-        snapshot.docs.forEach(doc => {
+        snapshot.forEach(doc => {
             const data = doc.data();
             msgs.push({
                 id: doc.id,
                 nome: data.nome || 'Anônimo',
                 texto: data.texto || '',
-                timestamp: data.timestamp,
                 horario: data.timestamp?.toDate?.() || new Date()
             });
         });
-        // ordenar novamente por timestamp (garantia)
-        msgs.sort((a,b) => (a.timestamp?.toMillis?.() || 0) - (b.timestamp?.toMillis?.() || 0));
+        msgs.sort((a,b) => (a.horario - b.horario));
         currentMessages = msgs;
-        renderMessages(msgs);
-    }, (error) => {
-        console.error("Erro no listener do chat:", error);
-        messagesContainer.innerHTML = '<div style="color:#ffaa88;">⚠️ Erro ao conectar ao chat. Verifique regras do Firestore.</div>';
+        renderChat(msgs);
+    }, err => {
+        console.error("Chat error", err);
+        messagesContainer.innerHTML = '<div style="color:#ffaa88;">⚠️ Erro no chat (verifique regras Firestore).</div>';
     });
 
-    // Função enviar mensagem
     async function sendMessage() {
         let nome = userNameInput.value.trim();
         if (nome === "") nome = "Anônimo";
         if (nome.length > 30) nome = nome.substring(0,30);
         const texto = messageInput.value.trim();
-        if (texto === "") {
-            alert("Digite uma mensagem.");
-            return;
-        }
-        if (texto.length > 200) {
-            alert("Máximo 200 caracteres.");
-            return;
-        }
-
-        // Desabilitar botão temporariamente para evitar spam
+        if (texto === "") return alert("Digite uma mensagem");
         sendBtn.disabled = true;
         sendBtn.textContent = "Enviando...";
         try {
-            await addDoc(chatCollectionRef, {
+            await addDoc(chatCollection, {
                 nome: nome,
                 texto: texto,
                 timestamp: serverTimestamp()
             });
-            messageInput.value = ""; // limpa campo
-            // foco no input
+            messageInput.value = "";
             messageInput.focus();
-        } catch (err) {
-            console.error("Erro ao enviar mensagem:", err);
-            alert("Falha ao enviar mensagem. Verifique suas regras do Firestore (coleção /chat).");
+        } catch(err) {
+            alert("Erro ao enviar mensagem: "+err.message);
         } finally {
             sendBtn.disabled = false;
             sendBtn.textContent = "Enviar";
         }
     }
-
     sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+    messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 
-    // Ajuste inicial para mostrar mensagem descritiva
-    setTimeout(() => {
-        if (currentMessages.length === 0) {
-            messagesContainer.innerHTML = '<div style="text-align:center; color:#a0c0d0;">💬 Nenhuma mensagem ainda. Digite algo!</div>';
+    // ************ PARTE 3: JOGO DA VELHA (simples, local) ************
+    const boardElement = document.getElementById('board');
+    const turnIndicator = document.getElementById('turnIndicator');
+    const winnerMsgDiv = document.getElementById('winnerMessage');
+    const resetBtn = document.getElementById('resetGameBtn');
+
+    let boardState = ['', '', '', '', '', '', '', '', ''];
+    let currentPlayer = 'X';   // X começa
+    let gameActive = true;
+
+    // símbolos visuais: X e O
+    function renderBoard() {
+        const cells = document.querySelectorAll('.cell');
+        for (let i = 0; i < 9; i++) {
+            cells[i].innerText = boardState[i] === 'X' ? '❌' : (boardState[i] === 'O' ? '⭕' : '');
+            // também armazenamos data-value para verificação
         }
-    }, 500);
+    }
+
+    function checkWinner() {
+        const winPatterns = [
+            [0,1,2], [3,4,5], [6,7,8],
+            [0,3,6], [1,4,7], [2,5,8],
+            [0,4,8], [2,4,6]
+        ];
+        for (let pattern of winPatterns) {
+            const [a,b,c] = pattern;
+            if (boardState[a] && boardState[a] === boardState[b] && boardState[a] === boardState[c]) {
+                return boardState[a];
+            }
+        }
+        if (boardState.every(cell => cell !== '')) return 'empate';
+        return null;
+    }
+
+    function updateGameStatus() {
+        const winner = checkWinner();
+        if (winner === 'X') {
+            gameActive = false;
+            turnIndicator.innerText = '🏆 Jogador ❌ (X) venceu!';
+            winnerMsgDiv.innerText = '🎉 Vitória do X! Clique em reiniciar.';
+        } else if (winner === 'O') {
+            gameActive = false;
+            turnIndicator.innerText = '🏆 Jogador ⭕ (O) venceu!';
+            winnerMsgDiv.innerText = '🎉 Vitória do O! Reinicie o jogo.';
+        } else if (winner === 'empate') {
+            gameActive = false;
+            turnIndicator.innerText = '🤝 Empate!';
+            winnerMsgDiv.innerText = 'Deu velha! Reinicie para jogar novamente.';
+        } else {
+            // jogo ativo
+            gameActive = true;
+            turnIndicator.innerText = `Vez do ${currentPlayer === 'X' ? '❌ (X)' : '⭕ (O)'}`;
+            winnerMsgDiv.innerText = '';
+        }
+    }
+
+    function handleCellClick(index) {
+        if (!gameActive) return;
+        if (boardState[index] !== '') return;
+        // realiza jogada
+        boardState[index] = currentPlayer;
+        renderBoard();
+        const winner = checkWinner();
+        if (winner === 'X' || winner === 'O' || winner === 'empate') {
+            updateGameStatus();
+            return;
+        }
+        // alterna jogador
+        currentPlayer = (currentPlayer === 'X') ? 'O' : 'X';
+        updateGameStatus();
+        renderBoard(); // garante mostragem
+    }
+
+    function resetGame() {
+        boardState = ['', '', '', '', '', '', '', '', ''];
+        currentPlayer = 'X';
+        gameActive = true;
+        renderBoard();
+        updateGameStatus();
+        winnerMsgDiv.innerText = '';
+    }
+
+    function createBoardUI() {
+        boardElement.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.setAttribute('data-index', i);
+            cell.addEventListener('click', () => handleCellClick(i));
+            boardElement.appendChild(cell);
+        }
+        renderBoard();
+    }
+
+    resetBtn.addEventListener('click', resetGame);
+    createBoardUI();
+    updateGameStatus();
 </script>
 </body>
 </html>
