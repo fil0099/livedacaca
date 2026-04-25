@@ -2,235 +2,110 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <title>yartas Multiplayer - Com Chat e Música</title>
-  <!-- Firebase SDK -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mCartas - Jogo Multiplayer com Chat</title>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <style>
-    /* ========== ESTILOS (MANTIDOS E ORGANIZADOS) ========== */
     :root{
-      --bg1:#eef2ff;
-      --bg2:#f8fafc;
-      --panel: rgba(255,255,255,0.78);
-      --panel-strong: rgba(255,255,255,0.94);
-      --stroke: rgba(15,23,42,0.10);
-      --text:#0f172a;
-      --muted:#64748b;
-      --accent:#16a34a;
-      --accent-2:#0ea5e9;
-      --shadow: 0 20px 60px rgba(15,23,42,.12);
-      --card-w: clamp(58px, 6.4vw, 88px);
-      --card-h: calc(var(--card-w) * 1.42);
-      --card-small-w: clamp(42px, 4.8vw, 58px);
-      --card-small-h: calc(var(--card-small-w) * 1.42);
+      --bg1:#eef2ff; --bg2:#f8fafc; --panel: rgba(255,255,255,0.78); --panel-strong: rgba(255,255,255,0.94);
+      --stroke: rgba(15,23,42,0.10); --text:#0f172a; --muted:#64748b; --accent:#16a34a; --accent-2:#0ea5e9;
+      --shadow: 0 20px 60px rgba(15,23,42,.12); --card-w: clamp(58px, 6.4vw, 88px); --card-h: calc(var(--card-w) * 1.42);
+      --radius: 22px; --board-glow: rgba(14, 165, 233, .12); --board-glow-2: rgba(34, 197, 94, .12);
     }
-
     body[data-theme="dark"]{
-      --bg1:#07111f;
-      --bg2:#0f172a;
-      --panel: rgba(15, 23, 42, 0.70);
-      --panel-strong: rgba(15, 23, 42, 0.92);
-      --stroke: rgba(255,255,255,0.10);
-      --text:#e5eefb;
-      --muted:#93a4bf;
-      --accent:#22c55e;
-      --accent-2:#38bdf8;
-      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --bg1:#07111f; --bg2:#0f172a; --panel: rgba(15, 23, 42, 0.70); --panel-strong: rgba(15, 23, 42, 0.92);
+      --stroke: rgba(255,255,255,0.10); --text:#e5eefb; --muted:#93a4bf; --accent:#22c55e; --accent-2:#38bdf8;
+      --shadow: 0 20px 60px rgba(0,0,0,.35); --board-glow: rgba(56, 189, 248, .16); --board-glow-2: rgba(34, 197, 94, .14);
     }
-
-    *{ box-sizing:border-box; }
-    html, body{ width:100%; height:100%; margin:0; }
-    body{
-      font-family: Inter, system-ui, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 20% 15%, var(--accent-2,.12), transparent 40%),
-        radial-gradient(circle at 80% 20%, var(--accent,.12), transparent 40%),
-        linear-gradient(160deg, var(--bg1), var(--bg2));
-      transition: .2s;
-    }
-
-    .screen{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px; backdrop-filter: blur(12px); z-index:20; }
-    #lobbyScreen{ align-items:flex-start; overflow-y:auto; }
-    .panel{
-      width:min(980px, 100%);
-      border:1px solid var(--stroke);
-      background:var(--panel);
-      border-radius:30px;
-      padding:clamp(22px, 4vw, 40px);
-      backdrop-filter: blur(12px);
-    }
-    .centered{ text-align:center; }
-    h1 span{
-      display:inline-block;
-      padding:0 .35em;
-      border-radius:999px;
-      background: linear-gradient(135deg, rgba(14,165,233,.16), rgba(34,197,94,.16));
-    }
-    .btn{
-      padding:12px 18px; border-radius:999px; font-weight:800; color:white;
-      background: linear-gradient(135deg, #22c55e, #0ea5e9);
-      cursor:pointer;
-      border:none;
-    }
-    .btn.secondary{ background:var(--panel-strong); color:var(--text); border:1px solid var(--stroke); }
-    .name-row{ display:flex; gap:10px; margin-top:14px; }
-    .name-row input{
-      flex:1; padding:14px 16px; border-radius:16px;
-      border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      color:var(--text);
-    }
-    .rooms{ display:grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap:14px; margin-top:12px; }
-    .room-card{ padding:18px; border:1px solid var(--stroke); border-radius:24px; background:var(--panel); }
-    .room-card button{ margin-top:10px; width:100%; }
-
-    /* Mesa de jogo */
-    #table{ display:none; position:fixed; inset:0; background: radial-gradient(circle at 50% 45%, var(--accent,.15), transparent 50%); }
-    .table-shell{ height:100%; display:flex; flex-direction:column; padding:12px; gap:8px; }
-    .hud{
-      display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;
-      background:var(--panel-strong); border-radius:28px; padding:8px 16px;
-      border:1px solid var(--stroke);
-    }
-    .music-player{ display:flex; align-items:center; gap:6px; }
-    .music-disc{ width:32px; height:32px; border-radius:50%; cursor:pointer; }
-    .music-disc.playing{ animation: spin 4s linear infinite; }
-    @keyframes spin{ to{ transform:rotate(360deg); } }
-
-    .board{
-      flex:1;
-      display:grid;
-      grid-template-areas: 
-        "top top top"
-        "left center right"
-        "bottom bottom bottom";
-      gap: 12px;
-      padding: 8px;
-    }
-    .hand{
-      background: rgba(0,0,0,0.2);
-      border-radius: 24px;
-      padding: 8px;
-      backdrop-filter: blur(4px);
-    }
-    .hand .info{ display:flex; justify-content:space-between; font-weight:bold; margin-bottom:6px; }
-    .cards{ display:flex; flex-wrap:wrap; justify-content:center; gap:4px; }
-    .card{
-      background-size:cover; background-position:center;
-      border-radius: 12px;
-      border: 2px solid rgba(255,255,255,0.3);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      cursor: pointer;
-      transition: transform 0.1s;
-      position: relative;
-    }
-    .card::after{
-      content: attr(data-value);
-      position: absolute;
-      top: 4px; left: 6px;
-      background: rgba(0,0,0,0.6);
-      color: white;
-      font-size: 0.7rem;
-      padding: 2px 5px;
-      border-radius: 20px;
-    }
-    .card.playable:hover{ transform: translateY(-4px); }
-    .card.back{
-      background: linear-gradient(135deg, #1e293b, #0f172a);
-    }
-    .card.back::after{ content: "?"; background: none; left: 50%; top: 50%; transform:translate(-50%,-50%); font-size:1.2rem; }
-
-    .player-bottom .card{ width: var(--card-w); height: var(--card-h); }
-    .player-top .card, .player-left .card, .player-right .card{ width: var(--card-small-w); height: var(--card-small-h); }
-
-    .player-top    { grid-area: top; justify-self: center; width: auto; max-width: 90%; }
-    .player-left   { grid-area: left; align-self: center; }
-    .player-right  { grid-area: right; align-self: center; }
-    .center-area   { grid-area: center; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-    .player-bottom { grid-area: bottom; }
-
-    .pile{ width:var(--card-w); height:var(--card-h); border-radius:16px; background:var(--panel-strong); border:1px solid var(--stroke); }
-    .pile.draw{ background: linear-gradient(135deg, #1e293b, #0f172a); }
-
-    /* Chat */
-    .chat-panel{
-      position:fixed; right:16px; bottom:16px; width:min(340px,calc(100vw-32px)); max-height:45vh;
-      background:var(--panel-strong); border-radius:24px; padding:12px; border:1px solid var(--stroke);
-      display:flex; flex-direction:column; gap:8px; z-index:15;
-    }
-    .chat-messages{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:6px; max-height:200px; }
-    .chat-message{ background:rgba(128,128,128,0.1); border-radius:12px; padding:6px 10px; border-left:3px solid var(--accent-2); }
-    .chat-message .author{ font-weight:bold; font-size:0.75rem; color:var(--accent-2); }
-    .chat-message .text{ font-size:0.85rem; word-break:break-word; }
-    .chat-input-area{ display:flex; gap:8px; }
-    .chat-input-area input{ flex:1; padding:8px; border-radius:40px; border:1px solid var(--stroke); background:var(--panel); }
-    .collapsed .chat-messages, .collapsed .chat-input-area{ display:none; }
-    .collapsed{ width:auto; }
-    @media (max-width: 860px){ .board{ grid-template-areas: "top" "center" "left" "right" "bottom"; } }
+    *{ box-sizing:border-box; } html, body{ width:100%; height:100%; margin:0; }
+    body{ font-family: Inter, system-ui, sans-serif; color: var(--text); background: radial-gradient(circle at 20% 15%, var(--board-glow), transparent 24%), radial-gradient(circle at 80% 20%, var(--board-glow-2), transparent 22%), linear-gradient(160deg, var(--bg1), var(--bg2)); }
+    .screen{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center; padding:24px; z-index:20; background: radial-gradient(circle at top, rgba(56,189,248,.12), transparent 35%), linear-gradient(180deg, rgba(248,250,252,.78), rgba(241,245,249,.90)); backdrop-filter: blur(12px); }
+    body[data-theme="dark"] .screen{ background: radial-gradient(circle at top, rgba(56,189,248,.18), transparent 35%), linear-gradient(180deg, rgba(2,6,23,.96), rgba(15,23,42,.92)); }
+    #lobbyScreen{ align-items:flex-start; overflow-y:auto; padding-top:24px; }
+    .panel{ width:min(980px, 100%); border:1px solid var(--stroke); background:var(--panel); box-shadow:var(--shadow); border-radius:30px; padding:clamp(22px, 4vw, 40px); backdrop-filter: blur(12px); }
+    .centered{ text-align:center; } h1{ margin:0; font-size:clamp(2rem, 5vw, 4rem); letter-spacing:-0.04em; } h1 span{ display:inline-block; padding:0 .35em; border-radius:999px; background: linear-gradient(135deg, rgba(14,165,233,.16), rgba(34,197,94,.16)); border:1px solid var(--stroke); }
+    .subtitle{ color:var(--muted); margin:10px auto 0; max-width:64ch; }
+    .btn{ appearance:none; border:none; cursor:pointer; padding:12px 18px; border-radius:999px; font-weight:800; color:white; background: linear-gradient(135deg, #22c55e, #0ea5e9); box-shadow:0 16px 30px rgba(14,165,233,.22); transition: transform .15s ease; white-space:nowrap; }
+    .btn:hover{ transform: translateY(-1px); } .btn.secondary{ background:var(--panel-strong); color:var(--text); border:1px solid var(--stroke); box-shadow:none; } .btn.small{ padding:6px 12px; font-size:0.8rem; }
+    .lobby-grid{ display:grid; grid-template-columns: 1fr; gap:18px; margin-top:24px; text-align:left; }
+    .hero-card, .lobby-card, .room-card, .chat-panel, .hud, .board-note{ border:1px solid var(--stroke); background:var(--panel); box-shadow:var(--shadow); border-radius:24px; backdrop-filter: blur(12px); }
+    .hero-card{ padding:22px; } .name-row{ display:flex; gap:10px; margin-top:14px; } .name-row input{ flex:1; padding:14px 16px; border-radius:16px; border:1px solid var(--stroke); background:var(--panel-strong); color:var(--text); outline:none; font-size:1rem; }
+    .rooms{ display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; } .room-card{ padding:18px; } .room-head{ display:flex; justify-content:space-between; margin-bottom:10px; } .room-tag{ padding:6px 10px; border-radius:999px; font-size:.75rem; font-weight:800; background:rgba(14,165,233,.12); border:1px solid var(--stroke); }
+    #table{ position:fixed; inset:0; display:none; overflow:hidden; background: radial-gradient(circle at 50% 45%, var(--board-glow-2), transparent 30%), radial-gradient(circle at 50% 45%, var(--board-glow), transparent 42%); }
+    .table-shell{ position:relative; width:100%; height:100%; padding:16px; display:grid; grid-template-rows:auto 1fr; gap:12px; }
+    .hud{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:14px 16px; flex-wrap:wrap; }
+    .board{ position:relative; width:100%; height:100%; display:grid; grid-template-columns: 1fr 1.2fr 1fr; grid-template-rows: 1fr 1.1fr 1fr; gap:12px; min-height:0; }
+    .hand{ min-width:0; display:flex; flex-direction:column; gap:8px; padding:10px; overflow:hidden; } .hand .info{ display:flex; align-items:center; gap:8px; font-size:.88rem; font-weight:800; } .hand .info small{ color:var(--muted); font-weight:700; } .cards{ display:flex; flex-wrap:wrap; gap:4px; align-items:flex-start; }
+    .player-top{ grid-column:1 / 4; grid-row:1; } .player-left{ grid-column:1; grid-row:2; } .player-right{ grid-column:3; grid-row:2; } .center-area{ grid-column:2; grid-row:2; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; } .player-bottom{ grid-column:1 / 4; grid-row:3; }
+    .pile{ width:var(--card-w); height:var(--card-h); border-radius:16px; border:1px solid var(--stroke); background:var(--panel-strong); box-shadow: var(--shadow); } .pile.draw{ background: linear-gradient(135deg, rgba(15,23,42,.92), rgba(30,41,59,.92)); cursor:pointer; } .pile.discard{ position:relative; overflow:hidden; }
+    .board-note{ padding:10px 14px; text-align:center; font-size:.9rem; color:var(--muted); max-width: 340px; }
+    .card{ width:var(--card-w); height:var(--card-h); border-radius:16px; position:relative; border:2px solid rgba(255,255,255,.25); background-size:cover; background-position:center; box-shadow:0 10px 22px rgba(15,23,42,.18); transition: transform .16s ease; overflow:hidden; user-select:none; }
+    .card::after{ content: attr(data-value); position:absolute; top:6px; left:6px; padding:4px 6px; border-radius:999px; font-size:.72rem; font-weight:900; color:white; background:rgba(15,23,42,.64); backdrop-filter: blur(4px); }
+    .card:hover{ transform:translateY(-4px) scale(1.02); cursor:pointer; } .card.playable{ transform: translateY(-8px) scale(1.04); box-shadow:0 18px 34px rgba(15,23,42,.26); } .card.back{ background: linear-gradient(135deg, #0f172a, #334155); border:2px solid rgba(255,255,255,.12); cursor:default; } .card.back::after{ content:""; }
+    .chat-panel{ position:fixed; right:16px; bottom:16px; width:min(350px, calc(100vw - 32px)); max-height: 48vh; display:flex; flex-direction:column; gap:10px; padding:14px; z-index:15; background:var(--panel-strong); }
+    .chat-header{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--stroke); padding-bottom:6px; }
+    .chat-messages{ flex:1; min-height:150px; max-height:260px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px; }
+    .chat-message{ background:rgba(128,128,128,0.08); border-radius:14px; padding:8px 10px; border-left:3px solid var(--accent-2); }
+    .chat-message .message-header{ display:flex; justify-content:space-between; font-size:0.75rem; margin-bottom:4px; } .message-author{ font-weight:800; color:var(--accent-2); } .message-time{ color:var(--muted); } .message-text{ font-size:0.85rem; word-break:break-word; }
+    .chat-input-area{ display:flex; gap:8px; } .chat-input-area input{ flex:1; padding:8px 12px; border-radius:40px; border:1px solid var(--stroke); background:var(--panel); color:var(--text); }
+    .turn-badge{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:999px; background:rgba(34,197,94,.14); border:1px solid rgba(34,197,94,.25); font-weight:800; }
+    .turn-dot{ width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(34,197,94,.14); }
+    @media (max-width: 920px){ .rooms{ grid-template-columns:1fr; } .board{ grid-template-columns: 1fr; grid-template-rows:auto auto auto auto auto; } .player-top{ grid-column:1; grid-row:1; } .center-area{ grid-column:1; grid-row:2; } .player-left{ grid-column:1; grid-row:3; } .player-right{ grid-column:1; grid-row:4; } .player-bottom{ grid-column:1; grid-row:5; } .chat-panel{ position:relative; right:auto; bottom:auto; width:auto; margin-top:12px; } }
   </style>
 </head>
 <body data-theme="light">
-  <!-- LOBBY -->
   <div id="lobbyScreen" class="screen">
     <div class="panel centered">
-      <h1><span>Cartas Multiplayer</span></h1>
-      <p class="subtitle">Entre em uma sala e jogue online com amigos!</p>
+      <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+        <button class="btn secondary small" onclick="toggleAdminMode()">Adm</button>
+      </div>
+      <h1><span>Cartas</span></h1>
+      <p class="subtitle">Combine cor ou valor e zere sua mão. Agora 100% multiplayer via Firebase.</p>
       <div class="lobby-grid">
         <div class="hero-card">
           <strong>Seu nome</strong>
           <div class="name-row">
-            <input id="globalUserName" type="text" placeholder="Digite seu nome" maxlength="18" value="Jogador" />
+            <input id="playerName" type="text" placeholder="Digite seu nome" maxlength="18" />
             <button class="btn" onclick="joinRobots()">Jogar com robôs</button>
           </div>
-        </div>
-        <div class="lobby-card">
+        <div class="lobby-card" style="padding:22px;">
           <strong>Salas multiplayer</strong>
+          <div class="name-row" style="margin:12px 0;">
+            <input id="roomName" type="text" placeholder="Seu nome na sala" maxlength="18" />
+          </div>
           <div class="rooms" id="roomsList"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- FIM DE JOGO -->
   <div id="endScreen" class="screen" style="display:none">
-    <div class="panel">
+    <div class="panel centered">
       <h1 id="winnerText"></h1>
       <button class="btn" onclick="backToLobby()">Voltar à lobby</button>
     </div>
   </div>
 
-  <!-- MESA -->
   <div id="table" style="display:none">
     <div class="table-shell">
       <div class="hud">
-        <div class="title">
-          <button class="btn secondary" onclick="backToLobby()">Sair</button>
-          <div class="music-player">
-            <button class="btn secondary" onclick="prevTrack()">&lt;</button>
-            <img id="musicDisc" class="music-disc" src="https://raw.githubusercontent.com/fil0099/livedacaca/main/vini2.png" onclick="toggleMusic()" />
-            <button class="btn secondary" onclick="nextTrack()">&gt;</button>
-            <input id="musicVolume" type="range" min="0" max="100" value="70" oninput="setMusicVolume(this.value)" />
-          </div>
+        <div>
+          <button class="btn secondary" onclick="backToLobby()">Voltar</button>
+          <strong style="margin-left:10px;">Cartas</strong>
         </div>
-        <div class="hud-right">
-          <div id="hudTurn" class="turn-badge" style="background:rgba(34,197,94,.2); padding:6px 12px; border-radius:40px;">Sua vez</div>
-          <label class="theme-switch">
-            <span class="switch"><input id="themeToggle" type="checkbox" onchange="toggleTheme()" /><span class="slider"></span></span>
-          </label>
-        </div>
+        <div id="hudTurn" class="turn-badge"><span class="turn-dot"></span><span>Sua vez</span></div>
       </div>
       <div class="board">
         <div id="p2" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
         <div id="p3" class="hand player-left"><div class="info"></div><div class="cards"></div></div>
         <div class="center-area">
-          <div class="center-card-row">
-            <div id="drawPile" class="pile draw"></div>
+          <div style="display:flex; gap:14px;">
+            <div id="drawPile" class="pile draw" onclick="drawCard()"></div>
             <div id="discardPile" class="pile discard"></div>
           </div>
-          <div class="board-note" id="statusNote">Aguardando jogadores...</div>
-          <button class="btn" id="drawCardBtn">Comprar carta</button>
+          <div class="board-note" id="statusNote">Combine cor ou valor</div>
+          <button class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
         <div id="p4" class="hand player-right"><div class="info"></div><div class="cards"></div></div>
         <div id="p1" class="hand player-bottom"><div class="info"></div><div class="cards"></div></div>
@@ -238,399 +113,444 @@
     </div>
   </div>
 
-  <!-- CHAT -->
   <div id="chatPanel" class="chat-panel" style="display:none">
-    <div class="chat-header" style="display:flex; justify-content:space-between;">
-      <strong>💬 Chat</strong>
-      <button class="chat-collapse-btn" onclick="toggleChatPanel()">−</button>
+    <div class="chat-header">
+      <strong>💬 Chat da sala</strong>
     </div>
     <div id="chatMessagesList" class="chat-messages"></div>
     <div class="chat-input-area">
-      <input type="text" id="chatMessageInput" placeholder="Mensagem..." maxlength="200">
+      <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." maxlength="200">
       <button class="btn" id="sendChatBtn">Enviar</button>
     </div>
   </div>
 
-  <script>
-    // ========== FIREBASE ==========
-    const firebaseConfig = {
-      apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
-      authDomain: "testbotao.firebaseapp.com",
-      databaseURL: "https://testbotao-default-rtdb.firebaseio.com",
-      projectId: "testbotao",
-      storageBucket: "testbotao.firebasestorage.app",
-      messagingSenderId: "940068631746",
-      appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
+  authDomain: "testbotao.firebaseapp.com",
+  databaseURL: "https://testbotao-default-rtdb.firebaseio.com",
+  projectId: "testbotao",
+  storageBucket: "testbotao.firebasestorage.app",
+  messagingSenderId: "940068631746",
+  appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-    // ========== CONSTANTES DO JOGO ==========
-    const imgs = [
-      "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
-      "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
-      "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
-      "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp"
-    ];
-    const colors = ["red","blue","green","yellow"];
-    const colorMap = { red:"#ef4444", blue:"#3b82f6", green:"#22c55e", yellow:"#eab308" };
+const imgs = [
+  "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+  "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+  "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
+  "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp"
+];
+const colors = ["red", "blue", "green", "yellow"];
+const colorMap = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#eab308" };
 
-    function createCard(){
-      const r=Math.random();
-      let value=Math.floor(Math.random()*10).toString();
-      if(r<0.12) value="+2";
-      else if(r<0.18) value="+4";
-      return { color: colors[Math.floor(Math.random()*colors.length)], value, img: imgs[Math.floor(Math.random()*imgs.length)] };
-    }
-    function generateDeck(){ let d=[]; for(let i=0;i<60;i++) d.push(createCard()); return d; }
-    function canPlay(card, top){ if(!top) return true; if(card.value==="+4") return true; if(card.value==="+2") return card.color===top.color || top.value==="+2"; return card.color===top.color || card.value===top.value; }
+let gameState = {
+  roomMode: false, roomId: null, myName: "Você", myId: Math.random().toString(36).substr(2,9),
+  roomMembers: [], deck: [], players: [[],[],[],[]], topCard: null, turn: 0, penalty: 0,
+  gameRunning: false, botTimer: null, roomRef: null, isAdmin: false, unsubscribe: null
+};
 
-    // ========== VARIÁVEIS GLOBAIS ==========
-    let currentRoomId = null;
-    let myPlayerId = null;
-    let mySeatIndex = -1;
-    let gameUnsubscribe = null;
-    let chatUnsubscribe = null;
-    let isAdmin = false;
+let roomsList = [
+  { id: "sala1", name: "Sala 1" },
+  { id: "sala2", name: "Sala 2" },
+  { id: "sala3", name: "Sala 3" }
+];
 
-    // Elementos
-    const drawBtn = document.getElementById("drawCardBtn");
+function renderLobbyRooms(){
+  const container = document.getElementById("roomsList");
+  container.innerHTML = "";
+  roomsList.forEach(room => {
+    const div = document.createElement("div");
+    div.className = "room-card";
+    div.innerHTML = `<div class="room-head"><strong>${room.name}</strong><span class="room-tag">Aberta</span></div><button class="btn secondary" onclick="joinRoom('${room.id}')">Entrar</button>`;
+    container.appendChild(div);
+  });
+}
 
-    // ========== FUNÇÕES AUXILIARES ==========
-    function getCurrentUserName(){
-      let name = document.getElementById("globalUserName").value.trim();
-      return name ? name.slice(0,18) : "Jogador";
-    }
-    function generateId(){ return Math.random().toString(36).substr(2, 8); }
-    function shuffleArray(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+function createCard(){
+  const r=Math.random(); let value=Math.floor(Math.random()*10).toString();
+  if(r<0.12) value="+2"; else if(r<0.18) value="+4";
+  return { color: colors[Math.floor(Math.random()*colors.length)], value, img: imgs[Math.floor(Math.random()*imgs.length)] };
+}
+function canPlay(c){ if(!gameState.topCard) return true; if(c.value==="+4") return true; if(c.value==="+2") return c.color===gameState.topCard.color || gameState.topCard.value==="+2"; return c.color===gameState.topCard.color || c.value===gameState.topCard.value; }
 
-    // ========== INICIAR/ENTRAR NA SALA ==========
-    async function joinRoom(roomId){
-      const userName = getCurrentUserName();
-      if(!userName){ alert("Digite um nome."); return; }
-      currentRoomId = roomId;
-      myPlayerId = generateId();
+async function joinRoom(roomId){
+  try{
+    let userName = document.getElementById("roomName").value.trim() || document.getElementById("playerName").value.trim() || "Jogador";
+    gameState.myName = userName.slice(0,18);
+    gameState.roomMode = true;
+    gameState.roomId = roomId;
+    gameState.roomRef = db.collection('rooms').doc(roomId);
+    
+    showGame();
+    initRoomChat(roomId);
 
-      const gameRef = db.collection("game_salas").doc(roomId);
-      await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(gameRef);
-        let gameData;
-        if(!doc.exists){
-          // Criar nova sala
-          let deck = shuffleArray(generateDeck());
-          let players = [{ id: myPlayerId, name: userName, cards: [] }];
-          let topCard = deck.pop();
-          gameData = {
-            roomId,
-            players,
-            deck,
-            discardPile: topCard,
-            turn: 0,
-            penalty: 0,
-            gameActive: true,
-            winner: null,
-            maxPlayers: 4
-          };
-          // Distribuir 6 cartas
-          for(let i=0;i<6;i++) gameData.players[0].cards.push(gameData.deck.pop());
-          transaction.set(gameRef, gameData);
-        } else {
-          gameData = doc.data();
-          // Verificar se jogador já está na sala
-          let already = gameData.players.find(p => p.id === myPlayerId);
-          if(already){
-            mySeatIndex = gameData.players.findIndex(p => p.id === myPlayerId);
-            return;
-          }
-          if(gameData.players.length >= gameData.maxPlayers){
-            alert("Sala cheia!");
-            throw new Error("Sala cheia");
-          }
-          // Adicionar novo jogador
-          let newPlayer = { id: myPlayerId, name: userName, cards: [] };
-          // Distribuir cartas iniciais para o novo jogador
-          let newDeck = [...gameData.deck];
-          for(let i=0;i<6;i++) newPlayer.cards.push(newDeck.pop());
-          gameData.deck = newDeck;
-          gameData.players.push(newPlayer);
-          transaction.update(gameRef, { players: gameData.players, deck: gameData.deck });
-        }
-      }).catch(err => { if(err.message !== "Sala cheia") console.error(err); else backToLobby(); return; });
-
-      startGameListener(currentRoomId);
-      initRoomChat(currentRoomId);
-      showGame();
-    }
-
-    function startGameListener(roomId){
-      if(gameUnsubscribe) gameUnsubscribe();
-      const gameRef = db.collection("game_salas").doc(roomId);
-      gameUnsubscribe = gameRef.onSnapshot(snapshot => {
-        if(!snapshot.exists) return;
-        const data = snapshot.data();
-        if(!data.gameActive && data.winner !== undefined){
-          const winnerName = data.players[data.winner]?.name || "Alguém";
-          document.getElementById("winnerText").innerHTML = `${winnerName} venceu!`;
-          document.getElementById("table").style.display = "none";
-          document.getElementById("endScreen").style.display = "flex";
-          return;
-        }
-        // Atualizar meu seat index
-        mySeatIndex = data.players.findIndex(p => p.id === myPlayerId);
-        if(mySeatIndex === -1 && data.players.some(p=>p.id===myPlayerId)) mySeatIndex = data.players.findIndex(p=>p.id===myPlayerId);
-        renderGame(data);
-        const myTurn = (data.turn === mySeatIndex);
-        drawBtn.disabled = !(myTurn && data.gameActive && data.penalty===0);
-        if(myTurn && data.penalty===0 && data.gameActive) document.getElementById("statusNote").innerHTML = "Sua vez! Jogue uma carta ou compre.";
-        else if(data.penalty>0) document.getElementById("statusNote").innerHTML = `${data.players[data.turn]?.name} vai comprar ${data.penalty} carta(s)!`;
-        else document.getElementById("statusNote").innerHTML = `Vez de ${data.players[data.turn]?.name}`;
-      }, err => console.error(err));
-    }
-
-    // ========== AÇÕES DO JOGO ==========
-    async function playCard(cardIndex){
-      if(!currentRoomId) return;
-      const gameRef = db.collection("game_salas").doc(currentRoomId);
-      await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(gameRef);
-        if(!doc.exists) return;
-        const gameData = doc.data();
-        if(gameData.turn !== mySeatIndex){ alert("Não é sua vez!"); return; }
-        if(gameData.penalty > 0){ alert("Você precisa comprar penalidade primeiro!"); return; }
-        const card = gameData.players[mySeatIndex].cards[cardIndex];
-        if(!canPlay(card, gameData.discardPile)){ alert("Carta inválida!"); return; }
-        // Jogar carta
-        gameData.players[mySeatIndex].cards.splice(cardIndex,1);
-        gameData.discardPile = card;
-        if(card.value === "+2") gameData.penalty += 2;
-        if(card.value === "+4") gameData.penalty += 4;
-        if(gameData.players[mySeatIndex].cards.length === 0){
-          gameData.gameActive = false;
-          gameData.winner = mySeatIndex;
-          transaction.update(gameRef, gameData);
-          return;
-        }
-        if(gameData.penalty === 0){
-          gameData.turn = (gameData.turn + 1) % gameData.players.length;
-        }
-        transaction.update(gameRef, gameData);
-      }).catch(err => console.error(err));
-    }
-
-    async function drawCard(){
-      if(!currentRoomId) return;
-      const gameRef = db.collection("game_salas").doc(currentRoomId);
-      await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(gameRef);
-        if(!doc.exists) return;
-        const gameData = doc.data();
-        if(gameData.turn !== mySeatIndex){ alert("Não é sua vez!"); return; }
-        if(gameData.penalty > 0){
-          for(let i=0;i<gameData.penalty;i++){
-            if(gameData.deck.length===0) gameData.deck = generateDeck();
-            gameData.players[mySeatIndex].cards.push(gameData.deck.pop());
-          }
-          gameData.penalty = 0;
-        } else {
-          if(gameData.deck.length===0) gameData.deck = generateDeck();
-          gameData.players[mySeatIndex].cards.push(gameData.deck.pop());
-        }
-        gameData.turn = (gameData.turn + 1) % gameData.players.length;
-        transaction.update(gameRef, gameData);
-      }).catch(err => console.error(err));
-    }
-
-    // ========== RENDERIZAÇÃO ==========
-    function renderGame(gameData){
-      if(!gameData) return;
-      // Carta descarte
-      const discardDiv = document.getElementById("discardPile");
-      if(gameData.discardPile){
-        const c = gameData.discardPile;
-        discardDiv.innerHTML = `<div class="card" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}"></div>`;
-      } else discardDiv.innerHTML = "";
-
-      const positions = ["p1","p2","p3","p4"];
-      const numPlayers = gameData.players.length;
-      // Mapear cada seat para uma posição visual (rotacionar para que o jogador atual fique embaixo)
-      // Simples: mostra o primeiro jogador (índice 0) como "p1" (embaixo), o segundo acima, terceiro esquerda, quarto direita
-      // Mas o índice do jogador atual pode variar. Para simplificar, vamos ordenar visualmente baseado no índice.
-      // p1 = jogador do meio (eu), p2 = próximo (cima), p3 = esquerda, p4 = direita (se existirem)
-      // Vamos fazer uma rotação circular: o meu índice é sempre o último (p1)
-      const myIdx = gameData.players.findIndex(p => p.id === myPlayerId);
-      if(myIdx === -1) return;
-      // Reordenar jogadores para visualização: 
-      // ordem visual: [meu, próximo, próximo+1, próximo+2] (máximo 4)
-      let visualOrder = [];
-      for(let i=0;i<numPlayers;i++){
-        visualOrder.push(gameData.players[(myIdx + i) % numPlayers]);
+    await db.runTransaction(async t => {
+      const doc = await t.get(gameState.roomRef);
+      let data = doc.exists ? doc.data() : { players: [] };
+      let players = data.players || [];
+      if(!players.find(p => p.id === gameState.myId)){
+        if(players.length >= 4) throw new Error("Sala cheia");
+        players.push({ id: gameState.myId, name: gameState.myName });
       }
-      // Preencher até 4 com placeholders vazios
-      while(visualOrder.length < 4) visualOrder.push({ name: "---", cards: [] });
+      t.set(gameState.roomRef, { players, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+    });
+
+    if(gameState.unsubscribe) gameState.unsubscribe();
+    gameState.unsubscribe = gameState.roomRef.onSnapshot(doc => {
+      if(!doc.exists) return;
+      const data = doc.data();
+      gameState.roomMembers = data.players || [];
       
-      const visualNames = ["p1","p2","p3","p4"];
-      for(let i=0;i<visualOrder.length;i++){
-        const player = visualOrder[i];
-        const div = document.getElementById(visualNames[i]);
-        if(!div) continue;
-        const isMe = (i===0);
-        div.querySelector('.info').innerHTML = `<span>${player.name}</span><small>${player.cards.length}</small>`;
-        const cardsDiv = div.querySelector('.cards');
-        if(isMe){
-          cardsDiv.innerHTML = player.cards.map((c,idx)=>`<div class="card playable" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${idx})"></div>`).join('');
-        } else {
-          cardsDiv.innerHTML = player.cards.map(()=>`<div class="card back"></div>`).join('');
+      if(data.state && data.state.gameRunning){
+        const s = data.state;
+        gameState.deck = s.deck || [];
+        gameState.players = s.hands || [[],[],[],[]];
+        gameState.topCard = s.topCard;
+        gameState.turn = s.turn || 0;
+        gameState.penalty = s.penalty || 0;
+        gameState.gameRunning = true;
+        renderGame();
+      } else if(data.state && data.state.winner){
+        gameState.gameRunning = false;
+        document.getElementById("table").style.display="none";
+        document.getElementById("endScreen").style.display="flex";
+        document.getElementById("winnerText").textContent = data.state.winner === gameState.myName ? "Você venceu!" : `${data.state.winner} venceu!`;
+      } else {
+        if(gameState.roomMembers[0]?.id === gameState.myId && !data.state){
+          initializeRoomGame();
         }
       }
-      // Oculta posições não utilizadas se menos de 4 jogadores
-      for(let i=numPlayers;i<4;i++){
-        const div = document.getElementById(visualNames[i]);
-        if(div) div.style.opacity = "0.5";
+    });
+  }catch(e){
+    alert(e.message || "Erro ao entrar");
+    backToLobby();
+  }
+}
+
+async function initializeRoomGame(){
+  try{
+    const deck = []; for(let i=0;i<80;i++) deck.push(createCard());
+    const hands = [[],[],[],[]];
+    for(let p=0;p<4;p++) for(let i=0;i<7;i++) hands[p].push(deck.pop());
+    const topCard = deck.pop();
+    await gameState.roomRef.set({
+      state: { deck, hands, topCard, turn: 0, penalty: 0, gameRunning: true, winner: null }
+    }, { merge: true });
+  }catch(e){}
+}
+
+function joinRobots(){
+  let userName = document.getElementById("playerName").value.trim() || "Você";
+  gameState.myName = userName.slice(0,18);
+  gameState.roomMode = false;
+  showGame();
+  initOfflineChat();
+  initGameSolo();
+}
+
+function showGame(){
+  document.getElementById("lobbyScreen").style.display = "none";
+  document.getElementById("endScreen").style.display = "none";
+  document.getElementById("table").style.display = "block";
+  document.getElementById("chatPanel").style.display = "flex";
+}
+
+function backToLobby(){
+  clearTimeout(gameState.botTimer);
+  if(window.chatUnsubscribe) { window.chatUnsubscribe(); window.chatUnsubscribe = null; }
+  if(gameState.unsubscribe){ gameState.unsubscribe(); gameState.unsubscribe = null; }
+  if(gameState.roomRef && gameState.roomMode){
+    gameState.roomRef.get().then(doc => {
+      if(doc.exists){
+        const players = (doc.data().players || []).filter(p => p.id !== gameState.myId);
+        gameState.roomRef.update({ players }).catch(()=>{});
       }
-      document.getElementById("hudTurn").innerHTML = (gameData.turn === myIdx) ? "Sua vez!" : `Vez de ${gameData.players[gameData.turn]?.name}`;
-    }
+    }).catch(()=>{});
+  }
+  gameState.roomMode = false;
+  gameState.roomId = null;
+  document.getElementById("table").style.display = "none";
+  document.getElementById("chatPanel").style.display = "none";
+  document.getElementById("lobbyScreen").style.display = "flex";
+  renderLobbyRooms();
+}
 
-    // ========== CHAT ==========
-    function initRoomChat(roomId){
-      if(chatUnsubscribe) chatUnsubscribe();
-      const q = db.collection('chat').where('roomId', '==', roomId).orderBy('timestamp', 'asc');
-      chatUnsubscribe = q.onSnapshot(snapshot => {
-        let msgs = [];
-        snapshot.forEach(doc => {
-          let d = doc.data();
-          msgs.push({ id: doc.id, author: d.author, message: d.message, timestamp: d.timestamp?.toDate?.() || new Date() });
+function initGameSolo(){
+  clearTimeout(gameState.botTimer);
+  gameState.deck = []; for(let i=0;i<80;i++) gameState.deck.push(createCard());
+  gameState.players = [[],[],[],[]];
+  for(let p=0;p<4;p++) for(let i=0;i<7;i++) gameState.players[p].push(gameState.deck.pop());
+  gameState.topCard = gameState.deck.pop();
+  gameState.turn = 0; gameState.penalty = 0; gameState.gameRunning = true;
+  renderGame();
+  scheduleBot();
+}
+
+function scheduleBot(){ clearTimeout(gameState.botTimer); gameState.botTimer = setTimeout(botTurn, 900); }
+
+function botTurn(){
+  if(!gameState.gameRunning || gameState.roomMode) return;
+  if(gameState.turn === 0){ scheduleBot(); return; }
+  const hand = gameState.players[gameState.turn];
+  if(gameState.penalty > 0){
+    for(let i=0;i<gameState.penalty;i++) hand.push(gameState.deck.pop() || createCard());
+    gameState.penalty = 0;
+  } else {
+    const idx = hand.findIndex(c => canPlay(c));
+    if(idx !== -1){
+      const c = hand.splice(idx,1)[0];
+      gameState.topCard = c;
+      if(c.value === "+2") gameState.penalty += 2;
+      if(c.value === "+4") gameState.penalty += 4;
+    } else {
+      hand.push(gameState.deck.pop() || createCard());
+    }
+  }
+  gameState.turn = (gameState.turn + 1) % 4;
+  checkWinSolo();
+  renderGame();
+  scheduleBot();
+}
+
+function checkWinSolo(){
+  for(let i=0;i<4;i++) if(gameState.players[i].length === 0){
+    gameState.gameRunning = false;
+    document.getElementById("table").style.display="none";
+    document.getElementById("endScreen").style.display="flex";
+    document.getElementById("winnerText").textContent = i===0 ? "Você venceu!" : `Robô ${i} venceu!`;
+    return true;
+  }
+  return false;
+}
+
+async function playCard(i){
+  if(!gameState.gameRunning) return;
+  
+  if(gameState.roomMode){
+    const myIndex = gameState.roomMembers.findIndex(p => p.id === gameState.myId);
+    if(myIndex !== gameState.turn) return;
+    const card = gameState.players[myIndex][i];
+    if(!card || !canPlay(card) || gameState.penalty > 0) return;
+    
+    try{
+      await db.runTransaction(async t => {
+        const doc = await t.get(gameState.roomRef);
+        const data = doc.data(); const s = data.state;
+        if(!s || s.turn !== myIndex) return;
+        const hands = s.hands; const cardToPlay = hands[myIndex][i];
+        hands[myIndex].splice(i,1);
+        let penalty = s.penalty || 0;
+        if(cardToPlay.value === "+2") penalty += 2;
+        if(cardToPlay.value === "+4") penalty += 4;
+        let winner = null;
+        if(hands[myIndex].length === 0) winner = gameState.myName;
+        const nextTurn = winner ? s.turn : (s.turn + 1) % Math.max(1, gameState.roomMembers.length);
+        t.update(gameState.roomRef, {
+          "state.hands": hands,
+          "state.topCard": cardToPlay,
+          "state.penalty": penalty,
+          "state.turn": nextTurn,
+          "state.gameRunning": !winner,
+          "state.winner": winner
         });
-        renderChat(msgs);
-      }, err => console.error("Erro chat:", err));
-    }
+      });
+    }catch(e){}
+  } else {
+    if(gameState.turn !== 0 || gameState.penalty > 0) return;
+    const c = gameState.players[0][i]; if(!c || !canPlay(c)) return;
+    gameState.players[0].splice(i,1);
+    gameState.topCard = c;
+    if(c.value === "+2") gameState.penalty += 2;
+    if(c.value === "+4") gameState.penalty += 4;
+    gameState.turn = 1;
+    checkWinSolo();
+    renderGame();
+    scheduleBot();
+  }
+}
 
-    async function sendChatMessage(){
-      let msg = document.getElementById("chatMessageInput").value.trim();
-      if(!msg) return;
-      let author = getCurrentUserName();
-      if(!author){ alert("Defina seu nome."); return; }
-      if(!currentRoomId) return;
-      try {
-        await db.collection('chat').add({
-          roomId: currentRoomId,
-          author,
-          message: msg,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+async function drawCard(){
+  if(!gameState.gameRunning) return;
+  
+  if(gameState.roomMode){
+    const myIndex = gameState.roomMembers.findIndex(p => p.id === gameState.myId);
+    if(myIndex !== gameState.turn) return;
+    
+    try{
+      await db.runTransaction(async t => {
+        const doc = await t.get(gameState.roomRef);
+        const data = doc.data(); const s = data.state;
+        const hands = s.hands; let deck = s.deck || []; let penalty = s.penalty || 0;
+        
+        if(penalty > 0){
+          for(let i=0;i<penalty;i++){
+            if(deck.length === 0) deck.push(createCard());
+            hands[myIndex].push(deck.pop());
+          }
+          penalty = 0;
+        } else {
+          if(deck.length === 0) deck.push(createCard());
+          hands[myIndex].push(deck.pop());
+        }
+        const nextTurn = (s.turn + 1) % Math.max(1, gameState.roomMembers.length);
+        t.update(gameState.roomRef, {
+          "state.hands": hands,
+          "state.deck": deck,
+          "state.penalty": penalty,
+          "state.turn": nextTurn
         });
-        document.getElementById("chatMessageInput").value = "";
-      } catch(e){ alert("Erro ao enviar."); }
-    }
-
-    function renderChat(messages){
-      const container = document.getElementById("chatMessagesList");
-      if(!container) return;
-      if(messages.length===0){ container.innerHTML = "<div>Nenhuma mensagem</div>"; return; }
-      container.innerHTML = "";
-      messages.forEach(msg => {
-        let time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-        let div = document.createElement("div");
-        div.className = "chat-message";
-        div.innerHTML = `<div class="author">${escapeHtml(msg.author)} <span style="font-size:0.7rem;">${time}</span></div><div class="text">${escapeHtml(msg.message)}</div>`;
-        container.appendChild(div);
       });
-      container.scrollTop = container.scrollHeight;
+    }catch(e){}
+  } else {
+    if(gameState.turn !== 0) return;
+    if(gameState.penalty > 0){
+      for(let i=0;i<gameState.penalty;i++) gameState.players[0].push(gameState.deck.pop() || createCard());
+      gameState.penalty = 0;
+    } else {
+      gameState.players[0].push(gameState.deck.pop() || createCard());
     }
+    gameState.turn = 1;
+    renderGame();
+    scheduleBot();
+  }
+}
 
-    // ========== ROBÔS (MANTIDO PARA MODO OFFLINE) ==========
-    function joinRobots(){
-      alert("Modo robôs funciona apenas offline. Por enquanto, use salas multiplayer.");
-      // Implementação resumida (para não quebrar)
-      gameState = { roomMode: false, gameRunning: true };
-      showGame();
-      // ... (código original de robôs seria extenso, mas mantemos apenas o essencial para não quebrar)
+function renderGame(){
+  const discard = document.getElementById("discardPile");
+  discard.innerHTML = gameState.topCard ? 
+    `<div class="card" data-value="${gameState.topCard.value}" style="background-image:url('${gameState.topCard.img}'); border-color:${colorMap[gameState.topCard.color] || '#fff'}"></div>` : '';
+  
+  if(gameState.roomMode){
+    const players = gameState.roomMembers;
+    const myIndex = players.findIndex(p => p.id === gameState.myId);
+    if(myIndex === -1) return;
+    
+    const turnName = players[gameState.turn]?.name || "";
+    document.getElementById("hudTurn").querySelector('span:last-child').textContent = 
+      gameState.turn === myIndex ? "Sua vez" : `Vez de ${turnName}`;
+    
+    const order = [myIndex, (myIndex+1)%players.length, (myIndex+2)%players.length, (myIndex+3)%players.length];
+    const ids = ["p1","p3","p2","p4"];
+    
+    order.forEach((playerIdx, pos) => {
+      if(playerIdx >= players.length) return;
+      const el = document.getElementById(ids[pos]);
+      if(!el) return;
+      const name = players[playerIdx].name;
+      const hand = gameState.players[playerIdx] || [];
+      el.querySelector('.info').innerHTML = `<span>${escapeHtml(name)}</span><small>${hand.length}</small>`;
+      
+      if(pos === 0){
+        el.querySelector('.cards').innerHTML = hand.map((c,i) => 
+          `<div class="card ${canPlay(c) && gameState.turn===myIndex && gameState.penalty===0 ? 'playable' : ''}" 
+            data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" 
+            onclick="playCard(${i})"></div>`
+        ).join('');
+      } else {
+        el.querySelector('.cards').innerHTML = Array(hand.length).fill('<div class="card back"></div>').join('');
+      }
+    });
+    // limpar slots vazios
+    for(let i=players.length; i<4; i++){
+      const el = document.getElementById(ids[i]);
+      if(el){ el.querySelector('.info').innerHTML=''; el.querySelector('.cards').innerHTML=''; }
     }
-
-    // ========== UI / LOBBY ==========
-    let roomsList = [
-      { id: "sala1", name: "Sala 1" },
-      { id: "sala2", name: "Sala 2" },
-      { id: "sala3", name: "Sala 3" }
-    ];
-    function renderLobbyRooms(){
-      const container = document.getElementById("roomsList");
-      if(!container) return;
-      container.innerHTML = "";
-      roomsList.forEach(room => {
-        const div = document.createElement("div");
-        div.className = "room-card";
-        div.innerHTML = `<strong>${room.name}</strong><button class="btn secondary" onclick="joinRoom('${room.id}')">Entrar</button>`;
-        container.appendChild(div);
-      });
-    }
-
-    function backToLobby(){
-      if(gameUnsubscribe) gameUnsubscribe();
-      if(chatUnsubscribe) chatUnsubscribe();
-      currentRoomId = null;
-      mySeatIndex = -1;
-      document.getElementById("table").style.display = "none";
-      document.getElementById("endScreen").style.display = "none";
-      document.getElementById("lobbyScreen").style.display = "flex";
-      document.getElementById("chatPanel").style.display = "none";
-      renderLobbyRooms();
-    }
-
-    function showGame(){
-      document.getElementById("lobbyScreen").style.display = "none";
-      document.getElementById("endScreen").style.display = "none";
-      document.getElementById("table").style.display = "block";
-      document.getElementById("chatPanel").style.display = "flex";
-    }
-
-    // ========== MÚSICA E ÁUDIO (SIMPLIFICADO) ==========
-    let musicAudio = null;
-    let musicPlaying = false;
-    function setupMusic(){
-      if(!musicAudio){
-        musicAudio = new Audio();
-        musicAudio.loop = false;
-        musicAudio.src = "https://raw.githubusercontent.com/fil0099/livedacaca/main/music_for_video-just-relax-11157.mp3";
-        musicAudio.volume = 0.7;
+  } else {
+    document.getElementById("hudTurn").querySelector('span:last-child').textContent = 
+      gameState.turn===0 ? "Sua vez" : `Vez do Robô ${gameState.turn}`;
+    
+    const p1 = document.getElementById("p1");
+    p1.querySelector('.info').innerHTML = `<span>${escapeHtml(gameState.myName)}</span><small>${gameState.players[0].length}</small>`;
+    p1.querySelector('.cards').innerHTML = gameState.players[0].map((c,i) => 
+      `<div class="card ${canPlay(c) && gameState.turn===0 && gameState.penalty===0 ? 'playable' : ''}" data-value="${c.value}" 
+        style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`
+    ).join('');
+    
+    for(let i=1;i<=3;i++){
+      const h = document.getElementById(`p${i+1}`);
+      if(h){
+        h.querySelector('.info').innerHTML = `<span>Robô ${i}</span><small>${gameState.players[i].length}</small>`;
+        h.querySelector('.cards').innerHTML = Array(gameState.players[i].length).fill('<div class="card back"></div>').join('');
       }
     }
-    function playMusic(){ if(musicAudio){ musicPlaying=true; musicAudio.play().catch(()=>{}); document.getElementById("musicDisc")?.classList.add("playing"); } }
-    function pauseMusic(){ if(musicAudio){ musicPlaying=false; musicAudio.pause(); document.getElementById("musicDisc")?.classList.remove("playing"); } }
-    function toggleMusic(){ musicPlaying?pauseMusic():playMusic(); }
-    function nextTrack(){ setupMusic(); if(musicPlaying) playMusic(); }
-    function prevTrack(){ setupMusic(); if(musicPlaying) playMusic(); }
-    function setMusicVolume(v){ if(musicAudio) musicAudio.volume = v/100; }
-    function setMasterVolume(v){}
-    function setMicVolume(v){}
-    async function toggleMic(){}
-    function toggleAudio(){}
-    function toggleTheme(){
-      const isDark = document.getElementById("themeToggle").checked;
-      document.body.setAttribute("data-theme", isDark ? "dark" : "light");
-    }
-    function loadTheme(){
-      const saved = localStorage.getItem("cartas_theme") || "light";
-      document.body.setAttribute("data-theme", saved);
-      document.getElementById("themeToggle").checked = saved === "dark";
-    }
-    function toggleAdminMode(){ isAdmin=!isAdmin; alert(isAdmin?"Admin ativado":"Admin desativado"); }
-    function toggleChatPanel(){
-      const p = document.getElementById("chatPanel");
-      p.classList.toggle("collapsed");
-      p.querySelector(".chat-collapse-btn").textContent = p.classList.contains("collapsed") ? "+" : "−";
-    }
-    function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+  }
+  
+  document.getElementById("statusNote").textContent = gameState.penalty > 0 ? 
+    `Compre ${gameState.penalty} cartas!` : "Combine cor ou valor";
+}
 
-    // Eventos
-    document.getElementById("sendChatBtn")?.addEventListener("click", sendChatMessage);
-    document.getElementById("chatMessageInput")?.addEventListener("keypress", e=>{ if(e.key==="Enter") sendChatMessage(); });
-    drawBtn?.addEventListener("click", drawCard);
+function initRoomChat(roomId){
+  if(window.chatUnsubscribe) window.chatUnsubscribe();
+  try{
+    const q = db.collection('chat').where('roomId', '==', roomId);
+    window.chatUnsubscribe = q.onSnapshot(snapshot => {
+      const msgs = [];
+      snapshot.forEach(doc => { 
+        const d=doc.data(); 
+        msgs.push({ id: doc.id, author: d.author, message: d.message, timestamp: d.timestamp?.toDate() || new Date() }); 
+      });
+      msgs.sort((a,b)=> a.timestamp - b.timestamp);
+      renderChatMessages(msgs.slice(-100));
+    }, ()=>{});
+  }catch(e){}
+}
 
-    window.onload = () => {
-      loadTheme();
-      renderLobbyRooms();
-      setupMusic();
-      playMusic();
-    };
-  </script>
+function initOfflineChat(){
+  const stored = localStorage.getItem("cartas_offline_chat");
+  const msgs = stored ? JSON.parse(stored).map(m => ({...m, timestamp: new Date(m.timestamp)})) : [];
+  renderChatMessages(msgs);
+}
+
+async function sendMessage(){
+  const input = document.getElementById("chatMessageInput");
+  const msg = input.value.trim(); if(!msg) return;
+  const author = gameState.myName;
+  if(gameState.roomMode){
+    try{
+      await db.collection('chat').add({ roomId: gameState.roomId, author, message: msg, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+    }catch(e){}
+  } else {
+    const stored = localStorage.getItem("cartas_offline_chat");
+    let msgs = stored ? JSON.parse(stored) : [];
+    msgs.push({ author, message: msg, timestamp: new Date().toISOString() });
+    localStorage.setItem("cartas_offline_chat", JSON.stringify(msgs.slice(-50)));
+    initOfflineChat();
+  }
+  input.value = "";
+}
+
+function renderChatMessages(messages){
+  const container = document.getElementById("chatMessagesList");
+  if(!messages || messages.length===0){ container.innerHTML='<div style="text-align:center; color:var(--muted); padding:20px;">Nenhuma mensagem</div>'; return; }
+  container.innerHTML = messages.map(msg => {
+    const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    const adminBtns = gameState.isAdmin && gameState.roomMode && msg.id ? 
+      `<div style="text-align:right; margin-top:4px;"><button class="btn secondary small" onclick="deleteMessage('${msg.id}')">Excluir</button></div>` : '';
+    return `<div class="chat-message">
+      <div class="message-header"><span class="message-author">${escapeHtml(msg.author)}</span><span class="message-time">${time}</span></div>
+      <div class="message-text">${escapeHtml(msg.message)}</div>
+      ${adminBtns}
+    </div>`;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+async function deleteMessage(id){ 
+  if(!id) return;
+  if(confirm("Excluir mensagem?")) {
+    try{ await db.collection('chat').doc(id).delete(); }catch(e){}
+  }
+}
+function toggleAdminMode(){ gameState.isAdmin = !gameState.isAdmin; alert(gameState.isAdmin ? "Modo admin ativado" : "Modo admin desativado"); }
+function escapeHtml(s){ return s ? s.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])) : ""; }
+
+document.getElementById("sendChatBtn").addEventListener("click", sendMessage);
+document.getElementById("chatMessageInput").addEventListener("keypress", e=>{ if(e.key==="Enter") sendMessage(); });
+
+window.onload = () => { renderLobbyRooms(); };
+</script>
 </body>
 </html>
