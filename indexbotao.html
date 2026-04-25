@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>llCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -734,6 +734,7 @@
         turn: 1,
         penalty: 0,
         gameRunning: true,
+        locked: false,
         winnerSlot: null,
         startedAt: Date.now(),
         updatedAt: Date.now()
@@ -770,6 +771,7 @@
         turn: Number.isFinite(state.turn) ? state.turn : 1,
         penalty: Number.isFinite(state.penalty) ? state.penalty : 0,
         gameRunning: state.gameRunning !== undefined ? !!state.gameRunning : false,
+        locked: state.locked !== undefined ? !!state.locked : false,
         winnerSlot: Number.isFinite(state.winnerSlot) ? state.winnerSlot : null,
         startedAt: state.startedAt || null,
         updatedAt: state.updatedAt || null
@@ -842,6 +844,7 @@
         const occupied = roomState ? Object.values(roomState.slots).filter(Boolean).length : 0;
         const isFull = occupied >= 4;
         const statusText = roomState ? (roomState.gameRunning ? "Partida ativa" : "Sala pronta") : "Aguardando primeiro jogador";
+        const buttonText = roomState && (roomState.locked || isFull) ? "Assistir" : "Entrar";
         const div = document.createElement("div");
         div.className = "room-card";
         div.innerHTML = `
@@ -851,7 +854,7 @@
           </div>
           <small>${escapeHtml(statusText)}</small>
           <div class="room-actions">
-            <button class="btn secondary" ${isFull ? 'disabled' : ''} onclick="joinRoom('${room.id}')">${isFull ? 'Sala cheia' : 'Entrar'}</button>
+            <button class="btn secondary" onclick="joinRoom('${room.id}')">${buttonText}</button>
           </div>
         `;
         container.appendChild(div);
@@ -931,7 +934,8 @@
           }
 
           let chosenSlot = existingSlot;
-          if(chosenSlot === null){
+          const roomLocked = !!state.locked || Object.values(state.slots).filter(Boolean).length >= 4;
+          if(chosenSlot === null && !roomLocked){
             for(let slot = 1; slot <= 4; slot++){
               if(!state.slots[slot]){
                 chosenSlot = slot;
@@ -939,6 +943,7 @@
               }
             }
           }
+
           if(chosenSlot !== null){
             state.slots[chosenSlot] = {
               id: gameState.myId,
@@ -950,6 +955,8 @@
 
           state.turn = normalizeTurn(state);
           state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
+          state.locked = state.locked || Object.values(state.slots).filter(Boolean).length >= 4;
+
           if(!state.topCard && chosenSlot !== null){
             state = createFreshRoomState();
             state.slots[chosenSlot] = {
@@ -1295,10 +1302,10 @@
         const currentTurn = normalizeTurn(state);
         const turnName = getPlayerName(currentTurn);
         const hudTurn = document.getElementById("hudTurn");
-        hudTurn.querySelector('span:last-child').textContent = currentTurn === gameState.mySlot ? "Sua vez" : `Vez de ${turnName}`;
+        hudTurn.querySelector('span:last-child').textContent = gameState.mySlot && currentTurn === gameState.mySlot ? "Sua vez" : `Vez de ${turnName}`;
 
         document.getElementById("discardPile").innerHTML = state.topCard ? `<div class="card" data-value="${state.topCard.value}" style="background-image:url('${state.topCard.img}'); border-color:${colorMap[state.topCard.color]}"></div>` : '';
-        document.getElementById("statusNote").textContent = state.penalty > 0 ? `Punição ativa: compre ${state.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
+        document.getElementById("statusNote").textContent = gameState.mySlot ? (state.penalty > 0 ? `Punição ativa: compre ${state.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre") : "Você está assistindo esta sala. O chat continua liberado.";
 
         const displayOrder = [];
         const usedSlots = new Set();
@@ -1307,12 +1314,15 @@
           usedSlots.add(slot);
           displayOrder.push(slot);
         };
-        pushSlot(gameState.mySlot);
+
         if(gameState.mySlot){
+          pushSlot(gameState.mySlot);
           for(let step = 1; step <= 4; step++){
             const slot = ((gameState.mySlot - 1 + step) % 4) + 1;
             pushSlot(slot);
           }
+        } else {
+          [1, 2, 4, 3].forEach(pushSlot);
         }
 
         const displayIds = ["p1", "p2", "p4", "p3"]; // baixo, direita, topo, esquerda
