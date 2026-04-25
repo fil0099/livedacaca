@@ -1,577 +1,384 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>xxFirestore Tempo Real: Botão + Chat + Jogo da Velha Multiplayer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Controle Firestore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-        body {
-            background: linear-gradient(145deg, #071e24 0%, #0f2f38 100%);
-            min-height: 100vh;
-            padding: 30px 20px;
-            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    color: #e2e8f0;
+    -webkit-font-smoothing: antialiased;
+  }
 
-        .dashboard {
-            max-width: 1400px;
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-            gap: 24px;
-            align-items: start;
-        }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(34,197,94,0.15) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(59,130,246,0.1) 0%, transparent 40%);
+    pointer-events: none;
+  }
 
-        .card {
-            background: rgba(15, 30, 38, 0.8);
-            backdrop-filter: blur(12px);
-            border-radius: 48px;
-            padding: 1.5rem;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
-        }
+  .card {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 28px;
+    padding: 40px 32px;
+    box-shadow: 
+      0 20px 60px -15px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    text-align: center;
+    animation: fadeIn 0.6s ease-out;
+  }
 
-        .toggle-panel {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 2rem;
-            flex-wrap: wrap;
-            background: rgba(0,0,0,0.35);
-            border-radius: 80px;
-            padding: 1rem 1.8rem;
-            margin-bottom: 1rem;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 92px;
-            height: 48px;
-            cursor: pointer;
-        }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #4a5b6e;
-            border-radius: 48px;
-            transition: 0.2s;
-            box-shadow: inset 0 1px 3px #00000055, 0 1px 2px #ffffff44;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 40px; width: 40px;
-            left: 4px; bottom: 4px;
-            background-color: white;
-            border-radius: 50%;
-            transition: 0.2s;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-        }
-        input:checked + .slider { background-color: #2ecc71; }
-        input:checked + .slider:before { transform: translateX(44px); }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-        .ball {
-            width: 76px; height: 76px;
-            border-radius: 50%;
-            background-color: #95a5a6;
-            transition: background-color 0.15s, transform 0.1s;
-            box-shadow: 0 8px 18px rgba(0,0,0,0.4), inset 0 1px 3px rgba(255,255,255,0.6);
-        }
-        .ball.ball-on { background-color: #2ecc71; box-shadow: 0 0 18px #2ecc71; }
-        .status-badge {
-            text-align: center;
-            background: #00000066;
-            border-radius: 60px;
-            padding: 8px 16px;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: bold;
-            color: white;
-            font-size: 1.3rem;
-        }
-        .led { width: 16px; height: 16px; border-radius: 50%; background: #7f8c8d; }
-        .led.on { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
+  .icon-wrap {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, rgba(34,197,94,0.2), rgba(34,197,94,0.05));
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+  }
 
-        .chat-messages {
-            background: #071a1fe0;
-            border-radius: 28px;
-            padding: 12px;
-            height: 260px;
-            overflow-y: auto;
-            margin-bottom: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .msg-bubble {
-            background: #1e3542;
-            padding: 8px 14px;
-            border-radius: 24px;
-            max-width: 85%;
-            color: #eef4ff;
-            word-break: break-word;
-        }
-        .msg-bubble strong { color: #a5f0c0; }
-        .msg-time { font-size: 0.65rem; color: #8aaec0; margin-left: 10px; }
-        .chat-input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-        .chat-input-row input, .chat-input-row button {
-            padding: 10px 16px;
-            border-radius: 60px;
-            border: none;
-            background: #102a33;
-            color: white;
-        }
-        .chat-input-row input { flex: 1; }
-        .chat-input-row button { background: #2ecc71; color: #071a1f; font-weight: bold; cursor: pointer; }
+  .icon-wrap svg {
+    width: 28px;
+    height: 28px;
+    color: #22c55e;
+  }
 
-        .game-title {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: #e2f0e6;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .board {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            max-width: 320px;
-            margin: 0 auto 20px auto;
-        }
-        .cell {
-            background: #0c242e;
-            aspect-ratio: 1 / 1;
-            border-radius: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: #d9f0ec;
-            cursor: pointer;
-            transition: 0.1s linear;
-            box-shadow: 0 6px 0 #031016;
-        }
-        .cell:active { transform: scale(0.96); }
-        .cell.disabled { cursor: not-allowed; opacity: 0.6; }
-        .turn-indicator {
-            background: #03101680;
-            border-radius: 40px;
-            padding: 10px 16px;
-            text-align: center;
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 20px;
-        }
-        .reset-btn {
-            background: #2c5a6e;
-            border: none;
-            color: white;
-            font-size: 1rem;
-            padding: 10px 20px;
-            border-radius: 60px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-        }
-        .winner-marker { text-align: center; margin-top: 10px; font-size: 0.9rem; color: #f2c94c; }
-        .sync-info {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 0.7rem;
-            color: #b0e0f0;
-            margin-top: 15px;
-            background: #03161e80;
-            padding: 6px 12px;
-            border-radius: 40px;
-            width: fit-content;
-        }
-        .pulse-dot {
-            width: 10px; height: 10px;
-            background: #2ecc71;
-            border-radius: 50%;
-            animation: pulse 1.2s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 0.4; transform: scale(0.8);}
-            100% { opacity: 1; transform: scale(1.2);}
-        }
-        .warning-box {
-            background: #ff980030;
-            border-left: 4px solid #ff9800;
-            padding: 8px 12px;
-            margin-top: 12px;
-            border-radius: 20px;
-            font-size: 0.7rem;
-            color: #ffdd99;
-        }
-        @media (max-width: 860px) {
-            .dashboard { grid-template-columns: 1fr; }
-            .ball { width: 58px; height: 58px; }
-            .switch { width: 74px; height: 40px; }
-            .slider:before { height: 32px; width: 32px; }
-            input:checked + .slider:before { transform: translateX(34px); }
-        }
-    </style>
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #f8fafc;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-bottom: 36px;
+  }
+
+  .control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin: 36px 0 28px;
+  }
+
+  /* Switch iOS */
+  .switch { 
+    position:relative; 
+    display:inline-block; 
+    width:64px; 
+    height:36px;
+    flex-shrink: 0;
+  }
+  .switch input { 
+    opacity:0; 
+    width:0; 
+    height:0 
+  }
+  .slider { 
+    position:absolute; 
+    cursor:pointer; 
+    inset:0; 
+    background:#334155; 
+    transition:.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    border-radius:36px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .slider:before { 
+    content:""; 
+    position:absolute; 
+    height:28px; 
+    width:28px; 
+    left:4px; 
+    bottom:4px; 
+    background:white; 
+    transition:.3s cubic-bezier(0.4, 0, 0.2, 1); 
+    border-radius:50%; 
+    box-shadow:0 2px 4px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.1);
+  }
+  input:checked + .slider { 
+    background:#22c55e;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.15), 0 0 20px rgba(34,197,94,0.3);
+  }
+  input:checked + .slider:before { 
+    transform:translateX(28px) 
+  }
+  input:disabled + .slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .switch:hover input:not(:disabled) + .slider {
+    background: #475569;
+  }
+  .switch:hover input:checked:not(:disabled) + .slider {
+    background: #16a34a;
+  }
+
+  /* Bola indicadora */
+  .bola {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #9ca3af;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+      0 0 0 4px rgba(156, 163, 175, 0.15),
+      0 2px 8px rgba(0,0,0,0.3),
+      inset 0 1px 2px rgba(255,255,255,0.2);
+    position: relative;
+  }
+
+  .bola::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, rgba(255,255,255,0.3), transparent);
+  }
+
+  .bola.ligada {
+    background: #22c55e;
+    box-shadow: 
+      0 0 0 4px rgba(34, 197, 94, 0.2),
+      0 0 24px rgba(34,197,94,0.5),
+      0 2px 8px rgba(0,0,0,0.3),
+      inset 0 1px 2px rgba(255,255,255,0.3);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+
+  .status {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 8px 0 32px;
+    transition: all 0.3s ease;
+    line-height: 1;
+  }
+
+  .status.desligado {
+    color: #94a3b8;
+  }
+
+  .status.ligado {
+    color: #22c55e;
+    text-shadow: 0 0 30px rgba(34,197,94,0.4);
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #475569;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .dot.connected {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34,197,94,0.6);
+  }
+
+  .dot.connected::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 1px solid #22c55e;
+    opacity: 0;
+    animation: ping 2s cubic-bezier(0,0,0.2,1) infinite;
+  }
+
+  @keyframes ping {
+    75%, 100% {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+  }
+
+  .footer small {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .footer small.connected {
+    color: #86efac;
+  }
+
+  @media (max-width: 400px) {
+    .card { padding: 32px 24px; }
+    .status { font-size: 36px; }
+  }
+</style>
 </head>
 <body>
-<div class="dashboard">
+  <main class="card">
+    <div class="icon-wrap">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+      </svg>
+    </div>
     
-    <!-- CARD 1: TOGGLE + BOLA -->
-    <div class="card">
-        <div class="toggle-panel">
-            <label class="switch">
-                <input type="checkbox" id="toggleSwitch">
-                <span class="slider"></span>
-            </label>
-            <div id="indicatorBall" class="ball"></div>
-        </div>
-        <div style="text-align: center;">
-            <div class="status-badge">
-                <span id="stateLabel">Desligado</span>
-                <div id="ledBadge" class="led"></div>
-            </div>
-        </div>
-        <div class="sync-info"><div class="pulse-dot"></div>⚡ Botão sincronizado via Firestore</div>
+    <h1>Controle Firestore</h1>
+    <p class="subtitle">Botão em tempo real</p>
+
+    <div class="control">
+      <label class="switch">
+        <input type="checkbox" id="toggle" aria-label="Alternar estado">
+        <span class="slider"></span>
+      </label>
+      <div class="bola" id="bola-indicadora" aria-hidden="true"></div>
     </div>
 
-    <!-- CARD 2: CHAT -->
-    <div class="card">
-        <h3 style="color:#c7f0e0; margin-bottom: 12px; display: flex; gap: 8px;">💬 Chat ao vivo <span class="pulse-dot"></span></h3>
-        <div id="chatMessagesList" class="chat-messages"><div style="text-align:center;">Carregando...</div></div>
-        <input type="text" id="chatUserName" placeholder="Seu nome" maxlength="30" value="Anônimo" style="width:100%; background:#102a33; border: none; padding: 8px 14px; border-radius: 40px; margin-bottom:8px; color:white;">
-        <div class="chat-input-row">
-            <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." maxlength="200">
-            <button id="sendMessageBtn">Enviar</button>
-        </div>
-        <div class="sync-info">📡 Chat em tempo real (Firestore /chat)</div>
-    </div>
+    <p class="status desligado" id="status">Desligado</p>
 
-    <!-- CARD 3: JOGO DA VELHA MULTIPLAYER -->
-    <div class="card">
-        <div class="game-title">🎮 Jogo da Velha - Multiplayer</div>
-        <div class="turn-indicator" id="turnIndicator">Aguardando partida...</div>
-        <div class="board" id="board"></div>
-        <button class="reset-btn" id="resetGameBtn">🔄 Reiniciar Jogo (todos)</button>
-        <div id="winnerMessage" class="winner-marker"></div>
-        <div class="sync-info">🌍 Sincronizado em tempo real • Jogue contra outra pessoa em qualquer aba</div>
-        <div class="warning-box" id="permissionWarning" style="display:none;">
-            ⚠️ Erro de permissão: você precisa adicionar a regra <code>match /ticTacToe/{document} { allow read, write: if true; }</code> no Firestore.
-        </div>
+    <div class="footer">
+      <span class="dot" id="connection-dot"></span>
+      <small id="connection">Conectando ao Firestore...</small>
     </div>
-</div>
+  </main>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, onSnapshot, setDoc, collection, query, orderBy, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
-        authDomain: "testbotao.firebaseapp.com",
-        databaseURL: "https://testbotao-default-rtdb.firebaseio.com",
-        projectId: "testbotao",
-        storageBucket: "testbotao.firebasestorage.app",
-        messagingSenderId: "940068631746",
-        appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+const firebaseConfig = {
+  apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
+  authDomain: "testbotao.firebaseapp.com",
+  databaseURL: "https://testbotao-default-rtdb.firebaseio.com",
+  projectId: "testbotao",
+  storageBucket: "testbotao.firebasestorage.app",
+  messagingSenderId: "940068631746",
+  appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
+};
 
-    // ========= 1. TOGGLE + BOLA =========
-    const estadoDocRef = doc(db, "toggle", "estado");
-    const toggleCheckbox = document.getElementById('toggleSwitch');
-    const ballDiv = document.getElementById('indicatorBall');
-    const stateLabelSpan = document.getElementById('stateLabel');
-    const ledBadge = document.getElementById('ledBadge');
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const docRef = doc(db, "toggle", "estado");
 
-    let isInternalUpdate = false;
-    let currentToggleState = false;
+const toggle = document.getElementById('toggle');
+const statusEl = document.getElementById('status');
+const bola = document.getElementById('bola-indicadora');
+const connection = document.getElementById('connection');
+const connectionDot = document.getElementById('connection-dot');
 
-    function updateToggleUI(estado) {
-        if (toggleCheckbox.checked !== estado) toggleCheckbox.checked = estado;
-        if (estado) {
-            ballDiv.classList.add('ball-on');
-            stateLabelSpan.innerText = 'Ligado';
-            ledBadge.classList.add('on');
-        } else {
-            ballDiv.classList.remove('ball-on');
-            stateLabelSpan.innerText = 'Desligado';
-            ledBadge.classList.remove('on');
-        }
-        currentToggleState = estado;
+toggle.disabled = true;
+
+function updateUI(ligado) {
+  toggle.checked = ligado;
+  statusEl.textContent = ligado ? 'Ligado' : 'Desligado';
+  statusEl.className = 'status ' + (ligado ? 'ligado' : 'desligado');
+  
+  if (ligado) {
+    bola.classList.add('ligada');
+    bola.style.background = '#22c55e';
+  } else {
+    bola.classList.remove('ligada');
+    bola.style.background = '#9ca3af';
+  }
+}
+
+// Estado inicial: desligado
+updateUI(false);
+
+onSnapshot(docRef, async (snap) => {
+  if (!snap.exists()) {
+    try {
+      await setDoc(docRef, { ligado: false, atualizado: serverTimestamp() });
+      return;
+    } catch (e) {
+      console.error('Erro ao criar documento:', e);
     }
+  }
+  
+  const data = snap.data();
+  const ligado = !!data.ligado;
+  
+  updateUI(ligado);
+  
+  toggle.disabled = false;
+  connection.textContent = 'Sincronizado em tempo real';
+  connection.classList.add('connected');
+  connectionDot.classList.add('connected');
+  
+}, (error) => {
+  console.error('Erro Firestore:', error);
+  connection.textContent = 'Erro de conexão';
+  connection.classList.remove('connected');
+  connectionDot.classList.remove('connected');
+  toggle.disabled = true;
+});
 
-    onSnapshot(estadoDocRef, (snap) => {
-        if (snap.exists()) {
-            const serverState = snap.data().ligado === true;
-            if (currentToggleState !== serverState) {
-                isInternalUpdate = true;
-                updateToggleUI(serverState);
-                isInternalUpdate = false;
-                ballDiv.style.transform = 'scale(1.02)';
-                setTimeout(() => { ballDiv.style.transform = ''; }, 150);
-            }
-        } else {
-            setDoc(estadoDocRef, { ligado: false }).catch(e => console.warn(e));
-            if (currentToggleState !== false) updateToggleUI(false);
-        }
-    });
-
-    toggleCheckbox.addEventListener('change', async () => {
-        if (isInternalUpdate) return;
-        const novo = toggleCheckbox.checked;
-        ballDiv.style.transform = 'scale(0.95)';
-        setTimeout(() => { ballDiv.style.transform = ''; }, 120);
-        try {
-            await setDoc(estadoDocRef, { ligado: novo });
-            if (currentToggleState !== novo) updateToggleUI(novo);
-        } catch (err) { console.error(err); toggleCheckbox.checked = currentToggleState; }
-    });
-    ballDiv.addEventListener('click', async () => {
-        if (isInternalUpdate) return;
-        const novo = !currentToggleState;
-        ballDiv.style.transform = 'scale(0.92)';
-        setTimeout(() => { ballDiv.style.transform = ''; }, 150);
-        try { await setDoc(estadoDocRef, { ligado: novo }); } catch(e) { alert("erro toggle"); }
-    });
-    updateToggleUI(false);
-
-    // ========= 2. CHAT =========
-    const messagesContainer = document.getElementById('chatMessagesList');
-    const userNameInput = document.getElementById('chatUserName');
-    const messageInput = document.getElementById('chatMessageInput');
-    const sendBtn = document.getElementById('sendMessageBtn');
-    const chatCollection = collection(db, "chat");
-    const chatQuery = query(chatCollection, orderBy("timestamp", "asc"));
-
-    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
-    function renderChat(messages) {
-        if (!messages.length) { messagesContainer.innerHTML = '<div style="text-align:center; color:#a0c0d0;">✨ Nenhuma mensagem</div>'; return; }
-        let html = '';
-        messages.forEach(msg => {
-            const nome = escapeHtml(msg.nome) || 'Anônimo';
-            const texto = escapeHtml(msg.texto);
-            const time = msg.horario ? new Date(msg.horario).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-            html += `<div class="msg-bubble"><strong>${nome}</strong> <span class="msg-time">${time}</span><br>${texto}</div>`;
-        });
-        messagesContainer.innerHTML = html;
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
-    let currentMessages = [];
-    onSnapshot(chatQuery, (snapshot) => {
-        const msgs = [];
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            msgs.push({ id: doc.id, nome: data.nome || 'Anônimo', texto: data.texto || '', horario: data.timestamp?.toDate?.() || new Date() });
-        });
-        msgs.sort((a,b) => a.horario - b.horario);
-        currentMessages = msgs;
-        renderChat(msgs);
-    }, err => console.error("Chat error", err));
-
-    async function sendMessage() {
-        let nome = userNameInput.value.trim(); if (nome === "") nome = "Anônimo";
-        if (nome.length > 30) nome = nome.substring(0,30);
-        const texto = messageInput.value.trim();
-        if (texto === "") return alert("Digite uma mensagem");
-        sendBtn.disabled = true; sendBtn.textContent = "Enviando...";
-        try {
-            await addDoc(chatCollection, { nome, texto, timestamp: serverTimestamp() });
-            messageInput.value = "";
-            messageInput.focus();
-        } catch(err) { alert("Erro: "+err.message); } finally { sendBtn.disabled = false; sendBtn.textContent = "Enviar"; }
-    }
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
-
-    // ========= 3. JOGO DA VELHA EM TEMPO REAL (Firestore) =========
-    const gameDocRef = doc(db, "ticTacToe", "partida");
-    const boardContainer = document.getElementById('board');
-    const turnIndicator = document.getElementById('turnIndicator');
-    const winnerMsgDiv = document.getElementById('winnerMessage');
-    const resetBtn = document.getElementById('resetGameBtn');
-    const permissionWarning = document.getElementById('permissionWarning');
-
-    let localBoardState = ['', '', '', '', '', '', '', '', ''];
-    let localCurrentPlayer = 'X';
-    let localGameActive = true;
-    let localWinner = null;
-    let isUpdatingFromFirestore = false;
-
-    function renderBoardUI() {
-        const cells = document.querySelectorAll('.cell');
-        for (let i = 0; i < 9; i++) {
-            const symbol = localBoardState[i];
-            if (symbol === 'X') cells[i].innerText = '❌';
-            else if (symbol === 'O') cells[i].innerText = '⭕';
-            else cells[i].innerText = '';
-            if (!localGameActive || localWinner !== null || localBoardState[i] !== '' || localCurrentPlayer !== (localGameActive ? localCurrentPlayer : null)) {
-                cells[i].classList.add('disabled');
-            } else {
-                cells[i].classList.remove('disabled');
-            }
-        }
-    }
-
-    function updateGameStatusFromFirestore(data) {
-        localBoardState = [...data.board];
-        localCurrentPlayer = data.currentPlayer;
-        localGameActive = data.gameActive;
-        localWinner = data.winner || null;
-        if (localWinner === 'X') {
-            turnIndicator.innerText = '🏆 Vitória do ❌ (X) !';
-            winnerMsgDiv.innerText = 'Jogador X venceu! Reinicie para nova partida.';
-        } else if (localWinner === 'O') {
-            turnIndicator.innerText = '🏆 Vitória do ⭕ (O) !';
-            winnerMsgDiv.innerText = 'Jogador O venceu! Reinicie.';
-        } else if (!localGameActive && localWinner === 'empate') {
-            turnIndicator.innerText = '🤝 Empate!';
-            winnerMsgDiv.innerText = 'Deu velha! Reinicie o jogo.';
-        } else {
-            turnIndicator.innerText = `Vez do ${localCurrentPlayer === 'X' ? '❌ (X)' : '⭕ (O)'}`;
-            winnerMsgDiv.innerText = '';
-        }
-        renderBoardUI();
-    }
-
-    async function initializeGameInFirestore() {
-        const initialData = {
-            board: ['', '', '', '', '', '', '', '', ''],
-            currentPlayer: 'X',
-            gameActive: true,
-            winner: null,
-            lastUpdate: serverTimestamp()
-        };
-        try {
-            await setDoc(gameDocRef, initialData);
-            permissionWarning.style.display = 'none';
-        } catch (err) {
-            console.error("Erro ao inicializar jogo:", err);
-            if (err.code === 'permission-denied') {
-                permissionWarning.style.display = 'block';
-                turnIndicator.innerText = "Erro de permissão! Adicione a regra do Firestore para /ticTacToe";
-            } else {
-                turnIndicator.innerText = "Erro ao conectar ao Firestore.";
-            }
-        }
-    }
-
-    onSnapshot(gameDocRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const data = snapshot.data();
-            if (data.board && Array.isArray(data.board) && data.currentPlayer) {
-                isUpdatingFromFirestore = true;
-                updateGameStatusFromFirestore(data);
-                isUpdatingFromFirestore = false;
-                permissionWarning.style.display = 'none';
-            } else {
-                initializeGameInFirestore();
-            }
-        } else {
-            initializeGameInFirestore();
-        }
-    }, (err) => {
-        console.error("Listener erro:", err);
-        if (err.code === 'permission-denied') {
-            permissionWarning.style.display = 'block';
-            turnIndicator.innerText = "Sem permissão: adicione regra /ticTacToe no Firestore";
-        }
-    });
-
-    async function makeMove(index) {
-        if (isUpdatingFromFirestore) return;
-        if (!localGameActive || localWinner !== null) return;
-        if (localBoardState[index] !== '') return;
-        const currentPlayerFromSync = localCurrentPlayer;
-        const newBoard = [...localBoardState];
-        newBoard[index] = currentPlayerFromSync;
-        let winner = null;
-        let gameActiveLocal = true;
-        const winPatterns = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-        let hasWinner = false;
-        for (let pattern of winPatterns) {
-            const [a,b,c] = pattern;
-            if (newBoard[a] && newBoard[a] === newBoard[b] && newBoard[a] === newBoard[c]) {
-                winner = newBoard[a];
-                hasWinner = true;
-                gameActiveLocal = false;
-                break;
-            }
-        }
-        let isDraw = false;
-        if (!hasWinner && newBoard.every(cell => cell !== '')) {
-            isDraw = true;
-            gameActiveLocal = false;
-            winner = 'empate';
-        }
-        const nextPlayer = (currentPlayerFromSync === 'X') ? 'O' : 'X';
-        const updatedData = {
-            board: newBoard,
-            currentPlayer: hasWinner ? currentPlayerFromSync : (isDraw ? currentPlayerFromSync : nextPlayer),
-            gameActive: gameActiveLocal,
-            winner: winner,
-            lastUpdate: serverTimestamp()
-        };
-        try {
-            await setDoc(gameDocRef, updatedData);
-        } catch (err) {
-            console.error("Erro ao registrar jogada:", err);
-            if (err.code === 'permission-denied') {
-                permissionWarning.style.display = 'block';
-                alert("Permissão negada: adicione a regra do Firestore para coleção ticTacToe");
-            } else {
-                alert("Falha ao realizar jogada: " + err.message);
-            }
-        }
-    }
-
-    async function resetGameGlobal() {
-        if (isUpdatingFromFirestore) return;
-        const resetData = {
-            board: ['', '', '', '', '', '', '', '', ''],
-            currentPlayer: 'X',
-            gameActive: true,
-            winner: null,
-            lastUpdate: serverTimestamp()
-        };
-        try {
-            await setDoc(gameDocRef, resetData);
-        } catch (err) {
-            console.error("Erro reset:", err);
-            alert("Erro ao reiniciar partida. Verifique as regras do Firestore.");
-        }
-    }
-
-    function createBoardUI() {
-        boardContainer.innerHTML = '';
-        for (let i = 0; i < 9; i++) {
-            const cell = document.createElement('div');
-            cell.classList.add('cell');
-            cell.setAttribute('data-idx', i);
-            cell.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const idx = parseInt(cell.getAttribute('data-idx'));
-                makeMove(idx);
-            });
-            boardContainer.appendChild(cell);
-        }
-        renderBoardUI();
-    }
-
-    resetBtn.addEventListener('click', resetGameGlobal);
-    createBoardUI();
+toggle.addEventListener('change', async () => {
+  const novoEstado = toggle.checked;
+  
+  // feedback imediato
+  updateUI(novoEstado);
+  toggle.disabled = true;
+  
+  try {
+    await setDoc(docRef, { 
+      ligado: novoEstado, 
+      atualizado: serverTimestamp() 
+    }, { merge: true });
+  } catch (error) {
+    console.error('Erro ao atualizar:', error);
+    // reverter em caso de erro
+    updateUI(!novoEstado);
+    connection.textContent = 'Falha ao sincronizar';
+    connection.classList.remove('connected');
+    connectionDot.classList.remove('connected');
+  }
+});
 </script>
 </body>
 </html>
