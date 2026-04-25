@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>App Completo</title>
+<title>App xompleto</title>
 
 <style>
 body {
@@ -25,12 +25,7 @@ body {
   border-radius: 15px;
 }
 
-.switch {
-  position: relative;
-  width: 60px;
-  height: 34px;
-}
-
+.switch { position: relative; width: 60px; height: 34px; }
 .switch input { opacity: 0; }
 
 .slider {
@@ -56,12 +51,7 @@ body {
 input:checked + .slider { background: #22c55e; }
 input:checked + .slider:before { transform: translateX(26px); }
 
-.bola {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: gray;
-}
+.bola { width: 20px; height: 20px; border-radius: 50%; background: gray; }
 .bola.on { background: #22c55e; }
 
 /* CHAT */
@@ -188,35 +178,51 @@ document.getElementById("sendBtn").onclick = async () => {
 };
 
 //
-// 🎮 JOGO DA VELHA (CORRIGIDO)
+// 🎮 JOGO DA VELHA (FINAL CORRIGIDO)
 //
 const gameRef = doc(db, "game", "velha");
 const grid = document.getElementById("grid");
 
-// garante criação
-await setDoc(gameRef, {
-  board: Array(9).fill(""),
-  turn: "X"
-}, { merge: true });
-
-// cria células
+// criar células
 for (let i = 0; i < 9; i++) {
   const cell = document.createElement("div");
   cell.className = "cell";
+  cell.dataset.index = i;
   grid.appendChild(cell);
-
-  cell.onclick = async () => {
-    const snap = await getDoc(gameRef);
-    const data = snap.data();
-
-    if (data.board[i]) return;
-
-    data.board[i] = data.turn;
-    data.turn = data.turn === "X" ? "O" : "X";
-
-    await setDoc(gameRef, data);
-  };
 }
+
+// garantir que existe
+async function initGame() {
+  const snap = await getDoc(gameRef);
+
+  if (!snap.exists()) {
+    await setDoc(gameRef, {
+      board: Array(9).fill(""),
+      turn: "X"
+    });
+  }
+}
+
+await initGame();
+
+// clique
+grid.addEventListener("click", async (e) => {
+  const cell = e.target;
+  if (!cell.classList.contains("cell")) return;
+
+  const i = cell.dataset.index;
+
+  const snap = await getDoc(gameRef);
+  const data = snap.data();
+
+  if (!data) return;
+  if (data.board[i]) return;
+
+  data.board[i] = data.turn;
+  data.turn = data.turn === "X" ? "O" : "X";
+
+  await setDoc(gameRef, data);
+});
 
 // tempo real
 onSnapshot(gameRef, (snap) => {
@@ -224,7 +230,7 @@ onSnapshot(gameRef, (snap) => {
   if (!data) return;
 
   document.querySelectorAll(".cell").forEach((c, i) => {
-    c.textContent = data.board[i];
+    c.textContent = data.board[i] || "";
   });
 });
 
