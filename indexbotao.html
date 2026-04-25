@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Botão + Chat Firebase</title>
+<title>Botão + Chat + Jogo da Velha</title>
 
 <style>
 body {
@@ -25,85 +25,50 @@ body {
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
 }
 
-.switch {
-  position: relative;
-  width: 60px;
-  height: 34px;
-}
+.switch { position: relative; width: 60px; height: 34px; }
+.switch input { opacity: 0; }
+.slider { position: absolute; cursor: pointer; background-color: #ccc; border-radius: 34px; inset: 0; }
+.slider:before { content: ""; position: absolute; height: 26px; width: 26px; left: 4px; top: 4px; background: white; border-radius: 50%; transition: 0.3s; }
+input:checked + .slider { background-color: #22c55e; }
+input:checked + .slider:before { transform: translateX(26px); }
 
-.switch input {
-  opacity: 0;
-}
+.bola { width: 20px; height: 20px; border-radius: 50%; background: gray; }
+.bola.on { background: #22c55e; }
 
-.slider {
-  position: absolute;
-  cursor: pointer;
-  background-color: #ccc;
-  border-radius: 34px;
-  inset: 0;
-}
-
-.slider:before {
-  content: "";
-  position: absolute;
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  top: 4px;
-  background: white;
-  border-radius: 50%;
-  transition: 0.3s;
-}
-
-input:checked + .slider {
-  background-color: #22c55e;
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-.bola {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: gray;
-}
-
-.bola.on {
-  background: #22c55e;
-}
-
-.chat {
+.chat, .game {
   width: 300px;
   background: white;
   padding: 15px;
   border-radius: 15px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
 }
 
 .messages {
-  height: 200px;
+  height: 150px;
   overflow-y: auto;
   border: 1px solid #ddd;
   padding: 10px;
   margin-bottom: 10px;
 }
 
-.input-area {
-  display: flex;
+.input-area { display: flex; gap: 5px; }
+input[type="text"] { flex: 1; padding: 8px; }
+button { padding: 8px; cursor: pointer; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 5px;
 }
 
-input[type="text"] {
-  flex: 1;
-  padding: 8px;
-}
-
-button {
-  padding: 8px 12px;
+.cell {
+  width: 80px;
+  height: 80px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eee;
   cursor: pointer;
 }
 </style>
@@ -121,11 +86,14 @@ button {
 
 <div class="chat">
   <div id="messages" class="messages"></div>
-
   <div class="input-area">
     <input id="msgInput" type="text" placeholder="Digite...">
     <button id="sendBtn">Enviar</button>
   </div>
+</div>
+
+<div class="game">
+  <div id="grid" class="grid"></div>
 </div>
 
 <script type="module">
@@ -168,29 +136,53 @@ const sendBtn = document.getElementById("sendBtn");
 
 const chatRef = collection(db, "chat");
 
-// tempo real mensagens
 onSnapshot(query(chatRef, orderBy("time")), (snapshot) => {
   messagesDiv.innerHTML = "";
   snapshot.forEach(doc => {
-    const msg = doc.data().text;
     const el = document.createElement("div");
-    el.textContent = msg;
+    el.textContent = doc.data().text;
     messagesDiv.appendChild(el);
   });
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 });
 
-// enviar mensagem
 sendBtn.addEventListener("click", async () => {
   const text = msgInput.value.trim();
   if (!text) return;
-
-  await addDoc(chatRef, {
-    text: text,
-    time: Date.now()
-  });
-
+  await addDoc(chatRef, { text, time: Date.now() });
   msgInput.value = "";
+});
+
+// JOGO DA VELHA (tempo real)
+const grid = document.getElementById("grid");
+const gameRef = doc(db, "game", "velha");
+
+// cria grid
+for (let i = 0; i < 9; i++) {
+  const cell = document.createElement("div");
+  cell.className = "cell";
+  cell.dataset.index = i;
+  grid.appendChild(cell);
+
+  cell.addEventListener("click", async () => {
+    const snap = await new Promise(resolve => onSnapshot(gameRef, resolve));
+    const data = snap.data() || { board: Array(9).fill(""), turn: "X" };
+
+    if (data.board[i]) return;
+
+    data.board[i] = data.turn;
+    data.turn = data.turn === "X" ? "O" : "X";
+
+    await setDoc(gameRef, data);
+  });
+}
+
+onSnapshot(gameRef, (snap) => {
+  const data = snap.data();
+  if (!data) return;
+
+  document.querySelectorAll(".cell").forEach((c, i) => {
+    c.textContent = data.board[i] || "";
+  });
 });
 </script>
 
