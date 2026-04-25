@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xyCartas - Jogo Multiplayer com Chat</title>
+  <title>Cartaxs - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -371,7 +371,7 @@
     }
     .card.back::after{ content:""; }
 
-    /* ========== CHAT SIMPLES E FUNCIONAL (IGUAL AO QUE FUNCIONOU) ========== */
+    /* ========== CHAT CORRIGIDO ========== */
     .chat-panel{
       position:fixed;
       right:16px; bottom:16px;
@@ -510,7 +510,7 @@
   <div id="lobbyScreen" class="screen">
     <div class="panel centered">
       <div class="lobby-topbar" style="display:flex; justify-content:flex-end; margin-bottom:12px;">
-        <button class="btn secondary small" onclick="openAdminModal()">Adm</button>
+        <button class="btn secondary small" onclick="toggleAdminMode()">Adm</button>
       </div>
       <h1><span>Cartas</span></h1>
       <p class="subtitle">Combine cor ou valor e zere sua mão.</p>
@@ -594,7 +594,7 @@
     </div>
   </div>
 
-  <!-- CHAT SIMPLES (MSM QUE FUNCIONOU) -->
+  <!-- CHAT SIMPLES CORRIGIDO -->
   <div id="chatPanel" class="chat-panel" style="display:none">
     <div class="chat-header">
       <strong>💬 Chat da sala</strong>
@@ -612,16 +612,6 @@
         <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." maxlength="200">
         <button class="btn" id="sendChatBtn">Enviar</button>
       </div>
-    </div>
-  </div>
-
-  <!-- MODAL ADMIN SIMPLES -->
-  <div id="adminModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center; z-index:100;">
-    <div style="background:var(--panel-strong); border-radius:28px; padding:24px; max-width:500px; width:90%; border:1px solid var(--stroke);">
-      <h3>Administração</h3>
-      <p>Funcionalidades de moderação de chat ativas:</p>
-      <ul><li>Excluir mensagens</li><li>Excluir usuário (banir do chat)</li></ul>
-      <button class="btn secondary" onclick="closeAdminModal()">Fechar</button>
     </div>
   </div>
 
@@ -656,7 +646,7 @@
       musicAudio: null, musicPlaying: false, musicVolume: 0.7, masterVolume: 1, micVolume: 1, audioEnabled: false, micEnabled: false,
       micStream: null, micAudioContext: null, micGain: null, trackIndex: 0,
       roomPlaylist: [], robotPlaylist: [],
-      isAdmin: false  // admin simples para moderar chat
+      isAdmin: false
     };
     const DEFAULT_PLAYLIST = [
       "https://raw.githubusercontent.com/fil0099/livedacaca/main/music_for_video-just-relax-11157.mp3",
@@ -783,7 +773,7 @@
       if(gameState.micEnabled){ try{ gameState.micStream=await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext=new (window.AudioContext||window.webkitAudioContext)(); const src=gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain=gameState.micAudioContext.createGain(); const mon=gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value=gameState.micVolume; mon.gain.value=gameState.audioEnabled?gameState.masterVolume:0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled=false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream=null; } }
     function toggleAudio(){ gameState.audioEnabled=!gameState.audioEnabled; document.getElementById("audioBtn").textContent=gameState.audioEnabled?"Áudio: ligado":"Áudio: desligado"; }
 
-    // ========== CHAT (EXATAMENTE O QUE FUNCIONOU) ==========
+    // ========== CHAT CORRIGIDO (FUNCIONAL) ==========
     let currentChatUserName = "Anônimo";
     function updateChatUserName(){ let n=document.getElementById("chatUserName").value.trim(); if(n==="") n="Anônimo"; currentChatUserName=n.slice(0,20); document.getElementById("chatUserName").value=currentChatUserName; }
 
@@ -794,7 +784,7 @@
         const msgs = [];
         snapshot.forEach(doc => { const d=doc.data(); msgs.push({ id:doc.id, author:d.author||"Anônimo", message:d.message||"", timestamp:d.timestamp?.toDate?.()||new Date() }); });
         renderChatMessages(msgs);
-      }, err => { console.error("Erro chat:",err); document.getElementById("chatMessagesList").innerHTML='<div style="text-align:center;color:red;">Erro ao carregar chat. Verifique regras do Firestore.</div>'; });
+      }, err => { console.error("Erro chat:",err); document.getElementById("chatMessagesList").innerHTML='<div style="text-align:center;color:red;">Erro no chat. Verifique regras do Firestore.</div>'; });
     }
 
     function initOfflineChat(){
@@ -831,14 +821,15 @@
       try { await db.collection('chat').doc(messageId).delete(); } catch(e){ alert("Erro ao excluir"); }
     }
 
-    async function deleteUserMessages(userId){
-      if(!confirm("Excluir TODAS as mensagens deste usuário?")) return;
+    async function deleteUserMessages(userName){
+      if(!confirm(`Excluir TODAS as mensagens de "${userName}"?`)) return;
       try {
-        const snap = await db.collection('chat').where('roomId','==',gameState.roomId).where('authorId','==',userId).get();
+        const snap = await db.collection('chat').where('roomId','==',gameState.roomId).where('author','==',userName).get();
         const batch = db.batch();
         snap.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
-      } catch(e){ alert("Erro ao excluir usuário"); }
+        alert(`Mensagens de ${userName} excluídas.`);
+      } catch(e){ alert("Erro ao excluir usuário: "+e.message); }
     }
 
     function renderChatMessages(messages){
@@ -867,13 +858,10 @@
       p.querySelector(".chat-collapse-btn").textContent = p.classList.contains("collapsed") ? "+" : "−";
     }
 
-    function openAdminModal(){
+    function toggleAdminMode(){
       gameState.isAdmin = !gameState.isAdmin;
-      alert(gameState.isAdmin ? "Modo Administrador ativado! Você pode excluir mensagens." : "Modo Administrador desativado.");
-      document.getElementById("adminModal").style.display = "flex";
-      setTimeout(()=>document.getElementById("adminModal").style.display="none",1500);
+      alert(gameState.isAdmin ? "Modo Administrador ATIVADO! Você pode excluir mensagens." : "Modo Administrador desativado.");
     }
-    function closeAdminModal(){ document.getElementById("adminModal").style.display="none"; }
 
     function toggleTheme(){
       const isDark = document.getElementById("themeToggle").checked;
