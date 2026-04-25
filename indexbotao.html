@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>aaaartas - Jogo Multiplayer com Chat</title>
+  <title>qqCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1194,15 +1194,9 @@
       const voice = document.getElementById("voiceGroup");
       const theme = document.getElementById("themeSwitch");
 
-      if (gameState.roomMode) {
-        if(music) music.style.display = "none";
-        if(voice) voice.style.display = "none";
-        if(theme) theme.style.display = "none";
-      } else {
-        if(music) music.style.display = "";
-        if(voice) voice.style.display = "";
-        if(theme) theme.style.display = "";
-      }
+      if(music) music.style.display = "";
+      if(voice) voice.style.display = "";
+      if(theme) theme.style.display = "";
     }
 
     function showGame(){
