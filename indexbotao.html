@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>eeCartas - Jogo Multiplayer com Chat</title>
+  <title>qqCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -811,7 +811,7 @@
   <div id="endScreen" class="screen" style="display:none">
     <div class="panel centered end-card">
       <h1 id="winnerText"></h1>
-      <button type="button" class="btn" onclick="backToLobby()">Voltar à lobby</button>
+      <button class="btn" onclick="backToLobby()">Voltar à lobby</button>
     </div>
   </div>
 
@@ -821,7 +821,7 @@
       <div class="hud">
         <div class="title">
           <div class="header-inline">
-            <button type="button" class="btn secondary mini-toggle" onclick="backToLobby()">Voltar</button>
+            <button class="btn secondary mini-toggle" onclick="backToLobby()">Voltar</button>
             <strong>Cartas</strong>
             <div id="musicPlayer" class="music-player">
               <div class="music-row">
@@ -1333,6 +1333,7 @@ const STOP_STALE_MS = 18000;
 
     async function joinRoom(roomId){
       let userName = document.getElementById("roomName").value.trim();
+      if(!userName) userName = document.getElementById("playerName").value.trim();
       if(!userName){
         alert("Digite seu nome antes de entrar na sala.");
         return;
@@ -1468,7 +1469,6 @@ const STOP_STALE_MS = 18000;
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
-      stopMusicPlayback();
       let shouldReset = false;
       try {
         await db.runTransaction(async (tx) => {
@@ -2841,14 +2841,6 @@ const STOP_STALE_MS = 18000;
     }
   }
   function pauseMusic(){ if(gameState.musicAudio){ gameState.musicPlaying = false; gameState.musicAudio.pause(); document.getElementById('musicDisc')?.classList.remove('playing'); } }
-  function stopMusicPlayback(){
-    if(gameState.musicAudio){
-      gameState.musicPlaying = false;
-      gameState.musicAudio.pause();
-      try{ gameState.musicAudio.currentTime = 0; }catch(e){}
-      document.getElementById('musicDisc')?.classList.remove('playing');
-    }
-  }
   function toggleMusic(){ gameState.musicPlaying ? pauseMusic() : playMusic(); }
   function nextTrack(auto=false){ const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex + 1) % pl.length; setupMusic(); if(gameState.musicPlaying || auto) playMusic(); }
   function prevTrack(){ const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
@@ -2867,10 +2859,8 @@ const STOP_STALE_MS = 18000;
       }
     }
     let userName = document.getElementById('roomName').value.trim();
-    if(!userName){
-      alert('Digite seu nome antes de entrar na sala.');
-      return;
-    }
+    if(!userName) userName = document.getElementById('playerName').value.trim();
+    if(!userName) userName = 'Jogador';
     userName = userName.slice(0,18);
     gameState.myName = userName;
     gameState.roomMode = true;
@@ -2961,32 +2951,11 @@ const STOP_STALE_MS = 18000;
 
   const oldBackToLobby = backToLobby;
   backToLobby = async function(){
-    try{
-      await oldBackToLobby();
-    }catch(err){
-      console.warn('Falha ao sair da sala, retornando à lobby mesmo assim:', err);
-    }finally{
-      gameState.roomMode = false;
-      gameState.stopMode = false;
-      const table = document.getElementById('table');
-      const endScreen = document.getElementById('endScreen');
-      const lobbyScreen = document.getElementById('lobbyScreen');
-      const chatPanel = document.getElementById('chatPanel');
-      if(table) table.style.display = 'none';
-      if(endScreen) endScreen.style.display = 'none';
-      if(lobbyScreen) lobbyScreen.style.display = 'flex';
-      if(chatPanel) chatPanel.style.display = 'none';
-      if(typeof stopSetBoardVisibility === 'function') stopSetBoardVisibility(false);
-      if(typeof stopClearDraftAnswers === 'function') stopClearDraftAnswers();
-      closeRoomSession();
-      stopMusicPlayback();
-      closeAdminModal();
-      closePeopleModal();
-      adminState.mode = adminState.mode === 'password' ? 'password' : 'none';
-      renderLobbyRooms();
-      renderThemeDots();
-      bootstrapLobbyRooms();
-    }
+    await oldBackToLobby();
+    closeAdminModal();
+    closePeopleModal();
+    adminState.mode = adminState.mode === 'password' ? 'password' : 'none';
+    renderLobbyRooms();
   };
 
   const oldRenderChatMessages = renderChatMessages;
@@ -3513,6 +3482,7 @@ async function updateStopAnswer(key, value){
 
 async function joinStopRoom(roomId = STOP_ROOM_ID){
   let userName = document.getElementById('roomName')?.value.trim();
+  if(!userName) userName = document.getElementById('playerName')?.value.trim();
   if(!userName){
     alert('Digite seu nome antes de entrar na sala.');
     return;
@@ -3592,7 +3562,6 @@ async function stopLeaveCurrentRoom(){
   if(!gameState.stopMode || !gameState.stopState) return;
   stopClearHeartbeat();
   stopStopSubscriptions();
-  stopMusicPlayback();
   const ref = db.collection('stopRooms').doc(getStopRoomId());
   const myId = gameState.myId;
   let shouldReset = false;
