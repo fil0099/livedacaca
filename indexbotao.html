@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ssCartas - Jogo Multiplayer com Chat</title>
+  <title>eeCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2106,10 +2106,6 @@ const STOP_STALE_MS = 18000;
           <div class="modal-row" style="margin-top:10px;">
             <input id="newRoomNameInput" class="field" type="text" placeholder="Nome da nova sala" />
             <input id="newRoomIdInput" class="field" type="text" placeholder="ID opcional (ex: sala4)" />
-            <select id="newRoomTypeInput" class="field">
-              <option value="card">Sala de cartas</option>
-              <option value="stop">Sala de stop</option>
-            </select>
             <button class="btn" type="button" onclick="createAdminRoom()">Criar sala</button>
           </div>
           <div class="modal-row" style="margin-top:10px;">
@@ -2190,10 +2186,9 @@ const STOP_STALE_MS = 18000;
     'https://raw.githubusercontent.com/fil0099/livedacaca/main/sonican-lo-fi-music-loop-sentimental-jazzy-love-473154.mp3'
   ];
   const DEFAULT_ROOMS = [
-    { id: 'sala1', name: 'Sala 1', type: 'card' },
-    { id: 'sala2', name: 'Sala 2', type: 'card' },
-    { id: 'sala3', name: 'Sala 3', type: 'card' },
-    { id: 'stop-main', name: 'Sala Stop', type: 'stop' }
+    { id: 'sala1', name: 'Sala 1' },
+    { id: 'sala2', name: 'Sala 2' },
+    { id: 'sala3', name: 'Sala 3' }
   ];
   const PERM_KEYS = ['password','rooms','music','autoplay','delegate'];
   const allPerms = () => ({ password:true, rooms:true, music:true, autoplay:true, delegate:true });
@@ -2224,7 +2219,7 @@ const STOP_STALE_MS = 18000;
   function loadSettings(){
     const base = {
       adminPassword: '123',
-      rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name, type:r.type || 'card' })),
+      rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name })),
       roomMeta: DEFAULT_ROOMS.reduce((acc, r) => {
         acc[r.id] = { name:r.name, password:'', autoplay:true, playlist: DEFAULT_PLAYLIST.slice() };
         return acc;
@@ -2238,16 +2233,15 @@ const STOP_STALE_MS = 18000;
     const next = {
       ...base,
       ...local,
-      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : 'card') })).filter(r => r.id) : base.rooms.slice(),
+      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim() })).filter(r => r.id) : base.rooms.slice(),
       roomMeta: { ...base.roomMeta, ...(local.roomMeta || {}) },
       delegations: local.delegations && typeof local.delegations === 'object' ? local.delegations : {},
       userRegistry: Array.isArray(local.userRegistry) ? local.userRegistry : []
     };
     next.rooms = next.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
     next.rooms.forEach(room => {
-      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card' };
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
-      next.roomMeta[room.id].type = next.roomMeta[room.id].type === 'stop' ? 'stop' : (room.type || 'card');
       next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
       next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
       next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
@@ -2265,7 +2259,7 @@ const STOP_STALE_MS = 18000;
     if(!remote || typeof remote !== 'object') return;
     const next = loadSettings();
     if(typeof remote.adminPassword === 'string') next.adminPassword = remote.adminPassword;
-    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : 'card') })).filter(r => r.id);
+    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim() })).filter(r => r.id);
     if(remote.roomMeta && typeof remote.roomMeta === 'object') next.roomMeta = { ...next.roomMeta, ...remote.roomMeta };
     if(remote.delegations && typeof remote.delegations === 'object') next.delegations = remote.delegations;
     if(Array.isArray(remote.userRegistry)) next.userRegistry = remote.userRegistry;
@@ -2280,14 +2274,12 @@ const STOP_STALE_MS = 18000;
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
   }
 
-  function getRooms(type = null){
+  function getRooms(){
     const seen = new Set();
     return (adminState.settings.rooms || []).map(room => {
       const id = String(room.id || '').trim();
       const meta = adminState.settings.roomMeta?.[id] || {};
-      const roomType = String(meta.type || room.type || 'card').trim() === 'stop' ? 'stop' : 'card';
-      if(type && roomType !== type) return null;
-      const item = { id, name: String(meta.name || room.name || id).trim() || id, type: roomType };
+      const item = { id, name: String(meta.name || room.name || id).trim() || id };
       if(seen.has(item.id)) return null;
       seen.add(item.id);
       return item;
@@ -2296,15 +2288,7 @@ const STOP_STALE_MS = 18000;
 
   function getRoomMeta(roomId){
     const id = String(roomId || '').trim();
-    const room = (adminState.settings.rooms || []).find(r => r.id === id);
-    const fallbackType = room && String(room.type || 'card').trim() === 'stop' ? 'stop' : 'card';
-    return adminState.settings.roomMeta?.[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type:fallbackType };
-  }
-
-  function getRoomType(roomId){
-    const id = String(roomId || '').trim();
-    const meta = getRoomMeta(id);
-    return String(meta.type || 'card').trim() === 'stop' ? 'stop' : 'card';
+    return adminState.settings.roomMeta?.[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
   }
 
   function setRoomMeta(roomId, patch){
@@ -2314,7 +2298,7 @@ const STOP_STALE_MS = 18000;
       ...(adminState.settings.roomMeta[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() }),
       ...patch
     };
-    if(!adminState.settings.rooms.some(r => r.id === id)) adminState.settings.rooms.push({ id, name: adminState.settings.roomMeta[id].name || id, type: adminState.settings.roomMeta[id].type || 'card' });
+    if(!adminState.settings.rooms.some(r => r.id === id)) adminState.settings.rooms.push({ id, name: adminState.settings.roomMeta[id].name || id });
     adminState.settings.rooms = adminState.settings.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
     adminState.settings.rooms = adminState.settings.rooms.map(r => r.id === id ? { id, name: adminState.settings.roomMeta[id].name || r.name || id } : r);
     saveSettings();
@@ -2347,10 +2331,6 @@ const STOP_STALE_MS = 18000;
     return meta.name || roomId;
   }
 
-  function getStopRoomId(){
-    return String(gameState.stopRoomId || STOP_ROOM_ID || 'stop-main');
-  }
-
   function roomPlayersFromState(state){
     const out = [];
     if(!state || !state.slots) return out;
@@ -2377,7 +2357,7 @@ const STOP_STALE_MS = 18000;
     return getRoomMeta(roomId).playlist || DEFAULT_PLAYLIST.slice();
   }
   function roomAutoplay(roomId){
-    return getRoomType(roomId) !== 'stop' && getRoomMeta(roomId).autoplay !== false;
+    return getRoomMeta(roomId).autoplay !== false;
   }
 
   function refreshRoomListeners(){
@@ -2385,8 +2365,7 @@ const STOP_STALE_MS = 18000;
     adminRoomUnsubs = [];
     const rooms = getRooms();
     rooms.forEach(room => {
-      const col = room.type === 'stop' ? db.collection('stopRooms') : db.collection('rooms');
-      const unsub = col.doc(room.id).onSnapshot(snap => {
+      const unsub = db.collection('rooms').doc(room.id).onSnapshot(snap => {
         adminState.roomCache[room.id] = snap.exists ? snap.data() : null;
         renderLobbyRooms();
         renderAdminRoomDetails();
@@ -2436,28 +2415,8 @@ const STOP_STALE_MS = 18000;
     container.innerHTML = '';
     const rooms = getRooms();
     rooms.forEach(room => {
-      const locked = !!getRoomMeta(room.id).password;
-      if(room.type === 'stop'){
-        const state = adminState.roomCache[room.id] || null;
-        const phase = state?.phase || 'waiting';
-        const status = phase === 'writing' ? 'Partida ativa' : (phase === 'results' ? 'Resultados' : 'Aguardando jogadores');
-        const div = document.createElement('div');
-        div.className = 'room-card';
-        div.innerHTML = `
-          <div class="room-head">
-            <strong>${escapeHtml(room.name)}</strong>
-            <span class="room-tag">STOP</span>
-          </div>
-          <small>${escapeHtml(status)}</small>
-          <div class="room-actions" style="align-items:center;">
-            <span class="pill">ID ${escapeHtml(room.id)}</span>
-            <button class="btn secondary" onclick="joinStopRoom('${room.id}')">${locked ? 'Entrar 🔒' : 'Entrar'}</button>
-          </div>
-        `;
-        container.appendChild(div);
-        return;
-      }
       const { occupied, state } = roomOccupancy(room.id);
+      const locked = !!getRoomMeta(room.id).password;
       const status = state ? (state.gameRunning ? 'Partida ativa' : 'Sala pronta') : 'Aguardando jogadores';
       const btnLabel = locked ? 'Entrar 🔒' : (state && state.seatingOpen === false ? 'Assistir' : 'Entrar');
       const div = document.createElement('div');
@@ -2490,28 +2449,6 @@ const STOP_STALE_MS = 18000;
     }
   }
 
-  async function ensureStopRoomDoc(roomId){
-    const ref = db.collection('stopRooms').doc(roomId);
-    const snap = await ref.get();
-    if(!snap.exists){
-      await ref.set({
-        roomId,
-        roomName: currentRoomLabel(roomId),
-        gameNumber: 1,
-        phase: 'waiting',
-        letter: '-',
-        players: {},
-        history: [],
-        startedAt: Date.now(),
-        roundStartedAt: null,
-        roundEndedAt: null,
-        stoppedBy: null,
-        lastResults: null,
-        updatedAt: Date.now()
-      });
-    }
-  }
-
   async function deleteRoomChatMessages(roomId){
     try{
       const snap = await db.collection('chat').where('roomId', '==', roomId).get();
@@ -2526,18 +2463,16 @@ const STOP_STALE_MS = 18000;
     if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
     let name = document.getElementById('newRoomNameInput')?.value.trim();
     let id = document.getElementById('newRoomIdInput')?.value.trim();
-    const type = String(document.getElementById('newRoomTypeInput')?.value || 'card') === 'stop' ? 'stop' : 'card';
-    if(!name) name = type === 'stop' ? 'Sala Stop' : 'Nova sala';
+    if(!name) name = 'Nova sala';
     if(!id){
-      id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || (type === 'stop' ? 'stop' : 'sala');
+      id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || 'sala';
       id = `${id}${Math.floor(Math.random()*90+10)}`;
     }
     if(adminState.settings.rooms.some(r => r.id === id)) return alert('Já existe uma sala com esse ID.');
-    adminState.settings.rooms.push({ id, name, type });
-    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type };
+    adminState.settings.rooms.push({ id, name });
+    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
     saveSettings();
-    if(type === 'stop') await ensureStopRoomDoc(id);
-    else await ensureRoomDoc(id);
+    await ensureRoomDoc(id);
     refreshRoomListeners();
     renderLobbyRooms();
     renderAdminModal();
@@ -2548,12 +2483,11 @@ const STOP_STALE_MS = 18000;
     const id = String(roomId || '').trim();
     if(!id) return;
     if(!confirm(`Deletar a sala ${id}?`)) return;
-    const type = getRoomType(id);
     adminState.settings.rooms = adminState.settings.rooms.filter(r => r.id !== id);
     delete adminState.settings.roomMeta[id];
     delete adminState.roomCache[id];
     saveSettings();
-    try { await db.collection(type === 'stop' ? 'stopRooms' : 'rooms').doc(id).delete(); } catch(e) {}
+    try { await db.collection('rooms').doc(id).delete(); } catch(e) {}
     await deleteRoomChatMessages(id);
     refreshRoomListeners();
     renderLobbyRooms();
@@ -2570,14 +2504,17 @@ const STOP_STALE_MS = 18000;
       list.innerHTML = '<div class="list-item"><small>Nenhuma sala cadastrada.</small></div>';
       return;
     }
-    const current = rooms.some(r => r.id === adminState.selectedRoomId) ? adminState.selectedRoomId : rooms[0].id;
+    const selectedFromUI = String(select.value || '').trim();
+    const current = rooms.some(r => r.id === selectedFromUI)
+      ? selectedFromUI
+      : (rooms.some(r => r.id === adminState.selectedRoomId) ? adminState.selectedRoomId : rooms[0].id);
     adminState.selectedRoomId = current;
     select.innerHTML = rooms.map(r => `<option value="${escapeHtml(r.id)}" ${r.id===current?'selected':''}>${escapeHtml(r.name)} (${escapeHtml(r.id)})</option>`).join('');
     const meta = getRoomMeta(current);
     const room = adminState.roomCache[current];
     const occupied = room?.state ? Object.values(room.state.slots || {}).filter(Boolean).length : 0;
     list.innerHTML = `
-      <div class="list-item"><div><strong>${escapeHtml(meta.name || current)}</strong><div><small>ID ${escapeHtml(current)} · ${occupied}/4 · tipo ${escapeHtml(getRoomType(current) === 'stop' ? 'stop' : 'cartas')}</small></div></div><button class="btn secondary small" onclick="deleteAdminRoom('${escapeHtml(current)}')">Deletar</button></div>
+      <div class="list-item"><div><strong>${escapeHtml(meta.name || current)}</strong><div><small>ID ${escapeHtml(current)} · ${occupied}/4</small></div></div><button class="btn secondary small" onclick="deleteAdminRoom('${escapeHtml(current)}')">Deletar</button></div>
       <div class="list-item"><input id="roomPasswordInput" type="text" placeholder="Senha da sala" value="${escapeHtml(meta.password || '')}" /><button class="btn" type="button" onclick="saveRoomPassword()">Salvar senha</button></div>
       <div class="list-item"><input id="roomNameInput" type="text" placeholder="Nome da sala" value="${escapeHtml(meta.name || current)}" /><button class="btn secondary" type="button" onclick="saveRoomName()">Salvar nome</button></div>
     `;
@@ -2606,16 +2543,30 @@ const STOP_STALE_MS = 18000;
     const textarea = document.getElementById('roomMusicList');
     const playlist = String(textarea?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
     setRoomMeta(roomId, { playlist: playlist.length ? playlist : DEFAULT_PLAYLIST.slice() });
+    if(gameState.roomMode && gameState.roomId === roomId){
+      refreshCurrentRoomMusic();
+      if(roomAutoplay(roomId)) playMusic();
+    }
   }
   function resetRoomMusicList(){
     if(!hasPermission('music')) return alert('Sem permissão de músicas.');
-    setRoomMeta(adminState.selectedRoomId, { playlist: DEFAULT_PLAYLIST.slice() });
+    const roomId = adminState.selectedRoomId;
+    setRoomMeta(roomId, { playlist: DEFAULT_PLAYLIST.slice() });
+    if(gameState.roomMode && gameState.roomId === roomId){
+      refreshCurrentRoomMusic();
+      if(roomAutoplay(roomId)) playMusic();
+    }
   }
   function toggleRoomAutoPlay(){
     if(!hasPermission('autoplay')) return alert('Sem permissão de autoplay.');
     const toggle = document.getElementById('roomAutoPlayToggle');
-    setRoomMeta(adminState.selectedRoomId, { autoplay: !!toggle?.checked });
-    refreshCurrentRoomMusic();
+    const roomId = adminState.selectedRoomId;
+    setRoomMeta(roomId, { autoplay: !!toggle?.checked });
+    if(gameState.roomMode && gameState.roomId === roomId){
+      refreshCurrentRoomMusic();
+      if(roomAutoplay(roomId)) playMusic();
+      else pauseMusic();
+    }
   }
 
   function renderAdminDelegationSearch(){
@@ -2800,10 +2751,8 @@ const STOP_STALE_MS = 18000;
     if(gameState.roomMode && gameState.roomId){
       gameState.roomPlaylist = roomPlaylist(gameState.roomId);
       setupMusic();
-      if(roomAutoplay(gameState.roomId)){
-        playMusic();
-        setTimeout(() => { if(roomAutoplay(gameState.roomId)) playMusic(); }, 180);
-      }
+      if(roomAutoplay(gameState.roomId)) playMusic();
+      else pauseMusic();
     }
   }
 
@@ -2834,6 +2783,7 @@ const STOP_STALE_MS = 18000;
 
   function playMusic(){
     if(!gameState.musicAudio) setupMusic();
+    if(gameState.musicAudio && !gameState.musicAudio.src) setupMusic();
     if(gameState.musicAudio && gameState.musicAudio.src){
       gameState.musicPlaying = true;
       document.getElementById('musicDisc')?.classList.add('playing');
@@ -2847,9 +2797,6 @@ const STOP_STALE_MS = 18000;
 
   const oldJoinRoom = joinRoom;
   joinRoom = async function(roomId){
-    if(getRoomType(roomId) === 'stop'){
-      return joinStopRoom(roomId);
-    }
     const meta = getRoomMeta(roomId);
     if(meta.password){
       const typed = String(prompt(`Senha da sala ${roomId}:`) || '').trim();
@@ -2911,10 +2858,8 @@ const STOP_STALE_MS = 18000;
       renderGame();
       registerPresence({ roomId, slot: gameState.mySlot, watching: !gameState.mySlot });
       refreshCurrentRoomMusic();
-      if(roomAutoplay(roomId)){
-        playMusic();
-        setTimeout(() => { if(roomAutoplay(roomId)) playMusic(); }, 180);
-      }
+      if(roomAutoplay(roomId)) playMusic();
+      else pauseMusic();
     }catch(err){
       console.error(err);
       alert(err.message || 'Não foi possível entrar na sala.');
@@ -2928,10 +2873,7 @@ const STOP_STALE_MS = 18000;
     if(gameState.roomMode){
       registerPresence({ roomId: gameState.roomId || '', slot: gameState.mySlot, watching: !gameState.mySlot });
       refreshCurrentRoomMusic();
-      if(gameState.roomId && roomAutoplay(gameState.roomId)){
-        playMusic();
-        setTimeout(() => { if(gameState.roomId && roomAutoplay(gameState.roomId)) playMusic(); }, 180);
-      }
+      if(gameState.roomId && roomAutoplay(gameState.roomId)) playMusic();
     }
   };
 
@@ -3230,15 +3172,11 @@ function stopResultsForState(state){
   return { perPlayer, ranking, activePlayers, normalizedBuckets };
 }
 
-async function ensureStopRoomDoc(roomId = getStopRoomId()){
-  const resolvedId = String(roomId || getStopRoomId() || STOP_ROOM_ID).trim() || STOP_ROOM_ID;
-  const ref = db.collection('stopRooms').doc(resolvedId);
+async function ensureStopRoomDoc(){
+  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   const snap = await ref.get();
   if(!snap.exists){
-    const next = stopEmptyState();
-    next.roomId = resolvedId;
-    next.roomName = currentRoomLabel(resolvedId);
-    await ref.set(next);
+    await ref.set(stopEmptyState());
   }
 }
 
@@ -3447,7 +3385,7 @@ function stopRenderPlayersSummary(state){
 
 async function subscribeStopRoom(){
   stopStopSubscriptions();
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   gameState.stopUnsub = ref.onSnapshot(snap => {
     if(!snap.exists) return;
     gameState.stopState = stopCleanupState(normalizeStopState(snap.data()));
@@ -3471,7 +3409,7 @@ async function updateStopAnswer(key, value){
   gameState.stopDraftAnswers[key] = nextValue;
   player.lastSeen = Date.now();
   try {
-    await db.collection('stopRooms').doc(getStopRoomId()).update({
+    await db.collection('stopRooms').doc(STOP_ROOM_ID).update({
       [`players.${gameState.myId}.answers.${key}`]: nextValue,
       [`players.${gameState.myId}.lastSeen`]: Date.now()
     });
@@ -3480,7 +3418,7 @@ async function updateStopAnswer(key, value){
   }
 }
 
-async function joinStopRoom(roomId = STOP_ROOM_ID){
+async function joinStopRoom(){
   let userName = document.getElementById('roomName')?.value.trim();
   if(!userName) userName = document.getElementById('playerName')?.value.trim();
   if(!userName){
@@ -3493,8 +3431,8 @@ async function joinStopRoom(roomId = STOP_ROOM_ID){
   gameState.stopMode = true;
   stopClearDraftAnswers();
   gameState.roomMode = false;
-  gameState.roomId = roomId || STOP_ROOM_ID;
-  gameState.stopRoomId = roomId || STOP_ROOM_ID;
+  gameState.roomId = STOP_ROOM_ID;
+  gameState.stopRoomId = STOP_ROOM_ID;
 
   showGame();
   applyModeUI();
@@ -3503,8 +3441,8 @@ async function joinStopRoom(roomId = STOP_ROOM_ID){
   document.getElementById('table').style.display = 'block';
 
   try{
-    await ensureStopRoomDoc(roomId || STOP_ROOM_ID);
-    const ref = db.collection('stopRooms').doc(getStopRoomId());
+    await ensureStopRoomDoc();
+    const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
     const joined = await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
@@ -3551,7 +3489,7 @@ function stopStartHeartbeat(){
     if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
     const state = gameState.stopState;
     if(!state.players?.[gameState.myId]) return;
-    db.collection('stopRooms').doc(getStopRoomId()).update({
+    db.collection('stopRooms').doc(STOP_ROOM_ID).update({
       [`players.${gameState.myId}.lastSeen`]: Date.now(),
       [`players.${gameState.myId}.name`]: gameState.myName
     }).catch(()=>{});
@@ -3562,7 +3500,7 @@ async function stopLeaveCurrentRoom(){
   if(!gameState.stopMode || !gameState.stopState) return;
   stopClearHeartbeat();
   stopStopSubscriptions();
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   const myId = gameState.myId;
   let shouldReset = false;
   try{
@@ -3605,7 +3543,7 @@ function stopSetLayout(){
 
 async function pressStop(){
   if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   try{
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
@@ -3653,7 +3591,7 @@ async function pressStop(){
 
 async function startStopNewGame(){
   if(!gameState.stopMode || !gameState.stopState) return;
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   try{
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
@@ -3691,7 +3629,7 @@ async function startStopNewGame(){
 
 async function stopPlayAgain(){
   if(!gameState.stopMode || !gameState.stopState) return;
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   try{
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
@@ -3767,6 +3705,21 @@ function closeStopHistory(){
 const _origRenderLobbyRooms = renderLobbyRooms;
 renderLobbyRooms = function(){
   _origRenderLobbyRooms();
+  const container = document.getElementById('roomsList');
+  if(!container) return;
+  const stopCard = document.createElement('div');
+  stopCard.className = 'room-card';
+  stopCard.innerHTML = `
+    <div class="room-head">
+      <strong>Sala Stop</strong>
+      <span class="room-tag">STOP</span>
+    </div>
+    <small>Jogo de palavras por letra, com chat e pontuação.</small>
+    <div class="room-actions">
+      <button class="btn secondary" onclick="joinStopRoom()">Entrar</button>
+    </div>
+  `;
+  container.appendChild(stopCard);
 };
 
 const _origRenderGame = renderGame;
