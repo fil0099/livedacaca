@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>uuCartas - Jogo Multiplayer com Chat</title>
+  <title>ffCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1024,8 +1024,7 @@ const STOP_STALE_MS = 18000;
       stopHeartbeat: null,
       stopUnsub: null,
       stopPlaylist: [],
-      stopDraftAnswers: {},
-      stopAnswerSaveTimers: {}
+      stopDraftAnswers: {}
     };
 
     const DEFAULT_PLAYLIST = [
@@ -1603,7 +1602,10 @@ const STOP_STALE_MS = 18000;
 
     function joinRobots(){
       let userName = document.getElementById("playerName").value.trim();
-      if(!userName) userName = "Você";
+      if(!userName){
+        alert("Digite seu nome antes de jogar.");
+        return;
+      }
       gameState.myName = userName.slice(0,18);
       gameState.roomMode = false;
       closeRoomSession();
@@ -3121,6 +3123,9 @@ function stopResultsForState(state){
   const activePlayers = stopActivePlayers(state);
   const normalizedBuckets = {};
   const perPlayer = {};
+  const requiredLetter = stopNormalizeText(state.letter || '');
+  const requiredInitial = requiredLetter ? requiredLetter[0] : '';
+
   activePlayers.forEach(p => {
     perPlayer[p.id] = {
       id: p.id,
@@ -3137,18 +3142,24 @@ function stopResultsForState(state){
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      if(!norm) return;
+      const startsWithLetter = !!norm && !!requiredInitial && norm.startsWith(requiredInitial);
+      if(!startsWithLetter) return;
       if(!buckets[norm]) buckets[norm] = [];
       buckets[norm].push(p.id);
     });
+
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      const pts = norm ? ((buckets[norm] || []).length === 1 ? 10 : 5) : 0;
+      const startsWithLetter = !!norm && !!requiredInitial && norm.startsWith(requiredInitial);
+      const pts = startsWithLetter
+        ? ((buckets[norm] || []).length > 1 ? 5 : 10)
+        : 0;
       perPlayer[p.id].score += pts;
       perPlayer[p.id].answers[label] = raw;
       perPlayer[p.id].categoryPoints[label] = pts;
     });
+
     normalizedBuckets[key] = buckets;
   });
 
@@ -3208,12 +3219,6 @@ function stopSetBoardVisibility(active){
 
 function stopClearDraftAnswers(){
   gameState.stopDraftAnswers = {};
-  if(gameState.stopAnswerSaveTimers && typeof gameState.stopAnswerSaveTimers === 'object'){
-    Object.values(gameState.stopAnswerSaveTimers).forEach(timer => {
-      try { clearTimeout(timer); } catch(e) {}
-    });
-  }
-  gameState.stopAnswerSaveTimers = {};
 }
 
 function stopSyncDraftFromDom(){
@@ -3232,24 +3237,6 @@ function stopDraftAnswer(key, value){
     gameState.stopDraftAnswers = {};
   }
   gameState.stopDraftAnswers[key] = String(value ?? '');
-}
-
-function stopScheduleCommitAnswer(key, value){
-  if(!gameState.stopAnswerSaveTimers || typeof gameState.stopAnswerSaveTimers !== 'object'){
-    gameState.stopAnswerSaveTimers = {};
-  }
-  const existing = gameState.stopAnswerSaveTimers[key];
-  if(existing) clearTimeout(existing);
-  gameState.stopAnswerSaveTimers[key] = setTimeout(() => {
-    stopCommitAnswer(key, value);
-  }, 250);
-}
-
-function stopHandleAnswerInput(event, key){
-  const current = event.currentTarget;
-  const value = current?.value ?? '';
-  stopDraftAnswer(key, value);
-  stopScheduleCommitAnswer(key, value);
 }
 
 function stopGetNextInputKey(currentKey){
@@ -3297,7 +3284,6 @@ function stopHandleAnswerKeydown(event, key){
   event.preventDefault();
   const current = event.currentTarget;
   const value = current?.value ?? '';
-  stopDraftAnswer(key, value);
   stopCommitAnswer(key, value);
   const nextKey = stopGetNextInputKey(key);
   if(nextKey){
@@ -3444,7 +3430,7 @@ function stopRenderPlayersSummary(state){
               value="${value}"
               placeholder="Comece com ${escapeHtml(state.letter)}"
               onfocus="stopDraftAnswer('${key}', this.value)"
-              oninput="stopHandleAnswerInput(event, '${key}')"
+              oninput="stopDraftAnswer('${key}', this.value)"
               onblur="stopCommitAnswer('${key}', this.value)"
               onkeydown="stopHandleAnswerKeydown(event, '${key}')"
             />
@@ -3677,7 +3663,6 @@ function stopSetLayout(){
 
 async function pressStop(){
   if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
-  stopSyncDraftFromDom();
   const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   try{
     await db.runTransaction(async (tx) => {
@@ -3685,16 +3670,6 @@ async function pressStop(){
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
       if(state.phase === 'results') return;
-      const localPlayer = state.players?.[gameState.myId];
-      if(localPlayer && stopPlayerIsActive(state, gameState.myId) && gameState.stopDraftAnswers && typeof gameState.stopDraftAnswers === 'object'){
-        STOP_CATEGORY_KEYS.forEach(key => {
-          const draftValue = gameState.stopDraftAnswers[key];
-          if(draftValue !== undefined){
-            if(!localPlayer.answers) localPlayer.answers = stopEmptyAnswers();
-            localPlayer.answers[key] = String(draftValue ?? '').trim();
-          }
-        });
-      }
       const results = stopResultsForState(state);
       results.activePlayers.forEach(p => {
         const player = state.players[p.id];
