@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>qqCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -3043,11 +3043,11 @@ function normalizeStopState(raw){
       player.name = String(p?.name || 'Jogador');
       player.joinedAt = p?.joinedAt || Date.now();
       player.lastSeen = p?.lastSeen || Date.now();
-      player.eligibleFromGame = Number.isFinite(p?.eligibleFromGame) ? p.eligibleFromGame : 1;
-      player.totalScore = Number.isFinite(p?.totalScore) ? p.totalScore : 0;
+      player.eligibleFromGame = Number.isFinite(p?.eligibleFromGame) ? p?.eligibleFromGame : 1;
+      player.totalScore = Number.isFinite(p?.totalScore) ? p?.totalScore : 0;
       const answers = p?.answers && typeof p.answers === 'object' ? p.answers : {};
       STOP_CATEGORY_KEYS.forEach(key => { player.answers[key] = String(answers[key] || ''); });
-      player.lastRoundScore = Number.isFinite(p?.lastRoundScore) ? p.lastRoundScore : 0;
+      player.lastRoundScore = Number.isFinite(p?.lastRoundScore) ? p?.lastRoundScore : 0;
       player.lastRoundAnswers = p?.lastRoundAnswers && typeof p.lastRoundAnswers === 'object' ? p.lastRoundAnswers : null;
       state.players[pid] = player;
     });
@@ -3055,13 +3055,41 @@ function normalizeStopState(raw){
   return state;
 }
 
+function stopFreshRoomState(previousState = null){
+  const fresh = stopEmptyState();
+  fresh.history = Array.isArray(previousState?.history) ? previousState.history.slice(0, 20) : [];
+  fresh.updatedAt = Date.now();
+  return fresh;
+}
+
+function stopIsPlayerFresh(player){
+  if(!player || !Number.isFinite(player.lastSeen)) return true;
+  return (Date.now() - player.lastSeen) <= STOP_STALE_MS;
+}
+
+function stopCleanupState(state){
+  const next = state && typeof state === 'object' ? state : stopEmptyState();
+  const cleanedPlayers = {};
+  Object.values(next.players || {}).forEach(player => {
+    if(!player || !player.id) return;
+    if(!stopIsPlayerFresh(player)) return;
+    cleanedPlayers[player.id] = player;
+  });
+  next.players = cleanedPlayers;
+  return next;
+}
+
 function stopActivePlayers(state){
-  return Object.values(state.players || {}).filter(p => p && p.id && (Number.isFinite(p.eligibleFromGame) ? p.eligibleFromGame : 1) <= state.gameNumber);
+  return Object.values(state.players || {}).filter(p => {
+    if(!p || !p.id) return false;
+    if(!stopIsPlayerFresh(p)) return false;
+    return (Number.isFinite(p.eligibleFromGame) ? p.eligibleFromGame : 1) <= state.gameNumber;
+  });
 }
 
 function stopPlayerIsActive(state, playerId){
   const player = state.players?.[playerId];
-  return !!player && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
+  return !!player && stopIsPlayerFresh(player) && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
 }
 
 function stopResultsForState(state){
@@ -3260,7 +3288,7 @@ async function subscribeStopRoom(){
   const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   gameState.stopUnsub = ref.onSnapshot(snap => {
     if(!snap.exists) return;
-    gameState.stopState = normalizeStopState(snap.data());
+    gameState.stopState = stopCleanupState(normalizeStopState(snap.data()));
     renderGame();
     renderPeopleModal();
     renderStopHistory();
@@ -3312,10 +3340,11 @@ async function joinStopRoom(){
     const joined = await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
+      let state = stopCleanupState(normalizeStopState(snap.data()));
       state.players = state.players || {};
       const existing = state.players[gameState.myId] || null;
-      const nextEligible = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
+      const roomWasEmpty = Object.keys(state.players || {}).length === 0;
+      const nextEligible = roomWasEmpty ? (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) : ((Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1);
       state.players[gameState.myId] = {
         ...(existing || stopEmptyPlayer(gameState.myId, userName, nextEligible)),
         id: gameState.myId,
@@ -3368,13 +3397,14 @@ async function stopLeaveCurrentRoom(){
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) return;
-      let state = normalizeStopState(snap.data());
+      let state = stopCleanupState(normalizeStopState(snap.data()));
       if(state.players && state.players[myId]){
         delete state.players[myId];
       }
       shouldReset = Object.keys(state.players || {}).length === 0;
       if(shouldReset){
-        tx.delete(ref);
+        state = stopFreshRoomState(state);
+        tx.set(ref, state, { merge: true });
       }else{
         state.updatedAt = Date.now();
         tx.set(ref, state, { merge: true });
@@ -3407,7 +3437,7 @@ async function pressStop(){
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
+      let state = stopCleanupState(normalizeStopState(snap.data()));
       if(state.phase === 'results') return;
       const results = stopResultsForState(state);
       results.activePlayers.forEach(p => {
@@ -3455,7 +3485,7 @@ async function startStopNewGame(){
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
+      let state = stopCleanupState(normalizeStopState(snap.data()));
       if(state.phase !== 'results') throw new Error('A partida ainda está em andamento.');
       state.gameNumber = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
       state.phase = 'writing';
