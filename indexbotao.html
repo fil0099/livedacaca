@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>llCartas - Jogo Multiplayer com Chat</title>
+  <title>22Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2982,6 +2982,32 @@ function stopNormalizeText(value){
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+function stopWordStartsWithLetter(word, letter){
+  const normalizedWord = stopNormalizeText(word);
+  const normalizedLetter = stopNormalizeText(letter).slice(0, 1);
+  if(!normalizedWord || !normalizedLetter) return false;
+  return normalizedWord[0] === normalizedLetter;
+}
+
+function stopFocusNextCategory(currentKey){
+  const index = STOP_CATEGORY_KEYS.indexOf(currentKey);
+  if(index === -1 || index + 1 >= STOP_CATEGORY_KEYS.length) return;
+  const nextKey = STOP_CATEGORY_KEYS[index + 1];
+  const nextInput = document.querySelector(`#stopCategories input[data-stop-key="${nextKey}"]`);
+  if(nextInput){
+    nextInput.focus();
+    if(typeof nextInput.select === 'function') nextInput.select();
+  }
+}
+
+async function stopHandleCategoryKeydown(event, key){
+  if(event.key !== 'Enter') return;
+  event.preventDefault();
+  const input = event.target;
+  await updateStopAnswer(key, input?.value ?? '');
+  stopFocusNextCategory(key);
+}
+
 function stopRandomLetter(){
   const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   return letters[Math.floor(Math.random() * letters.length)];
@@ -3108,6 +3134,8 @@ function stopResultsForState(state){
   const activePlayers = stopActivePlayers(state);
   const normalizedBuckets = {};
   const perPlayer = {};
+  const currentLetter = String(state?.letter || '').slice(0, 1);
+
   activePlayers.forEach(p => {
     perPlayer[p.id] = {
       id: p.id,
@@ -3120,23 +3148,35 @@ function stopResultsForState(state){
 
   STOP_CATEGORIES.forEach((label, idx) => {
     const key = STOP_CATEGORY_KEYS[idx];
-    const buckets = {};
+    const validEntries = [];
+    const validCounts = {};
+
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
+      if(!raw) return;
+      if(!stopWordStartsWithLetter(raw, currentLetter)) return;
       const norm = stopNormalizeText(raw);
-      if(!norm) return;
-      if(!buckets[norm]) buckets[norm] = [];
-      buckets[norm].push(p.id);
+      validEntries.push({ id: p.id, norm, raw });
+      validCounts[norm] = (validCounts[norm] || 0) + 1;
     });
+
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
-      const norm = stopNormalizeText(raw);
-      const pts = norm ? ((buckets[norm] || []).length === 1 ? 10 : 5) : 0;
+      let pts = 0;
+      if(raw && stopWordStartsWithLetter(raw, currentLetter)){
+        const norm = stopNormalizeText(raw);
+        pts = (validCounts[norm] || 0) >= 2 ? 5 : 10;
+      }
       perPlayer[p.id].score += pts;
       perPlayer[p.id].answers[label] = raw;
       perPlayer[p.id].categoryPoints[label] = pts;
     });
-    normalizedBuckets[key] = buckets;
+
+    normalizedBuckets[key] = validEntries.reduce((acc, entry) => {
+      if(!acc[entry.norm]) acc[entry.norm] = [];
+      acc[entry.norm].push(entry.id);
+      return acc;
+    }, {});
   });
 
   const ranking = activePlayers
@@ -3307,7 +3347,7 @@ function stopRenderPlayersSummary(state){
         return `
           <div class="stop-category">
             <label>${escapeHtml(label)}</label>
-            <input type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopDraftAnswer('${key}', this.value)" oninput="stopDraftAnswer('${key}', this.value)" onblur="updateStopAnswer('${key}', this.value)" />
+            <input data-stop-key="${key}" type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopDraftAnswer('${key}', this.value)" oninput="stopDraftAnswer('${key}', this.value)" onkeydown="stopHandleCategoryKeydown(event, '${key}')" onblur="updateStopAnswer('${key}', this.value)" />
           </div>
         `;
       }).join('');
