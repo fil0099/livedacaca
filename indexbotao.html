@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>ffCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1001,8 +1001,14 @@ const STOP_STALE_MS = 18000;
       audioEnabled: false,
       micEnabled: false,
       micStream: null,
+      micOutputStream: null,
       micAudioContext: null,
       micGain: null,
+      voiceRoomKey: null,
+      voiceBuiltWithMic: false,
+      voiceSignalUnsub: null,
+      voicePeers: {},
+      voiceRemoteAudio: {},
       trackIndex: 0,
       roomPlaylist: [],
       robotPlaylist: [],
@@ -1419,6 +1425,7 @@ const STOP_STALE_MS = 18000;
         if(joined.wasEmpty) await deleteRoomChatMessages(roomId);
         initRoomChat(roomId);
         renderGame();
+        await refreshVoiceChat(true);
       } catch(err){
         console.error(err);
         alert(err.message || "Não foi possível entrar na sala.");
@@ -1442,6 +1449,7 @@ const STOP_STALE_MS = 18000;
           }
         }
         renderGame();
+        refreshVoiceChat();
       }, err => {
         console.error("Erro ao ouvir sala:", err);
       });
@@ -1468,6 +1476,7 @@ const STOP_STALE_MS = 18000;
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
+      stopVoiceChat();
       stopMusicPlayback();
       let shouldReset = false;
       try {
@@ -1627,6 +1636,7 @@ const STOP_STALE_MS = 18000;
       document.getElementById("endScreen").style.display = "none";
       document.getElementById("lobbyScreen").style.display = "flex";
       document.getElementById("chatPanel").style.display = "none";
+      stopVoiceChat();
       closeRoomSession();
       refreshThemeForMode();
       renderLobbyRooms();
@@ -1938,14 +1948,366 @@ const STOP_STALE_MS = 18000;
     function nextTrack(auto=false){ const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex + 1) % pl.length; setupMusic(); if(gameState.musicPlaying || auto) playMusic(); }
     function prevTrack(){ const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
     function setMusicVolume(v){ gameState.musicVolume = v / 100; if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume; }
-    function setMasterVolume(v){ gameState.masterVolume = v / 100; if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume; if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume; }
-    function setMicVolume(v){ gameState.micVolume = v / 100; if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume; }
-    async function toggleMic(){
-      gameState.micEnabled = !gameState.micEnabled; document.getElementById("micBtn").textContent = gameState.micEnabled ? "Mic: ligado" : "Mic: desligado";
-      if(gameState.micEnabled){ try{ gameState.micStream = await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext = new (window.AudioContext||window.webkitAudioContext)(); const src = gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain = gameState.micAudioContext.createGain(); const mon = gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value = gameState.micVolume; mon.gain.value = gameState.audioEnabled ? gameState.masterVolume : 0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled = false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream = null; } }
-    function toggleAudio(){ gameState.audioEnabled = !gameState.audioEnabled; document.getElementById("audioBtn").textContent = gameState.audioEnabled ? "Áudio: ligado" : "Áudio: desligado"; }
+    function setMasterVolume(v){
+      gameState.masterVolume = v / 100;
+      if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+      if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume;
+      updateVoiceAudioVolumes();
+    }
+    function setMicVolume(v){
+      gameState.micVolume = v / 100;
+      if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume;
+    }
+
+    function getVoiceContext(){
+      if(gameState.stopMode && gameState.stopState && gameState.stopRoomId){
+        const participants = Object.values(gameState.stopState.players || {})
+          .filter(p => p && p.id)
+          .map(p => ({ id: String(p.id), name: String(p.name || 'Jogador') }));
+        return { mode: 'stop', roomId: String(gameState.stopRoomId || STOP_ROOM_ID), participants };
+      }
+      if(gameState.roomMode && gameState.roomId){
+        const participants = Object.values(gameState.roomState?.slots || {})
+          .filter(Boolean)
+          .map(p => ({ id: String(p.id || ''), name: String(p.name || 'Jogador') }))
+          .filter(p => p.id);
+        return { mode: 'cards', roomId: String(gameState.roomId), participants };
+      }
+      return null;
+    }
+
+    function getVoiceRoomCollection(ctx){
+      return ctx.mode === 'stop' ? db.collection('stopRooms') : db.collection('rooms');
+    }
+
+    function getVoiceSignalCollection(ctx){
+      return getVoiceRoomCollection(ctx).doc(ctx.roomId).collection('voiceSignals');
+    }
+
+    function getVoiceRoomKey(ctx){
+      return `${ctx.mode}:${ctx.roomId}`;
+    }
+
+    function ensureVoiceContainers(){
+      if(!document.getElementById('voiceHiddenAudioContainer')){
+        const holder = document.createElement('div');
+        holder.id = 'voiceHiddenAudioContainer';
+        holder.style.display = 'none';
+        document.body.appendChild(holder);
+      }
+    }
+
+    function updateVoiceAudioVolumes(){
+      const audios = gameState.voiceRemoteAudio || {};
+      Object.values(audios).forEach(audio => {
+        if(!audio) return;
+        audio.volume = gameState.masterVolume;
+        audio.muted = !gameState.audioEnabled;
+      });
+    }
+
+    function stopLocalMicStream(){
+      if(gameState.micStream){
+        try{ gameState.micStream.getTracks().forEach(t => t.stop()); }catch(e){}
+      }
+      if(gameState.micAudioContext){
+        try{ gameState.micAudioContext.close(); }catch(e){}
+      }
+      gameState.micStream = null;
+      gameState.micOutputStream = null;
+      gameState.micAudioContext = null;
+      gameState.micGain = null;
+    }
+
+    function destroyVoiceAudio(remoteId){
+      const audio = gameState.voiceRemoteAudio?.[remoteId];
+      if(audio){
+        try{ audio.pause(); }catch(e){}
+        try{ audio.srcObject = null; }catch(e){}
+        try{ audio.remove(); }catch(e){}
+        delete gameState.voiceRemoteAudio[remoteId];
+      }
+    }
+
+    function destroyVoicePeer(remoteId){
+      const entry = gameState.voicePeers?.[remoteId];
+      if(entry && entry.pc){
+        try{ entry.pc.ontrack = null; }catch(e){}
+        try{ entry.pc.onicecandidate = null; }catch(e){}
+        try{ entry.pc.onconnectionstatechange = null; }catch(e){}
+        try{ entry.pc.onnegotiationneeded = null; }catch(e){}
+        try{ entry.pc.close(); }catch(e){}
+      }
+      if(gameState.voicePeers) delete gameState.voicePeers[remoteId];
+      destroyVoiceAudio(remoteId);
+    }
+
+    function stopVoiceChat(){
+      if(gameState.voiceSignalUnsub){
+        try{ gameState.voiceSignalUnsub(); }catch(e){}
+        gameState.voiceSignalUnsub = null;
+      }
+      Object.keys(gameState.voicePeers || {}).forEach(destroyVoicePeer);
+      gameState.voicePeers = {};
+      gameState.voiceRemoteAudio = {};
+      gameState.voiceRoomKey = null;
+      gameState.voiceBuiltWithMic = false;
+      stopLocalMicStream();
+    }
+
+    async function ensureMicStreamForVoice(){
+      if(!gameState.micEnabled) return null;
+      if(gameState.micOutputStream) return gameState.micOutputStream;
+      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        throw new Error('Microfone não disponível');
+      }
+
+      const rawStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      gameState.micStream = rawStream;
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if(AudioCtx){
+        try{
+          const ctx = new AudioCtx();
+          if(ctx.state === 'suspended'){
+            try{ await ctx.resume(); }catch(e){}
+          }
+          const source = ctx.createMediaStreamSource(rawStream);
+          const gain = ctx.createGain();
+          const destination = ctx.createMediaStreamDestination();
+          gain.gain.value = gameState.micVolume;
+          source.connect(gain).connect(destination);
+          gameState.micAudioContext = ctx;
+          gameState.micGain = gain;
+          gameState.micOutputStream = destination.stream;
+          return destination.stream;
+        }catch(err){
+          console.warn('Falha ao processar o áudio do microfone, usando fluxo bruto:', err);
+        }
+      }
+
+      gameState.micOutputStream = rawStream;
+      return rawStream;
+    }
+
+    function attachRemoteAudio(remoteId, stream){
+      ensureVoiceContainers();
+      let audio = gameState.voiceRemoteAudio?.[remoteId];
+      if(!audio){
+        audio = document.createElement('audio');
+        audio.autoplay = true;
+        audio.playsInline = true;
+        audio.dataset.remoteId = remoteId;
+        audio.style.display = 'none';
+        document.getElementById('voiceHiddenAudioContainer')?.appendChild(audio);
+        gameState.voiceRemoteAudio[remoteId] = audio;
+      }
+      audio.srcObject = stream;
+      audio.volume = gameState.masterVolume;
+      audio.muted = !gameState.audioEnabled;
+      if(gameState.audioEnabled){
+        audio.play().catch(() => {});
+      }
+    }
+
+    function shouldInitiateVoice(remoteId){
+      return String(gameState.myId || '') < String(remoteId || '');
+    }
+
+    function sendVoiceSignal(ctx, to, kind, payload){
+      return getVoiceSignalCollection(ctx).add({
+        from: String(gameState.myId || ''),
+        to: String(to || ''),
+        roomId: ctx.roomId,
+        roomType: ctx.mode,
+        kind,
+        payload,
+        createdAt: Date.now()
+      }).catch(err => {
+        console.warn('Falha ao enviar sinal de voz:', err);
+      });
+    }
+
+    function ensureVoicePeer(ctx, remoteId){
+      if(!remoteId || remoteId === gameState.myId) return null;
+      if(gameState.voicePeers?.[remoteId]) return gameState.voicePeers[remoteId];
+      const RTCPeer = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+      if(!RTCPeer){
+        alert('Seu navegador não suporta chamada de voz.');
+        return null;
+      }
+
+      const pc = new RTCPeer({
+        iceServers: [
+          { urls: ['stun:stun.l.google.com:19302'] },
+          { urls: ['stun:global.stun.twilio.com:3478?transport=udp'] }
+        ]
+      });
+
+      const entry = { pc, remoteId };
+      if(!gameState.voicePeers) gameState.voicePeers = {};
+      gameState.voicePeers[remoteId] = entry;
+
+      pc.onicecandidate = event => {
+        if(event.candidate){
+          sendVoiceSignal(ctx, remoteId, 'candidate', event.candidate.toJSON ? event.candidate.toJSON() : event.candidate);
+        }
+      };
+
+      pc.ontrack = event => {
+        const stream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
+        attachRemoteAudio(remoteId, stream);
+      };
+
+      pc.onconnectionstatechange = () => {
+        const state = pc.connectionState || '';
+        if(state === 'failed' || state === 'closed'){
+          destroyVoicePeer(remoteId);
+        }
+      };
+
+      if(gameState.micEnabled && gameState.micOutputStream){
+        gameState.micOutputStream.getTracks().forEach(track => {
+          try{ pc.addTrack(track, gameState.micOutputStream); }catch(e){}
+        });
+      } else {
+        try{ pc.addTransceiver('audio', { direction: 'recvonly' }); }catch(e){}
+      }
+
+      if(shouldInitiateVoice(remoteId)){
+        queueMicrotask(async () => {
+          try{
+            if(!gameState.voicePeers?.[remoteId] || gameState.voicePeers[remoteId].pc !== pc) return;
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            sendVoiceSignal(ctx, remoteId, 'offer', pc.localDescription);
+          }catch(err){
+            console.warn('Falha ao criar offer de voz:', err);
+          }
+        });
+      }
+
+      return entry;
+    }
+
+    async function handleVoiceSignal(ctx, data){
+      if(!data || !data.from || String(data.from) === String(gameState.myId || '')) return;
+      if(String(data.roomId || '') !== String(ctx.roomId || '')) return;
+      const remoteId = String(data.from);
+
+      const entry = ensureVoicePeer(ctx, remoteId);
+      if(!entry || !entry.pc) return;
+      const pc = entry.pc;
+
+      try{
+        if(data.kind === 'offer' && data.payload){
+          await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          sendVoiceSignal(ctx, remoteId, 'answer', pc.localDescription);
+        } else if(data.kind === 'answer' && data.payload){
+          await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+        } else if(data.kind === 'candidate' && data.payload){
+          try{
+            await pc.addIceCandidate(new RTCIceCandidate(data.payload));
+          }catch(err){
+            console.warn('Falha ao adicionar candidato ICE:', err);
+          }
+        }
+      }catch(err){
+        console.warn('Erro no sinal de voz:', err);
+      }
+    }
+
+    async function refreshVoiceChat(forceRestart = false){
+      const ctx = getVoiceContext();
+      const voiceEnabled = !!ctx && (gameState.audioEnabled || gameState.micEnabled);
+
+      if(!voiceEnabled){
+        stopVoiceChat();
+        return;
+      }
+
+      const nextKey = getVoiceRoomKey(ctx);
+      const micMode = !!gameState.micEnabled;
+
+      if(forceRestart || gameState.voiceRoomKey !== nextKey || gameState.voiceBuiltWithMic !== micMode){
+        stopVoiceChat();
+        gameState.voiceRoomKey = nextKey;
+        gameState.voiceBuiltWithMic = micMode;
+      }
+
+      try{
+        if(gameState.micEnabled){
+          await ensureMicStreamForVoice();
+        } else {
+          stopLocalMicStream();
+        }
+      }catch(err){
+        console.error(err);
+        alert('Não foi possível ativar o microfone.');
+        gameState.micEnabled = false;
+        const micBtn = document.getElementById('micBtn');
+        if(micBtn) micBtn.textContent = 'Mic: desligado';
+        if(!gameState.audioEnabled){
+          stopVoiceChat();
+          return;
+        }
+      }
+
+      if(gameState.voiceSignalUnsub){
+        try{ gameState.voiceSignalUnsub(); }catch(e){}
+        gameState.voiceSignalUnsub = null;
+      }
+
+      const signalCol = getVoiceSignalCollection(ctx);
+      gameState.voiceSignalUnsub = signalCol.where('to', '==', String(gameState.myId || '')).onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if(change.type !== 'added') return;
+          const data = change.doc.data() || {};
+          handleVoiceSignal(ctx, data);
+          change.doc.ref.delete().catch(() => {});
+        });
+      }, err => {
+        console.warn('Erro nos sinais de voz:', err);
+      });
+
+      const desiredRemoteIds = new Set(
+        (ctx.participants || [])
+          .map(p => String(p.id || ''))
+          .filter(id => id && id !== String(gameState.myId || ''))
+      );
+
+      Object.keys(gameState.voicePeers || {}).forEach(remoteId => {
+        if(!desiredRemoteIds.has(remoteId)){
+          destroyVoicePeer(remoteId);
+        }
+      });
+
+      desiredRemoteIds.forEach(remoteId => {
+        ensureVoicePeer(ctx, remoteId);
+      });
+
+      updateVoiceAudioVolumes();
+    }
+
+    function toggleMic(){
+      gameState.micEnabled = !gameState.micEnabled;
+      const micBtn = document.getElementById('micBtn');
+      if(micBtn) micBtn.textContent = gameState.micEnabled ? 'Mic: ligado' : 'Mic: desligado';
+      refreshVoiceChat(true);
+    }
+
+    function toggleAudio(){
+      gameState.audioEnabled = !gameState.audioEnabled;
+      const audioBtn = document.getElementById('audioBtn');
+      if(audioBtn) audioBtn.textContent = gameState.audioEnabled ? 'Áudio: ligado' : 'Áudio: desligado';
+      updateVoiceAudioVolumes();
+      refreshVoiceChat(true);
+    }
 
     // ========== CHAT ==========
+
     function initRoomChat(roomId){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
       const q = db.collection('chat').where('roomId', '==', roomId);
@@ -3485,6 +3847,7 @@ async function subscribeStopRoom(){
     renderGame();
     renderPeopleModal();
     renderStopHistory();
+    refreshVoiceChat();
   }, err => {
     console.error('Erro na sala Stop:', err);
   });
@@ -3566,6 +3929,7 @@ async function joinStopRoom(roomId = STOP_ROOM_ID){
     stopStartHeartbeat();
     initRoomChat(STOP_CHAT_ROOM_ID);
     renderGame();
+    await refreshVoiceChat(true);
   }catch(err){
     console.error(err);
     alert(err.message || 'Não foi possível entrar na sala Stop.');
@@ -3592,6 +3956,7 @@ async function stopLeaveCurrentRoom(){
   if(!gameState.stopMode || !gameState.stopState) return;
   stopClearHeartbeat();
   stopStopSubscriptions();
+  stopVoiceChat();
   stopMusicPlayback();
   const ref = db.collection('stopRooms').doc(getStopRoomId());
   const myId = gameState.myId;
