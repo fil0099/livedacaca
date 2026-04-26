@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>qqCartas - Jogo Multiplayer com Chat</title>
+  <title>00Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -369,6 +369,8 @@
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
       min-height:0;
       position:relative;
+      overflow:auto;
+      padding-bottom:8px;
     }
     .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; justify-self:center; }
 
@@ -578,23 +580,24 @@
 
     .stop-panel{
       display:none;
-      position:fixed;
-      left:50%;
-      top:50%;
-      transform:translate(-50%, -50%);
-      width:min(1100px, calc(100vw - 32px));
-      max-height:calc(100vh - 32px);
-      overflow:auto;
+      position:relative;
+      left:auto;
+      top:auto;
+      transform:none;
+      width:min(100%, 980px);
+      max-height:none;
+      overflow:visible;
       padding:24px;
       border-radius:28px;
       border:1px solid var(--stroke);
       background:var(--panel-strong);
       box-shadow:var(--shadow);
-      z-index:35;
+      z-index:2;
       text-align:center;
       flex-direction:column;
       align-items:center;
       justify-content:center;
+      margin:12px auto 0;
     }
     .stop-panel.active{ display:flex; }
     .stop-head{
@@ -876,8 +879,9 @@
             <div class="stop-actions-row stop-toolbar">
               <button class="btn secondary mini-toggle" type="button" onclick="openPeopleModal()">Pessoas</button>
               <button class="btn secondary mini-toggle" type="button" onclick="openStopHistory()">Últimos 20 jogos</button>
-              <button class="btn secondary mini-toggle" type="button" onclick="startStopNewGame()">Nova partida</button>
-              <button class="btn mini-toggle stop-button" type="button" onclick="pressStop()" style="min-width:180px; font-size:1rem; padding:14px 20px;">STOP</button>
+              <button id="startStopBtn" class="btn mini-toggle" type="button" onclick="startStopGame()" style="min-width:180px; font-size:1rem; padding:14px 20px;">Começar jogo</button>
+              <button id="newStopBtn" class="btn secondary mini-toggle" type="button" onclick="startStopNewGame()">Nova partida</button>
+              <button id="stopStopBtn" class="btn mini-toggle stop-button" type="button" onclick="pressStop()" style="min-width:180px; font-size:1rem; padding:14px 20px;">STOP</button>
             </div>
             <div id="stopResults" class="stop-results hidden"></div>
           </div>
@@ -3005,12 +3009,12 @@ function stopEmptyState(){
     roomId: STOP_ROOM_ID,
     roomName: "Sala Stop",
     gameNumber: 1,
-    phase: "writing",
-    letter: stopRandomLetter(),
+    phase: "waiting",
+    letter: "",
     players: {},
     history: [],
     startedAt: Date.now(),
-    roundStartedAt: Date.now(),
+    roundStartedAt: null,
     roundEndedAt: null,
     stoppedBy: null,
     lastResults: null,
@@ -3024,12 +3028,14 @@ function normalizeStopState(raw){
   state.roomId = source.roomId || STOP_ROOM_ID;
   state.roomName = source.roomName || "Sala Stop";
   state.gameNumber = Number.isFinite(source.gameNumber) ? source.gameNumber : 1;
-  state.phase = source.phase === 'results' ? 'results' : 'writing';
-  state.letter = String(source.letter || stopRandomLetter()).slice(0, 1).toUpperCase() || stopRandomLetter();
+  state.phase = (source.phase === 'writing' || source.phase === 'results') ? source.phase : 'waiting';
+  state.letter = state.phase === 'waiting'
+    ? ""
+    : (String(source.letter || stopRandomLetter()).slice(0, 1).toUpperCase() || stopRandomLetter());
   state.players = {};
   state.history = Array.isArray(source.history) ? source.history.slice(0, 20) : [];
   state.startedAt = source.startedAt || Date.now();
-  state.roundStartedAt = source.roundStartedAt || Date.now();
+  state.roundStartedAt = source.roundStartedAt || null;
   state.roundEndedAt = source.roundEndedAt || null;
   state.stoppedBy = source.stoppedBy || null;
   state.lastResults = source.lastResults || null;
@@ -3092,6 +3098,13 @@ function stopPlayerIsActive(state, playerId){
   return !!player && stopIsPlayerFresh(player) && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
 }
 
+function stopWordMatchesLetter(value, letter){
+  const normalizedValue = stopNormalizeText(value);
+  const normalizedLetter = stopNormalizeText(letter).slice(0, 1);
+  if(!normalizedValue || !normalizedLetter) return false;
+  return normalizedValue.startsWith(normalizedLetter);
+}
+
 function stopResultsForState(state){
   const activePlayers = stopActivePlayers(state);
   const normalizedBuckets = {};
@@ -3109,17 +3122,21 @@ function stopResultsForState(state){
   STOP_CATEGORIES.forEach((label, idx) => {
     const key = STOP_CATEGORY_KEYS[idx];
     const buckets = {};
+    const validity = {};
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      if(!norm) return;
+      const valid = !!norm && stopWordMatchesLetter(raw, state.letter);
+      validity[p.id] = valid;
+      if(!valid) return;
       if(!buckets[norm]) buckets[norm] = [];
       buckets[norm].push(p.id);
     });
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      const pts = norm ? ((buckets[norm] || []).length === 1 ? 10 : 5) : 0;
+      const valid = !!raw && !!validity[p.id];
+      const pts = valid ? ((buckets[norm] || []).length === 1 ? 10 : 5) : 0;
       perPlayer[p.id].score += pts;
       perPlayer[p.id].answers[label] = raw;
       perPlayer[p.id].categoryPoints[label] = pts;
@@ -3172,7 +3189,7 @@ function stopSetBoardVisibility(active){
   if(stopPanel){
     stopPanel.classList.toggle('hidden', !active);
     stopPanel.classList.toggle('active', active);
-    stopPanel.style.display = active ? 'block' : 'none';
+    stopPanel.style.display = active ? 'flex' : 'none';
   }
   const seatActions = document.querySelector('.seat-actions');
   if(seatActions) seatActions.style.display = active ? 'none' : '';
@@ -3181,46 +3198,79 @@ function stopSetBoardVisibility(active){
 }
 
 function stopRenderPlayersSummary(state){
-  const activePlayers = stopActivePlayers(state);
   const me = state.players?.[gameState.myId];
   const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
   const notice = document.getElementById('stopJoinNotice');
+  const startBtn = document.getElementById('startStopBtn');
+  const newBtn = document.getElementById('newStopBtn');
+  const stopBtn = document.getElementById('stopStopBtn');
+
+  if(startBtn) startBtn.style.display = (state.phase === 'waiting' && eligible) ? 'inline-flex' : 'none';
+  if(newBtn) newBtn.style.display = (state.phase === 'results' && eligible) ? 'inline-flex' : 'none';
+  if(stopBtn) stopBtn.style.display = (state.phase === 'writing' && eligible) ? 'inline-flex' : 'none';
+
   if(notice){
     if(!gameState.stopMode){
       notice.textContent = 'Entre na sala Stop para jogar.';
-    } else if(eligible){
-      notice.textContent = `Você joga nesta partida. Letra: ${state.letter}`;
+    } else if(state.phase === 'waiting'){
+      notice.textContent = eligible
+        ? 'A sala está pronta. Quando todos entrarem, aperte Começar jogo.'
+        : 'Aguardando a próxima partida.';
+    } else if(state.phase === 'writing'){
+      notice.textContent = eligible
+        ? `Você joga nesta partida. A letra é ${state.letter}.`
+        : `Você entra na próxima partida. Letra atual: ${state.letter}`;
     } else {
-      notice.textContent = `Você entra na próxima partida. Letra atual: ${state.letter}`;
+      notice.textContent = 'A rodada acabou. Veja os resultados ou comece uma nova partida.';
     }
   }
 
   const letter = document.getElementById('stopLetter');
-  if(letter) letter.textContent = state.letter || '-';
+  if(letter) letter.textContent = state.phase === 'waiting' ? '-' : (state.letter || '-');
 
   const roundInfo = document.getElementById('stopRoundInfo');
   if(roundInfo){
-    roundInfo.textContent = state.phase === 'results'
-      ? `Partida ${state.gameNumber} encerrada`
-      : `Partida ${state.gameNumber} em andamento`;
+    if(state.phase === 'waiting'){
+      roundInfo.textContent = 'Aguardando alguém apertar Começar jogo...';
+    } else if(state.phase === 'results'){
+      roundInfo.textContent = `Partida ${state.gameNumber} encerrada`;
+    } else {
+      roundInfo.textContent = `Partida ${state.gameNumber} em andamento`;
+    }
   }
 
   const hudTurn = document.getElementById('hudTurn');
   if(hudTurn){
     const last = hudTurn.querySelector('span:last-child');
-    if(last) last.textContent = state.phase === 'results' ? 'Resultados da partida' : `STOP · letra ${state.letter}`;
+    if(last) last.textContent = state.phase === 'waiting' ? 'Sala aguardando' : (state.phase === 'results' ? 'Resultados da partida' : `STOP · letra ${state.letter}`);
   }
 
   const status = document.getElementById('statusNote');
   if(status){
-    status.textContent = state.phase === 'results'
-      ? 'A rodada acabou. Veja os resultados e inicie uma nova partida.'
-      : 'Escreva as respostas e aperte STOP quando quiser encerrar.';
+    if(state.phase === 'waiting'){
+      status.textContent = 'A sala está pronta. O jogo começa quando alguém apertar Começar jogo.';
+    } else if(state.phase === 'results'){
+      status.textContent = 'A rodada acabou. Veja os resultados e inicie uma nova partida.';
+    } else {
+      status.textContent = 'Escreva as respostas e aperte STOP quando quiser encerrar.';
+    }
   }
 
   const categories = document.getElementById('stopCategories');
   const resultsBox = document.getElementById('stopResults');
   if(!categories || !resultsBox) return;
+
+  if(state.phase === 'waiting'){
+    categories.innerHTML = `
+      <div class="stop-status-card">
+        <strong>Jogo ainda não começou.</strong>
+        <div style="margin-top:6px; color:var(--muted);">Mais pessoas podem entrar antes do início.</div>
+      </div>
+    `;
+    resultsBox.innerHTML = '';
+    resultsBox.classList.add('hidden');
+    return;
+  }
 
   if(state.phase === 'writing'){
     if(eligible){
@@ -3344,7 +3394,9 @@ async function joinStopRoom(){
       state.players = state.players || {};
       const existing = state.players[gameState.myId] || null;
       const roomWasEmpty = Object.keys(state.players || {}).length === 0;
-      const nextEligible = roomWasEmpty ? (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) : ((Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1);
+      const nextEligible = state.phase === 'waiting'
+        ? (Number.isFinite(state.gameNumber) ? state.gameNumber : 1)
+        : ((Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1);
       state.players[gameState.myId] = {
         ...(existing || stopEmptyPlayer(gameState.myId, userName, nextEligible)),
         id: gameState.myId,
@@ -3355,6 +3407,13 @@ async function joinStopRoom(){
         totalScore: Number.isFinite(existing?.totalScore) ? existing.totalScore : 0,
         answers: existing?.answers && typeof existing.answers === 'object' ? existing.answers : stopEmptyAnswers()
       };
+      if(state.phase === 'waiting' && roomWasEmpty){
+        state.letter = '';
+        state.roundStartedAt = null;
+        state.roundEndedAt = null;
+        state.stoppedBy = null;
+        state.lastResults = null;
+      }
       state.updatedAt = Date.now();
       tx.set(ref, state, { merge: true });
       return state;
@@ -3430,6 +3489,40 @@ function stopSetLayout(){
   if(p4) p4.style.display = 'none';
 }
 
+async function startStopGame(){
+  if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'waiting') return;
+  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
+  try{
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      if(state.phase !== 'waiting') throw new Error('O jogo já começou.');
+      const activePlayers = Object.values(state.players || {}).filter(p => p && stopIsPlayerFresh(p));
+      if(!activePlayers.length) throw new Error('Entre na sala antes de começar.');
+      state.phase = 'writing';
+      state.letter = stopRandomLetter();
+      state.roundStartedAt = Date.now();
+      state.roundEndedAt = null;
+      state.stoppedBy = null;
+      state.lastResults = null;
+      state.updatedAt = Date.now();
+      Object.values(state.players || {}).forEach(player => {
+        if(!player) return;
+        if((Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber){
+          player.answers = stopEmptyAnswers();
+          player.lastRoundScore = 0;
+          player.lastRoundAnswers = null;
+        }
+      });
+      tx.set(ref, state, { merge: true });
+    });
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível começar a partida.');
+  }
+}
+
 async function pressStop(){
   if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
   const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
@@ -3498,6 +3591,8 @@ async function startStopNewGame(){
         if(!player) return;
         if((Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber){
           player.answers = stopEmptyAnswers();
+          player.lastRoundScore = 0;
+          player.lastRoundAnswers = null;
         }
       });
       state.updatedAt = Date.now();
@@ -3766,6 +3861,7 @@ window.addEventListener('beforeunload', () => {
   window.saveDelegation = saveDelegation;
   window.deleteDelegation = deleteDelegation;
   window.openPeopleModal = openPeopleModal;
+  window.startStopGame = startStopGame;
   window.closePeopleModal = closePeopleModal;
   window.renderPeopleModal = renderPeopleModal;
 })();
