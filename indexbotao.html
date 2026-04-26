@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>aaCartas - Jogo Multiplayer com Chat</title>
+  <title>vvCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1122,6 +1122,7 @@ const STOP_STALE_MS = 18000;
         gameRunning: true,
         seatingOpen: true,
         winnerSlot: null,
+        kickedIds: {},
         startedAt: Date.now(),
         updatedAt: Date.now()
       };
@@ -1159,23 +1160,22 @@ const STOP_STALE_MS = 18000;
         gameRunning: state.gameRunning !== undefined ? !!state.gameRunning : false,
         seatingOpen: state.seatingOpen !== undefined ? !!state.seatingOpen : true,
         winnerSlot: Number.isFinite(state.winnerSlot) ? state.winnerSlot : null,
+        kickedIds: state.kickedIds && typeof state.kickedIds === 'object' ? { ...state.kickedIds } : {},
         startedAt: state.startedAt || null,
         updatedAt: state.updatedAt || null
       };
     }
 
+
+    function isSharedRoomKicked(state, playerId){
+      return !!state?.kickedIds?.[playerId];
+    }
+
     function slotIsActive(slotData){
-      if(!slotData || !slotData.id) return false;
-      if(!slotData.lastSeen) return true;
-      return (Date.now() - slotData.lastSeen) < STALE_SLOT_MS;
+      return !!(slotData && slotData.id);
     }
 
     function cleanupStaleSlots(state){
-      for(let slot = 1; slot <= 4; slot++){
-        if(state.slots[slot] && !slotIsActive(state.slots[slot])){
-          state.slots[slot] = null;
-        }
-      }
       return state;
     }
 
@@ -1448,7 +1448,7 @@ const STOP_STALE_MS = 18000;
             }
           }
         }
-        if(gameState.roomMode && gameState.mySlot && (!state.slots[gameState.mySlot] || String(state.slots[gameState.mySlot].id || '') !== String(gameState.myId))){
+        if(gameState.roomMode && gameState.myId && isSharedRoomKicked(state, gameState.myId)){
           alert('Você foi expulso da sala.');
           backToLobby();
           return;
@@ -3042,6 +3042,7 @@ const STOP_STALE_MS = 18000;
           if(!snap.exists) throw new Error('Sala não encontrada');
           const data = snap.data() || {};
           let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          state.kickedIds = state.kickedIds && typeof state.kickedIds === 'object' ? state.kickedIds : {};
           let changed = false;
           for(let slot = 1; slot <= 4; slot++){
             const s = state.slots[slot];
@@ -3051,6 +3052,7 @@ const STOP_STALE_MS = 18000;
             }
           }
           if(!changed) return;
+          state.kickedIds[uid] = Date.now();
           if(state.turn && !state.slots[state.turn]) state.turn = normalizeTurn(state);
           if(isRoomEmpty(state)) tx.delete(roomRef);
           else tx.update(roomRef, { state, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -3072,6 +3074,7 @@ const STOP_STALE_MS = 18000;
           const snap = await tx.get(ref);
           if(!snap.exists) throw new Error('Sala Stop não encontrada');
           let state = stopCleanupState(normalizeStopState(snap.data()));
+          state.kickedIds = state.kickedIds && typeof state.kickedIds === 'object' ? state.kickedIds : {};
           let changed = false;
           Object.keys(state.players || {}).forEach(pid => {
             const p = state.players[pid];
@@ -3081,6 +3084,7 @@ const STOP_STALE_MS = 18000;
             }
           });
           if(!changed) return;
+          state.kickedIds[uid] = Date.now();
           state.updatedAt = Date.now();
           tx.set(ref, state, { merge:true });
         });
@@ -3234,6 +3238,7 @@ function stopEmptyState(){
     phase: "waiting",
     letter: "-",
     players: {},
+    kickedIds: {},
     history: [],
     startedAt: Date.now(),
     roundStartedAt: null,
@@ -3253,6 +3258,7 @@ function normalizeStopState(raw){
   state.phase = (source.phase === 'results' || source.phase === 'writing' || source.phase === 'waiting') ? source.phase : 'waiting';
   state.letter = String(source.letter || '-').slice(0, 1).toUpperCase() || '-';
   state.players = {};
+  state.kickedIds = source.kickedIds && typeof source.kickedIds === 'object' ? { ...source.kickedIds } : {};
   state.history = Array.isArray(source.history) ? source.history.slice(0, 20) : [];
   state.startedAt = source.startedAt || Date.now();
   state.roundStartedAt = source.roundStartedAt || null;
@@ -3281,9 +3287,15 @@ function normalizeStopState(raw){
   return state;
 }
 
+
+function isStopRoomKicked(state, playerId){
+  return !!state?.kickedIds?.[playerId];
+}
+
 function stopFreshRoomState(previousState = null){
   const fresh = stopEmptyState();
   fresh.history = Array.isArray(previousState?.history) ? previousState.history.slice(0, 20) : [];
+  fresh.kickedIds = {};
   fresh.gameNumber = 1;
   fresh.letter = '-';
   fresh.phase = 'waiting';
@@ -3296,19 +3308,12 @@ function stopFreshRoomState(previousState = null){
 }
 
 function stopIsPlayerFresh(player){
-  if(!player || !Number.isFinite(player.lastSeen)) return true;
-  return (Date.now() - player.lastSeen) <= STOP_STALE_MS;
+  return !!(player && player.id);
 }
 
 function stopCleanupState(state){
   const next = state && typeof state === 'object' ? state : stopEmptyState();
-  const cleanedPlayers = {};
-  Object.values(next.players || {}).forEach(player => {
-    if(!player || !player.id) return;
-    if(!stopIsPlayerFresh(player)) return;
-    cleanedPlayers[player.id] = player;
-  });
-  next.players = cleanedPlayers;
+  next.players = next.players && typeof next.players === 'object' ? next.players : {};
   return next;
 }
 
@@ -3590,7 +3595,7 @@ async function subscribeStopRoom(){
   gameState.stopUnsub = ref.onSnapshot(snap => {
     if(!snap.exists) return;
     gameState.stopState = stopCleanupState(normalizeStopState(snap.data()));
-    if(gameState.stopMode && gameState.myId && !gameState.stopState.players?.[gameState.myId]){
+    if(gameState.stopMode && gameState.myId && isStopRoomKicked(gameState.stopState, gameState.myId)){
       alert('Você foi expulso da sala Stop.');
       stopLeaveCurrentRoom();
       backToLobby();
