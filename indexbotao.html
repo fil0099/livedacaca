@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>zzCartas - Jogo Multiplayer com Chat</title>
+  <title>uuCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1024,7 +1024,8 @@ const STOP_STALE_MS = 18000;
       stopHeartbeat: null,
       stopUnsub: null,
       stopPlaylist: [],
-      stopDraftAnswers: {}
+      stopDraftAnswers: {},
+      stopAnswerSaveTimers: {}
     };
 
     const DEFAULT_PLAYLIST = [
@@ -3207,6 +3208,12 @@ function stopSetBoardVisibility(active){
 
 function stopClearDraftAnswers(){
   gameState.stopDraftAnswers = {};
+  if(gameState.stopAnswerSaveTimers && typeof gameState.stopAnswerSaveTimers === 'object'){
+    Object.values(gameState.stopAnswerSaveTimers).forEach(timer => {
+      try { clearTimeout(timer); } catch(e) {}
+    });
+  }
+  gameState.stopAnswerSaveTimers = {};
 }
 
 function stopSyncDraftFromDom(){
@@ -3225,6 +3232,24 @@ function stopDraftAnswer(key, value){
     gameState.stopDraftAnswers = {};
   }
   gameState.stopDraftAnswers[key] = String(value ?? '');
+}
+
+function stopScheduleCommitAnswer(key, value){
+  if(!gameState.stopAnswerSaveTimers || typeof gameState.stopAnswerSaveTimers !== 'object'){
+    gameState.stopAnswerSaveTimers = {};
+  }
+  const existing = gameState.stopAnswerSaveTimers[key];
+  if(existing) clearTimeout(existing);
+  gameState.stopAnswerSaveTimers[key] = setTimeout(() => {
+    stopCommitAnswer(key, value);
+  }, 250);
+}
+
+function stopHandleAnswerInput(event, key){
+  const current = event.currentTarget;
+  const value = current?.value ?? '';
+  stopDraftAnswer(key, value);
+  stopScheduleCommitAnswer(key, value);
 }
 
 function stopGetNextInputKey(currentKey){
@@ -3272,6 +3297,7 @@ function stopHandleAnswerKeydown(event, key){
   event.preventDefault();
   const current = event.currentTarget;
   const value = current?.value ?? '';
+  stopDraftAnswer(key, value);
   stopCommitAnswer(key, value);
   const nextKey = stopGetNextInputKey(key);
   if(nextKey){
@@ -3418,7 +3444,7 @@ function stopRenderPlayersSummary(state){
               value="${value}"
               placeholder="Comece com ${escapeHtml(state.letter)}"
               onfocus="stopDraftAnswer('${key}', this.value)"
-              oninput="stopDraftAnswer('${key}', this.value)"
+              oninput="stopHandleAnswerInput(event, '${key}')"
               onblur="stopCommitAnswer('${key}', this.value)"
               onkeydown="stopHandleAnswerKeydown(event, '${key}')"
             />
@@ -3651,6 +3677,7 @@ function stopSetLayout(){
 
 async function pressStop(){
   if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
+  stopSyncDraftFromDom();
   const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   try{
     await db.runTransaction(async (tx) => {
@@ -3658,6 +3685,16 @@ async function pressStop(){
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
       if(state.phase === 'results') return;
+      const localPlayer = state.players?.[gameState.myId];
+      if(localPlayer && stopPlayerIsActive(state, gameState.myId) && gameState.stopDraftAnswers && typeof gameState.stopDraftAnswers === 'object'){
+        STOP_CATEGORY_KEYS.forEach(key => {
+          const draftValue = gameState.stopDraftAnswers[key];
+          if(draftValue !== undefined){
+            if(!localPlayer.answers) localPlayer.answers = stopEmptyAnswers();
+            localPlayer.answers[key] = String(draftValue ?? '').trim();
+          }
+        });
+      }
       const results = stopResultsForState(state);
       results.activePlayers.forEach(p => {
         const player = state.players[p.id];
