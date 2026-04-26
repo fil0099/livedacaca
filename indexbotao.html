@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>zzCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -680,13 +680,24 @@
     .stop-category input{
       width:100%;
       border:1px solid var(--stroke);
-      border-radius:12px;
-      padding:12px 12px;
-      background:var(--panel);
+      border-radius:16px;
+      padding:13px 14px;
+      background:var(--panel-strong);
       color:var(--text);
       outline:none;
       font-size:1rem;
-      min-height: 46px;
+      min-height: 50px;
+      box-shadow:none;
+      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, background .15s ease;
+    }
+    .stop-category input::placeholder{
+      color: color-mix(in srgb, var(--muted) 78%, transparent);
+    }
+    .stop-category input:focus{
+      border-color: rgba(14,165,233,.55);
+      box-shadow: 0 0 0 4px rgba(14,165,233,.12);
+      transform: translateY(-1px);
+      background: var(--panel);
     }
     .stop-actions-row{
       display:flex;
@@ -1947,6 +1958,7 @@ const STOP_STALE_MS = 18000;
 
     // ========== CHAT ==========
     function initRoomChat(roomId){
+      window.currentChatRoomId = roomId;
       if(window.chatUnsubscribe) window.chatUnsubscribe();
       const q = db.collection('chat').where('roomId', '==', roomId);
       window.chatUnsubscribe = q.onSnapshot(snapshot => {
@@ -1994,7 +2006,7 @@ const STOP_STALE_MS = 18000;
         alert("Por favor, defina seu nome na lobby antes de enviar mensagem.");
         return;
       }
-      const chatRoomId = gameState.stopMode ? STOP_CHAT_ROOM_ID : (gameState.roomMode && gameState.roomId ? gameState.roomId : null);
+      const chatRoomId = gameState.stopMode ? STOP_CHAT_ROOM_ID : (gameState.roomMode && gameState.roomId ? gameState.roomId : (window.currentChatRoomId || null));
       if(chatRoomId){
         try {
           await db.collection('chat').add({
@@ -3197,6 +3209,17 @@ function stopClearDraftAnswers(){
   gameState.stopDraftAnswers = {};
 }
 
+function stopSyncDraftFromDom(){
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object'){
+    gameState.stopDraftAnswers = {};
+  }
+  document.querySelectorAll('#stopCategories .stop-category input[data-stop-key]').forEach(input => {
+    const key = input.dataset.stopKey;
+    if(!key) return;
+    gameState.stopDraftAnswers[key] = String(input.value ?? '');
+  });
+}
+
 function stopDraftAnswer(key, value){
   if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object'){
     gameState.stopDraftAnswers = {};
@@ -3204,29 +3227,58 @@ function stopDraftAnswer(key, value){
   gameState.stopDraftAnswers[key] = String(value ?? '');
 }
 
-function stopRememberFocusedKey(key){
-  gameState.stopFocusedKey = key;
+function stopGetNextInputKey(currentKey){
+  const idx = STOP_CATEGORY_KEYS.indexOf(currentKey);
+  if(idx === -1) return null;
+  return STOP_CATEGORY_KEYS[idx + 1] || null;
 }
 
-function stopFocusNextInput(currentKey){
-  const idx = STOP_CATEGORY_KEYS.indexOf(currentKey);
-  const nextKey = STOP_CATEGORY_KEYS[idx + 1];
-  if(!nextKey) return;
-  const nextInput = document.querySelector(`.stop-answer-input[data-stop-key="${nextKey}"]`);
-  if(nextInput){
-    nextInput.focus();
-    if(typeof nextInput.select === 'function') nextInput.select();
+function stopFocusInputByKey(key){
+  if(!key) return;
+  const next = document.querySelector(`.stop-category input[data-stop-key="${key}"]`);
+  if(next){
+    next.focus({ preventScroll: true });
+    if(typeof next.select === 'function') next.select();
   }
 }
 
-function stopHandleInputKeydown(event, key){
+async function stopCommitAnswer(key, value){
+  if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
+  const state = gameState.stopState;
+  const player = state.players?.[gameState.myId];
+  if(!player || !stopPlayerIsActive(state, gameState.myId) || state.phase !== 'writing') return;
+  const nextValue = String(value || '').trim();
+  if(!player.answers) player.answers = stopEmptyAnswers();
+  player.answers[key] = nextValue;
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object') gameState.stopDraftAnswers = {};
+  gameState.stopDraftAnswers[key] = nextValue;
+  player.lastSeen = Date.now();
+  try {
+    await db.collection('stopRooms').doc(STOP_ROOM_ID).update({
+      [`players.${gameState.myId}.answers.${key}`]: nextValue,
+      [`players.${gameState.myId}.lastSeen`]: Date.now()
+    });
+  } catch(err) {
+    console.warn('Falha ao salvar resposta do Stop:', err);
+  }
+}
+
+async function updateStopAnswer(key, value){
+  return stopCommitAnswer(key, value);
+}
+
+function stopHandleAnswerKeydown(event, key){
   if(event.key !== 'Enter') return;
   event.preventDefault();
-  const input = event.currentTarget;
-  if(!input) return;
-  stopDraftAnswer(key, input.value);
-  updateStopAnswer(key, input.value);
-  window.requestAnimationFrame(() => stopFocusNextInput(key));
+  const current = event.currentTarget;
+  const value = current?.value ?? '';
+  stopCommitAnswer(key, value);
+  const nextKey = stopGetNextInputKey(key);
+  if(nextKey){
+    requestAnimationFrame(() => stopFocusInputByKey(nextKey));
+  } else if(current && typeof current.blur === 'function'){
+    current.blur();
+  }
 }
 
 function stopUpdateActionButtons(state){
@@ -3253,6 +3305,13 @@ function stopRenderPlayersSummary(state){
   const me = state.players?.[gameState.myId];
   const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
   const notice = document.getElementById('stopJoinNotice');
+  const activeInput = document.activeElement && document.activeElement.matches && document.activeElement.matches('#stopCategories .stop-category input[data-stop-key]')
+    ? document.activeElement
+    : null;
+  const activeKey = activeInput?.dataset?.stopKey || null;
+  const activeSelectionStart = typeof activeInput?.selectionStart === 'number' ? activeInput.selectionStart : null;
+  const activeSelectionEnd = typeof activeInput?.selectionEnd === 'number' ? activeInput.selectionEnd : null;
+
   if(notice){
     if(!gameState.stopMode){
       notice.textContent = 'Entre na sala Stop para jogar.';
@@ -3269,7 +3328,6 @@ function stopRenderPlayersSummary(state){
 
   if(state.phase !== 'writing'){
     stopClearDraftAnswers();
-    gameState.stopFocusedKey = null;
   }
 
   const letter = document.getElementById('stopLetter');
@@ -3307,6 +3365,10 @@ function stopRenderPlayersSummary(state){
 
   stopUpdateActionButtons(state);
 
+  if(state.phase === 'writing'){
+    stopSyncDraftFromDom();
+  }
+
   const categories = document.getElementById('stopCategories');
   const resultsBox = document.getElementById('stopResults');
   if(!categories || !resultsBox) return;
@@ -3320,6 +3382,20 @@ function stopRenderPlayersSummary(state){
     `;
     resultsBox.innerHTML = '';
     resultsBox.classList.add('hidden');
+    if(activeKey){
+      requestAnimationFrame(() => {
+        const input = document.querySelector(`.stop-category input[data-stop-key="${activeKey}"]`);
+        if(input){
+          input.focus({ preventScroll: true });
+          if(typeof input.setSelectionRange === 'function'){
+            const len = input.value.length;
+            const start = activeSelectionStart === null ? len : Math.min(activeSelectionStart, len);
+            const end = activeSelectionEnd === null ? len : Math.min(activeSelectionEnd, len);
+            try { input.setSelectionRange(start, end); } catch(e) {}
+          }
+        }
+      });
+    }
     return;
   }
 
@@ -3333,7 +3409,19 @@ function stopRenderPlayersSummary(state){
         return `
           <div class="stop-category">
             <label>${escapeHtml(label)}</label>
-            <input class="stop-answer-input" data-stop-key="${key}" type="text" inputmode="text" autocomplete="off" autocapitalize="words" spellcheck="false" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopRememberFocusedKey('${key}'); stopDraftAnswer('${key}', this.value)" oninput="stopRememberFocusedKey('${key}'); stopDraftAnswer('${key}', this.value)" onkeydown="stopHandleInputKeydown(event, '${key}')" />
+            <input
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              spellcheck="false"
+              data-stop-key="${key}"
+              value="${value}"
+              placeholder="Comece com ${escapeHtml(state.letter)}"
+              onfocus="stopDraftAnswer('${key}', this.value)"
+              oninput="stopDraftAnswer('${key}', this.value)"
+              onblur="stopCommitAnswer('${key}', this.value)"
+              onkeydown="stopHandleAnswerKeydown(event, '${key}')"
+            />
           </div>
         `;
       }).join('');
@@ -3347,6 +3435,20 @@ function stopRenderPlayersSummary(state){
     }
     resultsBox.innerHTML = '';
     resultsBox.classList.add('hidden');
+    if(activeKey){
+      requestAnimationFrame(() => {
+        const input = document.querySelector(`.stop-category input[data-stop-key="${activeKey}"]`);
+        if(input){
+          input.focus({ preventScroll: true });
+          if(typeof input.setSelectionRange === 'function'){
+            const len = input.value.length;
+            const start = activeSelectionStart === null ? len : Math.min(activeSelectionStart, len);
+            const end = activeSelectionEnd === null ? len : Math.min(activeSelectionEnd, len);
+            try { input.setSelectionRange(start, end); } catch(e) {}
+          }
+        }
+      });
+    }
     return;
   }
 
@@ -3533,16 +3635,6 @@ async function stopLeaveCurrentRoom(){
   gameState.stopState = null;
   gameState.stopMode = false;
   stopClearDraftAnswers();
-}
-
-function stopRestoreFocusedInput(){
-  const key = gameState.stopFocusedKey;
-  if(!key || !gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
-  const input = document.querySelector(`.stop-answer-input[data-stop-key="${key}"]`);
-  if(input){
-    input.focus();
-    if(typeof input.select === 'function') input.select();
-  }
 }
 
 function stopSetLayout(){
@@ -3741,6 +3833,9 @@ renderLobbyRooms = function(){
 const _origRenderGame = renderGame;
 renderGame = function(){
   if(gameState.stopMode){
+    if(window.currentChatRoomId !== STOP_CHAT_ROOM_ID){
+      initRoomChat(STOP_CHAT_ROOM_ID);
+    }
     const table = document.getElementById('table');
     const end = document.getElementById('endScreen');
     if(table) table.style.display = 'block';
@@ -3770,7 +3865,6 @@ renderGame = function(){
       stopResults?.classList.remove('hidden');
     }
     stopRenderPlayersSummary(state);
-    window.requestAnimationFrame(() => stopRestoreFocusedInput());
     return;
   }
   stopSetBoardVisibility(false);
