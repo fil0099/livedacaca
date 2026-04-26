@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ccCartas - Jogo Multiplayer com Chat</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -706,42 +706,29 @@
     .stop-category{
       display:flex;
       flex-direction:column;
-      gap:10px;
-      padding:16px;
+      gap:8px;
+      padding:14px;
       border-radius:18px;
       border:1px solid var(--stroke);
       background:rgba(255,255,255,.06);
       text-align:left;
-      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
-    }
-    .stop-category:focus-within{
-      border-color: rgba(14,165,233,.45);
-      box-shadow: 0 0 0 3px rgba(14,165,233,.12);
-      transform: translateY(-1px);
     }
     .stop-category label{
-      font-size:.98rem;
+      font-size:.95rem;
       font-weight:900;
       color:var(--text);
     }
-    .stop-answer{
+    .stop-category input{
       width:100%;
-      min-height: 72px;
-      resize: vertical;
       border:1px solid var(--stroke);
-      border-radius:14px;
-      padding:14px 14px;
+      border-radius:12px;
+      padding:12px 12px;
       background:var(--panel);
       color:var(--text);
       outline:none;
-      font-size:1.05rem;
-      line-height:1.45;
-      font-weight:600;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,.04);
+      font-size:1rem;
+      min-height: 46px;
     }
-    .stop-answer::placeholder{ color: var(--muted); opacity:.9; }
-    .stop-answer::-webkit-scrollbar{ width:10px; }
-    .stop-answer::-webkit-scrollbar-thumb{ background: rgba(100,116,139,.35); border-radius:999px; }
     .stop-actions-row{
       display:flex;
       gap:12px;
@@ -3668,7 +3655,6 @@ function stopResultsForState(state){
   const activePlayers = stopActivePlayers(state);
   const normalizedBuckets = {};
   const perPlayer = {};
-  const requiredLetter = stopNormalizeText(state.letter || '').slice(0, 1);
   activePlayers.forEach(p => {
     perPlayer[p.id] = {
       id: p.id,
@@ -3685,16 +3671,14 @@ function stopResultsForState(state){
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      const startsCorrect = !!norm && (!!requiredLetter ? norm.startsWith(requiredLetter) : true);
-      if(!startsCorrect) return;
+      if(!norm) return;
       if(!buckets[norm]) buckets[norm] = [];
       buckets[norm].push(p.id);
     });
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      const startsCorrect = !!norm && (!!requiredLetter ? norm.startsWith(requiredLetter) : true);
-      const pts = !norm ? 0 : (!startsCorrect ? 0 : ((buckets[norm] || []).length === 1 ? 10 : 5));
+      const pts = norm ? ((buckets[norm] || []).length === 1 ? 10 : 5) : 0;
       perPlayer[p.id].score += pts;
       perPlayer[p.id].answers[label] = raw;
       perPlayer[p.id].categoryPoints[label] = pts;
@@ -3769,21 +3753,6 @@ function stopDraftAnswer(key, value){
     gameState.stopDraftAnswers = {};
   }
   gameState.stopDraftAnswers[key] = String(value ?? '');
-}
-
-function stopResizeAnswerField(el){
-  if(!el) return;
-  el.style.height = 'auto';
-  el.style.height = Math.max(el.scrollHeight, 72) + 'px';
-}
-
-function stopFocusNextAnswer(currentKey){
-  const idx = STOP_CATEGORY_KEYS.indexOf(currentKey);
-  if(idx < 0) return;
-  const nextKey = STOP_CATEGORY_KEYS[idx + 1];
-  if(!nextKey) return;
-  const next = document.querySelector(`[data-stop-key="${nextKey}"]`);
-  if(next && typeof next.focus === 'function') next.focus();
 }
 
 function stopUpdateActionButtons(state){
@@ -3888,8 +3857,8 @@ function stopRenderPlayersSummary(state){
         const value = escapeHtml(String(currentValue));
         return `
           <div class="stop-category">
-            <label for="stop-${key}">${escapeHtml(label)}</label>
-            <textarea id="stop-${key}" class="stop-answer" data-stop-key="${key}" rows="2" inputmode="text" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopResizeAnswerField(this);" oninput="stopDraftAnswer('${key}', this.value); stopResizeAnswerField(this)" onblur="updateStopAnswer('${key}', this.value)" onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); updateStopAnswer('${key}', this.value); stopFocusNextAnswer('${key}'); }">${value}</textarea>
+            <label>${escapeHtml(label)}</label>
+            <input type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopDraftAnswer('${key}', this.value)" oninput="stopDraftAnswer('${key}', this.value)" onblur="updateStopAnswer('${key}', this.value)" />
           </div>
         `;
       }).join('');
