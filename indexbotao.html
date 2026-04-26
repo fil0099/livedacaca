@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>00Cartas - Jogo Multiplayer com Chat</title>
+  <title>rrCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -775,6 +775,77 @@
       gap:8px;
       margin-top:8px;
     }
+
+    .stop-side-dock{
+      position:fixed;
+      top:92px;
+      bottom:16px;
+      width:min(240px, 22vw);
+      display:none;
+      flex-direction:column;
+      gap:10px;
+      z-index:38;
+      pointer-events:auto;
+      overflow:auto;
+      padding:8px;
+      border-radius:20px;
+      background:rgba(255,255,255,.08);
+      border:1px solid var(--stroke);
+      backdrop-filter: blur(12px);
+      box-shadow:var(--shadow);
+    }
+    body[data-theme="dark"] .stop-side-dock{
+      background:rgba(15,23,42,.42);
+    }
+    .stop-left{ left:12px; align-items:flex-start; }
+    .stop-right{ right:12px; align-items:flex-end; }
+    .stop-side-dock .music-player,
+    .stop-side-dock .voice-group,
+    .stop-side-dock .theme-switch,
+    .stop-side-dock .turn-badge,
+    .stop-side-dock .btn{
+      width:100%;
+      justify-content:center;
+    }
+    .stop-side-dock .music-player,
+    .stop-side-dock .voice-group{
+      flex-direction:column;
+      align-items:stretch;
+    }
+    .stop-side-dock .music-row,
+    .stop-side-dock .hud-right{
+      width:100%;
+      justify-content:center;
+    }
+    .stop-side-dock .tiny-control{
+      width:100%;
+      justify-content:space-between;
+    }
+    #table.stop-writing .hud-right{
+      display:none;
+    }
+    #table.stop-writing .board{
+      width: min(100%, calc(100vw - 300px));
+      margin-inline:auto;
+    }
+    @media (max-width: 1100px){
+      .stop-side-dock{
+        width:180px;
+      }
+      #table.stop-writing .board{
+        width: min(100%, calc(100vw - 230px));
+      }
+    }
+    @media (max-width: 820px){
+      .stop-side-dock{
+        top:104px;
+        width:140px;
+        bottom:12px;
+      }
+      #table.stop-writing .board{
+        width: min(100%, calc(100vw - 170px));
+      }
+    }
     .hidden{ display:none !important; }
   </style>
 </head>
@@ -836,7 +907,7 @@
           </div>
           <small>Combine cor ou valor e zere sua mão</small>
         </div>
-        <div class="hud-right">
+        <div class="hud-right" id="hudRightControls">
           <div id="voiceGroup" class="voice-group">
             <button id="audioBtn" class="btn secondary mini-toggle" onclick="toggleAudio()">Áudio: desligado</button>
             <button id="micBtn" class="btn secondary mini-toggle" onclick="toggleMic()">Mic: desligado</button>
@@ -844,13 +915,15 @@
             <label class="tiny-control"><span>Som</span><input id="masterVolume" type="range" min="0" max="100" value="100" oninput="setMasterVolume(this.value)" /></label>
           </div>
           <div id="hudTurn" class="turn-badge"><span class="turn-dot"></span><span>Sua vez</span></div>
-          <button class="btn secondary mini-toggle people-btn" type="button" onclick="openPeopleModal()">Pessoas</button>
+          <button id="peopleBtn" class="btn secondary mini-toggle people-btn" type="button" onclick="openPeopleModal()">Pessoas</button>
           <div id="themeSwitch" class="theme-switch">
             <span class="theme-label">Tema</span>
             <div id="themeDots" class="theme-dots"></div>
           </div>
         </div>
       </div>
+      <div id="stopSideLeft" class="stop-side-dock stop-left hidden"></div>
+      <div id="stopSideRight" class="stop-side-dock stop-right hidden"></div>
       <div class="board" id="gameBoard">
         <!-- Jogador 4 no topo -->
         <div id="p4" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
@@ -1627,6 +1700,7 @@ const STOP_STALE_MS = 18000;
       document.getElementById("lobbyScreen").style.display = "flex";
       document.getElementById("chatPanel").style.display = "none";
       closeRoomSession();
+      stopSetWritingLayout(false);
       refreshThemeForMode();
       renderLobbyRooms();
       bootstrapLobbyRooms();
@@ -3183,7 +3257,7 @@ function stopSetBoardVisibility(active){
   if(stopPanel){
     stopPanel.classList.toggle('hidden', !active);
     stopPanel.classList.toggle('active', active);
-    stopPanel.style.display = active ? 'block' : 'none';
+    stopPanel.style.display = active ? 'flex' : 'none';
   }
   const seatActions = document.querySelector('.seat-actions');
   if(seatActions) seatActions.style.display = active ? 'none' : '';
@@ -3191,6 +3265,65 @@ function stopSetBoardVisibility(active){
   if(centerCardRow) centerCardRow.style.display = active ? 'none' : '';
 }
 
+
+function stopPlaceHudControlsInDock(target){
+  const hudRight = document.getElementById('hudRightControls');
+  if(!hudRight || !target) return;
+
+  const musicPlayer = document.getElementById('musicPlayer');
+  const voiceGroup = document.getElementById('voiceGroup');
+  const hudTurn = document.getElementById('hudTurn');
+  const peopleBtn = document.getElementById('peopleBtn');
+  const themeSwitch = document.getElementById('themeSwitch');
+
+  const source = [
+    { el: musicPlayer, parent: hudRight },
+    { el: voiceGroup, parent: hudRight },
+    { el: hudTurn, parent: hudRight },
+    { el: peopleBtn, parent: hudRight },
+    { el: themeSwitch, parent: hudRight }
+  ];
+
+  source.forEach(({el}) => {
+    if(!el) return;
+    try { target.appendChild(el); } catch(e) {}
+  });
+}
+
+function stopSetWritingLayout(active){
+  const table = document.getElementById('table');
+  const leftDock = document.getElementById('stopSideLeft');
+  const rightDock = document.getElementById('stopSideRight');
+  const hudRight = document.getElementById('hudRightControls');
+
+  if(table) table.classList.toggle('stop-writing', !!active);
+
+  if(leftDock) leftDock.classList.toggle('hidden', !active);
+  if(rightDock) rightDock.classList.toggle('hidden', !active);
+
+  if(active){
+    if(leftDock && hudRight){
+      stopPlaceHudControlsInDock(leftDock);
+    }
+    if(rightDock){
+      const voiceGroup = document.getElementById('voiceGroup');
+      const hudTurn = document.getElementById('hudTurn');
+      const peopleBtn = document.getElementById('peopleBtn');
+      [voiceGroup, hudTurn, peopleBtn].forEach(el => {
+        if(el) rightDock.appendChild(el);
+      });
+    }
+  } else if(hudRight){
+    const musicPlayer = document.getElementById('musicPlayer');
+    const voiceGroup = document.getElementById('voiceGroup');
+    const hudTurn = document.getElementById('hudTurn');
+    const peopleBtn = document.getElementById('peopleBtn');
+    const themeSwitch = document.getElementById('themeSwitch');
+    [musicPlayer, voiceGroup, hudTurn, peopleBtn, themeSwitch].forEach(el => {
+      if(el) hudRight.appendChild(el);
+    });
+  }
+}
 
 function stopUpdateActionButtons(state){
   const startBtn = document.getElementById('stopStartBtn');
@@ -3486,6 +3619,8 @@ async function stopLeaveCurrentRoom(){
 
 function stopSetLayout(){
   stopSetBoardVisibility(true);
+  const writing = gameState.stopState?.phase === 'writing';
+  stopSetWritingLayout(writing);
   const p1 = document.getElementById('p1');
   const p2 = document.getElementById('p2');
   const p3 = document.getElementById('p3');
@@ -3710,6 +3845,7 @@ renderGame = function(){
     return;
   }
   stopSetBoardVisibility(false);
+  stopSetWritingLayout(false);
   _origRenderGame();
 };
 
