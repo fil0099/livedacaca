@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mmCartas - Jogo Multiplayer com Chat</title>
+  <title>02Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1165,9 +1165,7 @@ const STOP_STALE_MS = 120000;
     }
 
     function slotIsActive(slotData){
-      if(!slotData || !slotData.id) return false;
-      if(!slotData.lastSeen) return true;
-      return (Date.now() - slotData.lastSeen) < STALE_SLOT_MS;
+      return !!(slotData && slotData.id);
     }
 
     function cleanupStaleSlots(state){
