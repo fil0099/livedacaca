@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>zzCartas - Jogo Multiplayer com Chat</title>
+  <title>eeCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -368,6 +368,7 @@
       grid-column:2; grid-row:2;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
       min-height:0;
+      position:relative;
     }
     .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; justify-self:center; }
 
@@ -577,30 +578,43 @@
 
     .stop-panel{
       display:none;
-      margin-top:10px;
-      width:100%;
-      padding:18px;
-      border-radius:22px;
+      position:fixed;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      width:min(1100px, calc(100vw - 32px));
+      max-height:calc(100vh - 32px);
+      overflow:auto;
+      padding:24px;
+      border-radius:28px;
       border:1px solid var(--stroke);
       background:var(--panel-strong);
       box-shadow:var(--shadow);
-      max-width: 1040px;
-      margin-inline:auto;
+      z-index:35;
+      text-align:center;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
     }
-    .stop-panel.active{ display:block; }
+    .stop-panel.active{ display:flex; }
     .stop-head{
       display:flex;
+      flex-direction:column;
       align-items:center;
-      justify-content:space-between;
-      gap:12px;
+      justify-content:center;
+      gap:14px;
       flex-wrap:wrap;
-      margin-bottom:12px;
+      margin-bottom:16px;
+      width:100%;
     }
     .stop-hero{
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
       min-width: 260px;
+      width:100%;
     }
     .stop-hero-label{
       display:inline-flex;
@@ -636,22 +650,27 @@
       color:var(--text);
       text-shadow:0 1px 0 rgba(255,255,255,.25);
     }
-    .stop-round{ color:var(--muted); font-size:.95rem; font-weight:700; text-align:right; }
-    .stop-note{ color:var(--muted); font-size:.98rem; line-height:1.5; margin-bottom:12px; }
+    .stop-round{ color:var(--muted); font-size:.95rem; font-weight:700; text-align:center; }
+    .stop-note{ color:var(--muted); font-size:1rem; line-height:1.6; margin:0 auto 18px; max-width:760px; text-align:center; }
     .stop-categories{
       display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap:10px;
-      margin-top:10px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap:12px;
+      margin-top:14px;
+      width:min(100%, 980px);
+      margin-inline:auto;
+      justify-items:stretch;
+      align-self:stretch;
     }
     .stop-category{
       display:flex;
       flex-direction:column;
-      gap:6px;
-      padding:10px;
-      border-radius:16px;
+      gap:8px;
+      padding:14px;
+      border-radius:18px;
       border:1px solid var(--stroke);
       background:rgba(255,255,255,.06);
+      text-align:left;
     }
     .stop-category label{
       font-size:.95rem;
@@ -671,10 +690,12 @@
     }
     .stop-actions-row{
       display:flex;
-      gap:10px;
+      gap:12px;
       flex-wrap:wrap;
       justify-content:center;
-      margin-top:12px;
+      align-items:center;
+      margin-top:18px;
+      width:100%;
     }
     .stop-status-card{
       margin-top:12px;
@@ -694,6 +715,11 @@
       color:#fff;
       border:none;
       box-shadow:0 16px 30px rgba(239,68,68,.22);
+      min-width:220px;
+      font-size:1.05rem;
+      padding:16px 26px;
+      font-weight:900;
+      letter-spacing:.08em;
     }
     .stop-button:hover{ filter:brightness(1.03); }
     .stop-results{
@@ -785,7 +811,7 @@
   <div id="endScreen" class="screen" style="display:none">
     <div class="panel centered end-card">
       <h1 id="winnerText"></h1>
-      <button class="btn" onclick="backToLobby()">Voltar à lobby</button>
+      <button type="button" class="btn" onclick="backToLobby()">Voltar à lobby</button>
     </div>
   </div>
 
@@ -795,7 +821,7 @@
       <div class="hud">
         <div class="title">
           <div class="header-inline">
-            <button class="btn secondary mini-toggle" onclick="backToLobby()">Voltar</button>
+            <button type="button" class="btn secondary mini-toggle" onclick="backToLobby()">Voltar</button>
             <strong>Cartas</strong>
             <div id="musicPlayer" class="music-player">
               <div class="music-row">
@@ -845,13 +871,14 @@
               </div>
               <div class="stop-round" id="stopRoundInfo">Aguardando a sala Stop...</div>
             </div>
-            <div class="stop-note" id="stopJoinNotice">Entre na sala para jogar a próxima partida.</div>
+            <div class="stop-note" id="stopJoinNotice">Digite uma palavra para cada categoria usando a letra sorteada. Quando quiser encerrar, aperte STOP.</div>
             <div id="stopCategories" class="stop-categories"></div>
             <div class="stop-actions-row stop-toolbar">
               <button class="btn secondary mini-toggle" type="button" onclick="openPeopleModal()">Pessoas</button>
               <button class="btn secondary mini-toggle" type="button" onclick="openStopHistory()">Últimos 20 jogos</button>
-              <button class="btn secondary mini-toggle" type="button" onclick="startStopNewGame()">Nova partida</button>
-              <button class="btn mini-toggle stop-button" type="button" onclick="pressStop()">STOP</button>
+              <button id="stopStartBtn" class="btn mini-toggle stop-button" type="button" onclick="startStopNewGame()" style="min-width:180px; font-size:1rem; padding:14px 20px;">Começar jogo</button>
+              <button id="stopPlayAgainBtn" class="btn secondary mini-toggle hidden" type="button" onclick="stopPlayAgain()" style="min-width:180px; font-size:1rem; padding:14px 20px;">Jogar mais</button>
+              <button id="stopStopBtn" class="btn mini-toggle stop-button hidden" type="button" onclick="pressStop()" style="min-width:180px; font-size:1rem; padding:14px 20px;">STOP</button>
             </div>
             <div id="stopResults" class="stop-results hidden"></div>
           </div>
@@ -932,12 +959,12 @@
       { id: "orange", label: "Laranja", bg1: "#fff7ed", bg2: "#fffbeb", glow1: "rgba(249,115,22,.14)", glow2: "rgba(245,158,11,.10)" },
       { id: "pink", label: "Rosa", bg1: "#fdf2f8", bg2: "#fff1f2", glow1: "rgba(236,72,153,.14)", glow2: "rgba(244,63,94,.10)" }
     ];
-    const STALE_SLOT_MS = 18000;
+    const STALE_SLOT_MS = 120000;
 
 const STOP_ROOM_ID = "stop-main";
 const STOP_CHAT_ROOM_ID = STOP_ROOM_ID;
 const STOP_CATEGORIES = [
-  "Minha amiga caca é",
+  "A cacá é...",
   "Nome",
   "Animal",
   "Fruta",
@@ -947,7 +974,7 @@ const STOP_CATEGORIES = [
   "Marca"
 ];
 const STOP_CATEGORY_KEYS = STOP_CATEGORIES.map((_, idx) => `c${idx + 1}`);
-const STOP_STALE_MS = 18000;
+const STOP_STALE_MS = 120000;
 
     let gameState = {
       roomMode: false,
@@ -974,8 +1001,14 @@ const STOP_STALE_MS = 18000;
       audioEnabled: false,
       micEnabled: false,
       micStream: null,
+      micOutputStream: null,
       micAudioContext: null,
       micGain: null,
+      voiceRoomKey: null,
+      voiceBuiltWithMic: false,
+      voiceSignalUnsub: null,
+      voicePeers: {},
+      voiceRemoteAudio: {},
       trackIndex: 0,
       roomPlaylist: [],
       robotPlaylist: [],
@@ -985,7 +1018,8 @@ const STOP_STALE_MS = 18000;
       stopState: null,
       stopHeartbeat: null,
       stopUnsub: null,
-      stopPlaylist: []
+      stopPlaylist: [],
+      stopDraftAnswers: {}
     };
 
     const DEFAULT_PLAYLIST = [
@@ -1305,8 +1339,10 @@ const STOP_STALE_MS = 18000;
 
     async function joinRoom(roomId){
       let userName = document.getElementById("roomName").value.trim();
-      if(!userName) userName = document.getElementById("playerName").value.trim();
-      if(!userName) userName = "Jogador";
+      if(!userName){
+        alert("Digite seu nome antes de entrar na sala.");
+        return;
+      }
       userName = userName.slice(0, 18);
 
       gameState.myName = userName;
@@ -1389,6 +1425,7 @@ const STOP_STALE_MS = 18000;
         if(joined.wasEmpty) await deleteRoomChatMessages(roomId);
         initRoomChat(roomId);
         renderGame();
+        await refreshVoiceChat(true);
       } catch(err){
         console.error(err);
         alert(err.message || "Não foi possível entrar na sala.");
@@ -1412,6 +1449,7 @@ const STOP_STALE_MS = 18000;
           }
         }
         renderGame();
+        refreshVoiceChat();
       }, err => {
         console.error("Erro ao ouvir sala:", err);
       });
@@ -1428,7 +1466,7 @@ const STOP_STALE_MS = 18000;
           [`${pathBase}.name`]: gameState.myName,
           [`${pathBase}.lastSeen`]: Date.now()
         }).catch(() => {});
-      }, 7000);
+      }, 3000);
     }
 
     async function leaveCurrentRoom(){
@@ -1438,6 +1476,8 @@ const STOP_STALE_MS = 18000;
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
+      stopVoiceChat();
+      stopMusicPlayback();
       let shouldReset = false;
       try {
         await db.runTransaction(async (tx) => {
@@ -1596,6 +1636,7 @@ const STOP_STALE_MS = 18000;
       document.getElementById("endScreen").style.display = "none";
       document.getElementById("lobbyScreen").style.display = "flex";
       document.getElementById("chatPanel").style.display = "none";
+      stopVoiceChat();
       closeRoomSession();
       refreshThemeForMode();
       renderLobbyRooms();
@@ -1907,14 +1948,381 @@ const STOP_STALE_MS = 18000;
     function nextTrack(auto=false){ const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex + 1) % pl.length; setupMusic(); if(gameState.musicPlaying || auto) playMusic(); }
     function prevTrack(){ const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
     function setMusicVolume(v){ gameState.musicVolume = v / 100; if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume; }
-    function setMasterVolume(v){ gameState.masterVolume = v / 100; if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume; if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume; }
-    function setMicVolume(v){ gameState.micVolume = v / 100; if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume; }
-    async function toggleMic(){
-      gameState.micEnabled = !gameState.micEnabled; document.getElementById("micBtn").textContent = gameState.micEnabled ? "Mic: ligado" : "Mic: desligado";
-      if(gameState.micEnabled){ try{ gameState.micStream = await navigator.mediaDevices.getUserMedia({audio:true}); gameState.micAudioContext = new (window.AudioContext||window.webkitAudioContext)(); const src = gameState.micAudioContext.createMediaStreamSource(gameState.micStream); gameState.micGain = gameState.micAudioContext.createGain(); const mon = gameState.micAudioContext.createGain(); src.connect(gameState.micGain).connect(mon).connect(gameState.micAudioContext.destination); gameState.micGain.gain.value = gameState.micVolume; mon.gain.value = gameState.audioEnabled ? gameState.masterVolume : 0; }catch(e){ alert("Microfone não disponível"); gameState.micEnabled = false; } } else { if(gameState.micStream) gameState.micStream.getTracks().forEach(t=>t.stop()); if(gameState.micAudioContext) gameState.micAudioContext.close(); gameState.micStream = null; } }
-    function toggleAudio(){ gameState.audioEnabled = !gameState.audioEnabled; document.getElementById("audioBtn").textContent = gameState.audioEnabled ? "Áudio: ligado" : "Áudio: desligado"; }
+    function setMasterVolume(v){
+      gameState.masterVolume = v / 100;
+      if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+      if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume;
+      updateVoiceAudioVolumes();
+    }
+    function setMicVolume(v){
+      gameState.micVolume = v / 100;
+      if(gameState.micGain) gameState.micGain.gain.value = gameState.micVolume;
+    }
+
+    function getVoiceContext(){
+      if(gameState.stopMode && gameState.stopState && gameState.stopRoomId){
+        const participants = Object.values(gameState.stopState.players || {})
+          .filter(p => p && p.id)
+          .map(p => ({ id: String(p.id), name: String(p.name || 'Jogador') }));
+        return { mode: 'stop', roomId: String(gameState.stopRoomId || STOP_ROOM_ID), participants };
+      }
+      if(gameState.roomMode && gameState.roomId){
+        const participants = Object.values(gameState.roomState?.slots || {})
+          .filter(Boolean)
+          .map(p => ({ id: String(p.id || ''), name: String(p.name || 'Jogador') }))
+          .filter(p => p.id);
+        return { mode: 'cards', roomId: String(gameState.roomId), participants };
+      }
+      return null;
+    }
+
+    function getVoiceRoomCollection(ctx){
+      return ctx.mode === 'stop' ? db.collection('stopRooms') : db.collection('rooms');
+    }
+
+    function getVoiceSignalCollection(ctx){
+      return getVoiceRoomCollection(ctx).doc(ctx.roomId).collection('voiceSignals');
+    }
+
+    function getVoiceRoomKey(ctx){
+      return `${ctx.mode}:${ctx.roomId}`;
+    }
+
+    function ensureVoiceContainers(){
+      if(!document.getElementById('voiceHiddenAudioContainer')){
+        const holder = document.createElement('div');
+        holder.id = 'voiceHiddenAudioContainer';
+        holder.style.display = 'none';
+        document.body.appendChild(holder);
+      }
+    }
+
+    function updateVoiceAudioVolumes(){
+      const audios = gameState.voiceRemoteAudio || {};
+      Object.values(audios).forEach(audio => {
+        if(!audio) return;
+        audio.volume = gameState.masterVolume;
+        audio.muted = !gameState.audioEnabled;
+      });
+    }
+
+    function stopLocalMicStream(){
+      if(gameState.micStream){
+        try{ gameState.micStream.getTracks().forEach(t => t.stop()); }catch(e){}
+      }
+      if(gameState.micAudioContext){
+        try{ gameState.micAudioContext.close(); }catch(e){}
+      }
+      gameState.micStream = null;
+      gameState.micOutputStream = null;
+      gameState.micAudioContext = null;
+      gameState.micGain = null;
+    }
+
+    function destroyVoiceAudio(remoteId){
+      const audio = gameState.voiceRemoteAudio?.[remoteId];
+      if(audio){
+        try{ audio.pause(); }catch(e){}
+        try{ audio.srcObject = null; }catch(e){}
+        try{ audio.remove(); }catch(e){}
+        delete gameState.voiceRemoteAudio[remoteId];
+      }
+    }
+
+    function destroyVoicePeer(remoteId){
+      const entry = gameState.voicePeers?.[remoteId];
+      if(entry && entry.pc){
+        try{ entry.pc.ontrack = null; }catch(e){}
+        try{ entry.pc.onicecandidate = null; }catch(e){}
+        try{ entry.pc.onconnectionstatechange = null; }catch(e){}
+        try{ entry.pc.onnegotiationneeded = null; }catch(e){}
+        try{ entry.pc.close(); }catch(e){}
+      }
+      if(gameState.voicePeers) delete gameState.voicePeers[remoteId];
+      destroyVoiceAudio(remoteId);
+    }
+
+    function stopVoiceChat(){
+      if(gameState.voiceSignalUnsub){
+        try{ gameState.voiceSignalUnsub(); }catch(e){}
+        gameState.voiceSignalUnsub = null;
+      }
+      Object.keys(gameState.voicePeers || {}).forEach(destroyVoicePeer);
+      gameState.voicePeers = {};
+      gameState.voiceRemoteAudio = {};
+      gameState.voiceRoomKey = null;
+      gameState.voiceBuiltWithMic = false;
+      stopLocalMicStream();
+    }
+
+    async function ensureMicStreamForVoice(){
+      if(!gameState.micEnabled) return null;
+      if(gameState.micOutputStream) return gameState.micOutputStream;
+      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        throw new Error('Microfone não disponível');
+      }
+
+      const rawStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      gameState.micStream = rawStream;
+
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if(AudioCtx){
+        try{
+          const ctx = new AudioCtx();
+          if(ctx.state === 'suspended'){
+            try{ await ctx.resume(); }catch(e){}
+          }
+          const source = ctx.createMediaStreamSource(rawStream);
+          const gain = ctx.createGain();
+          const destination = ctx.createMediaStreamDestination();
+          gain.gain.value = gameState.micVolume;
+          source.connect(gain).connect(destination);
+          gameState.micAudioContext = ctx;
+          gameState.micGain = gain;
+          gameState.micOutputStream = destination.stream;
+          return destination.stream;
+        }catch(err){
+          console.warn('Falha ao processar o áudio do microfone, usando fluxo bruto:', err);
+        }
+      }
+
+      gameState.micOutputStream = rawStream;
+      return rawStream;
+    }
+
+    function attachRemoteAudio(remoteId, stream){
+      ensureVoiceContainers();
+      let audio = gameState.voiceRemoteAudio?.[remoteId];
+      if(!audio){
+        audio = document.createElement('audio');
+        audio.autoplay = true;
+        audio.playsInline = true;
+        audio.dataset.remoteId = remoteId;
+        audio.style.display = 'none';
+        document.getElementById('voiceHiddenAudioContainer')?.appendChild(audio);
+        gameState.voiceRemoteAudio[remoteId] = audio;
+      }
+      audio.srcObject = stream;
+      audio.volume = gameState.masterVolume;
+      audio.muted = !gameState.audioEnabled;
+      if(gameState.audioEnabled){
+        audio.play().catch(() => {});
+      }
+    }
+
+    function shouldInitiateVoice(remoteId){
+      return String(gameState.myId || '') < String(remoteId || '');
+    }
+
+    function sendVoiceSignal(ctx, to, kind, payload){
+      return getVoiceSignalCollection(ctx).add({
+        from: String(gameState.myId || ''),
+        to: String(to || ''),
+        roomId: ctx.roomId,
+        roomType: ctx.mode,
+        kind,
+        payload,
+        createdAt: Date.now()
+      }).catch(err => {
+        console.warn('Falha ao enviar sinal de voz:', err);
+      });
+    }
+
+    function ensureVoicePeer(ctx, remoteId){
+      if(!remoteId || remoteId === gameState.myId) return null;
+      if(gameState.voicePeers?.[remoteId]) return gameState.voicePeers[remoteId];
+      const RTCPeer = window.RTCPeerConnection || window.webkitRTCPeerConnection;
+      if(!RTCPeer){
+        alert('Seu navegador não suporta chamada de voz.');
+        return null;
+      }
+
+      const pc = new RTCPeer({
+        iceServers: [
+          { urls: ['stun:stun.l.google.com:19302'] },
+          { urls: ['stun:global.stun.twilio.com:3478?transport=udp'] }
+        ]
+      });
+
+      const entry = { pc, remoteId };
+      if(!gameState.voicePeers) gameState.voicePeers = {};
+      gameState.voicePeers[remoteId] = entry;
+
+      pc.onicecandidate = event => {
+        if(event.candidate){
+          sendVoiceSignal(ctx, remoteId, 'candidate', event.candidate.toJSON ? event.candidate.toJSON() : event.candidate);
+        }
+      };
+
+      pc.ontrack = event => {
+        const stream = event.streams && event.streams[0] ? event.streams[0] : new MediaStream([event.track]);
+        attachRemoteAudio(remoteId, stream);
+      };
+
+      pc.onconnectionstatechange = () => {
+        const state = pc.connectionState || '';
+        if(state === 'failed' || state === 'closed'){
+          destroyVoicePeer(remoteId);
+        }
+      };
+
+      if(gameState.micEnabled && gameState.micOutputStream){
+        gameState.micOutputStream.getTracks().forEach(track => {
+          try{ pc.addTrack(track, gameState.micOutputStream); }catch(e){}
+        });
+      } else {
+        try{ pc.addTransceiver('audio', { direction: 'recvonly' }); }catch(e){}
+      }
+
+      if(shouldInitiateVoice(remoteId)){
+        queueMicrotask(async () => {
+          try{
+            if(!gameState.voicePeers?.[remoteId] || gameState.voicePeers[remoteId].pc !== pc) return;
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            sendVoiceSignal(ctx, remoteId, 'offer', pc.localDescription);
+          }catch(err){
+            console.warn('Falha ao criar offer de voz:', err);
+          }
+        });
+      }
+
+      return entry;
+    }
+
+    async function handleVoiceSignal(ctx, data){
+      if(!data || !data.from || String(data.from) === String(gameState.myId || '')) return;
+      if(String(data.roomId || '') !== String(ctx.roomId || '')) return;
+      const remoteId = String(data.from);
+
+      const entry = ensureVoicePeer(ctx, remoteId);
+      if(!entry || !entry.pc) return;
+      const pc = entry.pc;
+
+      try{
+        if(data.kind === 'offer' && data.payload){
+          await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          sendVoiceSignal(ctx, remoteId, 'answer', pc.localDescription);
+        } else if(data.kind === 'answer' && data.payload){
+          await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+        } else if(data.kind === 'candidate' && data.payload){
+          try{
+            await pc.addIceCandidate(new RTCIceCandidate(data.payload));
+          }catch(err){
+            console.warn('Falha ao adicionar candidato ICE:', err);
+          }
+        }
+      }catch(err){
+        console.warn('Erro no sinal de voz:', err);
+      }
+    }
+
+    async function refreshVoiceChat(forceRestart = false){
+      const ctx = getVoiceContext();
+
+      if(gameState.micEnabled && !gameState.audioEnabled){
+        gameState.audioEnabled = true;
+        const audioBtn = document.getElementById('audioBtn');
+        if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
+      }
+
+      const voiceEnabled = !!ctx && (gameState.audioEnabled || gameState.micEnabled);
+
+      if(!voiceEnabled){
+        stopVoiceChat();
+        return;
+      }
+
+      const nextKey = getVoiceRoomKey(ctx);
+      const micMode = !!gameState.micEnabled;
+
+      if(forceRestart || gameState.voiceRoomKey !== nextKey || gameState.voiceBuiltWithMic !== micMode){
+        stopVoiceChat();
+        gameState.voiceRoomKey = nextKey;
+        gameState.voiceBuiltWithMic = micMode;
+      }
+
+      try{
+        if(gameState.micEnabled){
+          await ensureMicStreamForVoice();
+        } else {
+          stopLocalMicStream();
+        }
+      }catch(err){
+        console.error(err);
+        alert('Não foi possível ativar o microfone.');
+        gameState.micEnabled = false;
+        const micBtn = document.getElementById('micBtn');
+        if(micBtn) micBtn.textContent = 'Mic: desligado';
+        if(!gameState.audioEnabled){
+          stopVoiceChat();
+          return;
+        }
+      }
+
+      if(gameState.voiceSignalUnsub){
+        try{ gameState.voiceSignalUnsub(); }catch(e){}
+        gameState.voiceSignalUnsub = null;
+      }
+
+      const signalCol = getVoiceSignalCollection(ctx);
+      gameState.voiceSignalUnsub = signalCol.where('to', '==', String(gameState.myId || '')).onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if(change.type !== 'added') return;
+          const data = change.doc.data() || {};
+          handleVoiceSignal(ctx, data);
+          change.doc.ref.delete().catch(() => {});
+        });
+      }, err => {
+        console.warn('Erro nos sinais de voz:', err);
+      });
+
+      const desiredRemoteIds = new Set(
+        (ctx.participants || [])
+          .map(p => String(p.id || ''))
+          .filter(id => id && id !== String(gameState.myId || ''))
+      );
+
+      Object.keys(gameState.voicePeers || {}).forEach(remoteId => {
+        if(!desiredRemoteIds.has(remoteId)){
+          destroyVoicePeer(remoteId);
+        }
+      });
+
+      desiredRemoteIds.forEach(remoteId => {
+        ensureVoicePeer(ctx, remoteId);
+      });
+
+      updateVoiceAudioVolumes();
+    }
+
+    function toggleMic(){
+      gameState.micEnabled = !gameState.micEnabled;
+      const micBtn = document.getElementById('micBtn');
+      if(micBtn) micBtn.textContent = gameState.micEnabled ? 'Mic: ligado' : 'Mic: desligado';
+
+      // Ao falar, o áudio de retorno precisa estar disponível para ouvir os demais.
+      if(gameState.micEnabled && !gameState.audioEnabled){
+        gameState.audioEnabled = true;
+        const audioBtn = document.getElementById('audioBtn');
+        if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
+      }
+
+      refreshVoiceChat(true);
+    }
+
+    function toggleAudio(){
+      gameState.audioEnabled = !gameState.audioEnabled;
+      const audioBtn = document.getElementById('audioBtn');
+      if(audioBtn) audioBtn.textContent = gameState.audioEnabled ? 'Áudio: ligado' : 'Áudio: desligado';
+      updateVoiceAudioVolumes();
+      refreshVoiceChat(true);
+    }
 
     // ========== CHAT ==========
+
     function initRoomChat(roomId){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
       const q = db.collection('chat').where('roomId', '==', roomId);
@@ -2075,6 +2483,10 @@ const STOP_STALE_MS = 18000;
           <div class="modal-row" style="margin-top:10px;">
             <input id="newRoomNameInput" class="field" type="text" placeholder="Nome da nova sala" />
             <input id="newRoomIdInput" class="field" type="text" placeholder="ID opcional (ex: sala4)" />
+            <select id="newRoomTypeInput" class="field">
+              <option value="card">Sala de cartas</option>
+              <option value="stop">Sala de stop</option>
+            </select>
             <button class="btn" type="button" onclick="createAdminRoom()">Criar sala</button>
           </div>
           <div class="modal-row" style="margin-top:10px;">
@@ -2155,9 +2567,10 @@ const STOP_STALE_MS = 18000;
     'https://raw.githubusercontent.com/fil0099/livedacaca/main/sonican-lo-fi-music-loop-sentimental-jazzy-love-473154.mp3'
   ];
   const DEFAULT_ROOMS = [
-    { id: 'sala1', name: 'Sala 1' },
-    { id: 'sala2', name: 'Sala 2' },
-    { id: 'sala3', name: 'Sala 3' }
+    { id: 'sala1', name: 'Sala 1', type: 'card' },
+    { id: 'sala2', name: 'Sala 2', type: 'card' },
+    { id: 'sala3', name: 'Sala 3', type: 'card' },
+    { id: 'stop-main', name: 'Sala Stop', type: 'stop' }
   ];
   const PERM_KEYS = ['password','rooms','music','autoplay','delegate'];
   const allPerms = () => ({ password:true, rooms:true, music:true, autoplay:true, delegate:true });
@@ -2188,7 +2601,7 @@ const STOP_STALE_MS = 18000;
   function loadSettings(){
     const base = {
       adminPassword: '123',
-      rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name })),
+      rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name, type:r.type || 'card' })),
       roomMeta: DEFAULT_ROOMS.reduce((acc, r) => {
         acc[r.id] = { name:r.name, password:'', autoplay:true, playlist: DEFAULT_PLAYLIST.slice() };
         return acc;
@@ -2202,15 +2615,16 @@ const STOP_STALE_MS = 18000;
     const next = {
       ...base,
       ...local,
-      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim() })).filter(r => r.id) : base.rooms.slice(),
+      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : 'card') })).filter(r => r.id) : base.rooms.slice(),
       roomMeta: { ...base.roomMeta, ...(local.roomMeta || {}) },
       delegations: local.delegations && typeof local.delegations === 'object' ? local.delegations : {},
       userRegistry: Array.isArray(local.userRegistry) ? local.userRegistry : []
     };
     next.rooms = next.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
     next.rooms.forEach(room => {
-      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card' };
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
+      next.roomMeta[room.id].type = next.roomMeta[room.id].type === 'stop' ? 'stop' : (room.type || 'card');
       next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
       next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
       next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
@@ -2228,7 +2642,7 @@ const STOP_STALE_MS = 18000;
     if(!remote || typeof remote !== 'object') return;
     const next = loadSettings();
     if(typeof remote.adminPassword === 'string') next.adminPassword = remote.adminPassword;
-    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim() })).filter(r => r.id);
+    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : 'card') })).filter(r => r.id);
     if(remote.roomMeta && typeof remote.roomMeta === 'object') next.roomMeta = { ...next.roomMeta, ...remote.roomMeta };
     if(remote.delegations && typeof remote.delegations === 'object') next.delegations = remote.delegations;
     if(Array.isArray(remote.userRegistry)) next.userRegistry = remote.userRegistry;
@@ -2243,12 +2657,14 @@ const STOP_STALE_MS = 18000;
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
   }
 
-  function getRooms(){
+  function getRooms(type = null){
     const seen = new Set();
     return (adminState.settings.rooms || []).map(room => {
       const id = String(room.id || '').trim();
       const meta = adminState.settings.roomMeta?.[id] || {};
-      const item = { id, name: String(meta.name || room.name || id).trim() || id };
+      const roomType = String(meta.type || room.type || 'card').trim() === 'stop' ? 'stop' : 'card';
+      if(type && roomType !== type) return null;
+      const item = { id, name: String(meta.name || room.name || id).trim() || id, type: roomType };
       if(seen.has(item.id)) return null;
       seen.add(item.id);
       return item;
@@ -2257,7 +2673,15 @@ const STOP_STALE_MS = 18000;
 
   function getRoomMeta(roomId){
     const id = String(roomId || '').trim();
-    return adminState.settings.roomMeta?.[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
+    const room = (adminState.settings.rooms || []).find(r => r.id === id);
+    const fallbackType = room && String(room.type || 'card').trim() === 'stop' ? 'stop' : 'card';
+    return adminState.settings.roomMeta?.[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type:fallbackType };
+  }
+
+  function getRoomType(roomId){
+    const id = String(roomId || '').trim();
+    const meta = getRoomMeta(id);
+    return String(meta.type || 'card').trim() === 'stop' ? 'stop' : 'card';
   }
 
   function setRoomMeta(roomId, patch){
@@ -2267,7 +2691,7 @@ const STOP_STALE_MS = 18000;
       ...(adminState.settings.roomMeta[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() }),
       ...patch
     };
-    if(!adminState.settings.rooms.some(r => r.id === id)) adminState.settings.rooms.push({ id, name: adminState.settings.roomMeta[id].name || id });
+    if(!adminState.settings.rooms.some(r => r.id === id)) adminState.settings.rooms.push({ id, name: adminState.settings.roomMeta[id].name || id, type: adminState.settings.roomMeta[id].type || 'card' });
     adminState.settings.rooms = adminState.settings.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
     adminState.settings.rooms = adminState.settings.rooms.map(r => r.id === id ? { id, name: adminState.settings.roomMeta[id].name || r.name || id } : r);
     saveSettings();
@@ -2300,6 +2724,10 @@ const STOP_STALE_MS = 18000;
     return meta.name || roomId;
   }
 
+  function getStopRoomId(){
+    return String(gameState.stopRoomId || STOP_ROOM_ID || 'stop-main');
+  }
+
   function roomPlayersFromState(state){
     const out = [];
     if(!state || !state.slots) return out;
@@ -2326,7 +2754,7 @@ const STOP_STALE_MS = 18000;
     return getRoomMeta(roomId).playlist || DEFAULT_PLAYLIST.slice();
   }
   function roomAutoplay(roomId){
-    return getRoomMeta(roomId).autoplay !== false;
+    return getRoomType(roomId) !== 'stop' && getRoomMeta(roomId).autoplay !== false;
   }
 
   function refreshRoomListeners(){
@@ -2334,7 +2762,8 @@ const STOP_STALE_MS = 18000;
     adminRoomUnsubs = [];
     const rooms = getRooms();
     rooms.forEach(room => {
-      const unsub = db.collection('rooms').doc(room.id).onSnapshot(snap => {
+      const col = room.type === 'stop' ? db.collection('stopRooms') : db.collection('rooms');
+      const unsub = col.doc(room.id).onSnapshot(snap => {
         adminState.roomCache[room.id] = snap.exists ? snap.data() : null;
         renderLobbyRooms();
         renderAdminRoomDetails();
@@ -2384,8 +2813,28 @@ const STOP_STALE_MS = 18000;
     container.innerHTML = '';
     const rooms = getRooms();
     rooms.forEach(room => {
-      const { occupied, state } = roomOccupancy(room.id);
       const locked = !!getRoomMeta(room.id).password;
+      if(room.type === 'stop'){
+        const state = adminState.roomCache[room.id] || null;
+        const phase = state?.phase || 'waiting';
+        const status = phase === 'writing' ? 'Partida ativa' : (phase === 'results' ? 'Resultados' : 'Aguardando jogadores');
+        const div = document.createElement('div');
+        div.className = 'room-card';
+        div.innerHTML = `
+          <div class="room-head">
+            <strong>${escapeHtml(room.name)}</strong>
+            <span class="room-tag">STOP</span>
+          </div>
+          <small>${escapeHtml(status)}</small>
+          <div class="room-actions" style="align-items:center;">
+            <span class="pill">ID ${escapeHtml(room.id)}</span>
+            <button class="btn secondary" onclick="joinStopRoom('${room.id}')">${locked ? 'Entrar 🔒' : 'Entrar'}</button>
+          </div>
+        `;
+        container.appendChild(div);
+        return;
+      }
+      const { occupied, state } = roomOccupancy(room.id);
       const status = state ? (state.gameRunning ? 'Partida ativa' : 'Sala pronta') : 'Aguardando jogadores';
       const btnLabel = locked ? 'Entrar 🔒' : (state && state.seatingOpen === false ? 'Assistir' : 'Entrar');
       const div = document.createElement('div');
@@ -2418,6 +2867,28 @@ const STOP_STALE_MS = 18000;
     }
   }
 
+  async function ensureStopRoomDoc(roomId){
+    const ref = db.collection('stopRooms').doc(roomId);
+    const snap = await ref.get();
+    if(!snap.exists){
+      await ref.set({
+        roomId,
+        roomName: currentRoomLabel(roomId),
+        gameNumber: 1,
+        phase: 'waiting',
+        letter: '-',
+        players: {},
+        history: [],
+        startedAt: Date.now(),
+        roundStartedAt: null,
+        roundEndedAt: null,
+        stoppedBy: null,
+        lastResults: null,
+        updatedAt: Date.now()
+      });
+    }
+  }
+
   async function deleteRoomChatMessages(roomId){
     try{
       const snap = await db.collection('chat').where('roomId', '==', roomId).get();
@@ -2432,16 +2903,18 @@ const STOP_STALE_MS = 18000;
     if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
     let name = document.getElementById('newRoomNameInput')?.value.trim();
     let id = document.getElementById('newRoomIdInput')?.value.trim();
-    if(!name) name = 'Nova sala';
+    const type = String(document.getElementById('newRoomTypeInput')?.value || 'card') === 'stop' ? 'stop' : 'card';
+    if(!name) name = type === 'stop' ? 'Sala Stop' : 'Nova sala';
     if(!id){
-      id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || 'sala';
+      id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || (type === 'stop' ? 'stop' : 'sala');
       id = `${id}${Math.floor(Math.random()*90+10)}`;
     }
     if(adminState.settings.rooms.some(r => r.id === id)) return alert('Já existe uma sala com esse ID.');
-    adminState.settings.rooms.push({ id, name });
-    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
+    adminState.settings.rooms.push({ id, name, type });
+    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type };
     saveSettings();
-    await ensureRoomDoc(id);
+    if(type === 'stop') await ensureStopRoomDoc(id);
+    else await ensureRoomDoc(id);
     refreshRoomListeners();
     renderLobbyRooms();
     renderAdminModal();
@@ -2452,11 +2925,12 @@ const STOP_STALE_MS = 18000;
     const id = String(roomId || '').trim();
     if(!id) return;
     if(!confirm(`Deletar a sala ${id}?`)) return;
+    const type = getRoomType(id);
     adminState.settings.rooms = adminState.settings.rooms.filter(r => r.id !== id);
     delete adminState.settings.roomMeta[id];
     delete adminState.roomCache[id];
     saveSettings();
-    try { await db.collection('rooms').doc(id).delete(); } catch(e) {}
+    try { await db.collection(type === 'stop' ? 'stopRooms' : 'rooms').doc(id).delete(); } catch(e) {}
     await deleteRoomChatMessages(id);
     refreshRoomListeners();
     renderLobbyRooms();
@@ -2480,7 +2954,7 @@ const STOP_STALE_MS = 18000;
     const room = adminState.roomCache[current];
     const occupied = room?.state ? Object.values(room.state.slots || {}).filter(Boolean).length : 0;
     list.innerHTML = `
-      <div class="list-item"><div><strong>${escapeHtml(meta.name || current)}</strong><div><small>ID ${escapeHtml(current)} · ${occupied}/4</small></div></div><button class="btn secondary small" onclick="deleteAdminRoom('${escapeHtml(current)}')">Deletar</button></div>
+      <div class="list-item"><div><strong>${escapeHtml(meta.name || current)}</strong><div><small>ID ${escapeHtml(current)} · ${occupied}/4 · tipo ${escapeHtml(getRoomType(current) === 'stop' ? 'stop' : 'cartas')}</small></div></div><button class="btn secondary small" onclick="deleteAdminRoom('${escapeHtml(current)}')">Deletar</button></div>
       <div class="list-item"><input id="roomPasswordInput" type="text" placeholder="Senha da sala" value="${escapeHtml(meta.password || '')}" /><button class="btn" type="button" onclick="saveRoomPassword()">Salvar senha</button></div>
       <div class="list-item"><input id="roomNameInput" type="text" placeholder="Nome da sala" value="${escapeHtml(meta.name || current)}" /><button class="btn secondary" type="button" onclick="saveRoomName()">Salvar nome</button></div>
     `;
@@ -2703,7 +3177,10 @@ const STOP_STALE_MS = 18000;
     if(gameState.roomMode && gameState.roomId){
       gameState.roomPlaylist = roomPlaylist(gameState.roomId);
       setupMusic();
-      if(roomAutoplay(gameState.roomId)) playMusic();
+      if(roomAutoplay(gameState.roomId)){
+        playMusic();
+        setTimeout(() => { if(roomAutoplay(gameState.roomId)) playMusic(); }, 180);
+      }
     }
   }
 
@@ -2741,12 +3218,23 @@ const STOP_STALE_MS = 18000;
     }
   }
   function pauseMusic(){ if(gameState.musicAudio){ gameState.musicPlaying = false; gameState.musicAudio.pause(); document.getElementById('musicDisc')?.classList.remove('playing'); } }
+  function stopMusicPlayback(){
+    if(gameState.musicAudio){
+      gameState.musicPlaying = false;
+      gameState.musicAudio.pause();
+      try{ gameState.musicAudio.currentTime = 0; }catch(e){}
+      document.getElementById('musicDisc')?.classList.remove('playing');
+    }
+  }
   function toggleMusic(){ gameState.musicPlaying ? pauseMusic() : playMusic(); }
   function nextTrack(auto=false){ const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex + 1) % pl.length; setupMusic(); if(gameState.musicPlaying || auto) playMusic(); }
   function prevTrack(){ const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
 
   const oldJoinRoom = joinRoom;
   joinRoom = async function(roomId){
+    if(getRoomType(roomId) === 'stop'){
+      return joinStopRoom(roomId);
+    }
     const meta = getRoomMeta(roomId);
     if(meta.password){
       const typed = String(prompt(`Senha da sala ${roomId}:`) || '').trim();
@@ -2756,17 +3244,22 @@ const STOP_STALE_MS = 18000;
       }
     }
     let userName = document.getElementById('roomName').value.trim();
-    if(!userName) userName = document.getElementById('playerName').value.trim();
-    if(!userName) userName = 'Jogador';
+    if(!userName){
+      alert('Digite seu nome antes de entrar na sala.');
+      return;
+    }
     userName = userName.slice(0,18);
     gameState.myName = userName;
     gameState.roomMode = true;
     gameState.roomId = roomId;
     gameState.mySlot = null;
+    gameState.audioEnabled = true;
     showGame();
     applyModeUI();
     refreshThemeForMode();
     renderGame();
+    const audioBtn = document.getElementById('audioBtn');
+    if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
     try{
       await ensureRoomDoc(roomId);
       const roomRef = db.collection('rooms').doc(roomId);
@@ -2808,7 +3301,11 @@ const STOP_STALE_MS = 18000;
       renderGame();
       registerPresence({ roomId, slot: gameState.mySlot, watching: !gameState.mySlot });
       refreshCurrentRoomMusic();
-      if(roomAutoplay(roomId)) playMusic();
+      refreshCurrentMultiplayerPresence();
+      if(roomAutoplay(roomId)){
+        playMusic();
+        setTimeout(() => { if(roomAutoplay(roomId)) playMusic(); }, 180);
+      }
     }catch(err){
       console.error(err);
       alert(err.message || 'Não foi possível entrar na sala.');
@@ -2822,7 +3319,10 @@ const STOP_STALE_MS = 18000;
     if(gameState.roomMode){
       registerPresence({ roomId: gameState.roomId || '', slot: gameState.mySlot, watching: !gameState.mySlot });
       refreshCurrentRoomMusic();
-      if(gameState.roomId && roomAutoplay(gameState.roomId)) playMusic();
+      if(gameState.roomId && roomAutoplay(gameState.roomId)){
+        playMusic();
+        setTimeout(() => { if(gameState.roomId && roomAutoplay(gameState.roomId)) playMusic(); }, 180);
+      }
     }
   };
 
@@ -2842,11 +3342,32 @@ const STOP_STALE_MS = 18000;
 
   const oldBackToLobby = backToLobby;
   backToLobby = async function(){
-    await oldBackToLobby();
-    closeAdminModal();
-    closePeopleModal();
-    adminState.mode = adminState.mode === 'password' ? 'password' : 'none';
-    renderLobbyRooms();
+    try{
+      await oldBackToLobby();
+    }catch(err){
+      console.warn('Falha ao sair da sala, retornando à lobby mesmo assim:', err);
+    }finally{
+      gameState.roomMode = false;
+      gameState.stopMode = false;
+      const table = document.getElementById('table');
+      const endScreen = document.getElementById('endScreen');
+      const lobbyScreen = document.getElementById('lobbyScreen');
+      const chatPanel = document.getElementById('chatPanel');
+      if(table) table.style.display = 'none';
+      if(endScreen) endScreen.style.display = 'none';
+      if(lobbyScreen) lobbyScreen.style.display = 'flex';
+      if(chatPanel) chatPanel.style.display = 'none';
+      if(typeof stopSetBoardVisibility === 'function') stopSetBoardVisibility(false);
+      if(typeof stopClearDraftAnswers === 'function') stopClearDraftAnswers();
+      closeRoomSession();
+      stopMusicPlayback();
+      closeAdminModal();
+      closePeopleModal();
+      adminState.mode = adminState.mode === 'password' ? 'password' : 'none';
+      renderLobbyRooms();
+      renderThemeDots();
+      bootstrapLobbyRooms();
+    }
   };
 
   const oldRenderChatMessages = renderChatMessages;
@@ -2979,12 +3500,12 @@ function stopEmptyState(){
     roomId: STOP_ROOM_ID,
     roomName: "Sala Stop",
     gameNumber: 1,
-    phase: "writing",
-    letter: stopRandomLetter(),
+    phase: "waiting",
+    letter: "-",
     players: {},
     history: [],
     startedAt: Date.now(),
-    roundStartedAt: Date.now(),
+    roundStartedAt: null,
     roundEndedAt: null,
     stoppedBy: null,
     lastResults: null,
@@ -2998,12 +3519,12 @@ function normalizeStopState(raw){
   state.roomId = source.roomId || STOP_ROOM_ID;
   state.roomName = source.roomName || "Sala Stop";
   state.gameNumber = Number.isFinite(source.gameNumber) ? source.gameNumber : 1;
-  state.phase = source.phase === 'results' ? 'results' : 'writing';
-  state.letter = String(source.letter || stopRandomLetter()).slice(0, 1).toUpperCase() || stopRandomLetter();
+  state.phase = (source.phase === 'results' || source.phase === 'writing' || source.phase === 'waiting') ? source.phase : 'waiting';
+  state.letter = String(source.letter || '-').slice(0, 1).toUpperCase() || '-';
   state.players = {};
   state.history = Array.isArray(source.history) ? source.history.slice(0, 20) : [];
   state.startedAt = source.startedAt || Date.now();
-  state.roundStartedAt = source.roundStartedAt || Date.now();
+  state.roundStartedAt = source.roundStartedAt || null;
   state.roundEndedAt = source.roundEndedAt || null;
   state.stoppedBy = source.stoppedBy || null;
   state.lastResults = source.lastResults || null;
@@ -3017,11 +3538,11 @@ function normalizeStopState(raw){
       player.name = String(p?.name || 'Jogador');
       player.joinedAt = p?.joinedAt || Date.now();
       player.lastSeen = p?.lastSeen || Date.now();
-      player.eligibleFromGame = Number.isFinite(p?.eligibleFromGame) ? p.eligibleFromGame : 1;
-      player.totalScore = Number.isFinite(p?.totalScore) ? p.totalScore : 0;
+      player.eligibleFromGame = Number.isFinite(p?.eligibleFromGame) ? p?.eligibleFromGame : 1;
+      player.totalScore = Number.isFinite(p?.totalScore) ? p?.totalScore : 0;
       const answers = p?.answers && typeof p.answers === 'object' ? p.answers : {};
       STOP_CATEGORY_KEYS.forEach(key => { player.answers[key] = String(answers[key] || ''); });
-      player.lastRoundScore = Number.isFinite(p?.lastRoundScore) ? p.lastRoundScore : 0;
+      player.lastRoundScore = Number.isFinite(p?.lastRoundScore) ? p?.lastRoundScore : 0;
       player.lastRoundAnswers = p?.lastRoundAnswers && typeof p.lastRoundAnswers === 'object' ? p.lastRoundAnswers : null;
       state.players[pid] = player;
     });
@@ -3029,13 +3550,48 @@ function normalizeStopState(raw){
   return state;
 }
 
+function stopFreshRoomState(previousState = null){
+  const fresh = stopEmptyState();
+  fresh.history = Array.isArray(previousState?.history) ? previousState.history.slice(0, 20) : [];
+  fresh.gameNumber = 1;
+  fresh.letter = '-';
+  fresh.phase = 'waiting';
+  fresh.roundStartedAt = null;
+  fresh.roundEndedAt = null;
+  fresh.lastResults = null;
+  fresh.stoppedBy = null;
+  fresh.updatedAt = Date.now();
+  return fresh;
+}
+
+function stopIsPlayerFresh(player){
+  if(!player || !Number.isFinite(player.lastSeen)) return true;
+  return (Date.now() - player.lastSeen) <= STOP_STALE_MS;
+}
+
+function stopCleanupState(state){
+  const next = state && typeof state === 'object' ? state : stopEmptyState();
+  const cleanedPlayers = {};
+  Object.values(next.players || {}).forEach(player => {
+    if(!player || !player.id) return;
+    if(!stopIsPlayerFresh(player)) return;
+    cleanedPlayers[player.id] = player;
+  });
+  next.players = cleanedPlayers;
+  return next;
+}
+
 function stopActivePlayers(state){
-  return Object.values(state.players || {}).filter(p => p && p.id && (Number.isFinite(p.eligibleFromGame) ? p.eligibleFromGame : 1) <= state.gameNumber);
+  return Object.values(state.players || {}).filter(p => {
+    if(!p || !p.id) return false;
+    if(!stopIsPlayerFresh(p)) return false;
+    return (Number.isFinite(p.eligibleFromGame) ? p.eligibleFromGame : 1) <= state.gameNumber;
+  });
 }
 
 function stopPlayerIsActive(state, playerId){
   const player = state.players?.[playerId];
-  return !!player && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
+  return !!player && stopIsPlayerFresh(player) && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
 }
 
 function stopResultsForState(state){
@@ -3086,11 +3642,15 @@ function stopResultsForState(state){
   return { perPlayer, ranking, activePlayers, normalizedBuckets };
 }
 
-async function ensureStopRoomDoc(){
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
+async function ensureStopRoomDoc(roomId = getStopRoomId()){
+  const resolvedId = String(roomId || getStopRoomId() || STOP_ROOM_ID).trim() || STOP_ROOM_ID;
+  const ref = db.collection('stopRooms').doc(resolvedId);
   const snap = await ref.get();
   if(!snap.exists){
-    await ref.set(stopEmptyState());
+    const next = stopEmptyState();
+    next.roomId = resolvedId;
+    next.roomName = currentRoomLabel(resolvedId);
+    await ref.set(next);
   }
 }
 
@@ -3115,11 +3675,46 @@ function stopSetBoardVisibility(active){
     if(el) el.style.display = active ? 'none' : '';
   });
   const stopPanel = document.getElementById('stopPanel');
-  if(stopPanel) stopPanel.classList.toggle('hidden', !active);
+  if(stopPanel){
+    stopPanel.classList.toggle('hidden', !active);
+    stopPanel.classList.toggle('active', active);
+    stopPanel.style.display = active ? 'block' : 'none';
+  }
   const seatActions = document.querySelector('.seat-actions');
   if(seatActions) seatActions.style.display = active ? 'none' : '';
   const centerCardRow = document.querySelector('.center-card-row');
   if(centerCardRow) centerCardRow.style.display = active ? 'none' : '';
+}
+
+
+function stopClearDraftAnswers(){
+  gameState.stopDraftAnswers = {};
+}
+
+function stopDraftAnswer(key, value){
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object'){
+    gameState.stopDraftAnswers = {};
+  }
+  gameState.stopDraftAnswers[key] = String(value ?? '');
+}
+
+function stopUpdateActionButtons(state){
+  const startBtn = document.getElementById('stopStartBtn');
+  const stopBtn = document.getElementById('stopStopBtn');
+  const playAgainBtn = document.getElementById('stopPlayAgainBtn');
+  const me = state?.players?.[gameState.myId];
+  const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
+
+  if(startBtn){
+    startBtn.classList.toggle('hidden', state?.phase !== 'waiting');
+    startBtn.textContent = 'Começar jogo';
+  }
+  if(stopBtn){
+    stopBtn.classList.toggle('hidden', state?.phase !== 'writing' || !eligible);
+  }
+  if(playAgainBtn){
+    playAgainBtn.classList.toggle('hidden', state?.phase !== 'results');
+  }
 }
 
 function stopRenderPlayersSummary(state){
@@ -3130,6 +3725,10 @@ function stopRenderPlayersSummary(state){
   if(notice){
     if(!gameState.stopMode){
       notice.textContent = 'Entre na sala Stop para jogar.';
+    } else if(state.phase === 'waiting'){
+      notice.textContent = activePlayers.length
+        ? `Sala pronta. Quando quiser, aperte Começar jogo.`
+        : 'Aguardando jogadores. Quando quiser, aperte Começar jogo.';
     } else if(eligible){
       notice.textContent = `Você joga nesta partida. Letra: ${state.letter}`;
     } else {
@@ -3137,42 +3736,72 @@ function stopRenderPlayersSummary(state){
     }
   }
 
+  if(state.phase !== 'writing'){
+    stopClearDraftAnswers();
+  }
+
   const letter = document.getElementById('stopLetter');
-  if(letter) letter.textContent = state.letter || '-';
+  if(letter) letter.textContent = state.phase === 'waiting' ? '-' : (state.letter || '-');
 
   const roundInfo = document.getElementById('stopRoundInfo');
   if(roundInfo){
-    roundInfo.textContent = state.phase === 'results'
-      ? `Partida ${state.gameNumber} encerrada`
-      : `Partida ${state.gameNumber} em andamento`;
+    roundInfo.textContent = state.phase === 'waiting'
+      ? `Aguardando o começo da partida ${state.gameNumber}`
+      : state.phase === 'results'
+        ? `Partida ${state.gameNumber} encerrada`
+        : `Partida ${state.gameNumber} em andamento`;
   }
 
   const hudTurn = document.getElementById('hudTurn');
   if(hudTurn){
     const last = hudTurn.querySelector('span:last-child');
-    if(last) last.textContent = state.phase === 'results' ? 'Resultados da partida' : `STOP · letra ${state.letter}`;
+    if(last){
+      last.textContent = state.phase === 'waiting'
+        ? 'Aguardando começo'
+        : state.phase === 'results'
+          ? 'Resultados da partida'
+          : `STOP · letra ${state.letter}`;
+    }
   }
 
   const status = document.getElementById('statusNote');
   if(status){
-    status.textContent = state.phase === 'results'
-      ? 'A rodada acabou. Veja os resultados e inicie uma nova partida.'
-      : 'Escreva as respostas e aperte STOP quando quiser encerrar.';
+    status.textContent = state.phase === 'waiting'
+      ? 'Convide mais pessoas e clique em Começar jogo.'
+      : state.phase === 'results'
+        ? 'A rodada acabou. Veja os resultados ou volte para começar outra partida.'
+        : 'Escreva as respostas e aperte STOP quando quiser encerrar.';
   }
+
+  stopUpdateActionButtons(state);
 
   const categories = document.getElementById('stopCategories');
   const resultsBox = document.getElementById('stopResults');
   if(!categories || !resultsBox) return;
 
+  if(state.phase === 'waiting'){
+    categories.innerHTML = `
+      <div class="stop-status-card">
+        <strong>Sala pronta para começar</strong>
+        <div style="margin-top:6px; color:var(--muted);">Clique em <strong>Começar jogo</strong> para sortear a letra e iniciar a rodada.</div>
+      </div>
+    `;
+    resultsBox.innerHTML = '';
+    resultsBox.classList.add('hidden');
+    return;
+  }
+
   if(state.phase === 'writing'){
     if(eligible){
       categories.innerHTML = STOP_CATEGORIES.map((label, idx) => {
         const key = STOP_CATEGORY_KEYS[idx];
-        const value = escapeHtml(String(me?.answers?.[key] || ''));
+        const draftValue = gameState.stopDraftAnswers?.[key];
+        const currentValue = draftValue !== undefined ? draftValue : (me?.answers?.[key] || '');
+        const value = escapeHtml(String(currentValue));
         return `
           <div class="stop-category">
             <label>${escapeHtml(label)}</label>
-            <input type="text" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" oninput="updateStopAnswer('${key}', this.value)" />
+            <input type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopDraftAnswer('${key}', this.value)" oninput="stopDraftAnswer('${key}', this.value)" onblur="updateStopAnswer('${key}', this.value)" />
           </div>
         `;
       }).join('');
@@ -3221,19 +3850,23 @@ function stopRenderPlayersSummary(state){
         <span class="pill">${results.ranking.length} jogador(es)</span>
       </div>
       ${rankingHtml}
+      <div class="stop-actions-row" style="margin-top:14px;">
+        <button class="btn secondary mini-toggle" type="button" onclick="stopPlayAgain()" style="min-width:190px;">Jogar mais</button>
+      </div>
     </div>
   `;
 }
 
 async function subscribeStopRoom(){
   stopStopSubscriptions();
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
   gameState.stopUnsub = ref.onSnapshot(snap => {
     if(!snap.exists) return;
-    gameState.stopState = normalizeStopState(snap.data());
+    gameState.stopState = stopCleanupState(normalizeStopState(snap.data()));
     renderGame();
     renderPeopleModal();
     renderStopHistory();
+    refreshVoiceChat();
   }, err => {
     console.error('Erro na sala Stop:', err);
   });
@@ -3247,9 +3880,11 @@ async function updateStopAnswer(key, value){
   const nextValue = String(value || '');
   if(!player.answers) player.answers = stopEmptyAnswers();
   player.answers[key] = nextValue;
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object') gameState.stopDraftAnswers = {};
+  gameState.stopDraftAnswers[key] = nextValue;
   player.lastSeen = Date.now();
   try {
-    await db.collection('stopRooms').doc(STOP_ROOM_ID).update({
+    await db.collection('stopRooms').doc(getStopRoomId()).update({
       [`players.${gameState.myId}.answers.${key}`]: nextValue,
       [`players.${gameState.myId}.lastSeen`]: Date.now()
     });
@@ -3258,34 +3893,45 @@ async function updateStopAnswer(key, value){
   }
 }
 
-async function joinStopRoom(){
+async function joinStopRoom(roomId = STOP_ROOM_ID){
   let userName = document.getElementById('roomName')?.value.trim();
-  if(!userName) userName = document.getElementById('playerName')?.value.trim();
-  if(!userName) userName = 'Jogador';
+  if(!userName){
+    alert('Digite seu nome antes de entrar na sala.');
+    return;
+  }
   userName = userName.slice(0, 18);
 
   gameState.myName = userName;
   gameState.stopMode = true;
+  stopClearDraftAnswers();
   gameState.roomMode = false;
-  gameState.roomId = STOP_ROOM_ID;
-  gameState.stopRoomId = STOP_ROOM_ID;
+  gameState.audioEnabled = true;
+  gameState.roomId = roomId || STOP_ROOM_ID;
+  gameState.stopRoomId = roomId || STOP_ROOM_ID;
 
   showGame();
   applyModeUI();
   refreshThemeForMode();
+  const audioBtn = document.getElementById('audioBtn');
+  if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
   stopSetBoardVisibility(true);
   document.getElementById('table').style.display = 'block';
 
   try{
-    await ensureStopRoomDoc();
-    const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
+    await ensureStopRoomDoc(roomId || STOP_ROOM_ID);
+    const ref = db.collection('stopRooms').doc(getStopRoomId());
     const joined = await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
+      let state = stopCleanupState(normalizeStopState(snap.data()));
       state.players = state.players || {};
       const existing = state.players[gameState.myId] || null;
-      const nextEligible = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
+      const roomWasEmpty = Object.keys(state.players || {}).length === 0;
+      if(roomWasEmpty){
+        state = stopFreshRoomState(state);
+      }
+      const currentGameNumber = Number.isFinite(state.gameNumber) ? state.gameNumber : 1;
+      const nextEligible = state.phase === 'waiting' ? currentGameNumber : currentGameNumber + 1;
       state.players[gameState.myId] = {
         ...(existing || stopEmptyPlayer(gameState.myId, userName, nextEligible)),
         id: gameState.myId,
@@ -3305,6 +3951,8 @@ async function joinStopRoom(){
     stopStartHeartbeat();
     initRoomChat(STOP_CHAT_ROOM_ID);
     renderGame();
+    refreshCurrentMultiplayerPresence();
+    await refreshVoiceChat(true);
   }catch(err){
     console.error(err);
     alert(err.message || 'Não foi possível entrar na sala Stop.');
@@ -3320,31 +3968,58 @@ function stopStartHeartbeat(){
     if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
     const state = gameState.stopState;
     if(!state.players?.[gameState.myId]) return;
-    db.collection('stopRooms').doc(STOP_ROOM_ID).update({
+    db.collection('stopRooms').doc(getStopRoomId()).update({
       [`players.${gameState.myId}.lastSeen`]: Date.now(),
       [`players.${gameState.myId}.name`]: gameState.myName
     }).catch(()=>{});
-  }, 7000);
+  }, 3000);
 }
+
+function refreshCurrentMultiplayerPresence(){
+  try{
+    if(gameState.roomMode && gameState.roomId && gameState.mySlot){
+      const pathBase = `state.slots.${gameState.mySlot}`;
+      db.collection('rooms').doc(gameState.roomId).update({
+        [`${pathBase}.id`]: gameState.myId,
+        [`${pathBase}.name`]: gameState.myName,
+        [`${pathBase}.lastSeen`]: Date.now()
+      }).catch(()=>{});
+    }
+    if(gameState.stopMode && gameState.stopState && gameState.stopState.players?.[gameState.myId]){
+      db.collection('stopRooms').doc(getStopRoomId()).update({
+        [`players.${gameState.myId}.lastSeen`]: Date.now(),
+        [`players.${gameState.myId}.name`]: gameState.myName
+      }).catch(()=>{});
+    }
+  }catch(e){}
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden) refreshCurrentMultiplayerPresence();
+});
+window.addEventListener('focus', refreshCurrentMultiplayerPresence);
 
 async function stopLeaveCurrentRoom(){
   if(!gameState.stopMode || !gameState.stopState) return;
   stopClearHeartbeat();
   stopStopSubscriptions();
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
+  stopVoiceChat();
+  stopMusicPlayback();
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
   const myId = gameState.myId;
   let shouldReset = false;
   try{
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) return;
-      let state = normalizeStopState(snap.data());
+      let state = stopCleanupState(normalizeStopState(snap.data()));
       if(state.players && state.players[myId]){
         delete state.players[myId];
       }
       shouldReset = Object.keys(state.players || {}).length === 0;
       if(shouldReset){
-        tx.delete(ref);
+        state = stopFreshRoomState(state);
+        tx.set(ref, state, { merge: true });
       }else{
         state.updatedAt = Date.now();
         tx.set(ref, state, { merge: true });
@@ -3356,6 +4031,7 @@ async function stopLeaveCurrentRoom(){
   }
   gameState.stopState = null;
   gameState.stopMode = false;
+  stopClearDraftAnswers();
 }
 
 function stopSetLayout(){
@@ -3372,12 +4048,12 @@ function stopSetLayout(){
 
 async function pressStop(){
   if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
   try{
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
+      let state = stopCleanupState(normalizeStopState(snap.data()));
       if(state.phase === 'results') return;
       const results = stopResultsForState(state);
       results.activePlayers.forEach(p => {
@@ -3420,24 +4096,31 @@ async function pressStop(){
 
 async function startStopNewGame(){
   if(!gameState.stopMode || !gameState.stopState) return;
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
   try{
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
-      if(state.phase !== 'results') throw new Error('A partida ainda está em andamento.');
-      state.gameNumber = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      if(state.phase === 'writing') throw new Error('A partida ainda está em andamento.');
+
+      if(state.phase === 'results'){
+        throw new Error('Use Jogar mais para voltar à tela de espera.');
+      }
+
       state.phase = 'writing';
       state.letter = stopRandomLetter();
+      stopClearDraftAnswers();
       state.roundStartedAt = Date.now();
       state.roundEndedAt = null;
       state.stoppedBy = null;
       state.lastResults = null;
+      const currentGameNumber = Number.isFinite(state.gameNumber) ? state.gameNumber : 1;
       Object.values(state.players || {}).forEach(player => {
         if(!player) return;
-        if((Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber){
+        if((Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= currentGameNumber){
           player.answers = stopEmptyAnswers();
+          player.eligibleFromGame = currentGameNumber;
         }
       });
       state.updatedAt = Date.now();
@@ -3445,7 +4128,37 @@ async function startStopNewGame(){
     });
   }catch(err){
     console.error(err);
-    alert(err.message || 'Não foi possível iniciar uma nova partida.');
+    alert(err.message || 'Não foi possível iniciar a partida.');
+  }
+}
+
+async function stopPlayAgain(){
+  if(!gameState.stopMode || !gameState.stopState) return;
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  try{
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      state.gameNumber = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
+      state.phase = 'waiting';
+      stopClearDraftAnswers();
+      state.letter = '-';
+      state.roundStartedAt = null;
+      state.roundEndedAt = null;
+      state.stoppedBy = null;
+      state.lastResults = null;
+      Object.values(state.players || {}).forEach(player => {
+        if(!player) return;
+        player.answers = stopEmptyAnswers();
+        player.eligibleFromGame = state.gameNumber;
+      });
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+    });
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível voltar para a sala de espera.');
   }
 }
 
@@ -3497,21 +4210,6 @@ function closeStopHistory(){
 const _origRenderLobbyRooms = renderLobbyRooms;
 renderLobbyRooms = function(){
   _origRenderLobbyRooms();
-  const container = document.getElementById('roomsList');
-  if(!container) return;
-  const stopCard = document.createElement('div');
-  stopCard.className = 'room-card';
-  stopCard.innerHTML = `
-    <div class="room-head">
-      <strong>Sala Stop</strong>
-      <span class="room-tag">STOP</span>
-    </div>
-    <small>Jogo de palavras por letra, com chat e pontuação.</small>
-    <div class="room-actions">
-      <button class="btn secondary" onclick="joinStopRoom()">Entrar</button>
-    </div>
-  `;
-  container.appendChild(stopCard);
 };
 
 const _origRenderGame = renderGame;
@@ -3650,6 +4348,7 @@ window.openStopHistory = openStopHistory;
 window.closeStopHistory = closeStopHistory;
 window.pressStop = pressStop;
 window.startStopNewGame = startStopNewGame;
+window.stopPlayAgain = stopPlayAgain;
 window.updateStopAnswer = updateStopAnswer;
 window.stopLeaveCurrentRoom = stopLeaveCurrentRoom;
 
