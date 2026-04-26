@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>llCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1012,7 +1012,8 @@ const STOP_STALE_MS = 18000;
       stopState: null,
       stopHeartbeat: null,
       stopUnsub: null,
-      stopPlaylist: []
+      stopPlaylist: [],
+      stopDraftAnswers: {}
     };
 
     const DEFAULT_PLAYLIST = [
@@ -3192,17 +3193,30 @@ function stopSetBoardVisibility(active){
 }
 
 
+function stopClearDraftAnswers(){
+  gameState.stopDraftAnswers = {};
+}
+
+function stopDraftAnswer(key, value){
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object'){
+    gameState.stopDraftAnswers = {};
+  }
+  gameState.stopDraftAnswers[key] = String(value ?? '');
+}
+
 function stopUpdateActionButtons(state){
   const startBtn = document.getElementById('stopStartBtn');
   const stopBtn = document.getElementById('stopStopBtn');
   const playAgainBtn = document.getElementById('stopPlayAgainBtn');
+  const me = state?.players?.[gameState.myId];
+  const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
 
   if(startBtn){
     startBtn.classList.toggle('hidden', state?.phase !== 'waiting');
     startBtn.textContent = 'Começar jogo';
   }
   if(stopBtn){
-    stopBtn.classList.toggle('hidden', state?.phase !== 'writing');
+    stopBtn.classList.toggle('hidden', state?.phase !== 'writing' || !eligible);
   }
   if(playAgainBtn){
     playAgainBtn.classList.toggle('hidden', state?.phase !== 'results');
@@ -3226,6 +3240,10 @@ function stopRenderPlayersSummary(state){
     } else {
       notice.textContent = `Você entra na próxima partida. Letra atual: ${state.letter}`;
     }
+  }
+
+  if(state.phase !== 'writing'){
+    stopClearDraftAnswers();
   }
 
   const letter = document.getElementById('stopLetter');
@@ -3283,11 +3301,13 @@ function stopRenderPlayersSummary(state){
     if(eligible){
       categories.innerHTML = STOP_CATEGORIES.map((label, idx) => {
         const key = STOP_CATEGORY_KEYS[idx];
-        const value = escapeHtml(String(me?.answers?.[key] || ''));
+        const draftValue = gameState.stopDraftAnswers?.[key];
+        const currentValue = draftValue !== undefined ? draftValue : (me?.answers?.[key] || '');
+        const value = escapeHtml(String(currentValue));
         return `
           <div class="stop-category">
             <label>${escapeHtml(label)}</label>
-            <input type="text" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" oninput="updateStopAnswer('${key}', this.value)" />
+            <input type="text" inputmode="text" autocomplete="off" spellcheck="false" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopDraftAnswer('${key}', this.value)" oninput="stopDraftAnswer('${key}', this.value)" onblur="updateStopAnswer('${key}', this.value)" />
           </div>
         `;
       }).join('');
@@ -3342,6 +3362,7 @@ function stopRenderPlayersSummary(state){
     </div>
   `;
 }
+
 async function subscribeStopRoom(){
   stopStopSubscriptions();
   const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
@@ -3364,6 +3385,8 @@ async function updateStopAnswer(key, value){
   const nextValue = String(value || '');
   if(!player.answers) player.answers = stopEmptyAnswers();
   player.answers[key] = nextValue;
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object') gameState.stopDraftAnswers = {};
+  gameState.stopDraftAnswers[key] = nextValue;
   player.lastSeen = Date.now();
   try {
     await db.collection('stopRooms').doc(STOP_ROOM_ID).update({
@@ -3386,6 +3409,7 @@ async function joinStopRoom(){
 
   gameState.myName = userName;
   gameState.stopMode = true;
+  stopClearDraftAnswers();
   gameState.roomMode = false;
   gameState.roomId = STOP_ROOM_ID;
   gameState.stopRoomId = STOP_ROOM_ID;
@@ -3482,6 +3506,7 @@ async function stopLeaveCurrentRoom(){
   }
   gameState.stopState = null;
   gameState.stopMode = false;
+  stopClearDraftAnswers();
 }
 
 function stopSetLayout(){
@@ -3560,6 +3585,7 @@ async function startStopNewGame(){
 
       state.phase = 'writing';
       state.letter = stopRandomLetter();
+      stopClearDraftAnswers();
       state.roundStartedAt = Date.now();
       state.roundEndedAt = null;
       state.stoppedBy = null;
@@ -3591,6 +3617,7 @@ async function stopPlayAgain(){
       let state = stopCleanupState(normalizeStopState(snap.data()));
       state.gameNumber = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
       state.phase = 'waiting';
+      stopClearDraftAnswers();
       state.letter = '-';
       state.roundStartedAt = null;
       state.roundEndedAt = null;
