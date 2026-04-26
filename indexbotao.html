@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ggCartas - Jogo Multiplayer com Chat</title>
+  <title>vfCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1466,9 +1466,8 @@ const STOP_STALE_MS = 120000;
     }
 
     async function leaveCurrentRoom(){
-      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      if(!gameState.roomMode || !gameState.roomId) return;
       const roomId = gameState.roomId;
-      const mySlot = gameState.mySlot;
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
@@ -1481,9 +1480,19 @@ const STOP_STALE_MS = 120000;
           if(!snap.exists) return;
           const data = snap.data() || {};
           let state = cleanupStaleSlots(normalizeSharedState(data.state));
-          if(state.slots[mySlot] && state.slots[mySlot].id === myId){
-            state.slots[mySlot] = null;
-            if(state.turn === mySlot) state.turn = normalizeTurn(state);
+          let targetSlot = null;
+          for(let slot = 1; slot <= 4; slot++){
+            if(state.slots[slot] && state.slots[slot].id === myId){
+              targetSlot = slot;
+              break;
+            }
+          }
+          if(targetSlot === null && Number.isInteger(gameState.mySlot) && gameState.mySlot >= 1 && gameState.mySlot <= 4){
+            targetSlot = gameState.mySlot;
+          }
+          if(targetSlot !== null && state.slots[targetSlot] && state.slots[targetSlot].id === myId){
+            state.slots[targetSlot] = null;
+            if(state.turn === targetSlot) state.turn = normalizeTurn(state);
             shouldReset = isRoomEmpty(state);
             if(!shouldReset) state.seatingOpen = anyVacantSlot(state);
             if(shouldReset){
@@ -1504,9 +1513,8 @@ const STOP_STALE_MS = 120000;
     }
 
     async function leaveSeat(){
-      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      if(!gameState.roomMode || !gameState.roomId) return;
       const roomId = gameState.roomId;
-      const mySlot = gameState.mySlot;
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
@@ -1517,9 +1525,19 @@ const STOP_STALE_MS = 120000;
           if(!snap.exists) throw new Error("Sala não encontrada");
           const data = snap.data() || {};
           let state = cleanupStaleSlots(normalizeSharedState(data.state));
-          if(state.slots[mySlot] && state.slots[mySlot].id === myId){
-            state.slots[mySlot] = null;
-            if(state.turn === mySlot) state.turn = normalizeTurn(state);
+          let targetSlot = null;
+          for(let slot = 1; slot <= 4; slot++){
+            if(state.slots[slot] && state.slots[slot].id === myId){
+              targetSlot = slot;
+              break;
+            }
+          }
+          if(targetSlot === null && Number.isInteger(gameState.mySlot) && gameState.mySlot >= 1 && gameState.mySlot <= 4){
+            targetSlot = gameState.mySlot;
+          }
+          if(targetSlot !== null && state.slots[targetSlot] && state.slots[targetSlot].id === myId){
+            state.slots[targetSlot] = null;
+            if(state.turn === targetSlot) state.turn = normalizeTurn(state);
             shouldReset = isRoomEmpty(state);
             if(!shouldReset) state.seatingOpen = anyVacantSlot(state);
             if(shouldReset){
