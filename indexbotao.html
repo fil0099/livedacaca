@@ -959,7 +959,7 @@
       { id: "orange", label: "Laranja", bg1: "#fff7ed", bg2: "#fffbeb", glow1: "rgba(249,115,22,.14)", glow2: "rgba(245,158,11,.10)" },
       { id: "pink", label: "Rosa", bg1: "#fdf2f8", bg2: "#fff1f2", glow1: "rgba(236,72,153,.14)", glow2: "rgba(244,63,94,.10)" }
     ];
-    const STALE_SLOT_MS = 10000;
+    const STALE_SLOT_MS = 120000;
 
 const STOP_ROOM_ID = "stop-main";
 const STOP_CHAT_ROOM_ID = STOP_ROOM_ID;
@@ -974,7 +974,7 @@ const STOP_CATEGORIES = [
   "Marca"
 ];
 const STOP_CATEGORY_KEYS = STOP_CATEGORIES.map((_, idx) => `c${idx + 1}`);
-const STOP_STALE_MS = 10000;
+const STOP_STALE_MS = 120000;
 
     let gameState = {
       roomMode: false,
@@ -1165,15 +1165,10 @@ const STOP_STALE_MS = 10000;
     }
 
     function slotIsActive(slotData){
-      if(!slotData || !slotData.id) return false;
-      const seenAt = Number.isFinite(slotData.lastSeen)
-        ? slotData.lastSeen
-        : Number.isFinite(slotData.joinedAt)
-          ? slotData.joinedAt
-          : 0;
-      return (Date.now() - seenAt) <= STALE_SLOT_MS;
+      return !!(slotData && slotData.id);
     }
-function cleanupStaleSlots(state){
+
+    function cleanupStaleSlots(state){
       for(let slot = 1; slot <= 4; slot++){
         if(state.slots[slot] && !slotIsActive(state.slots[slot])){
           state.slots[slot] = null;
@@ -1434,13 +1429,43 @@ function cleanupStaleSlots(state){
       }
     }
 
+    function resetGameAndChatAfterRoomEnded(){
+      clearTimeout(gameState.botTimer);
+      stopRoomHeartbeat();
+      stopVoiceChat();
+      stopMusicPlayback();
+      closeRoomSession();
+      gameState.roomMode = false;
+      document.getElementById("table").style.display = "none";
+      document.getElementById("endScreen").style.display = "none";
+      document.getElementById("lobbyScreen").style.display = "flex";
+      document.getElementById("chatPanel").style.display = "none";
+      const chatList = document.getElementById("chatMessagesList");
+      if(chatList){
+        chatList.innerHTML = '<div style="text-align:center; color:var(--muted);">Aguardando mensagens...</div>';
+      }
+      refreshThemeForMode();
+      renderLobbyRooms();
+      bootstrapLobbyRooms();
+      renderThemeDots();
+    }
+
     function subscribeRoom(roomId){
       stopRoomSubscriptions();
       const roomRef = db.collection('rooms').doc(roomId);
-      const unsub = roomRef.onSnapshot(snapshot => {
-        if(!snapshot.exists) return;
+      const unsub = roomRef.onSnapshot(async snapshot => {
+        if(!snapshot.exists){
+          await deleteRoomChatMessages(roomId);
+          resetGameAndChatAfterRoomEnded();
+          return;
+        }
         const data = snapshot.data() || {};
         const state = cleanupStaleSlots(normalizeSharedState(data.state));
+        if(isRoomEmpty(state)){
+          await deleteRoomChatMessages(roomId);
+          resetGameAndChatAfterRoomEnded();
+          return;
+        }
         gameState.roomState = state;
         if(gameState.myId){
           for(let slot = 1; slot <= 4; slot++){
@@ -1471,8 +1496,9 @@ function cleanupStaleSlots(state){
     }
 
     async function leaveCurrentRoom(){
-      if(!gameState.roomMode || !gameState.roomId) return;
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
       const roomId = gameState.roomId;
+      const mySlot = gameState.mySlot;
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
@@ -1485,19 +1511,9 @@ function cleanupStaleSlots(state){
           if(!snap.exists) return;
           const data = snap.data() || {};
           let state = cleanupStaleSlots(normalizeSharedState(data.state));
-          let targetSlot = null;
-          for(let slot = 1; slot <= 4; slot++){
-            if(state.slots[slot] && state.slots[slot].id === myId){
-              targetSlot = slot;
-              break;
-            }
-          }
-          if(targetSlot === null && Number.isInteger(gameState.mySlot) && gameState.mySlot >= 1 && gameState.mySlot <= 4){
-            targetSlot = gameState.mySlot;
-          }
-          if(targetSlot !== null && state.slots[targetSlot] && state.slots[targetSlot].id === myId){
-            state.slots[targetSlot] = null;
-            if(state.turn === targetSlot) state.turn = normalizeTurn(state);
+          if(state.slots[mySlot] && state.slots[mySlot].id === myId){
+            state.slots[mySlot] = null;
+            if(state.turn === mySlot) state.turn = normalizeTurn(state);
             shouldReset = isRoomEmpty(state);
             if(!shouldReset) state.seatingOpen = anyVacantSlot(state);
             if(shouldReset){
@@ -1518,8 +1534,9 @@ function cleanupStaleSlots(state){
     }
 
     async function leaveSeat(){
-      if(!gameState.roomMode || !gameState.roomId) return;
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
       const roomId = gameState.roomId;
+      const mySlot = gameState.mySlot;
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
@@ -1530,19 +1547,9 @@ function cleanupStaleSlots(state){
           if(!snap.exists) throw new Error("Sala não encontrada");
           const data = snap.data() || {};
           let state = cleanupStaleSlots(normalizeSharedState(data.state));
-          let targetSlot = null;
-          for(let slot = 1; slot <= 4; slot++){
-            if(state.slots[slot] && state.slots[slot].id === myId){
-              targetSlot = slot;
-              break;
-            }
-          }
-          if(targetSlot === null && Number.isInteger(gameState.mySlot) && gameState.mySlot >= 1 && gameState.mySlot <= 4){
-            targetSlot = gameState.mySlot;
-          }
-          if(targetSlot !== null && state.slots[targetSlot] && state.slots[targetSlot].id === myId){
-            state.slots[targetSlot] = null;
-            if(state.turn === targetSlot) state.turn = normalizeTurn(state);
+          if(state.slots[mySlot] && state.slots[mySlot].id === myId){
+            state.slots[mySlot] = null;
+            if(state.turn === mySlot) state.turn = normalizeTurn(state);
             shouldReset = isRoomEmpty(state);
             if(!shouldReset) state.seatingOpen = anyVacantSlot(state);
             if(shouldReset){
@@ -2158,8 +2165,8 @@ function cleanupStaleSlots(state){
 
       const pc = new RTCPeer({
         iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:global.stun.twilio.com:3478' }
+          { urls: ['stun:stun.l.google.com:19302'] },
+          { urls: ['stun:global.stun.twilio.com:3478?transport=udp'] }
         ]
       });
 
@@ -2442,27 +2449,10 @@ function cleanupStaleSlots(state){
     document.getElementById("sendChatBtn")?.addEventListener("click", sendMessage);
     document.getElementById("chatMessageInput")?.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-    let appExitHandled = false;
-
-    async function handleAppExit(){
-      if(appExitHandled) return;
-      appExitHandled = true;
+    window.addEventListener('beforeunload', () => {
       stopRoomHeartbeat();
-      if(gameState.stopMode){
-        await stopLeaveCurrentRoom();
-        return;
-      }
-      if(gameState.roomMode){
-        await leaveCurrentRoom();
-      }
-    }
-
-    window.addEventListener('beforeunload', () => { handleAppExit(); });
-    window.addEventListener('pagehide', (event) => {
-      if(event && event.persisted) return;
-      handleAppExit();
+      if(gameState.roomMode) leaveCurrentRoom();
     });
-    window.addEventListener('pageshow', () => { appExitHandled = false; });
 
     async function bootstrapLobbyRooms(){
       stopLobbySubscriptions();
@@ -4388,12 +4378,9 @@ window.stopPlayAgain = stopPlayAgain;
 window.updateStopAnswer = updateStopAnswer;
 window.stopLeaveCurrentRoom = stopLeaveCurrentRoom;
 
-window.addEventListener('beforeunload', () => { handleAppExit(); });
-window.addEventListener('pagehide', (event) => {
-  if(event && event.persisted) return;
-  handleAppExit();
+window.addEventListener('beforeunload', () => {
+  if(gameState.stopMode) stopLeaveCurrentRoom();
 });
-window.addEventListener('pageshow', () => { appExitHandled = false; });
 
   const oldBootstrapLobbyRooms = bootstrapLobbyRooms;
   bootstrapLobbyRooms = function(){
