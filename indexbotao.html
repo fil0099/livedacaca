@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>10Cartas - Jogo Multiplayer com Chat</title>
+  <title>ccCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -3668,6 +3668,7 @@ function stopResultsForState(state){
   const activePlayers = stopActivePlayers(state);
   const normalizedBuckets = {};
   const perPlayer = {};
+  const requiredLetter = stopNormalizeText(state.letter || '').slice(0, 1);
   activePlayers.forEach(p => {
     perPlayer[p.id] = {
       id: p.id,
@@ -3684,14 +3685,16 @@ function stopResultsForState(state){
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      if(!norm) return;
+      const startsCorrect = !!norm && (!!requiredLetter ? norm.startsWith(requiredLetter) : true);
+      if(!startsCorrect) return;
       if(!buckets[norm]) buckets[norm] = [];
       buckets[norm].push(p.id);
     });
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      const pts = norm ? ((buckets[norm] || []).length === 1 ? 10 : 5) : 0;
+      const startsCorrect = !!norm && (!!requiredLetter ? norm.startsWith(requiredLetter) : true);
+      const pts = !norm ? 0 : (!startsCorrect ? 0 : ((buckets[norm] || []).length === 1 ? 10 : 5));
       perPlayer[p.id].score += pts;
       perPlayer[p.id].answers[label] = raw;
       perPlayer[p.id].categoryPoints[label] = pts;
@@ -3886,7 +3889,7 @@ function stopRenderPlayersSummary(state){
         return `
           <div class="stop-category">
             <label for="stop-${key}">${escapeHtml(label)}</label>
-            <textarea id="stop-${key}" class="stop-answer" data-stop-key="${key}" rows="2" inputmode="text" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopDraftAnswer('${key}', this.value); stopResizeAnswerField(this);" oninput="stopDraftAnswer('${key}', this.value); stopResizeAnswerField(this)" onblur="updateStopAnswer('${key}', this.value)" onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); stopDraftAnswer('${key}', this.value); updateStopAnswer('${key}', this.value); stopFocusNextAnswer('${key}'); }">${value}</textarea>
+            <textarea id="stop-${key}" class="stop-answer" data-stop-key="${key}" rows="2" inputmode="text" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopResizeAnswerField(this);" oninput="stopDraftAnswer('${key}', this.value); stopResizeAnswerField(this)" onblur="updateStopAnswer('${key}', this.value)" onkeydown="if(event.key === 'Enter' && !event.shiftKey){ event.preventDefault(); updateStopAnswer('${key}', this.value); stopFocusNextAnswer('${key}'); }">${value}</textarea>
           </div>
         `;
       }).join('');
