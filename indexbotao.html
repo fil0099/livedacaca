@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>eeCartas - Jogo Multiplayer com Chat</title>
+  <title>yyCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1074,6 +1074,12 @@ const STOP_STALE_MS = 18000;
       return array;
     }
 
+    function normalizeMusicList(list){
+      return Array.isArray(list)
+        ? list.map(item => String(item || '').trim()).filter(Boolean)
+        : [];
+    }
+
     function createCard(){
       const r = Math.random();
       let value = Math.floor(Math.random() * 10).toString();
@@ -2116,7 +2122,7 @@ const STOP_STALE_MS = 18000;
 
         <div class="modal-section" data-permission="music">
           <strong>Músicas da sala</strong>
-          <div class="mini-note">Cole uma URL por linha. Vale para a sala selecionada.</div>
+          <div class="mini-note">Cole uma URL por linha. Vale para todas as salas.</div>
           <textarea id="roomMusicList" rows="6" placeholder="Uma URL por linha"></textarea>
           <div class="modal-row" style="margin-top:10px;">
             <button class="btn" type="button" onclick="saveRoomMusicList()">Salvar músicas</button>
@@ -2126,7 +2132,7 @@ const STOP_STALE_MS = 18000;
 
         <div class="modal-section" data-permission="autoplay">
           <strong>Autoplay nas salas</strong>
-          <div class="mini-note">Quando ligado, ao entrar na sala a música do player começa automaticamente.</div>
+          <div class="mini-note">Quando ligado, ao entrar em qualquer sala a música do player começa automaticamente.</div>
           <div class="modal-row" style="margin-top:10px; align-items:center;">
             <label class="theme-switch" style="justify-content:flex-start;">
               <span class="theme-label">Ativo</span>
@@ -2224,6 +2230,8 @@ const STOP_STALE_MS = 18000;
         acc[r.id] = { name:r.name, password:'', autoplay:true, playlist: DEFAULT_PLAYLIST.slice() };
         return acc;
       }, {}),
+      sharedPlaylist: DEFAULT_PLAYLIST.slice(),
+      sharedAutoplay: true,
       delegations: {},
       userRegistry: []
     };
@@ -2235,10 +2243,15 @@ const STOP_STALE_MS = 18000;
       ...local,
       rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim() })).filter(r => r.id) : base.rooms.slice(),
       roomMeta: { ...base.roomMeta, ...(local.roomMeta || {}) },
+      sharedPlaylist: Array.isArray(local.sharedPlaylist) && local.sharedPlaylist.length ? normalizeMusicList(local.sharedPlaylist) : base.sharedPlaylist.slice(),
+      sharedAutoplay: local.sharedAutoplay !== false,
       delegations: local.delegations && typeof local.delegations === 'object' ? local.delegations : {},
       userRegistry: Array.isArray(local.userRegistry) ? local.userRegistry : []
     };
     next.rooms = next.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
+    next.sharedPlaylist = normalizeMusicList(next.sharedPlaylist);
+    if(!next.sharedPlaylist.length) next.sharedPlaylist = DEFAULT_PLAYLIST.slice();
+    next.sharedAutoplay = next.sharedAutoplay !== false;
     next.rooms.forEach(room => {
       if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
@@ -2261,6 +2274,8 @@ const STOP_STALE_MS = 18000;
     if(typeof remote.adminPassword === 'string') next.adminPassword = remote.adminPassword;
     if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim() })).filter(r => r.id);
     if(remote.roomMeta && typeof remote.roomMeta === 'object') next.roomMeta = { ...next.roomMeta, ...remote.roomMeta };
+    if(Array.isArray(remote.sharedPlaylist)) next.sharedPlaylist = normalizeMusicList(remote.sharedPlaylist);
+    if(remote.sharedAutoplay !== undefined) next.sharedAutoplay = remote.sharedAutoplay !== false;
     if(remote.delegations && typeof remote.delegations === 'object') next.delegations = remote.delegations;
     if(Array.isArray(remote.userRegistry)) next.userRegistry = remote.userRegistry;
     next.rooms.forEach(room => {
@@ -2270,6 +2285,9 @@ const STOP_STALE_MS = 18000;
       next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
       next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
     });
+    next.sharedPlaylist = normalizeMusicList(next.sharedPlaylist);
+    if(!next.sharedPlaylist.length) next.sharedPlaylist = DEFAULT_PLAYLIST.slice();
+    next.sharedAutoplay = next.sharedAutoplay !== false;
     adminState.settings = next;
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
   }
@@ -2354,9 +2372,12 @@ const STOP_STALE_MS = 18000;
   }
 
   function roomPlaylist(roomId){
+    const shared = normalizeMusicList(adminState.settings.sharedPlaylist);
+    if(shared.length) return shared;
     return getRoomMeta(roomId).playlist || DEFAULT_PLAYLIST.slice();
   }
   function roomAutoplay(roomId){
+    if(adminState.settings.sharedAutoplay !== undefined) return adminState.settings.sharedAutoplay !== false;
     return getRoomMeta(roomId).autoplay !== false;
   }
 
@@ -2386,6 +2407,9 @@ const STOP_STALE_MS = 18000;
       renderAdminModal();
       renderPeopleModal();
       refreshRoomListeners();
+      if(gameState.roomMode && gameState.roomId){
+        refreshCurrentRoomMusic(false);
+      }
     });
   }
 
@@ -2519,9 +2543,9 @@ const STOP_STALE_MS = 18000;
       <div class="list-item"><input id="roomNameInput" type="text" placeholder="Nome da sala" value="${escapeHtml(meta.name || current)}" /><button class="btn secondary" type="button" onclick="saveRoomName()">Salvar nome</button></div>
     `;
     const music = document.getElementById('roomMusicList');
-    if(music) music.value = (meta.playlist || DEFAULT_PLAYLIST).join('\n');
+    if(music) music.value = (normalizeMusicList(adminState.settings.sharedPlaylist).length ? adminState.settings.sharedPlaylist : DEFAULT_PLAYLIST).join('\n');
     const toggle = document.getElementById('roomAutoPlayToggle');
-    if(toggle) toggle.checked = meta.autoplay !== false;
+    if(toggle) toggle.checked = roomAutoplay(current);
   }
 
   function saveRoomPassword(){
@@ -2542,30 +2566,41 @@ const STOP_STALE_MS = 18000;
     const roomId = adminState.selectedRoomId;
     const textarea = document.getElementById('roomMusicList');
     const playlist = String(textarea?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
-    setRoomMeta(roomId, { playlist: playlist.length ? playlist : DEFAULT_PLAYLIST.slice() });
-    if(gameState.roomMode && gameState.roomId === roomId){
-      refreshCurrentRoomMusic();
-      if(roomAutoplay(roomId)) playMusic();
+    adminState.settings.sharedPlaylist = playlist.length ? normalizeMusicList(playlist) : DEFAULT_PLAYLIST.slice();
+    adminState.settings.rooms.forEach(room => {
+      if(!adminState.settings.roomMeta[room.id]) adminState.settings.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
+      adminState.settings.roomMeta[room.id].playlist = adminState.settings.sharedPlaylist.slice();
+    });
+    saveSettings();
+    if(gameState.roomMode && gameState.roomId){
+      refreshCurrentRoomMusic(false);
     }
   }
   function resetRoomMusicList(){
     if(!hasPermission('music')) return alert('Sem permissão de músicas.');
     const roomId = adminState.selectedRoomId;
-    setRoomMeta(roomId, { playlist: DEFAULT_PLAYLIST.slice() });
-    if(gameState.roomMode && gameState.roomId === roomId){
-      refreshCurrentRoomMusic();
-      if(roomAutoplay(roomId)) playMusic();
+    adminState.settings.sharedPlaylist = DEFAULT_PLAYLIST.slice();
+    adminState.settings.rooms.forEach(room => {
+      if(!adminState.settings.roomMeta[room.id]) adminState.settings.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
+      adminState.settings.roomMeta[room.id].playlist = DEFAULT_PLAYLIST.slice();
+    });
+    saveSettings();
+    if(gameState.roomMode && gameState.roomId){
+      refreshCurrentRoomMusic(false);
     }
   }
   function toggleRoomAutoPlay(){
     if(!hasPermission('autoplay')) return alert('Sem permissão de autoplay.');
     const toggle = document.getElementById('roomAutoPlayToggle');
     const roomId = adminState.selectedRoomId;
-    setRoomMeta(roomId, { autoplay: !!toggle?.checked });
-    if(gameState.roomMode && gameState.roomId === roomId){
-      refreshCurrentRoomMusic();
-      if(roomAutoplay(roomId)) playMusic();
-      else pauseMusic();
+    adminState.settings.sharedAutoplay = !!toggle?.checked;
+    adminState.settings.rooms.forEach(room => {
+      if(!adminState.settings.roomMeta[room.id]) adminState.settings.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
+      adminState.settings.roomMeta[room.id].autoplay = adminState.settings.sharedAutoplay;
+    });
+    saveSettings();
+    if(gameState.roomMode && gameState.roomId){
+      refreshCurrentRoomMusic(false);
     }
   }
 
@@ -2747,11 +2782,12 @@ const STOP_STALE_MS = 18000;
     `;
   }
 
-  function refreshCurrentRoomMusic(){
+  function refreshCurrentRoomMusic(forcePlay = false){
     if(gameState.roomMode && gameState.roomId){
+      const shouldPlay = forcePlay || gameState.musicPlaying || roomAutoplay(gameState.roomId);
       gameState.roomPlaylist = roomPlaylist(gameState.roomId);
       setupMusic();
-      if(roomAutoplay(gameState.roomId)) playMusic();
+      if(shouldPlay) playMusic();
       else pauseMusic();
     }
   }
