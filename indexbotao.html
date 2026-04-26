@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>kkCartas - Jogo Multiplayer com Chat</title>
+  <title>nnCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -512,6 +512,184 @@
     }
 
     /* Remove a quebra de layout em telas menores – mantém sempre 3 colunas */
+.theme-dots{
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .theme-dot{
+      width:16px;
+      height:16px;
+      border-radius:50%;
+      border:2px solid rgba(255,255,255,.7);
+      box-shadow:0 6px 14px rgba(0,0,0,.10);
+      cursor:pointer;
+      padding:0;
+      outline:none;
+      opacity:.7;
+      transition:transform .15s ease, opacity .15s ease, box-shadow .15s ease;
+    }
+    .theme-dot.active{
+      opacity:1;
+      transform:translateY(-1px) scale(1.08);
+      box-shadow:0 0 0 4px rgba(14,165,233,.12), 0 6px 14px rgba(0,0,0,.12);
+    }
+    .presence-btn{
+      padding:8px 12px;
+      font-size:.84rem;
+    }
+    .lobby-topbar{
+      display:flex;
+      justify-content:flex-end;
+      margin-bottom:12px;
+    }
+    .admin-btn{ padding:10px 14px; }
+    .modal{
+      position:fixed; inset:0; display:none;
+      align-items:center; justify-content:center;
+      padding:24px;
+      z-index:40;
+      background:rgba(15,23,42,.44);
+      backdrop-filter: blur(10px);
+    }
+    .modal-card{
+      width:min(780px, 100%);
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      box-shadow:var(--shadow);
+      border-radius:24px;
+      padding:22px;
+      backdrop-filter: blur(12px);
+    }
+    .modal-card h3{ margin:0; font-size:1.2rem; }
+    .modal-row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .modal-row .field{
+      flex:1;
+      min-width:0;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      color:var(--text);
+      outline:none;
+      font-size:1rem;
+    }
+    .modal-section{
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--stroke);
+      margin-top:12px;
+    }
+    .modal-list{ display:flex; flex-direction:column; gap:10px; max-height:52vh; overflow:auto; padding-right:2px; }
+    .admin-room-item,
+    .admin-user-result,
+    .admin-role-item,
+    .admin-permission-item{
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.10);
+      border-radius:16px;
+      padding:12px;
+    }
+    .admin-room-item{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    .admin-room-item small,
+    .admin-role-item small,
+    .admin-user-meta small{
+      color:var(--muted);
+    }
+    .room-lock-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      font-size:.78rem;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .admin-search-results,
+    .admin-permission-list,
+    .admin-role-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .admin-user-result{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+    }
+    .admin-user-result.selected{
+      outline:2px solid rgba(14,165,233,.32);
+    }
+    .admin-selected-user{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.08);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .id-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      font-size:.72rem;
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .presence-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-height:52vh;
+      overflow:auto;
+      padding-right:2px;
+    }
+    .presence-group{
+      padding:12px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.08);
+    }
+    .presence-group h4{
+      margin:0 0 8px 0;
+      font-size:.95rem;
+    }
+    .presence-item{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:8px 0;
+      border-top:1px solid rgba(127,127,127,.14);
+    }
+    .presence-item:first-of-type{ border-top:none; }
+    .presence-meta{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .presence-meta small{ color:var(--muted); }
+    .presence-count{
+      font-weight:900;
+      color:var(--accent-2);
+    }
+    .admin-section-hidden{ display:none !important; }
+
     @media (max-width: 920px){
       .rooms{ grid-template-columns:1fr; }
       /* NÃO altera mais o .board – ele permanece com 3 colunas e 3 linhas */
@@ -523,6 +701,9 @@
   <!-- LOBBY -->
   <div id="lobbyScreen" class="screen">
     <div class="panel centered">
+      <div class="lobby-topbar">
+        <button class="btn secondary small admin-btn" type="button" onclick="openAdminModal()">Adm</button>
+      </div>
       <h1><span>Cartas</span></h1>
       <p class="subtitle">Combine cor ou valor e zere sua mão.</p>
       <div class="lobby-grid">
@@ -585,6 +766,7 @@
           <div id="themeSwitch" class="theme-switch">
             <span class="theme-label">Tema</span>
             <div id="themeDots" class="theme-dots"></div>
+            <button class="btn secondary mini-toggle presence-btn" type="button" onclick="togglePresenceModal()">Pessoas</button>
           </div>
         </div>
       </div>
@@ -629,6 +811,104 @@
   </div>
 
   
+
+  <div id="adminModal" class="modal">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <h3>Adm</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn secondary small" type="button" onclick="logoutAdmin()">Sair</button>
+          <button class="btn secondary small" type="button" onclick="closeAdminModal()">Fechar</button>
+        </div>
+      </div>
+
+      <div id="adminLoginBox" class="modal-section">
+        <strong>Entrar como adm</strong>
+        <div class="modal-row" style="margin-top:10px;">
+          <input id="adminCode" class="field" type="password" placeholder="Código de admin" />
+          <button class="btn" type="button" onclick="loginAdmin()">Entrar</button>
+        </div>
+      </div>
+
+      <div id="adminPanel" style="display:none; flex-direction:column;">
+        <div class="modal-section" id="adminPasswordSection">
+          <strong>Alterar senha do adm</strong>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="newAdminPassword" class="field" type="password" placeholder="Nova senha do adm" />
+            <button class="btn" type="button" onclick="saveAdminPassword()">Salvar</button>
+          </div>
+        </div>
+
+        <div class="modal-section" id="adminDelegateSection">
+          <strong>Delegar função</strong>
+          <div class="mini-note">Pesquise pelo nome ou pelo id de 4 caracteres.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="adminUserSearch" class="field" type="text" placeholder="Pesquisar usuário" oninput="renderAdminUserSearch()" />
+            <button class="btn secondary" type="button" onclick="clearAdminUserSelection()">Limpar</button>
+          </div>
+          <div id="adminUserSearchResults" class="admin-search-results"></div>
+          <div id="adminSelectedUser" class="admin-selected-user" style="display:none;"></div>
+          <div style="margin-top:12px;">
+            <strong>Funções</strong>
+            <div id="adminFunctionList" class="admin-permission-list" style="margin-top:10px;"></div>
+            <div class="modal-row" style="margin-top:12px;">
+              <button class="btn" type="button" onclick="addAdminDelegation()">Adicionar</button>
+            </div>
+          </div>
+          <div style="margin-top:14px;">
+            <strong>Usuários com função de adm</strong>
+            <div id="adminDelegatedList" class="admin-role-list" style="margin-top:10px;"></div>
+          </div>
+        </div>
+
+        <div class="modal-section" id="adminPlayersSection">
+          <strong>Usuários da sala</strong>
+          <div id="adminPlayersList" class="admin-role-list" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="modal-section" id="adminRoomsSection">
+          <strong>Nova sala</strong>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="newRoomName" class="field" type="text" placeholder="Nome da nova sala" />
+            <button class="btn" type="button" onclick="createRoom()">Criar</button>
+          </div>
+        </div>
+
+        <div class="modal-section" id="adminExistingRoomsSection">
+          <strong>Salas existentes</strong>
+          <div id="adminRooms" class="modal-list" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="modal-section" id="adminMusicSection">
+          <strong>Músicas das salas</strong>
+          <div class="mini-note">Cole uma URL por linha.</div>
+          <textarea id="roomMusicList" style="width:100%;min-height:120px;resize:vertical;padding:12px 14px;border-radius:16px;border:1px solid var(--stroke);background:var(--panel-strong);color:var(--text);outline:none;margin-top:10px;"></textarea>
+          <div class="modal-row" style="margin-top:10px;">
+            <button class="btn" type="button" onclick="saveRoomMusicList()">Salvar músicas</button>
+            <button class="btn secondary" type="button" onclick="resetRoomMusicList()">Restaurar padrão</button>
+          </div>
+          <label class="theme-switch" style="justify-content:flex-start;margin-top:10px;">
+            <span>Auto play nas salas</span>
+            <span class="switch">
+              <input id="roomAutoPlayToggle" type="checkbox" onchange="toggleRoomAutoPlay()" />
+              <span class="slider"></span>
+            </span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="presenceModal" class="modal">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <h3>Pessoas na sala</h3>
+        <button class="btn secondary small" type="button" onclick="togglePresenceModal()">Fechar</button>
+      </div>
+      <div id="presenceList" class="presence-list" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
   <script>
     // ========== FIREBASE ==========
     const firebaseConfig = {
@@ -672,7 +952,7 @@
       roomMode: false,
       roomId: null,
       myName: "Você",
-      myId: Math.random().toString(36).substr(2, 8),
+      myId: "0000",
       mySlot: null,
       roomState: null,
       roomHeartbeat: null,
@@ -707,6 +987,531 @@
     ];
     gameState.roomPlaylist = [...DEFAULT_PLAYLIST];
     gameState.robotPlaylist = [...DEFAULT_PLAYLIST];
+
+
+    const LS_THEME_ROOM = "cartas_theme_room";
+    const LS_THEME_OFFLINE = "cartas_theme_offline";
+    const LS_THEME_SELECTED = "cartas_theme_selected";
+    const LS_ROOMS = "cartas.rooms.custom.v1";
+    const LS_ROOM_PLAYLIST = "cartas.roomPlaylist.v1";
+    const LS_ROOM_AUTOPLAY = "cartas.roomAutoplay.v1";
+    const LS_MY_USER_ID = "cartas.myUserId.v1";
+    const LS_USER_REGISTRY = "cartas.userRegistry.v1";
+    const LS_ADMIN_DELEGATIONS = "cartas.adminDelegations.v1";
+    const LS_ADMIN_PASSWORD = "cartas.adminPassword.v1";
+    const ADMIN_FUNCTIONS = [
+      { key: "rooms", label: "Salas" },
+      { key: "music", label: "Músicas" },
+      { key: "autoplay", label: "Auto play" },
+      { key: "chat", label: "Chat" },
+      { key: "delegate", label: "Delegar" }
+    ];
+
+    function randomId4(){
+      return Math.floor(Math.random() * 0x10000).toString(16).toUpperCase().padStart(4, "0");
+    }
+
+    function safeGetJSON(key, fallback){
+      try{
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      }catch(e){
+        return fallback;
+      }
+    }
+
+    function safeSetJSON(key, value){
+      try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){}
+    }
+
+    function ensureCurrentUserIdentity(name){
+      let currentId = localStorage.getItem(LS_MY_USER_ID);
+      if(!currentId){
+        currentId = randomId4();
+        localStorage.setItem(LS_MY_USER_ID, currentId);
+      }
+      const currentName = String(name || gameState.myName || "Você").trim().slice(0, 18) || "Você";
+      gameState.myId = currentId;
+      gameState.myName = currentName;
+      upsertKnownUser({ id: currentId, name: currentName });
+      return { id: currentId, name: currentName };
+    }
+
+    function loadUserRegistry(){
+      return safeGetJSON(LS_USER_REGISTRY, []);
+    }
+
+    function saveUserRegistry(users){
+      safeSetJSON(LS_USER_REGISTRY, users);
+    }
+
+    function upsertKnownUser(user){
+      if(!user || !user.id) return;
+      const id = String(user.id).slice(0, 4).toUpperCase();
+      const name = String(user.name || "Usuário").slice(0, 18);
+      const users = loadUserRegistry().filter(u => String(u.id).slice(0,4).toUpperCase() !== id);
+      users.push({ id, name });
+      saveUserRegistry(users);
+    }
+
+    function collectKnownUsers(){
+      const map = new Map();
+      loadUserRegistry().forEach(u => {
+        if(u && u.id) map.set(String(u.id).slice(0,4).toUpperCase(), { id:String(u.id).slice(0,4).toUpperCase(), name:String(u.name || "Usuário").slice(0,18) });
+      });
+      if(gameState.myId) map.set(String(gameState.myId).slice(0,4).toUpperCase(), { id:String(gameState.myId).slice(0,4).toUpperCase(), name:gameState.myName || "Você" });
+      if(gameState.roomState && Array.isArray(gameState.roomState.members)){
+        gameState.roomState.members.forEach(m => {
+          if(m && m.id) map.set(String(m.id).slice(0,4).toUpperCase(), { id:String(m.id).slice(0,4).toUpperCase(), name:String(m.name || "Usuário").slice(0,18) });
+        });
+      }
+      return Array.from(map.values());
+    }
+
+    function findKnownUsers(query){
+      const q = String(query || "").trim().toLowerCase();
+      const users = collectKnownUsers();
+      if(!q) return users;
+      return users.filter(u => u.name.toLowerCase().includes(q) || u.id.toLowerCase().includes(q));
+    }
+
+    function findUserById(id){
+      const clean = String(id || "").slice(0,4).toUpperCase();
+      return collectKnownUsers().find(u => u.id === clean) || null;
+    }
+
+    function loadAdminDelegations(){ return safeGetJSON(LS_ADMIN_DELEGATIONS, []); }
+    function saveAdminDelegations(list){ safeSetJSON(LS_ADMIN_DELEGATIONS, list); }
+    function getAdminPassword(){
+      try{
+        const saved = localStorage.getItem(LS_ADMIN_PASSWORD);
+        if(saved && String(saved).trim()) return String(saved).trim();
+        localStorage.setItem(LS_ADMIN_PASSWORD, "adm123");
+      }catch(e){}
+      return "adm123";
+    }
+    function saveAdminPassword(){
+      const input = document.getElementById("newAdminPassword");
+      const next = (input?.value || "").trim();
+      if(!next){ alert("Digite uma nova senha."); return; }
+      localStorage.setItem(LS_ADMIN_PASSWORD, next);
+      if(input) input.value = "";
+      const code = document.getElementById("adminCode");
+      if(code) code.value = "";
+      alert("Senha do Adm alterada com sucesso.");
+    }
+    function getCurrentAdminGrant(){
+      if(gameState.isAdmin) return { userId: gameState.myId, permissions: Object.fromEntries(ADMIN_FUNCTIONS.map(f => [f.key, true])) };
+      return loadAdminDelegations().find(item => item && String(item.userId).slice(0,4).toUpperCase() === String(gameState.myId).slice(0,4).toUpperCase()) || null;
+    }
+    function hasAnyAdminAccess(){ return !!(gameState.isAdmin || getCurrentAdminGrant()); }
+    function canUseAdminFunction(key){
+      if(gameState.isAdmin) return true;
+      const grant = getCurrentAdminGrant();
+      return !!(grant && grant.permissions && grant.permissions[key]);
+    }
+    function copyUserId(id){
+      const text = String(id || "").trim();
+      if(!text) return;
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).catch(()=>{});
+      }
+    }
+    function getRooms(){
+      return safeGetJSON(LS_ROOMS, ROOMS);
+    }
+    function saveRooms(rooms){
+      safeSetJSON(LS_ROOMS, rooms);
+      bootstrapLobbyRooms();
+      renderLobbyRooms();
+      renderAdminRooms();
+    }
+    function saveRoomMusicPrefs(){
+      safeSetJSON(LS_ROOM_PLAYLIST, gameState.roomPlaylist);
+      localStorage.setItem(LS_ROOM_AUTOPLAY, gameState.roomMusicAutoPlay ? "on" : "off");
+    }
+    function syncRoomMusicAdminUI(){
+      const textarea = document.getElementById("roomMusicList");
+      if(textarea) textarea.value = gameState.roomPlaylist.join("
+");
+      const toggle = document.getElementById("roomAutoPlayToggle");
+      if(toggle) toggle.checked = !!gameState.roomMusicAutoPlay;
+    }
+    function loadSavedRoomMusic(){
+      const saved = safeGetJSON(LS_ROOM_PLAYLIST, DEFAULT_PLAYLIST);
+      if(Array.isArray(saved) && saved.length) gameState.roomPlaylist = saved.map(String).filter(Boolean);
+      const auto = localStorage.getItem(LS_ROOM_AUTOPLAY);
+      if(auto !== null) gameState.roomMusicAutoPlay = auto === "on";
+    }
+    function applyRoomMembersSnapshot(state){
+      const members = Array.isArray(state.members) ? state.members.slice() : [];
+      state.members = members;
+      return state;
+    }
+    function cleanupMembers(state){
+      if(!state.members) state.members = [];
+      const seen = new Map();
+      state.members = state.members.filter(m => {
+        if(!m || !m.id) return false;
+        const id = String(m.id).slice(0,4).toUpperCase();
+        if(seen.has(id)) return false;
+        seen.set(id, true);
+        m.id = id;
+        m.name = String(m.name || "Usuário").slice(0,18);
+        if(m.seat !== null && m.seat !== undefined && !Number.isFinite(Number(m.seat))) m.seat = null;
+        return true;
+      });
+      return state;
+    }
+    function upsertMember(state, member){
+      if(!state.members) state.members = [];
+      const clean = {
+        id: String(member.id).slice(0,4).toUpperCase(),
+        name: String(member.name || "Usuário").slice(0,18),
+        seat: Number.isInteger(member.seat) ? member.seat : null,
+        spectator: member.seat === null || member.seat === undefined,
+        joinedAt: member.joinedAt || Date.now(),
+        lastSeen: Date.now()
+      };
+      const idx = state.members.findIndex(m => m && String(m.id).slice(0,4).toUpperCase() === clean.id);
+      if(idx >= 0) state.members[idx] = { ...state.members[idx], ...clean };
+      else state.members.push(clean);
+      return clean;
+    }
+    function removeMember(state, userId){
+      if(!state.members) state.members = [];
+      const id = String(userId || "").slice(0,4).toUpperCase();
+      state.members = state.members.filter(m => String(m.id).slice(0,4).toUpperCase() !== id);
+      return state;
+    }
+    function getRoomRoster(state){
+      const members = Array.isArray(state?.members) ? state.members : [];
+      const seated = [];
+      const spectators = [];
+      members.forEach(m => {
+        const seat = Number.isInteger(m.seat) ? m.seat : null;
+        if(seat && state.slots && state.slots[seat] && String(state.slots[seat].id).slice(0,4).toUpperCase() === String(m.id).slice(0,4).toUpperCase()){
+          seated.push({ ...m, seat });
+        } else if(seat !== null && seat !== undefined){
+          seated.push({ ...m, seat });
+        } else {
+          spectators.push({ ...m, seat: null });
+        }
+      });
+      for(let slot=1; slot<=4; slot++){
+        const s = state.slots?.[slot];
+        if(s){
+          const id = String(s.id || "").slice(0,4).toUpperCase();
+          if(!seated.some(x => x.id === id)) seated.push({ id, name: s.name || `Jogador ${slot}`, seat: slot, spectator:false, lastSeen:s.lastSeen || Date.now() });
+        }
+      }
+      return { seated, spectators };
+    }
+    function renderPresenceList(){
+      const box = document.getElementById("presenceList");
+      if(!box) return;
+      box.innerHTML = "";
+      if(!gameState.roomMode || !gameState.roomState){
+        box.innerHTML = '<div class="mini-note">Entre em uma sala para ver a lista.</div>';
+        return;
+      }
+      const roster = getRoomRoster(gameState.roomState);
+      const makeItem = (label, list) => {
+        const group = document.createElement("div");
+        group.className = "presence-group";
+        group.innerHTML = `<h4>${label} <span class="presence-count">${list.length}</span></h4>`;
+        if(!list.length){
+          group.innerHTML += '<div class="mini-note">Nenhum.</div>';
+          box.appendChild(group);
+          return;
+        }
+        list.forEach(person => {
+          const row = document.createElement("div");
+          row.className = "presence-item";
+          row.innerHTML = `
+            <div class="presence-meta">
+              <strong>${escapeHtml(person.name || "Usuário")}</strong>
+              <small>ID ${escapeHtml(String(person.id || "").slice(0,4).toUpperCase())}${person.seat ? ` • Lugar ${person.seat}` : " • Assistindo"}</small>
+            </div>
+            <span class="id-chip">${escapeHtml(String(person.id || "").slice(0,4).toUpperCase())}</span>
+          `;
+          group.appendChild(row);
+        });
+        box.appendChild(group);
+      };
+      makeItem("Jogadores", roster.seated);
+      makeItem("Assistindo", roster.spectators);
+    }
+    function togglePresenceModal(){
+      const modal = document.getElementById("presenceModal");
+      if(!modal) return;
+      const open = modal.style.display !== "flex";
+      modal.style.display = open ? "flex" : "none";
+      if(open) renderPresenceList();
+    }
+    function openAdminModal(){
+      ensureCurrentUserIdentity(document.getElementById("playerName")?.value || document.getElementById("roomName")?.value || gameState.myName);
+      const modal = document.getElementById("adminModal");
+      if(!modal) return;
+      modal.style.display = "flex";
+      renderAdminAccessState();
+    }
+    function closeAdminModal(){
+      const modal = document.getElementById("adminModal");
+      if(modal) modal.style.display = "none";
+    }
+    function loginAdmin(){
+      const code = (document.getElementById("adminCode")?.value || "").trim();
+      if(!code || code !== getAdminPassword()){
+        alert("Código inválido.");
+        return;
+      }
+      gameState.isAdmin = true;
+      renderAdminAccessState();
+    }
+    function logoutAdmin(){
+      gameState.isAdmin = false;
+      gameState.adminSelectedUserId = "";
+      gameState.adminPermissionDraft = {};
+      const code = document.getElementById("adminCode");
+      if(code) code.value = "";
+      renderAdminAccessState();
+    }
+    function renderAdminFunctionToggles(){
+      const area = document.getElementById("adminFunctionList");
+      if(!area) return;
+      const draft = gameState.adminPermissionDraft || {};
+      area.innerHTML = ADMIN_FUNCTIONS.map(fn => `
+        <label class="admin-permission-item">
+          <strong>${escapeHtml(fn.label)}</strong>
+          <input type="checkbox" ${draft[fn.key] ? "checked" : ""} onchange="toggleAdminPermission('${fn.key}', this.checked)" />
+        </label>
+      `).join("");
+    }
+    function toggleAdminPermission(key, checked){
+      gameState.adminPermissionDraft = { ...(gameState.adminPermissionDraft || {}), [key]: !!checked };
+    }
+    function renderAdminSelectedUser(){
+      const box = document.getElementById("adminSelectedUser");
+      if(!box) return;
+      const user = findUserById(gameState.adminSelectedUserId);
+      if(!user){
+        box.style.display = "none";
+        box.innerHTML = "";
+        return;
+      }
+      box.style.display = "flex";
+      box.innerHTML = `
+        <div class="admin-user-meta">
+          <strong>${escapeHtml(user.name)}</strong>
+          <small>ID ${escapeHtml(user.id)}</small>
+        </div>
+        <button class="btn secondary small" type="button" onclick="clearAdminUserSelection()">Trocar</button>
+      `;
+    }
+    function renderAdminUserSearch(){
+      const box = document.getElementById("adminUserSearchResults");
+      if(!box) return;
+      const q = document.getElementById("adminUserSearch")?.value || "";
+      const users = findKnownUsers(q);
+      box.innerHTML = "";
+      if(!users.length){
+        box.innerHTML = '<div class="mini-note">Nenhum usuário encontrado.</div>';
+        return;
+      }
+      users.forEach(user => {
+        const item = document.createElement("div");
+        item.className = "admin-user-result" + (gameState.adminSelectedUserId === user.id ? " selected" : "");
+        item.onclick = () => selectAdminUser(user.id);
+        item.innerHTML = `
+          <div class="admin-user-meta">
+            <strong>${escapeHtml(user.name)}</strong>
+            <small>ID ${escapeHtml(user.id)}</small>
+          </div>
+          <span class="room-lock-pill">Selecionar</span>
+        `;
+        box.appendChild(item);
+      });
+    }
+    function selectAdminUser(userId){
+      const user = findUserById(userId);
+      if(!user) return;
+      gameState.adminSelectedUserId = user.id;
+      const existing = loadAdminDelegations().find(item => String(item.userId).slice(0,4).toUpperCase() === user.id);
+      gameState.adminPermissionDraft = Object.fromEntries(ADMIN_FUNCTIONS.map(fn => [fn.key, !!(existing && existing.permissions && existing.permissions[fn.key])]));
+      const search = document.getElementById("adminUserSearch");
+      if(search) search.value = user.name;
+      renderAdminUserSearch();
+      renderAdminSelectedUser();
+      renderAdminFunctionToggles();
+    }
+    function clearAdminUserSelection(){
+      gameState.adminSelectedUserId = "";
+      gameState.adminPermissionDraft = {};
+      const search = document.getElementById("adminUserSearch");
+      if(search) search.value = "";
+      renderAdminUserSearch();
+      renderAdminSelectedUser();
+      renderAdminFunctionToggles();
+    }
+    function addAdminDelegation(){
+      const user = findUserById(gameState.adminSelectedUserId);
+      if(!user){
+        alert("Selecione um usuário.");
+        return;
+      }
+      const selected = ADMIN_FUNCTIONS.reduce((acc, fn) => (acc[fn.key] = !!(gameState.adminPermissionDraft && gameState.adminPermissionDraft[fn.key]), acc), {});
+      if(!Object.values(selected).some(Boolean)){
+        alert("Ligue ao menos uma função.");
+        return;
+      }
+      const list = loadAdminDelegations().filter(item => String(item.userId).slice(0,4).toUpperCase() !== user.id);
+      list.push({ userId:user.id, userName:user.name, permissions:selected });
+      saveAdminDelegations(list);
+      upsertKnownUser({ id:user.id, name:user.name });
+      renderAdminDelegatedList();
+      alert("Função(ões) adicionada(s).");
+    }
+    function renderAdminDelegatedList(){
+      const area = document.getElementById("adminDelegatedList");
+      if(!area) return;
+      const list = loadAdminDelegations();
+      area.innerHTML = "";
+      if(!list.length){
+        area.innerHTML = '<div class="mini-note">Nenhum usuário com função.</div>';
+        return;
+      }
+      list.forEach(item => {
+        const perms = Object.entries(item.permissions || {}).filter(([,v]) => v).map(([k]) => ADMIN_FUNCTIONS.find(f => f.key === k)?.label || k);
+        const div = document.createElement("div");
+        div.className = "admin-role-item";
+        div.innerHTML = `
+          <div class="admin-role-head">
+            <strong>${escapeHtml(item.userName || "Usuário")}</strong>
+            <span class="id-chip">${escapeHtml(String(item.userId).slice(0,4).toUpperCase())}</span>
+          </div>
+          <div class="mini-note">${escapeHtml(perms.join(" • ") || "Sem permissões")}</div>
+        `;
+        area.appendChild(div);
+      });
+    }
+    function renderAdminRooms(){
+      const area = document.getElementById("adminRooms");
+      if(!area) return;
+      const rooms = getRooms();
+      area.innerHTML = "";
+      rooms.forEach(room => {
+        const item = document.createElement("div");
+        item.className = "admin-room-item";
+        item.innerHTML = `
+          <div>
+            <strong>${escapeHtml(room.name)}</strong>
+            <small>${room.locked ? "Trancada" : "Aberta"}</small>
+          </div>
+          <button class="btn secondary small" type="button" onclick="deleteRoom('${room.id}')">Excluir</button>
+        `;
+        area.appendChild(item);
+      });
+    }
+    function renderAdminPlayersList(){
+      const area = document.getElementById("adminPlayersList");
+      if(!area) return;
+      const users = collectKnownUsers();
+      area.innerHTML = "";
+      if(!users.length){
+        area.innerHTML = '<div class="mini-note">Nenhum usuário registrado.</div>';
+        return;
+      }
+      users.forEach(user => {
+        const item = document.createElement("div");
+        item.className = "admin-role-item";
+        item.innerHTML = `
+          <div class="admin-role-head">
+            <strong>${escapeHtml(user.name)}</strong>
+            <span class="id-chip">${escapeHtml(user.id)}</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+            <button class="btn secondary small" type="button" onclick="copyUserId('${user.id}')">Copiar ID</button>
+            <button class="btn secondary small" type="button" onclick="deleteKnownUser('${user.id}')">Excluir</button>
+          </div>
+        `;
+        area.appendChild(item);
+      });
+    }
+    function deleteKnownUser(userId){
+      const id = String(userId || "").slice(0,4).toUpperCase();
+      if(!id) return;
+      const users = loadUserRegistry().filter(u => String(u.id).slice(0,4).toUpperCase() !== id);
+      saveUserRegistry(users);
+      renderAdminPlayersList();
+      renderAdminUserSearch();
+      renderPresenceList();
+    }
+    function createRoom(){
+      const name = (document.getElementById("newRoomName")?.value || "").trim();
+      if(!name){ alert("Digite um nome para a sala."); return; }
+      const rooms = getRooms();
+      const id = "room-" + Date.now();
+      rooms.push({ id, name, locked:false, password:"" });
+      saveRooms(rooms);
+      const input = document.getElementById("newRoomName");
+      if(input) input.value = "";
+      renderAdminRooms();
+      renderLobbyRooms();
+    }
+    function deleteRoom(roomId){
+      if(!confirm("Excluir esta sala?")) return;
+      const rooms = getRooms().filter(r => r.id !== roomId);
+      saveRooms(rooms);
+      renderAdminRooms();
+      renderLobbyRooms();
+    }
+    function saveRoomMusicList(){
+      const raw = (document.getElementById("roomMusicList")?.value || "").split("
+").map(s => s.trim()).filter(Boolean);
+      gameState.roomPlaylist = raw.length ? raw : DEFAULT_PLAYLIST.slice();
+      saveRoomMusicPrefs();
+      if(gameState.roomMode) setupMusic();
+      alert("Músicas das salas salvas.");
+    }
+    function resetRoomMusicList(){
+      gameState.roomPlaylist = DEFAULT_PLAYLIST.slice();
+      saveRoomMusicPrefs();
+      syncRoomMusicAdminUI();
+      if(gameState.roomMode) setupMusic();
+    }
+    function toggleRoomAutoPlay(){
+      const toggle = document.getElementById("roomAutoPlayToggle");
+      gameState.roomMusicAutoPlay = !!(toggle && toggle.checked);
+      saveRoomMusicPrefs();
+    }
+    function renderAdminAccessState(){
+      const loginBox = document.getElementById("adminLoginBox");
+      const panel = document.getElementById("adminPanel");
+      const hasAccess = hasAnyAdminAccess();
+      if(loginBox) loginBox.style.display = (gameState.isAdmin || hasAccess) ? "none" : "block";
+      if(panel) panel.style.display = (gameState.isAdmin || hasAccess) ? "flex" : "none";
+      if(!(gameState.isAdmin || hasAccess)) return;
+      const sections = [
+        ["adminRoomsSection", canUseAdminFunction("rooms") || gameState.isAdmin],
+        ["adminExistingRoomsSection", canUseAdminFunction("rooms") || gameState.isAdmin],
+        ["adminMusicSection", canUseAdminFunction("music") || canUseAdminFunction("autoplay") || gameState.isAdmin],
+        ["adminDelegateSection", canUseAdminFunction("delegate") || gameState.isAdmin],
+        ["adminPlayersSection", true]
+      ];
+      sections.forEach(([id, show]) => {
+        const el = document.getElementById(id);
+        if(el) el.classList.toggle("admin-section-hidden", !show);
+      });
+      renderAdminRooms();
+      renderAdminPlayersList();
+      renderAdminDelegatedList();
+      renderAdminUserSearch();
+      renderAdminSelectedUser();
+      syncRoomMusicAdminUI();
+    }
+    function renderRosterBadge(){ renderPresenceList(); }
+
 
     let lobbyRoomUnsubs = [];
     let activeRoomUnsubs = [];
@@ -1736,7 +2541,507 @@
     function loadTheme(){
       refreshThemeForMode();
     }
+
+// ===== Overrides e melhorias solicitadas =====
+const __origShowGame = typeof showGame === "function" ? showGame : null;
+const __origBackToLobby = typeof backToLobby === "function" ? backToLobby : null;
+const __origJoinRobots = typeof joinRobots === "function" ? joinRobots : null;
+const __origJoinRoom = typeof joinRoom === "function" ? joinRoom : null;
+const __origLeaveSeat = typeof leaveSeat === "function" ? leaveSeat : null;
+const __origTakeSeat = typeof takeSeat === "function" ? takeSeat : null;
+const __origLeaveCurrentRoom = typeof leaveCurrentRoom === "function" ? leaveCurrentRoom : null;
+const __origSubscribeRoom = typeof subscribeRoom === "function" ? subscribeRoom : null;
+const __origBootstrapLobbyRooms = typeof bootstrapLobbyRooms === "function" ? bootstrapLobbyRooms : null;
+const __origRenderLobbyRooms = typeof renderLobbyRooms === "function" ? renderLobbyRooms : null;
+
+function normalizeRoomStateMembers(state){
+  if(!state) return state;
+  if(!Array.isArray(state.members)) state.members = [];
+  return state;
+}
+
+function createFreshRoomState(){
+  const deck = createFreshDeck();
+  const hands = emptyRoomHands();
+  for(let slot = 1; slot <= 4; slot++){
+    for(let i = 0; i < 7; i++) hands[slot].push(deck.pop());
+  }
+  return {
+    slots: emptyRoomSlots(),
+    hands,
+    members: [],
+    deck,
+    topCard: deck.pop(),
+    turn: 1,
+    penalty: 0,
+    gameRunning: true,
+    seatingOpen: true,
+    winnerSlot: null,
+    startedAt: Date.now(),
+    updatedAt: Date.now()
+  };
+}
+
+function normalizeSharedState(raw){
+  const state = raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : {};
+  const slots = emptyRoomSlots();
+  const hands = emptyRoomHands();
+
+  if(state.slots && typeof state.slots === 'object'){
+    for(let slot = 1; slot <= 4; slot++) slots[slot] = state.slots[slot] ?? null;
+  }
+  if(Array.isArray(state.players)){
+    for(let slot = 1; slot <= 4; slot++) slots[slot] = state.players[slot - 1] ?? slots[slot];
+  }
+  if(state.hands && typeof state.hands === 'object'){
+    for(let slot = 1; slot <= 4; slot++){
+      if(Array.isArray(state.hands[slot])) hands[slot] = state.hands[slot].slice();
+    }
+  }
+  if(Array.isArray(state.playersHands)){
+    for(let slot = 1; slot <= 4; slot++){
+      if(Array.isArray(state.playersHands[slot - 1])) hands[slot] = state.playersHands[slot - 1].slice();
+    }
+  }
+  return normalizeRoomStateMembers({
+    slots,
+    hands,
+    members: Array.isArray(state.members) ? state.members.map(m => ({
+      id: String(m.id || "").slice(0,4).toUpperCase(),
+      name: String(m.name || "Usuário").slice(0,18),
+      seat: Number.isInteger(m.seat) ? m.seat : null,
+      spectator: m.spectator !== undefined ? !!m.spectator : (m.seat === null || m.seat === undefined),
+      joinedAt: m.joinedAt || Date.now(),
+      lastSeen: m.lastSeen || Date.now()
+    })) : [],
+    deck: Array.isArray(state.deck) ? state.deck.slice() : [],
+    topCard: state.topCard || null,
+    turn: Number.isFinite(state.turn) ? state.turn : 1,
+    penalty: Number.isFinite(state.penalty) ? state.penalty : 0,
+    gameRunning: state.gameRunning !== undefined ? !!state.gameRunning : false,
+    seatingOpen: state.seatingOpen !== undefined ? !!state.seatingOpen : true,
+    winnerSlot: Number.isFinite(state.winnerSlot) ? state.winnerSlot : null,
+    startedAt: state.startedAt || null,
+    updatedAt: state.updatedAt || null
+  });
+}
+
+function renderLobbyRooms(){
+  const container = document.getElementById("roomsList");
+  if(!container) return;
+  const rooms = getRooms();
+  container.innerHTML = "";
+  rooms.forEach(room => {
+    const roomState = room.state ? normalizeSharedState(room.state) : null;
+    const occupied = roomState ? Object.values(roomState.slots).filter(Boolean).length : 0;
+    const statusText = roomState ? (roomState.gameRunning ? "Partida ativa" : "Sala pronta") : "Aguardando primeiro jogador";
+    const joinLabel = roomState && roomState.seatingOpen === false ? "Assistir" : "Entrar";
+    const div = document.createElement("div");
+    div.className = "room-card";
+    div.innerHTML = `
+      <div class="room-head">
+        <strong>${escapeHtml(room.name)}</strong>
+        <span class="room-tag">${occupied}/4</span>
+      </div>
+      <small>${escapeHtml(statusText)}</small>
+      <div class="room-actions">
+        <button class="btn secondary" onclick="joinRoom('${room.id}')">${joinLabel}</button>
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+async function ensureRoomDoc(roomId){
+  const ref = db.collection('rooms').doc(roomId);
+  const snap = await ref.get();
+  if(!snap.exists){
+    const roomName = getRooms().find(r => r.id === roomId)?.name || roomId;
+    await ref.set({
+      roomId,
+      roomName,
+      state: createFreshRoomState(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
+function getEnteredName(){
+  const main = (document.getElementById("playerName")?.value || "").trim();
+  const room = (document.getElementById("roomName")?.value || "").trim();
+  return (room || main).slice(0, 18);
+}
+
+async function joinRoom(roomId){
+  let userName = getEnteredName();
+  if(!userName) userName = "Jogador";
+  userName = userName.slice(0, 18);
+  ensureCurrentUserIdentity(userName);
+  gameState.roomMode = true;
+  gameState.roomId = roomId;
+  gameState.mySlot = null;
+  showGame();
+  applyModeUI();
+  renderGame();
+  try {
+    await ensureRoomDoc(roomId);
+    const roomRef = db.collection('rooms').doc(roomId);
+    const joined = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(roomRef);
+      if(!snap.exists) throw new Error("Sala não encontrada");
+      const data = snap.data() || {};
+      let state = cleanupStaleSlots(normalizeSharedState(data.state));
+      state = normalizeRoomStateMembers(state);
+
+      let existingSlot = null;
+      for(let slot = 1; slot <= 4; slot++){
+        const s = state.slots[slot];
+        if(s && String(s.id).slice(0,4).toUpperCase() === gameState.myId){
+          existingSlot = slot;
+          break;
+        }
+      }
+
+      let chosenSlot = existingSlot;
+      const currentMember = state.members.find(m => String(m.id).slice(0,4).toUpperCase() === gameState.myId);
+      if(chosenSlot === null && state.seatingOpen !== false && !currentMember?.spectator){
+        chosenSlot = getFirstVacantSlot(state);
+      }
+      const member = upsertMember(state, { id: gameState.myId, name: userName, seat: chosenSlot, spectator: chosenSlot === null });
+      if(chosenSlot !== null){
+        state.slots[chosenSlot] = {
+          id: gameState.myId,
+          name: userName,
+          joinedAt: member.joinedAt,
+          lastSeen: Date.now()
+        };
+      } else if(state.seatingOpen !== false){
+        // spectator
+      }
+
+      const occupiedAfterJoin = Object.values(state.slots).filter(Boolean).length;
+      if(occupiedAfterJoin >= 4){
+        state.seatingOpen = false;
+      }
+
+      state.turn = normalizeTurn(state);
+      state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
+      if(!state.topCard && chosenSlot !== null){
+        state = createFreshRoomState();
+        state.members = [];
+        upsertMember(state, { id: gameState.myId, name: userName, seat: chosenSlot, spectator: chosenSlot === null });
+        state.slots[chosenSlot] = {
+          id: gameState.myId,
+          name: userName,
+          joinedAt: Date.now(),
+          lastSeen: Date.now()
+        };
+      }
+
+      state = ensureOccupiedHandsHaveSeven(state);
+
+      tx.set(roomRef, {
+        roomId,
+        roomName: getRooms().find(r => r.id === roomId)?.name || roomId,
+        state,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      return { slot: chosenSlot };
+    });
+
+    gameState.mySlot = joined.slot;
+    subscribeRoom(roomId);
+    startRoomHeartbeat();
+    initRoomChat(roomId);
+    renderGame();
+    openPresenceModalSilently();
+  } catch(err){
+    console.error(err);
+    alert(err.message || "Não foi possível entrar na sala.");
+    backToLobby();
+  }
+}
+
+function openPresenceModalSilently(){
+  const modal = document.getElementById("presenceModal");
+  if(modal) modal.style.display = "none";
+}
+
+function subscribeRoom(roomId){
+  if(__origSubscribeRoom) __origSubscribeRoom(roomId);
+  stopRoomSubscriptions();
+  const roomRef = db.collection('rooms').doc(roomId);
+  const unsub = roomRef.onSnapshot(snapshot => {
+    if(!snapshot.exists) return;
+    const data = snapshot.data() || {};
+    const state = cleanupStaleSlots(normalizeSharedState(data.state));
+    gameState.roomState = normalizeRoomStateMembers(state);
+    if(gameState.myId){
+      for(let slot = 1; slot <= 4; slot++){
+        if(state.slots[slot] && String(state.slots[slot].id).slice(0,4).toUpperCase() === gameState.myId){
+          gameState.mySlot = slot;
+        }
+      }
+      const myMember = gameState.roomState.members.find(m => String(m.id).slice(0,4).toUpperCase() === gameState.myId);
+      if(myMember && Number.isInteger(myMember.seat)) gameState.mySlot = myMember.seat;
+    }
+    renderGame();
+  }, err => console.error("Erro ao ouvir sala:", err));
+  activeRoomUnsubs.push(unsub);
+}
+
+function startRoomHeartbeat(){
+  stopRoomHeartbeat();
+  gameState.roomHeartbeat = setInterval(() => {
+    if(!gameState.roomMode || !gameState.roomId) return;
+    const roomRef = db.collection('rooms').doc(gameState.roomId);
+    roomRef.get().then(snap => {
+      if(!snap.exists) return;
+      const data = snap.data() || {};
+      let state = cleanupStaleSlots(normalizeSharedState(data.state));
+      state = normalizeRoomStateMembers(state);
+      const memberIdx = state.members.findIndex(m => String(m.id).slice(0,4).toUpperCase() === gameState.myId);
+      if(memberIdx >= 0){
+        state.members[memberIdx].name = gameState.myName;
+        state.members[memberIdx].lastSeen = Date.now();
+        state.members[memberIdx].seat = gameState.mySlot;
+        state.members[memberIdx].spectator = !gameState.mySlot;
+      } else {
+        upsertMember(state, { id: gameState.myId, name: gameState.myName, seat: gameState.mySlot, spectator: !gameState.mySlot });
+      }
+      if(gameState.mySlot){
+        const pathBase = `state.slots.${gameState.mySlot}`;
+        roomRef.update({
+          [`${pathBase}.id`]: gameState.myId,
+          [`${pathBase}.name`]: gameState.myName,
+          [`${pathBase}.lastSeen`]: Date.now(),
+          "state.members": state.members,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(()=>{});
+      } else {
+        roomRef.update({
+          "state.members": state.members,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(()=>{});
+      }
+    }).catch(()=>{});
+  }, 7000);
+}
+
+async function leaveSeat(){
+  if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+  const roomId = gameState.roomId;
+  const mySlot = gameState.mySlot;
+  const myId = gameState.myId;
+  const roomRef = db.collection('rooms').doc(roomId);
+  stopRoomHeartbeat();
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(roomRef);
+      if(!snap.exists) throw new Error("Sala não encontrada");
+      const data = snap.data() || {};
+      let state = cleanupStaleSlots(normalizeSharedState(data.state));
+      state = normalizeRoomStateMembers(state);
+      if(state.slots[mySlot] && String(state.slots[mySlot].id).slice(0,4).toUpperCase() === myId){
+        state.slots[mySlot] = null;
+      }
+      const memberIdx = state.members.findIndex(m => String(m.id).slice(0,4).toUpperCase() === myId);
+      if(memberIdx >= 0){
+        state.members[memberIdx].seat = null;
+        state.members[memberIdx].spectator = true;
+        state.members[memberIdx].lastSeen = Date.now();
+      }
+      if(state.turn === mySlot) state.turn = normalizeTurn(state);
+      tx.update(roomRef, {
+        state,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+    gameState.mySlot = null;
+    renderGame();
+  } catch(e) {
+    console.warn("Não foi possível sair da mesa:", e);
+    alert(e.message || "Não foi possível sair da mesa.");
+  }
+}
+
+async function takeSeat(){
+  if(!gameState.roomMode || !gameState.roomId || gameState.mySlot) return;
+  const roomId = gameState.roomId;
+  const roomRef = db.collection('rooms').doc(roomId);
+  try {
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(roomRef);
+      if(!snap.exists) throw new Error("Sala não encontrada");
+      const data = snap.data() || {};
+      let state = cleanupStaleSlots(normalizeSharedState(data.state));
+      state = normalizeRoomStateMembers(state);
+
+      let existingSlot = null;
+      for(let slot = 1; slot <= 4; slot++){
+        const s = state.slots[slot];
+        if(s && String(s.id).slice(0,4).toUpperCase() === gameState.myId){
+          existingSlot = slot;
+          break;
+        }
+      }
+
+      let chosenSlot = existingSlot ?? getFirstVacantSlot(state);
+      if(chosenSlot === null) throw new Error("Não há lugar vazio na mesa");
+
+      state.slots[chosenSlot] = {
+        id: gameState.myId,
+        name: gameState.myName,
+        joinedAt: Date.now(),
+        lastSeen: Date.now()
+      };
+      upsertMember(state, { id: gameState.myId, name: gameState.myName, seat: chosenSlot, spectator: false });
+      if(Object.values(state.slots).filter(Boolean).length >= 4){
+        state.seatingOpen = false;
+      }
+      state = ensureOccupiedHandsHaveSeven(state);
+      state.turn = normalizeTurn(state);
+      tx.update(roomRef, {
+        state,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      return chosenSlot;
+    });
+    gameState.mySlot = result;
+    startRoomHeartbeat();
+    renderGame();
+  } catch(e) {
+    console.warn("Não foi possível subir para a mesa:", e);
+    alert(e.message || "Não foi possível subir para a mesa.");
+  }
+}
+
+async function leaveCurrentRoom(){
+  if(!gameState.roomMode || !gameState.roomId) return;
+  const roomId = gameState.roomId;
+  const mySlot = gameState.mySlot;
+  const myId = gameState.myId;
+  const roomRef = db.collection('rooms').doc(roomId);
+  stopRoomHeartbeat();
+  try {
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(roomRef);
+      if(!snap.exists) return;
+      const data = snap.data() || {};
+      let state = cleanupStaleSlots(normalizeSharedState(data.state));
+      state = normalizeRoomStateMembers(state);
+      if(mySlot && state.slots[mySlot] && String(state.slots[mySlot].id).slice(0,4).toUpperCase() === myId){
+        state.slots[mySlot] = null;
+      }
+      state.members = state.members.filter(m => String(m.id).slice(0,4).toUpperCase() !== myId);
+      if(state.turn === mySlot) state.turn = normalizeTurn(state);
+      const stillOccupied = Object.values(state.slots).some(Boolean) || state.members.length > 0;
+      if(!stillOccupied){
+        state = createFreshRoomState();
+      }
+      tx.set(roomRef, {
+        state,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    });
+  } catch(e) {
+    console.warn("Não foi possível liberar a sala imediatamente:", e);
+  }
+  stopRoomSubscriptions();
+  gameState.roomState = null;
+  gameState.roomId = null;
+  gameState.mySlot = null;
+}
+
+function joinRobots(){
+  let userName = document.getElementById("playerName").value.trim();
+  if(!userName) userName = "Você";
+  ensureCurrentUserIdentity(userName);
+  gameState.roomMode = false;
+  closeRoomSession();
+  showGame();
+  initGame();
+  initOfflineChat();
+  applyModeUI();
+}
+
+async function backToLobby(){
+  clearTimeout(gameState.botTimer);
+  await leaveCurrentRoom();
+  gameState.roomMode = false;
+  document.getElementById("table").style.display = "none";
+  document.getElementById("endScreen").style.display = "none";
+  document.getElementById("lobbyScreen").style.display = "flex";
+  document.getElementById("chatPanel").style.display = "none";
+  renderLobbyRooms();
+  bootstrapLobbyRooms();
+  closeRoomSession();
+  renderPresenceList();
+  renderAdminAccessState();
+}
+
+function bootstrapLobbyRooms(){
+  stopLobbySubscriptions();
+  const rooms = getRooms();
+  lobbyRoomUnsubs = rooms.map(room => db.collection('rooms').doc(room.id).onSnapshot(snapshot => {
+    room.state = snapshot.exists ? snapshot.data().state : null;
+    renderLobbyRooms();
+  }, () => {
+    room.state = null;
+    renderLobbyRooms();
+  }));
+}
+
+function loadTheme(){
+  const saved = localStorage.getItem(gameState.roomMode ? LS_THEME_ROOM : LS_THEME_OFFLINE) || localStorage.getItem(LS_THEME_SELECTED) || "green";
+  applyTheme(saved);
+  renderThemeDots();
+}
+
+function toggleTheme(){
+  const dots = document.getElementById("themeDots");
+  if(!dots) return;
+  // preserve existing behavior through dots
+  renderThemeDots();
+}
+
+function initCurrentUserOnLoad(){
+  ensureCurrentUserIdentity(document.getElementById("playerName")?.value || document.getElementById("roomName")?.value || gameState.myName);
+  const storedAutoplay = localStorage.getItem(LS_ROOM_AUTOPLAY);
+  if(storedAutoplay !== null) gameState.roomMusicAutoPlay = storedAutoplay === "on";
+  syncRoomMusicAdminUI();
+  renderAdminAccessState();
+  renderPresenceList();
+}
+
+
     function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+
+
+    // ===== Ajustes finais para garantir que as últimas definições sejam as corretas =====
+    function toggleTheme(){
+      renderThemeDots();
+    }
+
+    function loadTheme(){
+      const saved = localStorage.getItem(gameState.roomMode ? LS_THEME_ROOM : LS_THEME_OFFLINE) || localStorage.getItem(LS_THEME_SELECTED) || "green";
+      applyTheme(saved);
+      renderThemeDots();
+    }
+
+    async function bootstrapLobbyRooms(){
+      stopLobbySubscriptions();
+      const rooms = getRooms();
+      lobbyRoomUnsubs = rooms.map(room => db.collection('rooms').doc(room.id).onSnapshot(snapshot => {
+        room.state = snapshot.exists ? snapshot.data().state : null;
+        renderLobbyRooms();
+      }, () => {
+        room.state = null;
+        renderLobbyRooms();
+      }));
+    }
+
+
 
     document.getElementById("sendChatBtn")?.addEventListener("click", sendMessage);
     document.getElementById("chatMessageInput")?.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
@@ -1746,21 +3051,12 @@
       if(gameState.roomMode) leaveCurrentRoom();
     });
 
-    async function bootstrapLobbyRooms(){
-      stopLobbySubscriptions();
-      lobbyRoomUnsubs = ROOMS.map(room => db.collection('rooms').doc(room.id).onSnapshot(snapshot => {
-        room.state = snapshot.exists ? snapshot.data().state : null;
-        renderLobbyRooms();
-      }, () => {
-        room.state = null;
-        renderLobbyRooms();
-      }));
-    }
-
     window.onload = async () => {
       loadTheme();
+      initCurrentUserOnLoad();
       renderLobbyRooms();
       bootstrapLobbyRooms();
+      renderAdminAccessState();
     };
   </script>
 
