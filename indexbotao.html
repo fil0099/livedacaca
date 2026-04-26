@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2Cartas - Jogo Multiplayer com Chat</title>
+  <title>10Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2888,7 +2888,7 @@
     if(input) input.value = "";
   }
 
-  function createRoom(){
+  async function createRoom(){
     if(!canAccess("rooms")) return;
     const nameInput = document.getElementById("newRoomNameInput");
     const passInput = document.getElementById("newRoomPasswordInput");
@@ -2906,6 +2906,8 @@
       playlist: ADMIN_DEFAULT_PLAYLIST.slice()
     };
     saveSettings();
+    await ensureRoomDoc(id);
+    bootstrapLobbyRooms();
     if(nameInput) nameInput.value = "";
     if(passInput) passInput.value = "";
     alert("Sala criada.");
@@ -2927,7 +2929,9 @@
     }catch(e){}
     adminUI.settings.rooms = adminUI.settings.rooms.filter(r => r.id !== id);
     delete adminUI.settings.roomMeta[id];
+    delete adminUI.roomCache[id];
     saveSettings();
+    bootstrapLobbyRooms();
     if(gameState.roomId === id){
       gameState.roomMode = false;
       closeRoomSession();
