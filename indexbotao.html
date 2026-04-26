@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>02Cartas - Jogo Multiplayer com Chat</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -680,24 +680,13 @@
     .stop-category input{
       width:100%;
       border:1px solid var(--stroke);
-      border-radius:16px;
-      padding:13px 14px;
-      background:var(--panel-strong);
+      border-radius:12px;
+      padding:12px 12px;
+      background:var(--panel);
       color:var(--text);
       outline:none;
       font-size:1rem;
-      min-height: 50px;
-      box-shadow:none;
-      transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease, background .15s ease;
-    }
-    .stop-category input::placeholder{
-      color: color-mix(in srgb, var(--muted) 78%, transparent);
-    }
-    .stop-category input:focus{
-      border-color: rgba(14,165,233,.55);
-      box-shadow: 0 0 0 4px rgba(14,165,233,.12);
-      transform: translateY(-1px);
-      background: var(--panel);
+      min-height: 46px;
     }
     .stop-actions-row{
       display:flex;
@@ -1958,7 +1947,6 @@ const STOP_STALE_MS = 18000;
 
     // ========== CHAT ==========
     function initRoomChat(roomId){
-      window.currentChatRoomId = roomId;
       if(window.chatUnsubscribe) window.chatUnsubscribe();
       const q = db.collection('chat').where('roomId', '==', roomId);
       window.chatUnsubscribe = q.onSnapshot(snapshot => {
@@ -2006,7 +1994,7 @@ const STOP_STALE_MS = 18000;
         alert("Por favor, defina seu nome na lobby antes de enviar mensagem.");
         return;
       }
-      const chatRoomId = gameState.stopMode ? STOP_CHAT_ROOM_ID : (gameState.roomMode && gameState.roomId ? gameState.roomId : (window.currentChatRoomId || null));
+      const chatRoomId = gameState.stopMode ? STOP_CHAT_ROOM_ID : (gameState.roomMode && gameState.roomId ? gameState.roomId : null);
       if(chatRoomId){
         try {
           await db.collection('chat').add({
@@ -3216,58 +3204,29 @@ function stopDraftAnswer(key, value){
   gameState.stopDraftAnswers[key] = String(value ?? '');
 }
 
-function stopGetNextInputKey(currentKey){
+function stopRememberFocusedKey(key){
+  gameState.stopFocusedKey = key;
+}
+
+function stopFocusNextInput(currentKey){
   const idx = STOP_CATEGORY_KEYS.indexOf(currentKey);
-  if(idx === -1) return null;
-  return STOP_CATEGORY_KEYS[idx + 1] || null;
-}
-
-function stopFocusInputByKey(key){
-  if(!key) return;
-  const next = document.querySelector(`.stop-category input[data-stop-key="${key}"]`);
-  if(next){
-    next.focus({ preventScroll: true });
-    if(typeof next.select === 'function') next.select();
+  const nextKey = STOP_CATEGORY_KEYS[idx + 1];
+  if(!nextKey) return;
+  const nextInput = document.querySelector(`.stop-answer-input[data-stop-key="${nextKey}"]`);
+  if(nextInput){
+    nextInput.focus();
+    if(typeof nextInput.select === 'function') nextInput.select();
   }
 }
 
-async function stopCommitAnswer(key, value){
-  if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
-  const state = gameState.stopState;
-  const player = state.players?.[gameState.myId];
-  if(!player || !stopPlayerIsActive(state, gameState.myId) || state.phase !== 'writing') return;
-  const nextValue = String(value || '').trim();
-  if(!player.answers) player.answers = stopEmptyAnswers();
-  player.answers[key] = nextValue;
-  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object') gameState.stopDraftAnswers = {};
-  gameState.stopDraftAnswers[key] = nextValue;
-  player.lastSeen = Date.now();
-  try {
-    await db.collection('stopRooms').doc(STOP_ROOM_ID).update({
-      [`players.${gameState.myId}.answers.${key}`]: nextValue,
-      [`players.${gameState.myId}.lastSeen`]: Date.now()
-    });
-  } catch(err) {
-    console.warn('Falha ao salvar resposta do Stop:', err);
-  }
-}
-
-async function updateStopAnswer(key, value){
-  return stopCommitAnswer(key, value);
-}
-
-function stopHandleAnswerKeydown(event, key){
+function stopHandleInputKeydown(event, key){
   if(event.key !== 'Enter') return;
   event.preventDefault();
-  const current = event.currentTarget;
-  const value = current?.value ?? '';
-  stopCommitAnswer(key, value);
-  const nextKey = stopGetNextInputKey(key);
-  if(nextKey){
-    requestAnimationFrame(() => stopFocusInputByKey(nextKey));
-  } else if(current && typeof current.blur === 'function'){
-    current.blur();
-  }
+  const input = event.currentTarget;
+  if(!input) return;
+  stopDraftAnswer(key, input.value);
+  updateStopAnswer(key, input.value);
+  window.requestAnimationFrame(() => stopFocusNextInput(key));
 }
 
 function stopUpdateActionButtons(state){
@@ -3310,6 +3269,7 @@ function stopRenderPlayersSummary(state){
 
   if(state.phase !== 'writing'){
     stopClearDraftAnswers();
+    gameState.stopFocusedKey = null;
   }
 
   const letter = document.getElementById('stopLetter');
@@ -3373,19 +3333,7 @@ function stopRenderPlayersSummary(state){
         return `
           <div class="stop-category">
             <label>${escapeHtml(label)}</label>
-            <input
-              type="text"
-              inputmode="text"
-              autocomplete="off"
-              spellcheck="false"
-              data-stop-key="${key}"
-              value="${value}"
-              placeholder="Comece com ${escapeHtml(state.letter)}"
-              onfocus="stopDraftAnswer('${key}', this.value)"
-              oninput="stopDraftAnswer('${key}', this.value)"
-              onblur="stopCommitAnswer('${key}', this.value)"
-              onkeydown="stopHandleAnswerKeydown(event, '${key}')"
-            />
+            <input class="stop-answer-input" data-stop-key="${key}" type="text" inputmode="text" autocomplete="off" autocapitalize="words" spellcheck="false" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopRememberFocusedKey('${key}'); stopDraftAnswer('${key}', this.value)" oninput="stopRememberFocusedKey('${key}'); stopDraftAnswer('${key}', this.value)" onkeydown="stopHandleInputKeydown(event, '${key}')" />
           </div>
         `;
       }).join('');
@@ -3587,6 +3535,16 @@ async function stopLeaveCurrentRoom(){
   stopClearDraftAnswers();
 }
 
+function stopRestoreFocusedInput(){
+  const key = gameState.stopFocusedKey;
+  if(!key || !gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
+  const input = document.querySelector(`.stop-answer-input[data-stop-key="${key}"]`);
+  if(input){
+    input.focus();
+    if(typeof input.select === 'function') input.select();
+  }
+}
+
 function stopSetLayout(){
   stopSetBoardVisibility(true);
   const p1 = document.getElementById('p1');
@@ -3783,9 +3741,6 @@ renderLobbyRooms = function(){
 const _origRenderGame = renderGame;
 renderGame = function(){
   if(gameState.stopMode){
-    if(window.currentChatRoomId !== STOP_CHAT_ROOM_ID){
-      initRoomChat(STOP_CHAT_ROOM_ID);
-    }
     const table = document.getElementById('table');
     const end = document.getElementById('endScreen');
     if(table) table.style.display = 'block';
@@ -3815,6 +3770,7 @@ renderGame = function(){
       stopResults?.classList.remove('hidden');
     }
     stopRenderPlayersSummary(state);
+    window.requestAnimationFrame(() => stopRestoreFocusedInput());
     return;
   }
   stopSetBoardVisibility(false);
