@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>yyCartas - Jogo Multiplayer com Chat</title>
+  <title>ooCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -959,7 +959,7 @@
       { id: "orange", label: "Laranja", bg1: "#fff7ed", bg2: "#fffbeb", glow1: "rgba(249,115,22,.14)", glow2: "rgba(245,158,11,.10)" },
       { id: "pink", label: "Rosa", bg1: "#fdf2f8", bg2: "#fff1f2", glow1: "rgba(236,72,153,.14)", glow2: "rgba(244,63,94,.10)" }
     ];
-    const STALE_SLOT_MS = 8000;
+    const STALE_SLOT_MS = 120000;
 
 const STOP_ROOM_ID = "stop-main";
 const STOP_CHAT_ROOM_ID = STOP_ROOM_ID;
@@ -1165,15 +1165,17 @@ const STOP_STALE_MS = 120000;
     }
 
     function slotIsActive(slotData){
-      if(!slotData || !slotData.id) return false;
-      const lastSeen = Number(slotData.lastSeen);
-      if(!Number.isFinite(lastSeen)) return true;
-      return (Date.now() - lastSeen) <= STALE_SLOT_MS;
+      if(!(slotData && slotData.id)) return false;
+      const lastSeen = Number(slotData.lastSeen || 0);
+      return !lastSeen || (Date.now() - lastSeen <= STALE_SLOT_MS);
     }
 
     function cleanupStaleSlots(state){
+      const now = Date.now();
       for(let slot = 1; slot <= 4; slot++){
-        if(state.slots[slot] && !slotIsActive(state.slots[slot])){
+        const slotData = state.slots[slot];
+        const lastSeen = Number(slotData?.lastSeen || 0);
+        if(slotData && (!slotIsActive(slotData) || (lastSeen && (now - lastSeen > STALE_SLOT_MS)))){
           state.slots[slot] = null;
         }
       }
@@ -1436,34 +1438,9 @@ const STOP_STALE_MS = 120000;
       stopRoomSubscriptions();
       const roomRef = db.collection('rooms').doc(roomId);
       const unsub = roomRef.onSnapshot(snapshot => {
-        if(!snapshot.exists){
-          gameState.roomState = null;
-          renderGame();
-          refreshVoiceChat();
-          return;
-        }
+        if(!snapshot.exists) return;
         const data = snapshot.data() || {};
-        const rawState = normalizeSharedState(data.state);
-        const state = cleanupStaleSlots(rawState);
-        const rawSlots = JSON.stringify(rawState.slots || {});
-        const cleanSlots = JSON.stringify(state.slots || {});
-        if(rawSlots !== cleanSlots){
-          if(isRoomEmpty(state)){
-            deleteRoomChatMessages(roomId);
-            roomRef.delete().catch(() => {});
-            gameState.roomState = null;
-            renderGame();
-            refreshVoiceChat();
-            return;
-          } else {
-            roomRef.set({
-              roomId,
-              roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
-              state,
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true }).catch(() => {});
-          }
-        }
+        const state = cleanupStaleSlots(normalizeSharedState(data.state));
         gameState.roomState = state;
         if(gameState.myId){
           for(let slot = 1; slot <= 4; slot++){
@@ -2766,7 +2743,15 @@ const STOP_STALE_MS = 120000;
     const current = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry.slice() : [];
     const id = gameState.myId;
     const name = String(gameState.myName || 'Você').slice(0,18);
-    const idx = current.findIndex(u => String(u.id || '').toUpperCase() === id);
+    const normalizedId = String(id || '').toUpperCase();
+
+    if(!roomId && slot === null && !watching){
+      adminState.settings.userRegistry = current.filter(u => String(u.id || '').toUpperCase() !== normalizedId).slice(-200);
+      saveSettings();
+      return;
+    }
+
+    const idx = current.findIndex(u => String(u.id || '').toUpperCase() === normalizedId);
     const payload = { id, name, roomId, slot, watching, lastSeen: Date.now() };
     if(idx >= 0) current[idx] = { ...current[idx], ...payload };
     else current.push(payload);
@@ -2825,8 +2810,9 @@ const STOP_STALE_MS = 120000;
 
   function roomOccupancy(roomId){
     const roomDoc = adminState.roomCache[roomId];
-    const state = roomDoc?.state || null;
-    if(!state) return { occupied: 0, state: null };
+    const rawState = roomDoc?.state || null;
+    if(!rawState) return { occupied: 0, state: null };
+    const state = cleanupStaleSlots(normalizeSharedState(rawState));
     const occupied = state.slots ? Object.values(state.slots).filter(Boolean).length : 0;
     return { occupied, state };
   }
