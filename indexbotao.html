@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>vfCartas - Jogo Multiplayer com Chat</title>
+  <title>rrCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -959,7 +959,7 @@
       { id: "orange", label: "Laranja", bg1: "#fff7ed", bg2: "#fffbeb", glow1: "rgba(249,115,22,.14)", glow2: "rgba(245,158,11,.10)" },
       { id: "pink", label: "Rosa", bg1: "#fdf2f8", bg2: "#fff1f2", glow1: "rgba(236,72,153,.14)", glow2: "rgba(244,63,94,.10)" }
     ];
-    const STALE_SLOT_MS = 120000;
+    const STALE_SLOT_MS = 10000;
 
 const STOP_ROOM_ID = "stop-main";
 const STOP_CHAT_ROOM_ID = STOP_ROOM_ID;
@@ -974,7 +974,7 @@ const STOP_CATEGORIES = [
   "Marca"
 ];
 const STOP_CATEGORY_KEYS = STOP_CATEGORIES.map((_, idx) => `c${idx + 1}`);
-const STOP_STALE_MS = 120000;
+const STOP_STALE_MS = 10000;
 
     let gameState = {
       roomMode: false,
@@ -1165,10 +1165,15 @@ const STOP_STALE_MS = 120000;
     }
 
     function slotIsActive(slotData){
-      return !!(slotData && slotData.id);
+      if(!slotData || !slotData.id) return false;
+      const seenAt = Number.isFinite(slotData.lastSeen)
+        ? slotData.lastSeen
+        : Number.isFinite(slotData.joinedAt)
+          ? slotData.joinedAt
+          : 0;
+      return (Date.now() - seenAt) <= STALE_SLOT_MS;
     }
-
-    function cleanupStaleSlots(state){
+function cleanupStaleSlots(state){
       for(let slot = 1; slot <= 4; slot++){
         if(state.slots[slot] && !slotIsActive(state.slots[slot])){
           state.slots[slot] = null;
@@ -2437,10 +2442,27 @@ const STOP_STALE_MS = 120000;
     document.getElementById("sendChatBtn")?.addEventListener("click", sendMessage);
     document.getElementById("chatMessageInput")?.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
 
-    window.addEventListener('beforeunload', () => {
+    let appExitHandled = false;
+
+    async function handleAppExit(){
+      if(appExitHandled) return;
+      appExitHandled = true;
       stopRoomHeartbeat();
-      if(gameState.roomMode) leaveCurrentRoom();
+      if(gameState.stopMode){
+        await stopLeaveCurrentRoom();
+        return;
+      }
+      if(gameState.roomMode){
+        await leaveCurrentRoom();
+      }
+    }
+
+    window.addEventListener('beforeunload', () => { handleAppExit(); });
+    window.addEventListener('pagehide', (event) => {
+      if(event && event.persisted) return;
+      handleAppExit();
     });
+    window.addEventListener('pageshow', () => { appExitHandled = false; });
 
     async function bootstrapLobbyRooms(){
       stopLobbySubscriptions();
@@ -4366,9 +4388,12 @@ window.stopPlayAgain = stopPlayAgain;
 window.updateStopAnswer = updateStopAnswer;
 window.stopLeaveCurrentRoom = stopLeaveCurrentRoom;
 
-window.addEventListener('beforeunload', () => {
-  if(gameState.stopMode) stopLeaveCurrentRoom();
+window.addEventListener('beforeunload', () => { handleAppExit(); });
+window.addEventListener('pagehide', (event) => {
+  if(event && event.persisted) return;
+  handleAppExit();
 });
+window.addEventListener('pageshow', () => { appExitHandled = false; });
 
   const oldBootstrapLobbyRooms = bootstrapLobbyRooms;
   bootstrapLobbyRooms = function(){
