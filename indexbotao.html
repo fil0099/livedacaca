@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>mmCartas - Jogo Multiplayer com Chat</title>
+  <title>zzCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -575,75 +575,6 @@
     .permission-chip{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,.10); }
     .permission-chip input{ width:16px; height:16px; }
     .hidden{ display:none !important; }
-    .stop-panel{
-      width:min(100%, 560px);
-      border:1px solid var(--stroke);
-      border-radius:22px;
-      background:var(--panel-strong);
-      box-shadow:var(--shadow);
-      padding:14px;
-    }
-    .stop-panel h3{ margin:0 0 8px; font-size:1.05rem; }
-    .stop-letter{
-      display:inline-flex; align-items:center; justify-content:center;
-      width:64px; height:64px; border-radius:18px;
-      border:1px solid var(--stroke);
-      background:linear-gradient(135deg, rgba(14,165,233,.14), rgba(34,197,94,.14));
-      font-size:1.7rem; font-weight:900;
-      letter-spacing:.04em;
-      margin-bottom:10px;
-    }
-    .stop-grid{
-      display:grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap:8px;
-      margin-top:10px;
-    }
-    .stop-row{ display:flex; flex-direction:column; gap:5px; }
-    .stop-row label{ font-size:.78rem; font-weight:800; color:var(--muted); }
-    .stop-row input{
-      width:100%;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background:var(--panel);
-      color:var(--text);
-      outline:none;
-    }
-    .stop-status{ font-size:.92rem; color:var(--muted); line-height:1.5; }
-    .stop-results{
-      margin-top:14px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      text-align:left;
-      width:100%;
-    }
-    .stop-result-card{
-      border:1px solid var(--stroke);
-      border-radius:18px;
-      background:rgba(255,255,255,.10);
-      padding:12px;
-    }
-    .stop-result-card strong{ display:block; margin-bottom:6px; }
-    .stop-response-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:8px 14px;
-      margin-top:10px;
-      font-size:.9rem;
-    }
-    .stop-response-grid div{ padding:6px 8px; border-radius:10px; background:rgba(255,255,255,.08); }
-    .stop-history-card{ max-width: 980px; }
-    .stop-history-entry{
-      border:1px solid var(--stroke);
-      border-radius:18px;
-      background:rgba(255,255,255,.10);
-      padding:12px;
-      width:100%;
-    }
-    .stop-history-entry summary{ cursor:pointer; font-weight:800; }
-    .stop-history-entry .stop-response-grid{ grid-template-columns: 1fr; }
   </style>
 </head>
 <body data-theme="light">
@@ -730,12 +661,11 @@
             <div id="discardPile" class="pile discard"></div>
           </div>
           <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre</div>
-          <div id="stopPanel" class="stop-panel hidden"></div>
           <div class="seat-actions">
             <button id="seatDownBtn" class="btn secondary mini-toggle" onclick="leaveSeat()">Descer</button>
             <button id="seatUpBtn" class="btn secondary mini-toggle" onclick="takeSeat()">Subir</button>
           </div>
-          <button id="drawCardBtn" class="btn" onclick="drawCard()">Comprar carta</button>
+          <button class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
         <!-- Jogador 2 na direita -->
         <div id="p2" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
@@ -830,9 +760,7 @@
       trackIndex: 0,
       roomPlaylist: [],
       robotPlaylist: [],
-      botIds: [],
-      stopSaveTimer: null,
-      stopDraft: []
+      botIds: []
     };
 
     const DEFAULT_PLAYLIST = [
@@ -939,182 +867,148 @@
       };
     }
 
-    const STOP_CATEGORIES = [
-      'Minha amiga caca é',
-      'Nome',
-      'Animal',
-      'Fruta',
-      'Cor',
-      'Cidade/Estado/País (CEP)',
-      'Objeto',
-      'Marca'
-    ];
-
-    function randomStopLetter(){
-      const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      return letters[Math.floor(Math.random() * letters.length)];
-    }
-
-    function emptyStopAnswers(){
-      return Array.from({ length: STOP_CATEGORIES.length }, () => '');
+    function emptyStopState(){
+      return {
+        roundNumber: 0,
+        active: false,
+        locked: false,
+        categoryIndex: 0,
+        category: STOP_CATEGORIES[0],
+        participants: {},
+        answers: {},
+        results: [],
+        history: [],
+        stoppedBy: null,
+        startedAt: null,
+        stoppedAt: null
+      };
     }
 
     function createFreshStopRoomState(){
       return {
-        gameType: 'stop',
         slots: emptyRoomSlots(),
-        round: 1,
-        stopped: false,
-        currentLetter: randomStopLetter(),
-        responses: {},
-        history: [],
-        finalResults: null,
+        gameRunning: true,
         seatingOpen: true,
-        gameRunning: true,
-        winnerSlot: null,
+        stop: emptyStopState(),
         startedAt: Date.now(),
         updatedAt: Date.now()
       };
     }
 
-    function normalizeStopRoomState(raw){
-      const state = raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : {};
-      const slots = emptyRoomSlots();
-      if(state.slots && typeof state.slots === 'object'){
-        for(let slot = 1; slot <= 4; slot++) slots[slot] = state.slots[slot] ?? null;
-      }
-      return {
-        gameType: 'stop',
-        slots,
-        round: Number.isFinite(state.round) ? state.round : 1,
-        stopped: state.stopped !== undefined ? !!state.stopped : false,
-        currentLetter: String(state.currentLetter || randomStopLetter()).toUpperCase().slice(0, 1),
-        responses: state.responses && typeof state.responses === 'object' ? state.responses : {},
-        history: Array.isArray(state.history) ? state.history.slice(-20) : [],
-        finalResults: state.finalResults || null,
-        seatingOpen: state.seatingOpen !== undefined ? !!state.seatingOpen : true,
-        gameRunning: state.gameRunning !== undefined ? !!state.gameRunning : true,
-        winnerSlot: Number.isFinite(state.winnerSlot) ? state.winnerSlot : null,
-        startedAt: state.startedAt || null,
-        updatedAt: state.updatedAt || null
-      };
+    function normalizeStopState(raw){
+      const base = emptyStopState();
+      const stop = raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : {};
+      const next = { ...base, ...stop };
+      next.roundNumber = Number.isFinite(next.roundNumber) ? next.roundNumber : 0;
+      next.active = !!next.active;
+      next.locked = !!next.locked;
+      next.categoryIndex = Number.isFinite(next.categoryIndex) ? next.categoryIndex : 0;
+      next.category = String(next.category || STOP_CATEGORIES[next.categoryIndex] || STOP_CATEGORIES[0]);
+      next.participants = next.participants && typeof next.participants === 'object' ? next.participants : {};
+      next.answers = next.answers && typeof next.answers === 'object' ? next.answers : {};
+      next.results = Array.isArray(next.results) ? next.results : [];
+      next.history = Array.isArray(next.history) ? next.history : [];
+      next.stoppedBy = Number.isFinite(next.stoppedBy) ? next.stoppedBy : null;
+      return next;
     }
 
-    function createStateForRoom(roomId){
-      return isStopRoom(roomId) ? createFreshStopRoomState() : createFreshRoomState();
+    function getRoomType(roomId){
+      return String(roomId || '').toLowerCase() === STOP_ROOM_ID ? 'stop' : 'cards';
     }
 
-    function normalizeStateForRoom(raw, roomId){
-      return isStopRoom(roomId) ? normalizeStopRoomState(raw) : normalizeSharedState(raw);
+    function isStopRoom(roomId){
+      return getRoomType(roomId) === 'stop';
     }
 
-    function ensureStopRoundBucket(state, round){
-      const key = String(round || state.round || 1);
-      if(!state.responses || typeof state.responses !== 'object') state.responses = {};
-      if(!state.responses[key] || typeof state.responses[key] !== 'object') state.responses[key] = {};
-      return state.responses[key];
+    function normalizeStopWord(word){
+      return String(word || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     }
 
-    function getCurrentStopRoundBucket(state){
-      return ensureStopRoundBucket(state, state.round);
-    }
-
-    function normalizeStopAnswerText(value){
-      return String(value || '')
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .replace(/[^a-z0-9\s]/g, '')
-        .replace(/\s+/g, ' ');
-    }
-
-    function getStopActiveSlots(state){
-      const round = Number.isFinite(state.round) ? state.round : 1;
-      const active = [];
+    function buildStopParticipantsSnapshot(state){
+      const participants = {};
       for(let slot = 1; slot <= 4; slot++){
-        const s = state.slots[slot];
-        if(s && Number((s.joinRound || round)) <= round) active.push(slot);
-      }
-      return active;
-    }
-
-    function buildStopScoring(state){
-      const round = Number.isFinite(state.round) ? state.round : 1;
-      const roundBucket = state.responses?.[String(round)] || {};
-      const activeSlots = getStopActiveSlots(state);
-      const playerNames = {};
-      const scoreMap = {};
-      const responsesByPlayer = {};
-      activeSlots.forEach(slot => {
-        playerNames[slot] = state.slots[slot]?.name || `Jogador ${slot}`;
-        scoreMap[slot] = 0;
-        const resp = Array.isArray(roundBucket[slot]) ? roundBucket[slot].slice(0, STOP_CATEGORIES.length) : emptyStopAnswers();
-        responsesByPlayer[slot] = resp;
-      });
-      STOP_CATEGORIES.forEach((cat, idx) => {
-        const freq = new Map();
-        activeSlots.forEach(slot => {
-          const norm = normalizeStopAnswerText(responsesByPlayer[slot]?.[idx]);
-          if(!norm) return;
-          freq.set(norm, (freq.get(norm) || 0) + 1);
-        });
-        activeSlots.forEach(slot => {
-          const norm = normalizeStopAnswerText(responsesByPlayer[slot]?.[idx]);
-          if(!norm) return;
-          scoreMap[slot] += (freq.get(norm) > 1) ? 5 : 10;
-        });
-      });
-      return { round, activeSlots, playerNames, scoreMap, responsesByPlayer };
-    }
-
-    function finalizeStopRoundState(state){
-      const scoring = buildStopScoring(state);
-      const finishedAt = Date.now();
-      const historyEntry = {
-        round: scoring.round,
-        letter: state.currentLetter,
-        createdAt: state.startedAt || finishedAt,
-        finishedAt,
-        scores: scoring.scoreMap,
-        players: scoring.activeSlots.map(slot => ({
-          slot,
-          name: scoring.playerNames[slot],
-          score: scoring.scoreMap[slot] || 0,
-          responses: scoring.responsesByPlayer[slot] || emptyStopAnswers()
-        }))
-      };
-      return {
-        ...state,
-        stopped: true,
-        gameRunning: false,
-        finalResults: historyEntry,
-        history: [...(Array.isArray(state.history) ? state.history : []), historyEntry].slice(-20),
-        updatedAt: finishedAt
-      };
-    }
-
-    function startNextStopRoundState(state){
-      const nextRound = (Number.isFinite(state.round) ? state.round : 1) + 1;
-      const nextState = {
-        ...state,
-        round: nextRound,
-        stopped: false,
-        currentLetter: randomStopLetter(),
-        responses: {},
-        finalResults: null,
-        gameRunning: true,
-        winnerSlot: null,
-        startedAt: Date.now(),
-        updatedAt: Date.now()
-      };
-      for(let slot = 1; slot <= 4; slot++){
-        if(nextState.slots[slot]){
-          const prevJoin = Number(nextState.slots[slot].joinRound || 0);
-          nextState.slots[slot].joinRound = Math.min(prevJoin || nextRound, nextRound);
+        if(state.slots[slot]){
+          participants[slot] = {
+            id: String(state.slots[slot].id || ''),
+            name: String(state.slots[slot].name || `Jogador ${slot}`)
+          };
         }
       }
-      return nextState;
+      return participants;
+    }
+
+    function startStopRound(state){
+      const next = normalizeSharedState(state);
+      const stop = normalizeStopState(next.stop);
+      stop.roundNumber = (stop.roundNumber || 0) + 1;
+      stop.active = true;
+      stop.locked = false;
+      stop.categoryIndex = Math.floor(Math.random() * STOP_CATEGORIES.length);
+      stop.category = STOP_CATEGORIES[stop.categoryIndex];
+      stop.participants = buildStopParticipantsSnapshot(next);
+      stop.answers = {};
+      stop.results = [];
+      stop.stoppedBy = null;
+      stop.startedAt = Date.now();
+      stop.stoppedAt = null;
+      next.stop = stop;
+      next.gameRunning = true;
+      return next;
+    }
+
+    function finalizeStopRound(state, stopperSlot){
+      const next = normalizeSharedState(state);
+      const stop = normalizeStopState(next.stop);
+      if(stop.locked) return next;
+
+      const participants = Object.keys(stop.participants || {})
+        .map(Number)
+        .filter(slot => next.slots[slot])
+        .sort((a, b) => a - b);
+
+      const answers = {};
+      participants.forEach(slot => {
+        answers[slot] = String(stop.answers[slot] || '').trim();
+      });
+
+      const counts = {};
+      participants.forEach(slot => {
+        const key = normalizeStopWord(answers[slot]);
+        if(!key) return;
+        counts[key] = (counts[key] || 0) + 1;
+      });
+
+      const results = participants.map(slot => {
+        const answer = answers[slot] || '';
+        const key = normalizeStopWord(answer);
+        const points = key ? (counts[key] > 1 ? 5 : 10) : 0;
+        return {
+          slot,
+          name: next.slots[slot]?.name || `Jogador ${slot}`,
+          answer,
+          points
+        };
+      });
+
+      stop.active = false;
+      stop.locked = true;
+      stop.stoppedBy = stopperSlot;
+      stop.stoppedAt = Date.now();
+      stop.results = results;
+      stop.history = Array.isArray(stop.history) ? stop.history.slice() : [];
+      stop.history.push({
+        id: String(Date.now()),
+        roundNumber: stop.roundNumber,
+        category: stop.category,
+        stoppedBy: stopperSlot,
+        stoppedAt: stop.stoppedAt,
+        results: results.map(item => ({ ...item })),
+        answers: { ...answers }
+      });
+      stop.history = stop.history.slice(-20);
+      next.stop = stop;
+      next.gameRunning = false;
+      return next;
     }
 
     function normalizeSharedState(raw){
@@ -1150,7 +1044,8 @@
         seatingOpen: state.seatingOpen !== undefined ? !!state.seatingOpen : true,
         winnerSlot: Number.isFinite(state.winnerSlot) ? state.winnerSlot : null,
         startedAt: state.startedAt || null,
-        updatedAt: state.updatedAt || null
+        updatedAt: state.updatedAt || null,
+        stop: state.stop && typeof state.stop === 'object' ? JSON.parse(JSON.stringify(state.stop)) : null
       };
     }
 
@@ -1242,11 +1137,10 @@
         const roomState = room.state ? normalizeSharedState(room.state) : null;
         const occupied = roomState ? Object.values(roomState.slots).filter(Boolean).length : 0;
         const isFull = occupied >= 4;
-        const roomType = room.roomType || roomState?.gameType || getRoomType(room.id);
-        const statusText = roomState ? (roomState.gameRunning ? (roomType === 'stop' ? 'Stop em andamento' : 'Partida ativa') : (roomType === 'stop' ? 'Stop pronto' : 'Sala pronta')) : 'Aguardando primeiro jogador';
-        const joinLabel = roomState && roomState.seatingOpen === false ? 'Assistir' : 'Entrar';
-        const div = document.createElement('div');
-        div.className = 'room-card';
+        const statusText = roomState ? (roomState.gameRunning ? "Partida ativa" : "Sala pronta") : "Aguardando primeiro jogador";
+        const joinLabel = roomState && roomState.seatingOpen === false ? "Assistir" : "Entrar";
+        const div = document.createElement("div");
+        div.className = "room-card";
         div.innerHTML = `
           <div class="room-head">
             <strong>${escapeHtml(room.name)}</strong>
@@ -1321,11 +1215,79 @@
       if(!snap.exists){
         await ref.set({
           roomId,
-          roomName: getRoomMeta(roomId).name || roomId,
-          roomType: getRoomType(roomId),
-          state: createStateForRoom(roomId),
+          roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
+          state: roomId === STOP_ROOM_ID ? createFreshStopRoomState() : createFreshRoomState(),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+      }
+    }
+
+    async function joinStopRoom(roomId, userName){
+      showGame();
+      applyModeUI();
+      refreshThemeForMode();
+      renderGame();
+
+      try {
+        await ensureRoomDoc(roomId);
+        const roomRef = db.collection('rooms').doc(roomId);
+        const joined = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error("Sala não encontrada");
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          if(!state.stop) state.stop = emptyStopState();
+
+          const wasEmpty = isRoomEmpty(state);
+
+          let existingSlot = null;
+          for(let slot = 1; slot <= 4; slot++){
+            const s = state.slots[slot];
+            if(s && s.id === gameState.myId){
+              existingSlot = slot;
+              break;
+            }
+          }
+
+          let chosenSlot = existingSlot;
+          if(chosenSlot === null){
+            chosenSlot = getFirstVacantSlot(state);
+          }
+          if(chosenSlot !== null){
+            state.slots[chosenSlot] = {
+              id: gameState.myId,
+              name: userName,
+              joinedAt: Date.now(),
+              lastSeen: Date.now()
+            };
+          }
+
+          if((state.stop.roundNumber || 0) === 0){
+            state = startStopRound(state);
+          }
+
+          state.gameRunning = true;
+          state.updatedAt = Date.now();
+
+          tx.set(roomRef, {
+            roomId,
+            roomName: currentRoomLabel(roomId),
+            state,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          return { slot: chosenSlot, wasEmpty };
+        });
+
+        gameState.mySlot = joined.slot;
+        subscribeRoom(roomId);
+        startRoomHeartbeat();
+        if(joined.wasEmpty) await deleteRoomChatMessages(roomId);
+        initRoomChat(roomId);
+        renderGame();
+      } catch(err){
+        console.error(err);
+        alert(err.message || "Não foi possível entrar na sala.");
+        backToLobby();
       }
     }
 
@@ -1339,6 +1301,10 @@
       gameState.roomMode = true;
       gameState.roomId = roomId;
       gameState.mySlot = null;
+
+      if(roomId === STOP_ROOM_ID){
+        return joinStopRoom(roomId, userName);
+      }
 
       showGame();
       applyModeUI();
@@ -1493,7 +1459,7 @@
     }
 
     async function leaveSeat(){
-      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot || gameState.roomId === STOP_ROOM_ID) return;
       const roomId = gameState.roomId;
       const mySlot = gameState.mySlot;
       const myId = gameState.myId;
@@ -1530,7 +1496,7 @@
     }
 
     async function takeSeat(){
-      if(!gameState.roomMode || !gameState.roomId || gameState.mySlot) return;
+      if(!gameState.roomMode || !gameState.roomId || gameState.mySlot || gameState.roomId === STOP_ROOM_ID) return;
       const roomId = gameState.roomId;
       const roomRef = db.collection('rooms').doc(roomId);
       try {
@@ -1616,7 +1582,6 @@
 
     async function backToLobby(){
       clearTimeout(gameState.botTimer);
-      clearTimeout(gameState.stopSaveTimer);
       await leaveCurrentRoom();
       gameState.roomMode = false;
       document.getElementById("table").style.display = "none";
@@ -1830,247 +1795,6 @@
       upBtn.style.display = !seated && hasVacancy ? "" : "none";
     }
 
-
-    function getStopRoundData(state){
-      const roundKey = String(state.round || 1);
-      const bucket = state.responses?.[roundKey] || {};
-      return bucket;
-    }
-
-    function scheduleStopDraftSave(){
-      clearTimeout(gameState.stopSaveTimer);
-      gameState.stopSaveTimer = setTimeout(() => saveStopDraftNow(), 220);
-    }
-
-    function saveStopDraftNow(){
-      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot || !isStopRoom(gameState.roomId)) return;
-      const state = gameState.roomState;
-      if(!state || state.stopped) return;
-      const draft = Array.isArray(gameState.stopDraft) ? gameState.stopDraft.slice(0, STOP_CATEGORIES.length) : emptyStopAnswers();
-      const roomRef = db.collection('rooms').doc(gameState.roomId);
-      const path = `state.responses.${String(state.round || 1)}.${gameState.mySlot}`;
-      roomRef.update({
-        [`${path}`]: draft,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(() => {});
-    }
-
-    function updateStopField(index, value){
-      if(!Array.isArray(gameState.stopDraft)) gameState.stopDraft = emptyStopAnswers();
-      gameState.stopDraft[index] = value;
-      scheduleStopDraftSave();
-    }
-
-    function renderStopBoard(state){
-      const panel = document.getElementById('stopPanel');
-      const drawBtn = document.getElementById('drawCardBtn');
-      const drawPile = document.getElementById('drawPile');
-      const discardPile = document.getElementById('discardPile');
-      const statusNote = document.getElementById('statusNote');
-      if(drawBtn) drawBtn.style.display = 'none';
-      if(drawPile) drawPile.style.display = 'none';
-      if(discardPile) discardPile.style.display = 'none';
-      if(!panel) return;
-      panel.classList.remove('hidden');
-      const activeSlots = getStopActiveSlots(state);
-      const seated = !!gameState.mySlot && activeSlots.includes(gameState.mySlot);
-      const waiting = !!gameState.mySlot && !seated;
-      const roundBucket = getStopRoundData(state);
-      const myAnswers = seated ? (Array.isArray(roundBucket[gameState.mySlot]) ? roundBucket[gameState.mySlot] : emptyStopAnswers()) : emptyStopAnswers();
-      gameState.stopDraft = myAnswers.slice();
-      const promptLine = state.stopped
-        ? 'A rodada acabou. Veja os pontos e respostas.'
-        : `Letra da rodada: ${state.currentLetter}`;
-      if(statusNote) statusNote.textContent = waiting ? 'Você entra só na próxima partida.' : promptLine;
-      if(state.stopped){
-        panel.innerHTML = `
-          <div class="stop-letter">${escapeHtml(state.currentLetter || '?')}</div>
-          <h3>Partida finalizada</h3>
-          <div class="stop-status">Clique em "Nova partida" para começar outra rodada.</div>
-          <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-            <button class="btn" type="button" onclick="startNextStopRound()">Nova partida</button>
-            <button class="btn secondary" type="button" onclick="openStopHistoryModal()">Últimos 20 jogos</button>
-          </div>
-        `;
-        return;
-      }
-      if(!gameState.mySlot){
-        panel.innerHTML = `
-          <div class="stop-letter">${escapeHtml(state.currentLetter || '?')}</div>
-          <h3>Stop</h3>
-          <div class="stop-status">Sente-se na sala para escrever respostas na próxima rodada.</div>
-        `;
-        return;
-      }
-      if(!seated){
-        panel.innerHTML = `
-          <div class="stop-letter">${escapeHtml(state.currentLetter || '?')}</div>
-          <h3>Você joga na próxima partida</h3>
-          <div class="stop-status">Entre na sala no meio da rodada e aguarde a próxima partida.</div>
-        `;
-        return;
-      }
-      const fields = STOP_CATEGORIES.map((cat, idx) => `
-        <div class="stop-row">
-          <label>${escapeHtml(cat)}</label>
-          <input type="text" maxlength="24" value="${escapeHtml(myAnswers[idx] || '')}" oninput="updateStopField(${idx}, this.value)" placeholder="Resposta para ${escapeHtml(cat)}" />
-        </div>
-      `).join('');
-      panel.innerHTML = `
-        <div class="stop-letter">${escapeHtml(state.currentLetter || '?')}</div>
-        <h3>Stop — rodada ${state.round || 1}</h3>
-        <div class="stop-status">Preencha as categorias com a letra ${escapeHtml(state.currentLetter || '?')}. Quando alguém apertar stop, o jogo fecha na hora.</div>
-        <div class="stop-grid">${fields}</div>
-        <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-          <button class="btn" type="button" onclick="stopCurrentRound()">Stop</button>
-          <button class="btn secondary" type="button" onclick="openStopHistoryModal()">Últimos 20 jogos</button>
-        </div>
-      `;
-    }
-
-    function renderStopPlayerSeats(state){
-      const displayOrder = [];
-      const usedSlots = new Set();
-      const pushSlot = (slot) => {
-        if(!slot || usedSlots.has(slot) || !state.slots[slot]) return;
-        usedSlots.add(slot);
-        displayOrder.push(slot);
-      };
-      if(gameState.mySlot){
-        pushSlot(gameState.mySlot);
-        for(let step = 1; step <= 4; step++){
-          const slot = ((gameState.mySlot - 1 + step) % 4) + 1;
-          pushSlot(slot);
-        }
-      } else {
-        for(let slot = 1; slot <= 4; slot++) pushSlot(slot);
-      }
-      const displayIds = ["p1", "p2", "p4", "p3"];
-      displayIds.forEach((id, idx) => {
-        const h = document.getElementById(id);
-        if(!h) return;
-        const actualSlot = displayOrder[idx];
-        const info = h.querySelector('.info');
-        const cardsEl = h.querySelector('.cards');
-        if(!actualSlot){
-          info.innerHTML = '';
-          cardsEl.innerHTML = '';
-          return;
-        }
-        const slot = state.slots[actualSlot];
-        const name = slot?.name || `Jogador ${actualSlot}`;
-        const ready = Number(slot?.joinRound || state.round || 1) <= Number(state.round || 1);
-        const responseCount = Object.values(getStopRoundData(state)[actualSlot] || {}).filter(Boolean).length;
-        info.innerHTML = `<span>${escapeHtml(name)}${gameState.mySlot === actualSlot ? ' (você)' : ''}</span><small>${ready ? 'jogando' : 'aguarda próxima'}</small>`;
-        cardsEl.innerHTML = `<div class="stop-result-card"><strong>${ready ? 'Pronto' : 'Aguardando'}</strong><small>${responseCount}/8 respostas</small></div>`;
-      });
-    }
-
-    function renderStopResults(state){
-      const box = document.getElementById('stopResults');
-      if(!box) return;
-      const final = state.finalResults || buildStopScoring(state);
-      const players = Array.isArray(final.players) ? final.players : [];
-      box.classList.remove('hidden');
-      box.innerHTML = `
-        <div class="stop-result-card">
-          <strong>Resultados da rodada ${escapeHtml(String(final.round || state.round || 1))} — letra ${escapeHtml(state.currentLetter || '?')}</strong>
-          <div class="stop-response-grid">
-            ${players.map(p => `<div><strong>${escapeHtml(p.name)}</strong><br>${escapeHtml(String(p.score || 0))} pontos</div>`).join('') || '<div>Nenhum jogador ativo.</div>'}
-          </div>
-        </div>
-        ${players.map(p => `
-          <div class="stop-result-card">
-            <strong>${escapeHtml(p.name)} — ${escapeHtml(String(p.score || 0))} pontos</strong>
-            <div class="stop-response-grid">
-              ${STOP_CATEGORIES.map((cat, idx) => `<div><strong>${escapeHtml(cat)}:</strong><br>${escapeHtml(p.responses?.[idx] || '')}</div>`).join('')}
-            </div>
-          </div>
-        `).join('')}
-      `;
-    }
-
-    function renderStopHistoryList(){
-      const state = gameState.roomState;
-      const box = document.getElementById('stopHistoryList');
-      if(!box) return;
-      const history = Array.isArray(state?.history) ? state.history.slice(-20).reverse() : [];
-      if(!history.length){
-        box.innerHTML = '<div class="list-item"><small>Nenhum jogo registrado ainda.</small></div>';
-        return;
-      }
-      box.innerHTML = history.map((entry, idx) => `
-        <details class="stop-history-entry" ${idx === 0 ? 'open' : ''}>
-          <summary>Rodada ${escapeHtml(String(entry.round || '-'))} — letra ${escapeHtml(entry.letter || '?')} — ${escapeHtml(String(Object.values(entry.scores || {}).reduce((a,b)=>a + (Number(b)||0), 0)))} pontos totais</summary>
-          <div class="stop-response-grid" style="margin-top:10px;">
-            ${(entry.players || []).map(p => `<div><strong>${escapeHtml(p.name)}</strong><br>${escapeHtml(String(p.score || 0))} pontos</div>`).join('')}
-          </div>
-          ${(entry.players || []).map(p => `
-            <div class="stop-result-card" style="margin-top:10px;">
-              <strong>${escapeHtml(p.name)} — ${escapeHtml(String(p.score || 0))} pontos</strong>
-              <div class="stop-response-grid">
-                ${STOP_CATEGORIES.map((cat, cIdx) => `<div><strong>${escapeHtml(cat)}:</strong><br>${escapeHtml(p.responses?.[cIdx] || '')}</div>`).join('')}
-              </div>
-            </div>
-          `).join('')}
-        </details>
-      `).join('');
-    }
-
-    function openStopHistoryModal(){
-      const modal = document.getElementById('stopHistoryModal');
-      if(!modal) return;
-      modal.style.display = 'flex';
-      renderStopHistoryList();
-    }
-
-    function closeStopHistoryModal(){
-      const modal = document.getElementById('stopHistoryModal');
-      if(modal) modal.style.display = 'none';
-    }
-
-    function stopCurrentRound(){
-      if(!gameState.roomMode || !gameState.roomId || !isStopRoom(gameState.roomId)) return;
-      clearTimeout(gameState.stopSaveTimer);
-      const roomRef = db.collection('rooms').doc(gameState.roomId);
-      roomRef.get().then(snap => {
-        if(!snap.exists) return;
-        const data = snap.data() || {};
-        let state = normalizeStateForRoom(data.state, gameState.roomId);
-        state = cleanupStaleSlots(state);
-        if(gameState.mySlot && Array.isArray(gameState.stopDraft)){
-          const bucket = ensureStopRoundBucket(state, state.round);
-          bucket[gameState.mySlot] = gameState.stopDraft.slice(0, STOP_CATEGORIES.length);
-        }
-        state = finalizeStopRoundState(state);
-        state.gameRunning = false;
-        state.stopped = true;
-        state.roomType = 'stop';
-        return roomRef.set({ roomId: gameState.roomId, roomName: getRoomMeta(gameState.roomId).name || gameState.roomId, roomType: 'stop', state, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
-      }).catch(() => {});
-    }
-
-    function startNextStopRound(){
-      if(!gameState.roomMode || !gameState.roomId || !isStopRoom(gameState.roomId)) return;
-      clearTimeout(gameState.stopSaveTimer);
-      const roomRef = db.collection('rooms').doc(gameState.roomId);
-      db.runTransaction(async (tx) => {
-        const snap = await tx.get(roomRef);
-        if(!snap.exists) throw new Error('Sala não encontrada');
-        const data = snap.data() || {};
-        let state = normalizeStateForRoom(data.state, gameState.roomId);
-        state = cleanupStaleSlots(state);
-        state = startNextStopRoundState(state);
-        tx.set(roomRef, {
-          roomId: gameState.roomId,
-          roomName: getRoomMeta(gameState.roomId).name || gameState.roomId,
-          roomType: 'stop',
-          state,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-      }).catch(err => alert(err.message || 'Não foi possível iniciar a nova partida.'));
-    }
-
     function renderGame(){
       if(gameState.roomMode){
         const state = gameState.roomState;
@@ -2079,25 +1803,8 @@
           updateSeatControls(null);
           return;
         }
-
-        if(isStopRoom(gameState.roomId)){
-          document.getElementById("table").style.display = "block";
-          document.getElementById("endScreen").style.display = state.stopped ? "flex" : "none";
-          document.getElementById("winnerText").innerHTML = state.stopped ? "Stop — fim da rodada" : "Stop";
-          const stopResults = document.getElementById('stopResults');
-          if(state.stopped){
-            renderStopResults(state);
-            if(stopResults) stopResults.classList.remove('hidden');
-            document.getElementById('table').style.display = 'none';
-          } else {
-            if(stopResults) stopResults.classList.add('hidden');
-          }
-          updateSeatControls(state);
-          const hudTurn = document.getElementById('hudTurn');
-          if(hudTurn) hudTurn.querySelector('span:last-child').textContent = state.stopped ? 'Rodada encerrada' : 'Stop';
-          renderStopBoard(state);
-          renderStopPlayerSeats(state);
-          if(!state.stopped) document.getElementById('endScreen').style.display = 'none';
+        if(gameState.roomId === STOP_ROOM_ID){
+          renderStopGame();
           return;
         }
 
@@ -2110,16 +1817,6 @@
 
         document.getElementById("table").style.display = "block";
         document.getElementById("endScreen").style.display = "none";
-        const stopPanel = document.getElementById('stopPanel');
-        const drawBtn = document.getElementById('drawCardBtn');
-        const drawPile = document.getElementById('drawPile');
-        const discardPile = document.getElementById('discardPile');
-        if(stopPanel){ stopPanel.classList.add('hidden'); stopPanel.innerHTML = ''; }
-        if(drawBtn) drawBtn.style.display = '';
-        if(drawPile) drawPile.style.display = '';
-        if(discardPile) discardPile.style.display = '';
-        const stopResults = document.getElementById('stopResults');
-        if(stopResults) stopResults.classList.add('hidden');
 
         updateSeatControls(state);
         const currentTurn = normalizeTurn(state);
@@ -2175,6 +1872,15 @@
       }
 
       if(!gameState.gameRunning) return;
+      const center = document.querySelector('#gameBoard .center-area');
+      const centerTemplate = window.__cardsCenterTemplate || '';
+      if(center && centerTemplate && center.innerHTML !== centerTemplate){
+        center.innerHTML = centerTemplate;
+      }
+      const drawPile = document.getElementById('drawPile');
+      const discardPile = document.getElementById('discardPile');
+      if(drawPile) drawPile.style.display = '';
+      if(discardPile) discardPile.style.display = '';
       document.getElementById("discardPile").innerHTML = gameState.topCard ? `<div class="card" data-value="${gameState.topCard.value}" style="background-image:url('${gameState.topCard.img}'); border-color:${colorMap[gameState.topCard.color]}"></div>` : '';
       document.getElementById("hudTurn").querySelector('span:last-child').textContent = gameState.turn === 0 ? "Sua vez" : `Vez de ${getPlayerName(gameState.turn + 1)}`;
       const p1 = document.getElementById("p1");
@@ -2187,6 +1893,276 @@
       }
       document.getElementById("statusNote").textContent = gameState.penalty > 0 ? `Punição ativa: compre ${gameState.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
     }
+
+
+    function stopSlotFromPlayerData(slot, state){
+      const s = state.slots?.[slot];
+      return {
+        id: String(s?.id || ''),
+        name: String(s?.name || `Jogador ${slot}`)
+      };
+    }
+
+    function renderStopHistoryModal(entries){
+      let modal = document.getElementById('stopHistoryModal');
+      if(!modal){
+        modal = document.createElement('div');
+        modal.id = 'stopHistoryModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+          <div class="modal-card" style="width:min(920px, 100%);">
+            <div class="section-title">
+              <h3>Últimos 20 jogos</h3>
+              <button class="btn secondary small" type="button" onclick="closeStopHistory()">Fechar</button>
+            </div>
+            <div id="stopHistoryBody" class="list" style="margin-top:12px;"></div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+      }
+      const body = document.getElementById('stopHistoryBody');
+      if(!body) return;
+      if(!entries || !entries.length){
+        body.innerHTML = '<div class="list-item"><small>Nenhuma partida registrada ainda.</small></div>';
+        return;
+      }
+      body.innerHTML = entries.slice().reverse().map(entry => {
+        const rows = (entry.results || []).map(r => `<div class="list-item"><div><strong>${escapeHtml(r.name || `Jogador ${r.slot}`)}</strong><div><small>${escapeHtml(r.answer || '—')}</small></div></div><span class="pill">${Number(r.points || 0)} pts</span></div>`).join('');
+        return `
+          <div class="modal-section">
+            <div class="section-title">
+              <strong>Rodada ${escapeHtml(String(entry.roundNumber || ''))}</strong>
+              <span class="pill">${escapeHtml(entry.category || '')}</span>
+            </div>
+            <div class="mini-note" style="margin-top:8px;">Encerrado por ${escapeHtml(String(entry.stoppedBy || ''))}</div>
+            <div class="list" style="margin-top:10px;">${rows}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openStopHistory(){
+      if(!gameState.roomState) return;
+      const stop = normalizeStopState(gameState.roomState.stop);
+      renderStopHistoryModal(stop.history || []);
+      const modal = document.getElementById('stopHistoryModal');
+      if(modal) modal.style.display = 'flex';
+    }
+
+    function closeStopHistory(){
+      const modal = document.getElementById('stopHistoryModal');
+      if(modal) modal.style.display = 'none';
+    }
+
+    async function startStopRoundNow(){
+      if(!gameState.roomMode || gameState.roomId !== STOP_ROOM_ID) return;
+      const roomRef = db.collection('rooms').doc(gameState.roomId);
+      try {
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error('Sala não encontrada');
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          state = startStopRound(state);
+          state.updatedAt = Date.now();
+          tx.update(roomRef, {
+            state,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      } catch(err){
+        console.error(err);
+        alert(err.message || 'Não foi possível iniciar a nova partida.');
+      }
+    }
+
+    async function stopRoundNow(){
+      if(!gameState.roomMode || gameState.roomId !== STOP_ROOM_ID || !gameState.mySlot) return;
+      const roomRef = db.collection('rooms').doc(gameState.roomId);
+      try {
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error('Sala não encontrada');
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          if(!state.slots[gameState.mySlot] || state.slots[gameState.mySlot].id !== gameState.myId){
+            throw new Error('Você não está mais nessa sala');
+          }
+          const stop = normalizeStopState(state.stop);
+          if(stop.locked) throw new Error('A partida já foi encerrada.');
+          state = finalizeStopRound(state, gameState.mySlot);
+          state.updatedAt = Date.now();
+          tx.update(roomRef, {
+            state,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      } catch(err){
+        console.error(err);
+        alert(err.message || 'Não foi possível encerrar a partida.');
+      }
+    }
+
+    async function saveStopAnswer(){
+      if(!gameState.roomMode || gameState.roomId !== STOP_ROOM_ID || !gameState.mySlot) return;
+      const input = document.getElementById('stopAnswerInput');
+      const answer = String(input?.value || '').trim().slice(0, 50);
+      if(!answer) return alert('Digite uma palavra antes de salvar.');
+      const roomRef = db.collection('rooms').doc(gameState.roomId);
+      try {
+        await db.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error('Sala não encontrada');
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          if(!state.slots[gameState.mySlot] || state.slots[gameState.mySlot].id !== gameState.myId){
+            throw new Error('Você não está mais nessa sala');
+          }
+          const stop = normalizeStopState(state.stop);
+          if(stop.locked || !stop.active) throw new Error('A partida já foi encerrada.');
+          if(!stop.participants[gameState.mySlot]) throw new Error('Você joga a próxima partida.');
+          stop.answers = stop.answers && typeof stop.answers === 'object' ? stop.answers : {};
+          stop.answers[gameState.mySlot] = answer;
+          state.stop = stop;
+          state.updatedAt = Date.now();
+          tx.update(roomRef, {
+            state,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+      } catch(err){
+        console.error(err);
+        alert(err.message || 'Não foi possível salvar sua resposta.');
+      }
+    }
+
+    function renderStopGame(){
+      const state = gameState.roomState;
+      if(!state) return;
+      const stop = normalizeStopState(state.stop);
+      document.getElementById('table').style.display = 'block';
+      document.getElementById('endScreen').style.display = 'none';
+
+      const drawPile = document.getElementById('drawPile');
+      const discardPile = document.getElementById('discardPile');
+      if(drawPile) drawPile.style.display = 'none';
+      if(discardPile) discardPile.style.display = 'none';
+      const seatDownBtn = document.getElementById('seatDownBtn');
+      const seatUpBtn = document.getElementById('seatUpBtn');
+      if(seatDownBtn) seatDownBtn.style.display = 'none';
+      if(seatUpBtn) seatUpBtn.style.display = 'none';
+
+      const center = document.querySelector('#gameBoard .center-area');
+      if(center){
+        center.innerHTML = `
+          <div style="width:100%; max-width:460px; display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center;">
+            <div class="pill">STOP</div>
+            <div style="font-size:1.45rem; font-weight:900; letter-spacing:-.03em;">${escapeHtml(stop.category || STOP_CATEGORIES[0])}</div>
+            <div class="board-note" style="max-width:none; width:100%;">
+              ${stop.active ? 'Escreva a sua palavra antes de alguém apertar STOP.' : 'A partida terminou. Veja os pontos e respostas.'}
+            </div>
+            <div id="stopActionArea" style="width:100%; display:flex; flex-direction:column; gap:8px;"></div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+              <button class="btn secondary mini-toggle" type="button" onclick="openStopHistory()">Últimos 20 jogos</button>
+              <button class="btn secondary mini-toggle" type="button" onclick="backToLobby()">Voltar</button>
+            </div>
+          </div>
+        `;
+      }
+
+      const actionArea = document.getElementById('stopActionArea');
+      if(actionArea){
+        const mySlot = gameState.mySlot;
+        const myJoined = !!(mySlot && state.slots[mySlot]);
+        const inRound = !!(mySlot && stop.participants && stop.participants[mySlot]);
+        const myAnswer = String(stop.answers?.[mySlot] || '');
+        if(stop.active && !stop.locked && myJoined && inRound){
+          const allPlayers = Object.keys(stop.participants || {}).map(slot => Number(slot)).sort((a,b)=>a-b).map(slot => {
+            const answered = String(stop.answers?.[slot] || '').trim();
+            return `<div class="list-item"><div><strong>${escapeHtml(state.slots[slot]?.name || `Jogador ${slot}`)}</strong><div><small>${answered ? 'Resposta salva' : 'Aguardando'}</small></div></div><span class="pill">${answered ? 'OK' : '...'}</span></div>`;
+          }).join('');
+          actionArea.innerHTML = `
+            <input id="stopAnswerInput" type="text" maxlength="50" placeholder="Digite sua resposta..." value="${escapeHtml(myAnswer)}"
+              style="padding:12px 14px; border-radius:16px; border:1px solid var(--stroke); background:var(--panel-strong); color:var(--text); font-size:1rem; outline:none;">
+            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+              <button class="btn secondary mini-toggle" type="button" onclick="saveStopAnswer()">Salvar resposta</button>
+              <button class="btn mini-toggle" type="button" onclick="stopRoundNow()">STOP</button>
+            </div>
+            <div class="mini-note">Se você entrar no meio da partida, joga só a próxima.</div>
+            <div class="list" style="width:100%;">${allPlayers}</div>
+          `;
+        } else if(stop.active && !stop.locked && myJoined && !inRound){
+          actionArea.innerHTML = `
+            <div class="board-note" style="max-width:none;">Você entrou no meio da partida e joga só a próxima.</div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+              <button class="btn secondary mini-toggle" type="button" onclick="stopRoundNow()">STOP</button>
+            </div>
+          `;
+        } else if(stop.locked){
+          const summary = (stop.results || []).map(r => `
+            <div class="list-item">
+              <div>
+                <strong>${escapeHtml(r.name || `Jogador ${r.slot}`)}</strong>
+                <div><small>${escapeHtml(r.answer || '—')}</small></div>
+              </div>
+              <span class="pill">${Number(r.points || 0)} pts</span>
+            </div>
+          `).join('');
+          actionArea.innerHTML = `
+            <div class="board-note" style="max-width:none;">A rodada foi encerrada. Veja o resumo e clique em Nova partida para jogar de novo.</div>
+            <div class="list" style="width:100%; margin-top:4px;">${summary}</div>
+            <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;">
+              <button class="btn mini-toggle" type="button" onclick="startStopRoundNow()">Nova partida</button>
+            </div>
+          `;
+        } else {
+          actionArea.innerHTML = `<div class="board-note" style="max-width:none;">Aguardando jogadores para iniciar a partida.</div>`;
+        }
+      }
+
+      const displayIds = ['p1', 'p2', 'p4', 'p3'];
+      displayIds.forEach((id, idx) => {
+        const h = document.getElementById(id);
+        if(!h) return;
+        const slot = idx === 0 ? 1 : idx === 1 ? 2 : idx === 2 ? 4 : 3;
+        const info = h.querySelector('.info');
+        const cardsEl = h.querySelector('.cards');
+        const slotData = state.slots[slot];
+        if(!slotData){
+          info.innerHTML = '';
+          cardsEl.innerHTML = '';
+          return;
+        }
+        const participant = stop.participants && stop.participants[slot];
+        const result = (stop.results || []).find(r => r.slot === slot);
+        const answer = String(stop.answers?.[slot] || '');
+        const isMe = gameState.mySlot === slot;
+        let subtitle = participant ? (stop.locked ? `${result ? result.points : 0} pts` : (answer ? 'Resposta salva' : 'Aguardando resposta')) : 'Joga na próxima partida';
+        info.innerHTML = `<span>${escapeHtml(slotData.name || `Jogador ${slot}`)}${isMe ? ' (você)' : ''}</span><small>${escapeHtml(subtitle)}</small>`;
+        if(stop.locked){
+          cardsEl.innerHTML = `
+            <div class="card" style="width:100%; height:auto; min-height:72px; padding:10px; background:var(--panel-strong); border-color:var(--stroke); display:flex; flex-direction:column; justify-content:center;">
+              <strong style="font-size:.9rem;">${escapeHtml(result?.answer || '—')}</strong>
+              <small style="display:block; margin-top:6px; color:var(--muted);">${Number(result?.points || 0)} pontos</small>
+            </div>
+          `;
+        } else {
+          cardsEl.innerHTML = `
+            <div class="card" style="width:100%; height:auto; min-height:72px; padding:10px; background:var(--panel-strong); border-color:var(--stroke); display:flex; flex-direction:column; justify-content:center;">
+              <strong style="font-size:.9rem;">${participant ? escapeHtml(answer || '—') : 'Próxima partida'}</strong>
+              <small style="display:block; margin-top:6px; color:var(--muted);">${participant ? 'Resposta desta rodada' : 'Aguardando'}</small>
+            </div>
+          `;
+        }
+      });
+
+      const hudTurn = document.getElementById('hudTurn');
+      if(hudTurn) hudTurn.querySelector('span:last-child').textContent = stop.active ? 'Rodada em andamento' : 'Partida encerrada';
+      const statusNote = document.getElementById('statusNote');
+      if(statusNote) statusNote.textContent = stop.active ? 'Escreva a sua palavra e aperte STOP para encerrar.' : 'Clique em Nova partida para começar de novo.';
+    }
+
+    window.__cardsCenterTemplate = window.__cardsCenterTemplate || (document.querySelector('#gameBoard .center-area') ? document.querySelector('#gameBoard .center-area').innerHTML : '');
 
     // ========== MÚSICA E ÁUDIO ==========
     function setupMusic(){
@@ -2441,17 +2417,6 @@
     </div>
   </div>
 
-  <div id="stopHistoryModal" class="modal">
-    <div class="modal-card stop-history-card">
-      <div class="section-title">
-        <h3>Últimos 20 jogos</h3>
-        <button class="btn secondary small" type="button" onclick="closeStopHistoryModal()">Fechar</button>
-      </div>
-      <div class="mini-note">Clique em cada jogo para ver as respostas e os pontos.</div>
-      <div id="stopHistoryList" class="list"></div>
-    </div>
-  </div>
-
 
 <script>
 (() => {
@@ -2464,10 +2429,21 @@
     'https://raw.githubusercontent.com/fil0099/livedacaca/main/sonican-lo-fi-music-loop-sentimental-jazzy-love-473154.mp3'
   ];
   const DEFAULT_ROOMS = [
-    { id: 'sala1', name: 'Sala 1', type: 'cards' },
-    { id: 'sala2', name: 'Sala 2', type: 'cards' },
-    { id: 'sala3', name: 'Sala 3', type: 'cards' },
-    { id: 'stop1', name: 'Stop', type: 'stop' }
+    { id: 'sala1', name: 'Sala 1' },
+    { id: 'sala2', name: 'Sala 2' },
+    { id: 'sala3', name: 'Sala 3' },
+    { id: 'stop', name: 'Stop' }
+  ];
+  const STOP_ROOM_ID = 'stop';
+  const STOP_CATEGORIES = [
+    'Minha amiga caca é',
+    'Nome',
+    'Animal',
+    'Fruta',
+    'Cor',
+    'Cidade/Estado/País (CEP)',
+    'Objeto',
+    'Marca'
   ];
   const PERM_KEYS = ['password','rooms','music','autoplay','delegate'];
   const allPerms = () => ({ password:true, rooms:true, music:true, autoplay:true, delegate:true });
@@ -2500,7 +2476,13 @@
       adminPassword: '123',
       rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name })),
       roomMeta: DEFAULT_ROOMS.reduce((acc, r) => {
-        acc[r.id] = { name:r.name, password:'', autoplay:true, playlist: DEFAULT_PLAYLIST.slice(), type: r.type || 'cards' };
+        acc[r.id] = {
+          name:r.name,
+          password:'',
+          autoplay:true,
+          playlist: DEFAULT_PLAYLIST.slice(),
+          type: r.id === 'stop' ? 'stop' : 'cards'
+        };
         return acc;
       }, {}),
       delegations: {},
@@ -2512,22 +2494,30 @@
     const next = {
       ...base,
       ...local,
-      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type: String(r.type || 'cards') })).filter(r => r.id) : base.rooms.slice(),
+      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim() })).filter(r => r.id) : base.rooms.slice(),
       roomMeta: { ...base.roomMeta, ...(local.roomMeta || {}) },
       delegations: local.delegations && typeof local.delegations === 'object' ? local.delegations : {},
       userRegistry: Array.isArray(local.userRegistry) ? local.userRegistry : []
     };
     next.rooms = next.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
-    base.rooms.forEach(room => {
-      if(!next.rooms.some(r => r.id === room.id)) next.rooms.push({ id: room.id, name: room.name, type: room.type || 'cards' });
+    DEFAULT_ROOMS.forEach(room => {
+      if(!next.rooms.some(r => r.id === room.id)) next.rooms.push({ id: room.id, name: room.name });
     });
     next.rooms.forEach(room => {
-      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type: room.type || 'cards' };
+      if(!next.roomMeta[room.id]) {
+        next.roomMeta[room.id] = {
+          name:room.name,
+          password:'',
+          autoplay:true,
+          playlist:DEFAULT_PLAYLIST.slice(),
+          type: room.id === 'stop' ? 'stop' : 'cards'
+        };
+      }
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
       next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
       next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
       next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
-      next.roomMeta[room.id].type = next.roomMeta[room.id].type || room.type || 'cards';
+      next.roomMeta[room.id].type = String(next.roomMeta[room.id].type || (room.id === 'stop' ? 'stop' : 'cards')).toLowerCase();
     });
     return next;
   }
@@ -2544,15 +2534,25 @@
     if(typeof remote.adminPassword === 'string') next.adminPassword = remote.adminPassword;
     if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim() })).filter(r => r.id);
     if(remote.roomMeta && typeof remote.roomMeta === 'object') next.roomMeta = { ...next.roomMeta, ...remote.roomMeta };
+    DEFAULT_ROOMS.forEach(room => {
+      if(!next.rooms.some(r => r.id === room.id)) next.rooms.push({ id: room.id, name: room.name });
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = {
+        name: room.name,
+        password:'',
+        autoplay:true,
+        playlist: DEFAULT_PLAYLIST.slice(),
+        type: room.id === 'stop' ? 'stop' : 'cards'
+      };
+    });
     if(remote.delegations && typeof remote.delegations === 'object') next.delegations = remote.delegations;
     if(Array.isArray(remote.userRegistry)) next.userRegistry = remote.userRegistry;
     next.rooms.forEach(room => {
-      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type: room.type || 'cards' };
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type: room.id === 'stop' ? 'stop' : 'cards' };
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
       next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
       next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
       next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
-      next.roomMeta[room.id].type = next.roomMeta[room.id].type || room.type || 'cards';
+      next.roomMeta[room.id].type = String(next.roomMeta[room.id].type || (room.id === 'stop' ? 'stop' : 'cards')).toLowerCase();
     });
     adminState.settings = next;
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
@@ -2563,7 +2563,7 @@
     return (adminState.settings.rooms || []).map(room => {
       const id = String(room.id || '').trim();
       const meta = adminState.settings.roomMeta?.[id] || {};
-      const item = { id, name: String(meta.name || room.name || id).trim() || id, type: String(meta.type || room.type || 'cards') };
+      const item = { id, name: String(meta.name || room.name || id).trim() || id };
       if(seen.has(item.id)) return null;
       seen.add(item.id);
       return item;
@@ -2572,26 +2572,20 @@
 
   function getRoomMeta(roomId){
     const id = String(roomId || '').trim();
-    return adminState.settings.roomMeta?.[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type:'cards' };
-  }
-
-  function getRoomType(roomId){
-    return String(getRoomMeta(roomId).type || 'cards').toLowerCase();
-  }
-  function isStopRoom(roomId){
-    return getRoomType(roomId) === 'stop';
+    return adminState.settings.roomMeta?.[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type: id === 'stop' ? 'stop' : 'cards' };
   }
 
   function setRoomMeta(roomId, patch){
     const id = String(roomId || '').trim();
     if(!id) return;
     adminState.settings.roomMeta[id] = {
-      ...(adminState.settings.roomMeta[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type:'cards' }),
+      ...(adminState.settings.roomMeta[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type: id === 'stop' ? 'stop' : 'cards' }),
       ...patch
     };
     if(!adminState.settings.rooms.some(r => r.id === id)) adminState.settings.rooms.push({ id, name: adminState.settings.roomMeta[id].name || id });
     adminState.settings.rooms = adminState.settings.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
-    adminState.settings.rooms = adminState.settings.rooms.map(r => r.id === id ? { id, name: adminState.settings.roomMeta[id].name || r.name || id, type: adminState.settings.roomMeta[id].type || r.type || 'cards' } : r);
+    adminState.settings.roomMeta[id].type = String(adminState.settings.roomMeta[id].type || (id === 'stop' ? 'stop' : 'cards')).toLowerCase();
+    adminState.settings.rooms = adminState.settings.rooms.map(r => r.id === id ? { id, name: adminState.settings.roomMeta[id].name || r.name || id } : r);
     saveSettings();
     renderLobbyRooms();
     renderAdminModal();
@@ -2734,7 +2728,7 @@
       await ref.set({
         roomId,
         roomName: currentRoomLabel(roomId),
-        state: createFreshRoomState(),
+        state: getRoomType(roomId) === 'stop' ? createFreshStopRoomState() : createFreshRoomState(),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
@@ -2759,10 +2753,9 @@
       id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || 'sala';
       id = `${id}${Math.floor(Math.random()*90+10)}`;
     }
-    const inferredType = /stop/i.test(name) || /^stop/i.test(id) ? 'stop' : 'cards';
     if(adminState.settings.rooms.some(r => r.id === id)) return alert('Já existe uma sala com esse ID.');
-    adminState.settings.rooms.push({ id, name, type: inferredType });
-    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice(), type: inferredType };
+    adminState.settings.rooms.push({ id, name });
+    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
     saveSettings();
     await ensureRoomDoc(id);
     refreshRoomListeners();
