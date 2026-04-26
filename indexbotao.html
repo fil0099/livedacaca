@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>aaCartas - Jogo Multiplayer com Chat</title>
+  <title>vvartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -845,13 +845,13 @@
               </div>
               <div class="stop-round" id="stopRoundInfo">Aguardando a sala Stop...</div>
             </div>
-            <div class="stop-note" id="stopJoinNotice">Entre na sala para jogar a próxima partida.</div>
+            <div class="stop-note" id="stopJoinNotice">Digite uma palavra para cada categoria usando a letra sorteada. Quando quiser encerrar, aperte STOP.</div>
             <div id="stopCategories" class="stop-categories"></div>
             <div class="stop-actions-row stop-toolbar">
               <button class="btn secondary mini-toggle" type="button" onclick="openPeopleModal()">Pessoas</button>
               <button class="btn secondary mini-toggle" type="button" onclick="openStopHistory()">Últimos 20 jogos</button>
               <button class="btn secondary mini-toggle" type="button" onclick="startStopNewGame()">Nova partida</button>
-              <button class="btn mini-toggle stop-button" type="button" onclick="pressStop()">STOP</button>
+              <button class="btn mini-toggle stop-button" type="button" onclick="pressStop()" style="min-width:180px; font-size:1rem; padding:14px 20px;">STOP</button>
             </div>
             <div id="stopResults" class="stop-results hidden"></div>
           </div>
@@ -937,7 +937,7 @@
 const STOP_ROOM_ID = "stop-main";
 const STOP_CHAT_ROOM_ID = STOP_ROOM_ID;
 const STOP_CATEGORIES = [
-  "Minha amiga caca é",
+  "A cacá é...",
   "Nome",
   "Animal",
   "Fruta",
