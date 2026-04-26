@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>vvartas - Jogo Multiplayer com Chat</title>
+  <title>llkartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -368,6 +368,7 @@
       grid-column:2; grid-row:2;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
       min-height:0;
+      position:relative;
     }
     .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; justify-self:center; }
 
@@ -577,30 +578,40 @@
 
     .stop-panel{
       display:none;
-      margin-top:10px;
-      width:100%;
-      padding:18px;
-      border-radius:22px;
+      position:fixed;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      width:min(1100px, calc(100vw - 32px));
+      max-height:calc(100vh - 32px);
+      overflow:auto;
+      padding:24px;
+      border-radius:28px;
       border:1px solid var(--stroke);
       background:var(--panel-strong);
       box-shadow:var(--shadow);
-      max-width: 1040px;
-      margin-inline:auto;
+      z-index:35;
+      text-align:center;
     }
     .stop-panel.active{ display:block; }
     .stop-head{
       display:flex;
+      flex-direction:column;
       align-items:center;
-      justify-content:space-between;
-      gap:12px;
+      justify-content:center;
+      gap:14px;
       flex-wrap:wrap;
-      margin-bottom:12px;
+      margin-bottom:16px;
+      width:100%;
     }
     .stop-hero{
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
       min-width: 260px;
+      width:100%;
     }
     .stop-hero-label{
       display:inline-flex;
@@ -636,22 +647,26 @@
       color:var(--text);
       text-shadow:0 1px 0 rgba(255,255,255,.25);
     }
-    .stop-round{ color:var(--muted); font-size:.95rem; font-weight:700; text-align:right; }
-    .stop-note{ color:var(--muted); font-size:.98rem; line-height:1.5; margin-bottom:12px; }
+    .stop-round{ color:var(--muted); font-size:.95rem; font-weight:700; text-align:center; }
+    .stop-note{ color:var(--muted); font-size:1rem; line-height:1.6; margin:0 auto 18px; max-width:760px; text-align:center; }
     .stop-categories{
       display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap:10px;
-      margin-top:10px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap:12px;
+      margin-top:14px;
+      width:min(100%, 980px);
+      margin-inline:auto;
+      justify-items:stretch;
     }
     .stop-category{
       display:flex;
       flex-direction:column;
-      gap:6px;
-      padding:10px;
-      border-radius:16px;
+      gap:8px;
+      padding:14px;
+      border-radius:18px;
       border:1px solid var(--stroke);
       background:rgba(255,255,255,.06);
+      text-align:left;
     }
     .stop-category label{
       font-size:.95rem;
@@ -671,10 +686,12 @@
     }
     .stop-actions-row{
       display:flex;
-      gap:10px;
+      gap:12px;
       flex-wrap:wrap;
       justify-content:center;
-      margin-top:12px;
+      align-items:center;
+      margin-top:18px;
+      width:100%;
     }
     .stop-status-card{
       margin-top:12px;
@@ -694,6 +711,11 @@
       color:#fff;
       border:none;
       box-shadow:0 16px 30px rgba(239,68,68,.22);
+      min-width:220px;
+      font-size:1.05rem;
+      padding:16px 26px;
+      font-weight:900;
+      letter-spacing:.08em;
     }
     .stop-button:hover{ filter:brightness(1.03); }
     .stop-results{
