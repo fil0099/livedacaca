@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ffCartas - Jogo Multiplayer com Chat</title>
+  <title>vcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -3119,12 +3119,13 @@ function stopPlayerIsActive(state, playerId){
   return !!player && stopIsPlayerFresh(player) && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
 }
 
-function stopResultsForState(state){
+function stopResultsForState(state, draftOverlay = {}){
   const activePlayers = stopActivePlayers(state);
   const normalizedBuckets = {};
   const perPlayer = {};
   const requiredLetter = stopNormalizeText(state.letter || '');
   const requiredInitial = requiredLetter ? requiredLetter[0] : '';
+  const overlays = draftOverlay && typeof draftOverlay === 'object' ? draftOverlay : {};
 
   activePlayers.forEach(p => {
     perPlayer[p.id] = {
@@ -3140,7 +3141,7 @@ function stopResultsForState(state){
     const key = STOP_CATEGORY_KEYS[idx];
     const buckets = {};
     activePlayers.forEach(p => {
-      const raw = String(p.answers?.[key] || '').trim();
+      const raw = String((overlays[p.id]?.[key] ?? p.answers?.[key] ?? '')).trim();
       const norm = stopNormalizeText(raw);
       const startsWithLetter = !!norm && !!requiredInitial && norm.startsWith(requiredInitial);
       if(!startsWithLetter) return;
@@ -3149,7 +3150,7 @@ function stopResultsForState(state){
     });
 
     activePlayers.forEach(p => {
-      const raw = String(p.answers?.[key] || '').trim();
+      const raw = String((overlays[p.id]?.[key] ?? p.answers?.[key] ?? '')).trim();
       const norm = stopNormalizeText(raw);
       const startsWithLetter = !!norm && !!requiredInitial && norm.startsWith(requiredInitial);
       const pts = startsWithLetter
@@ -3237,6 +3238,20 @@ function stopDraftAnswer(key, value){
     gameState.stopDraftAnswers = {};
   }
   gameState.stopDraftAnswers[key] = String(value ?? '');
+}
+
+function stopBuildDraftOverlay(){
+  const overlay = {};
+  const myId = gameState.myId;
+  if(!myId) return overlay;
+  overlay[myId] = {};
+  STOP_CATEGORY_KEYS.forEach(key => {
+    const input = document.querySelector(`.stop-category input[data-stop-key="${key}"]`);
+    const domValue = input ? String(input.value ?? '') : '';
+    const localValue = gameState.stopDraftAnswers?.[key];
+    overlay[myId][key] = String((domValue !== '' ? domValue : (localValue ?? '')) || '');
+  });
+  return overlay;
 }
 
 function stopGetNextInputKey(currentKey){
@@ -3665,12 +3680,23 @@ async function pressStop(){
   if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
   const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
   try{
+    const draftOverlay = stopBuildDraftOverlay();
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
       if(state.phase === 'results') return;
-      const results = stopResultsForState(state);
+
+      const myDraft = draftOverlay[gameState.myId] || {};
+      if(state.players?.[gameState.myId]){
+        state.players[gameState.myId].answers = {
+          ...(state.players[gameState.myId].answers || stopEmptyAnswers()),
+          ...myDraft
+        };
+        state.players[gameState.myId].lastSeen = Date.now();
+      }
+
+      const results = stopResultsForState(state, draftOverlay);
       results.activePlayers.forEach(p => {
         const player = state.players[p.id];
         if(!player) return;
@@ -3703,6 +3729,7 @@ async function pressStop(){
       state.updatedAt = Date.now();
       tx.set(ref, state, { merge: true });
     });
+    gameState.stopDraftAnswers = {};
   }catch(err){
     console.error(err);
     alert(err.message || 'Não foi possível parar a partida.');
