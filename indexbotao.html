@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rrCartas - Jogo Multiplayer com Chat</title>
+  <title>qwCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -368,7 +368,6 @@
       grid-column:2; grid-row:2;
       display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
       min-height:0;
-      position:relative;
     }
     .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; justify-self:center; }
 
@@ -575,206 +574,6 @@
     .permission-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px; margin-top:10px; }
     .permission-chip{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,.10); }
     .permission-chip input{ width:16px; height:16px; }
-
-    .stop-panel{
-      display:none;
-      position:fixed;
-      left:50%;
-      top:50%;
-      transform:translate(-50%, -50%);
-      width:min(1100px, calc(100vw - 32px));
-      max-height:calc(100vh - 32px);
-      overflow:auto;
-      padding:24px;
-      border-radius:28px;
-      border:1px solid var(--stroke);
-      background:var(--panel-strong);
-      box-shadow:var(--shadow);
-      z-index:35;
-      text-align:center;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-    }
-    .stop-panel.active{ display:flex; }
-    .stop-head{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:14px;
-      flex-wrap:wrap;
-      margin-bottom:16px;
-      width:100%;
-    }
-    .stop-hero{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      align-items:center;
-      justify-content:center;
-      min-width: 260px;
-      width:100%;
-    }
-    .stop-hero-label{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      width:fit-content;
-      padding:6px 10px;
-      border-radius:999px;
-      background:rgba(14,165,233,.10);
-      border:1px solid var(--stroke);
-      font-size:.78rem;
-      font-weight:900;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-    .stop-badge{
-      display:inline-flex;
-      align-items:baseline;
-      gap:10px;
-      width:fit-content;
-      padding:14px 18px;
-      border-radius:22px;
-      background:linear-gradient(135deg, rgba(14,165,233,.16), rgba(34,197,94,.12));
-      border:1px solid var(--stroke);
-      font-weight:900;
-      box-shadow:0 12px 24px rgba(15,23,42,.08);
-    }
-    .stop-badge strong{
-      font-size: clamp(2.1rem, 6vw, 4rem);
-      line-height:1;
-      letter-spacing:-0.06em;
-      color:var(--text);
-      text-shadow:0 1px 0 rgba(255,255,255,.25);
-    }
-    .stop-round{ color:var(--muted); font-size:.95rem; font-weight:700; text-align:center; }
-    .stop-note{ color:var(--muted); font-size:1rem; line-height:1.6; margin:0 auto 18px; max-width:760px; text-align:center; }
-    .stop-categories{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap:12px;
-      margin-top:14px;
-      width:min(100%, 980px);
-      margin-inline:auto;
-      justify-items:stretch;
-      align-self:stretch;
-    }
-    .stop-category{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      padding:14px;
-      border-radius:18px;
-      border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);
-      text-align:left;
-    }
-    .stop-category label{
-      font-size:.95rem;
-      font-weight:900;
-      color:var(--text);
-    }
-    .stop-category input{
-      width:100%;
-      border:1px solid var(--stroke);
-      border-radius:12px;
-      padding:12px 12px;
-      background:var(--panel);
-      color:var(--text);
-      outline:none;
-      font-size:1rem;
-      min-height: 46px;
-    }
-    .stop-actions-row{
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      justify-content:center;
-      align-items:center;
-      margin-top:18px;
-      width:100%;
-    }
-    .stop-status-card{
-      margin-top:12px;
-      padding:12px;
-      border-radius:16px;
-      border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);
-    }
-    .stop-toolbar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      justify-content:center;
-    }
-    .stop-button{
-      background:linear-gradient(135deg, #ef4444, #f97316);
-      color:#fff;
-      border:none;
-      box-shadow:0 16px 30px rgba(239,68,68,.22);
-      min-width:220px;
-      font-size:1.05rem;
-      padding:16px 26px;
-      font-weight:900;
-      letter-spacing:.08em;
-    }
-    .stop-button:hover{ filter:brightness(1.03); }
-    .stop-results{
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-      margin-top:12px;
-    }
-    .stop-result-card{
-      padding:12px;
-      border-radius:16px;
-      border:1px solid var(--stroke);
-      background:rgba(255,255,255,.06);
-    }
-    .stop-result-head{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-bottom:8px;
-    }
-    .stop-result-grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap:8px;
-      margin-top:8px;
-    }
-    .stop-result-item{
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px solid var(--stroke);
-      background:rgba(255,255,255,.05);
-      font-size:.88rem;
-    }
-    .stop-history-list{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      max-height:60vh;
-      overflow:auto;
-      padding-right:4px;
-    }
-    .stop-history-card{
-      border:1px solid var(--stroke);
-      background:rgba(255,255,255,.08);
-      border-radius:16px;
-      padding:12px;
-    }
-    .stop-history-players{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      margin-top:8px;
-    }
     .hidden{ display:none !important; }
   </style>
 </head>
@@ -862,30 +661,11 @@
             <div id="discardPile" class="pile discard"></div>
           </div>
           <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre</div>
-
-          <div id="stopPanel" class="stop-panel hidden">
-            <div class="stop-head">
-              <div class="stop-hero">
-                <div class="stop-hero-label">Sala Stop</div>
-                <div class="stop-badge">LETRA <strong id="stopLetter">-</strong></div>
-              </div>
-              <div class="stop-round" id="stopRoundInfo">Aguardando a sala Stop...</div>
-            </div>
-            <div class="stop-note" id="stopJoinNotice">Digite uma palavra para cada categoria usando a letra sorteada. Quando quiser encerrar, aperte STOP.</div>
-            <div id="stopCategories" class="stop-categories"></div>
-            <div class="stop-actions-row stop-toolbar">
-              <button class="btn secondary mini-toggle" type="button" onclick="openPeopleModal()">Pessoas</button>
-              <button class="btn secondary mini-toggle" type="button" onclick="openStopHistory()">Últimos 20 jogos</button>
-              <button class="btn secondary mini-toggle" type="button" onclick="startStopNewGame()">Nova partida</button>
-              <button class="btn mini-toggle stop-button" type="button" onclick="pressStop()" style="min-width:180px; font-size:1rem; padding:14px 20px;">STOP</button>
-            </div>
-            <div id="stopResults" class="stop-results hidden"></div>
-          </div>
           <div class="seat-actions">
             <button id="seatDownBtn" class="btn secondary mini-toggle" onclick="leaveSeat()">Descer</button>
             <button id="seatUpBtn" class="btn secondary mini-toggle" onclick="takeSeat()">Subir</button>
           </div>
-          <button id="drawCardBtn" class="btn" onclick="drawCard()">Comprar carta</button>
+          <button class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
         <!-- Jogador 2 na direita -->
         <div id="p2" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
@@ -911,16 +691,6 @@
   </div>
 
   
-  <div id="stopHistoryModal" class="modal" style="display:none">
-    <div class="modal-card" style="max-width:920px;">
-      <div class="section-title">
-        <h3 style="margin:0;">Histórico das últimas 20 partidas</h3>
-        <button class="btn secondary small" type="button" onclick="closeStopHistory()">Fechar</button>
-      </div>
-      <div id="stopHistoryList" class="stop-history-list" style="margin-top:12px;"></div>
-    </div>
-  </div>
-
   <script>
     // ========== FIREBASE ==========
     const firebaseConfig = {
@@ -960,21 +730,6 @@
     ];
     const STALE_SLOT_MS = 18000;
 
-const STOP_ROOM_ID = "stop-main";
-const STOP_CHAT_ROOM_ID = STOP_ROOM_ID;
-const STOP_CATEGORIES = [
-  "A cacá é...",
-  "Nome",
-  "Animal",
-  "Fruta",
-  "Cor",
-  "Cidade/Estado/País (CEP)",
-  "Objeto",
-  "Marca"
-];
-const STOP_CATEGORY_KEYS = STOP_CATEGORIES.map((_, idx) => `c${idx + 1}`);
-const STOP_STALE_MS = 18000;
-
     let gameState = {
       roomMode: false,
       roomId: null,
@@ -1005,13 +760,7 @@ const STOP_STALE_MS = 18000;
       trackIndex: 0,
       roomPlaylist: [],
       robotPlaylist: [],
-      botIds: [],
-      stopMode: false,
-      stopRoomId: STOP_ROOM_ID,
-      stopState: null,
-      stopHeartbeat: null,
-      stopUnsub: null,
-      stopPlaylist: []
+      botIds: []
     };
 
     const DEFAULT_PLAYLIST = [
@@ -1021,7 +770,6 @@ const STOP_STALE_MS = 18000;
     ];
     gameState.roomPlaylist = [...DEFAULT_PLAYLIST];
     gameState.robotPlaylist = [...DEFAULT_PLAYLIST];
-    gameState.stopPlaylist = [...DEFAULT_PLAYLIST];
 
     let lobbyRoomUnsubs = [];
     let activeRoomUnsubs = [];
@@ -1399,6 +1147,7 @@ const STOP_STALE_MS = 18000;
             };
           }
 
+          state = ensureOccupiedHandsHaveSeven(state);
 
           tx.set(roomRef, {
             roomId,
@@ -1430,6 +1179,20 @@ const STOP_STALE_MS = 18000;
         const data = snapshot.data() || {};
         const state = cleanupStaleSlots(normalizeSharedState(data.state));
         gameState.roomState = state;
+        const needsRefill = Object.keys(state.slots).some(slot => state.slots[slot] && (!Array.isArray(state.hands[slot]) || state.hands[slot].length < 7));
+        if(needsRefill){
+          db.runTransaction(async (tx) => {
+            const freshSnap = await tx.get(roomRef);
+            if(!freshSnap.exists) return;
+            const freshData = freshSnap.data() || {};
+            let freshState = cleanupStaleSlots(normalizeSharedState(freshData.state));
+            freshState = ensureOccupiedHandsHaveSeven(freshState);
+            tx.update(roomRef, {
+              state: freshState,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }).catch(() => {});
+        }
         if(gameState.myId){
           for(let slot = 1; slot <= 4; slot++){
             if(state.slots[slot] && state.slots[slot].id === gameState.myId){
@@ -1565,6 +1328,7 @@ const STOP_STALE_MS = 18000;
           if(getOccupiedSlotsCount(state) >= 4){
             state.seatingOpen = false;
           }
+          state = ensureOccupiedHandsHaveSeven(state);
           state.turn = normalizeTurn(state);
           tx.set(roomRef, {
             roomId,
@@ -1989,11 +1753,10 @@ const STOP_STALE_MS = 18000;
         alert("Por favor, defina seu nome na lobby antes de enviar mensagem.");
         return;
       }
-      const chatRoomId = gameState.stopMode ? STOP_CHAT_ROOM_ID : (gameState.roomMode && gameState.roomId ? gameState.roomId : null);
-      if(chatRoomId){
+      if(gameState.roomMode && gameState.roomId){
         try {
           await db.collection('chat').add({
-            roomId: chatRoomId,
+            roomId: gameState.roomId,
             author: author,
             message: msg,
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -2823,6 +2586,7 @@ const STOP_STALE_MS = 18000;
           state = createFreshRoomState();
           state.slots[chosenSlot] = { id: gameState.myId, name: userName, joinedAt: Date.now(), lastSeen: Date.now() };
         }
+        state = ensureOccupiedHandsHaveSeven(state);
         tx.set(roomRef, { roomId, roomName: currentRoomLabel(roomId), state, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
         return { slot: chosenSlot, wasEmpty };
       });
@@ -2966,726 +2730,6 @@ const STOP_STALE_MS = 18000;
     }
     document.getElementById('chatMessageInput').value = '';
   };
-
-
-// ========== SALA STOP ==========
-function stopNormalizeText(value){
-  return String(value || '')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-}
-
-function stopRandomLetter(){
-  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  return letters[Math.floor(Math.random() * letters.length)];
-}
-
-function stopEmptyAnswers(){
-  const answers = {};
-  STOP_CATEGORY_KEYS.forEach(key => { answers[key] = ""; });
-  return answers;
-}
-
-function stopEmptyPlayer(id, name, gameNumber){
-  return {
-    id,
-    name,
-    joinedAt: Date.now(),
-    lastSeen: Date.now(),
-    eligibleFromGame: gameNumber,
-    totalScore: 0,
-    answers: stopEmptyAnswers()
-  };
-}
-
-function stopEmptyState(){
-  return {
-    roomId: STOP_ROOM_ID,
-    roomName: "Sala Stop",
-    gameNumber: 1,
-    phase: "writing",
-    letter: stopRandomLetter(),
-    players: {},
-    history: [],
-    startedAt: Date.now(),
-    roundStartedAt: Date.now(),
-    roundEndedAt: null,
-    stoppedBy: null,
-    lastResults: null,
-    updatedAt: Date.now()
-  };
-}
-
-function normalizeStopState(raw){
-  const source = raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : {};
-  const state = stopEmptyState();
-  state.roomId = source.roomId || STOP_ROOM_ID;
-  state.roomName = source.roomName || "Sala Stop";
-  state.gameNumber = Number.isFinite(source.gameNumber) ? source.gameNumber : 1;
-  state.phase = source.phase === 'results' ? 'results' : 'writing';
-  state.letter = String(source.letter || stopRandomLetter()).slice(0, 1).toUpperCase() || stopRandomLetter();
-  state.players = {};
-  state.history = Array.isArray(source.history) ? source.history.slice(0, 20) : [];
-  state.startedAt = source.startedAt || Date.now();
-  state.roundStartedAt = source.roundStartedAt || Date.now();
-  state.roundEndedAt = source.roundEndedAt || null;
-  state.stoppedBy = source.stoppedBy || null;
-  state.lastResults = source.lastResults || null;
-  state.updatedAt = source.updatedAt || Date.now();
-
-  if(source.players && typeof source.players === 'object'){
-    Object.entries(source.players).forEach(([id, p]) => {
-      const pid = String(id || '').trim();
-      if(!pid) return;
-      const player = stopEmptyPlayer(pid, String(p?.name || 'Jogador'), Number.isFinite(p?.eligibleFromGame) ? p.eligibleFromGame : 1);
-      player.name = String(p?.name || 'Jogador');
-      player.joinedAt = p?.joinedAt || Date.now();
-      player.lastSeen = p?.lastSeen || Date.now();
-      player.eligibleFromGame = Number.isFinite(p?.eligibleFromGame) ? p.eligibleFromGame : 1;
-      player.totalScore = Number.isFinite(p?.totalScore) ? p.totalScore : 0;
-      const answers = p?.answers && typeof p.answers === 'object' ? p.answers : {};
-      STOP_CATEGORY_KEYS.forEach(key => { player.answers[key] = String(answers[key] || ''); });
-      player.lastRoundScore = Number.isFinite(p?.lastRoundScore) ? p.lastRoundScore : 0;
-      player.lastRoundAnswers = p?.lastRoundAnswers && typeof p.lastRoundAnswers === 'object' ? p.lastRoundAnswers : null;
-      state.players[pid] = player;
-    });
-  }
-  return state;
-}
-
-function stopActivePlayers(state){
-  return Object.values(state.players || {}).filter(p => p && p.id && (Number.isFinite(p.eligibleFromGame) ? p.eligibleFromGame : 1) <= state.gameNumber);
-}
-
-function stopPlayerIsActive(state, playerId){
-  const player = state.players?.[playerId];
-  return !!player && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
-}
-
-function stopResultsForState(state){
-  const activePlayers = stopActivePlayers(state);
-  const normalizedBuckets = {};
-  const perPlayer = {};
-  activePlayers.forEach(p => {
-    perPlayer[p.id] = {
-      id: p.id,
-      name: p.name,
-      score: 0,
-      answers: {},
-      categoryPoints: {}
-    };
-  });
-
-  STOP_CATEGORIES.forEach((label, idx) => {
-    const key = STOP_CATEGORY_KEYS[idx];
-    const buckets = {};
-    activePlayers.forEach(p => {
-      const raw = String(p.answers?.[key] || '').trim();
-      const norm = stopNormalizeText(raw);
-      if(!norm) return;
-      if(!buckets[norm]) buckets[norm] = [];
-      buckets[norm].push(p.id);
-    });
-    activePlayers.forEach(p => {
-      const raw = String(p.answers?.[key] || '').trim();
-      const norm = stopNormalizeText(raw);
-      const pts = norm ? ((buckets[norm] || []).length === 1 ? 10 : 5) : 0;
-      perPlayer[p.id].score += pts;
-      perPlayer[p.id].answers[label] = raw;
-      perPlayer[p.id].categoryPoints[label] = pts;
-    });
-    normalizedBuckets[key] = buckets;
-  });
-
-  const ranking = activePlayers
-    .map(p => ({
-      id: p.id,
-      name: p.name,
-      score: perPlayer[p.id].score,
-      answers: perPlayer[p.id].answers,
-      categoryPoints: perPlayer[p.id].categoryPoints
-    }))
-    .sort((a, b) => b.score - a.score || String(a.name).localeCompare(String(b.name)));
-
-  return { perPlayer, ranking, activePlayers, normalizedBuckets };
-}
-
-async function ensureStopRoomDoc(){
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
-  const snap = await ref.get();
-  if(!snap.exists){
-    await ref.set(stopEmptyState());
-  }
-}
-
-function stopClearHeartbeat(){
-  if(gameState.stopHeartbeat){
-    clearInterval(gameState.stopHeartbeat);
-    gameState.stopHeartbeat = null;
-  }
-}
-
-function stopStopSubscriptions(){
-  if(gameState.stopUnsub){
-    try { gameState.stopUnsub(); } catch(e) {}
-    gameState.stopUnsub = null;
-  }
-}
-
-function stopSetBoardVisibility(active){
-  const ids = ['p1','p2','p3','p4','drawPile','discardPile','seatDownBtn','seatUpBtn','drawCardBtn'];
-  ids.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.style.display = active ? 'none' : '';
-  });
-  const stopPanel = document.getElementById('stopPanel');
-  if(stopPanel){
-    stopPanel.classList.toggle('hidden', !active);
-    stopPanel.classList.toggle('active', active);
-    stopPanel.style.display = active ? 'block' : 'none';
-  }
-  const seatActions = document.querySelector('.seat-actions');
-  if(seatActions) seatActions.style.display = active ? 'none' : '';
-  const centerCardRow = document.querySelector('.center-card-row');
-  if(centerCardRow) centerCardRow.style.display = active ? 'none' : '';
-}
-
-function stopRenderPlayersSummary(state){
-  const activePlayers = stopActivePlayers(state);
-  const me = state.players?.[gameState.myId];
-  const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
-  const notice = document.getElementById('stopJoinNotice');
-  if(notice){
-    if(!gameState.stopMode){
-      notice.textContent = 'Entre na sala Stop para jogar.';
-    } else if(eligible){
-      notice.textContent = `Você joga nesta partida. Letra: ${state.letter}`;
-    } else {
-      notice.textContent = `Você entra na próxima partida. Letra atual: ${state.letter}`;
-    }
-  }
-
-  const letter = document.getElementById('stopLetter');
-  if(letter) letter.textContent = state.letter || '-';
-
-  const roundInfo = document.getElementById('stopRoundInfo');
-  if(roundInfo){
-    roundInfo.textContent = state.phase === 'results'
-      ? `Partida ${state.gameNumber} encerrada`
-      : `Partida ${state.gameNumber} em andamento`;
-  }
-
-  const hudTurn = document.getElementById('hudTurn');
-  if(hudTurn){
-    const last = hudTurn.querySelector('span:last-child');
-    if(last) last.textContent = state.phase === 'results' ? 'Resultados da partida' : `STOP · letra ${state.letter}`;
-  }
-
-  const status = document.getElementById('statusNote');
-  if(status){
-    status.textContent = state.phase === 'results'
-      ? 'A rodada acabou. Veja os resultados e inicie uma nova partida.'
-      : 'Escreva as respostas e aperte STOP quando quiser encerrar.';
-  }
-
-  const categories = document.getElementById('stopCategories');
-  const resultsBox = document.getElementById('stopResults');
-  if(!categories || !resultsBox) return;
-
-  if(state.phase === 'writing'){
-    if(eligible){
-      categories.innerHTML = STOP_CATEGORIES.map((label, idx) => {
-        const key = STOP_CATEGORY_KEYS[idx];
-        const value = escapeHtml(String(me?.answers?.[key] || ''));
-        return `
-          <div class="stop-category">
-            <label>${escapeHtml(label)}</label>
-            <input type="text" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" oninput="updateStopAnswer('${key}', this.value)" />
-          </div>
-        `;
-      }).join('');
-    } else {
-      categories.innerHTML = `
-        <div class="stop-status-card">
-          <strong>Você entrou no meio da partida.</strong>
-          <div style="margin-top:6px; color:var(--muted);">Você poderá jogar na próxima partida.</div>
-        </div>
-      `;
-    }
-    resultsBox.innerHTML = '';
-    resultsBox.classList.add('hidden');
-    return;
-  }
-
-  const results = state.lastResults || stopResultsForState(state);
-  resultsBox.classList.remove('hidden');
-  categories.innerHTML = `
-    <div class="stop-status-card">
-      <strong>Resultados da partida ${state.gameNumber}</strong>
-      <div style="margin-top:6px; color:var(--muted);">Letra usada: ${escapeHtml(state.letter)}</div>
-    </div>
-  `;
-  const rankingHtml = results.ranking.length ? results.ranking.map(p => {
-    const answers = STOP_CATEGORIES.map((label, idx) => {
-      const key = STOP_CATEGORY_KEYS[idx];
-      const ans = escapeHtml(String(p.answers?.[label] || ''));
-      const pts = p.categoryPoints?.[label] || 0;
-      return `<div class="stop-result-item"><strong>${escapeHtml(label)}</strong><div>${ans || '<em>vazio</em>'}</div><small>${pts} ponto(s)</small></div>`;
-    }).join('');
-    return `
-      <div class="stop-result-card">
-        <div class="stop-result-head">
-          <strong>${escapeHtml(p.name)}</strong>
-          <span class="pill">${p.score} pontos</span>
-        </div>
-        <div class="stop-result-grid">${answers}</div>
-      </div>
-    `;
-  }).join('') : '<div class="stop-status-card"><small>Nenhum jogador elegível nesta partida.</small></div>';
-  resultsBox.innerHTML = `
-    <div class="stop-result-card">
-      <div class="stop-result-head">
-        <strong>Pontuação final</strong>
-        <span class="pill">${results.ranking.length} jogador(es)</span>
-      </div>
-      ${rankingHtml}
-    </div>
-  `;
-}
-
-async function subscribeStopRoom(){
-  stopStopSubscriptions();
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
-  gameState.stopUnsub = ref.onSnapshot(snap => {
-    if(!snap.exists) return;
-    gameState.stopState = normalizeStopState(snap.data());
-    renderGame();
-    renderPeopleModal();
-    renderStopHistory();
-  }, err => {
-    console.error('Erro na sala Stop:', err);
-  });
-}
-
-async function updateStopAnswer(key, value){
-  if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
-  const state = gameState.stopState;
-  const player = state.players?.[gameState.myId];
-  if(!player || !stopPlayerIsActive(state, gameState.myId) || state.phase !== 'writing') return;
-  const nextValue = String(value || '');
-  if(!player.answers) player.answers = stopEmptyAnswers();
-  player.answers[key] = nextValue;
-  player.lastSeen = Date.now();
-  try {
-    await db.collection('stopRooms').doc(STOP_ROOM_ID).update({
-      [`players.${gameState.myId}.answers.${key}`]: nextValue,
-      [`players.${gameState.myId}.lastSeen`]: Date.now()
-    });
-  } catch(err) {
-    console.warn('Falha ao salvar resposta do Stop:', err);
-  }
-}
-
-async function joinStopRoom(){
-  let userName = document.getElementById('roomName')?.value.trim();
-  if(!userName) userName = document.getElementById('playerName')?.value.trim();
-  if(!userName) userName = 'Jogador';
-  userName = userName.slice(0, 18);
-
-  gameState.myName = userName;
-  gameState.stopMode = true;
-  gameState.roomMode = false;
-  gameState.roomId = STOP_ROOM_ID;
-  gameState.stopRoomId = STOP_ROOM_ID;
-
-  showGame();
-  applyModeUI();
-  refreshThemeForMode();
-  stopSetBoardVisibility(true);
-  document.getElementById('table').style.display = 'block';
-
-  try{
-    await ensureStopRoomDoc();
-    const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
-    const joined = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
-      state.players = state.players || {};
-      const existing = state.players[gameState.myId] || null;
-      const nextEligible = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
-      state.players[gameState.myId] = {
-        ...(existing || stopEmptyPlayer(gameState.myId, userName, nextEligible)),
-        id: gameState.myId,
-        name: userName,
-        joinedAt: existing?.joinedAt || Date.now(),
-        lastSeen: Date.now(),
-        eligibleFromGame: existing?.eligibleFromGame || nextEligible,
-        totalScore: Number.isFinite(existing?.totalScore) ? existing.totalScore : 0,
-        answers: existing?.answers && typeof existing.answers === 'object' ? existing.answers : stopEmptyAnswers()
-      };
-      state.updatedAt = Date.now();
-      tx.set(ref, state, { merge: true });
-      return state;
-    });
-    gameState.stopState = normalizeStopState(joined);
-    await subscribeStopRoom();
-    stopStartHeartbeat();
-    initRoomChat(STOP_CHAT_ROOM_ID);
-    renderGame();
-  }catch(err){
-    console.error(err);
-    alert(err.message || 'Não foi possível entrar na sala Stop.');
-    gameState.stopMode = false;
-    gameState.roomId = null;
-    backToLobby();
-  }
-}
-
-function stopStartHeartbeat(){
-  stopClearHeartbeat();
-  gameState.stopHeartbeat = setInterval(() => {
-    if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
-    const state = gameState.stopState;
-    if(!state.players?.[gameState.myId]) return;
-    db.collection('stopRooms').doc(STOP_ROOM_ID).update({
-      [`players.${gameState.myId}.lastSeen`]: Date.now(),
-      [`players.${gameState.myId}.name`]: gameState.myName
-    }).catch(()=>{});
-  }, 7000);
-}
-
-async function stopLeaveCurrentRoom(){
-  if(!gameState.stopMode || !gameState.stopState) return;
-  stopClearHeartbeat();
-  stopStopSubscriptions();
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
-  const myId = gameState.myId;
-  let shouldReset = false;
-  try{
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      if(!snap.exists) return;
-      let state = normalizeStopState(snap.data());
-      if(state.players && state.players[myId]){
-        delete state.players[myId];
-      }
-      shouldReset = Object.keys(state.players || {}).length === 0;
-      if(shouldReset){
-        tx.delete(ref);
-      }else{
-        state.updatedAt = Date.now();
-        tx.set(ref, state, { merge: true });
-      }
-    });
-    if(shouldReset) await deleteRoomChatMessages(STOP_CHAT_ROOM_ID);
-  }catch(err){
-    console.warn('Não foi possível sair da sala Stop:', err);
-  }
-  gameState.stopState = null;
-  gameState.stopMode = false;
-}
-
-function stopSetLayout(){
-  stopSetBoardVisibility(true);
-  const p1 = document.getElementById('p1');
-  const p2 = document.getElementById('p2');
-  const p3 = document.getElementById('p3');
-  const p4 = document.getElementById('p4');
-  if(p1) p1.style.display = 'none';
-  if(p2) p2.style.display = 'none';
-  if(p3) p3.style.display = 'none';
-  if(p4) p4.style.display = 'none';
-}
-
-async function pressStop(){
-  if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
-  try{
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
-      if(state.phase === 'results') return;
-      const results = stopResultsForState(state);
-      results.activePlayers.forEach(p => {
-        const player = state.players[p.id];
-        if(!player) return;
-        player.lastRoundScore = results.perPlayer[p.id].score;
-        player.totalScore = (Number.isFinite(player.totalScore) ? player.totalScore : 0) + results.perPlayer[p.id].score;
-        player.lastRoundAnswers = { ...results.perPlayer[p.id].answers };
-        player.answers = stopEmptyAnswers();
-      });
-      state.history = [
-        {
-          gameNumber: state.gameNumber,
-          letter: state.letter,
-          endedAt: Date.now(),
-          scores: Object.fromEntries(results.ranking.map(p => [p.id, p.score])),
-          players: results.ranking.reduce((acc, p) => {
-            acc[p.id] = {
-              name: p.name,
-              score: p.score,
-              answers: p.answers
-            };
-            return acc;
-          }, {})
-        },
-        ...(Array.isArray(state.history) ? state.history : [])
-      ].slice(0, 20);
-      state.phase = 'results';
-      state.roundEndedAt = Date.now();
-      state.stoppedBy = { id: gameState.myId, name: gameState.myName };
-      state.lastResults = results;
-      state.updatedAt = Date.now();
-      tx.set(ref, state, { merge: true });
-    });
-  }catch(err){
-    console.error(err);
-    alert(err.message || 'Não foi possível parar a partida.');
-  }
-}
-
-async function startStopNewGame(){
-  if(!gameState.stopMode || !gameState.stopState) return;
-  const ref = db.collection('stopRooms').doc(STOP_ROOM_ID);
-  try{
-    await db.runTransaction(async (tx) => {
-      const snap = await tx.get(ref);
-      if(!snap.exists) throw new Error('Sala Stop não encontrada');
-      let state = normalizeStopState(snap.data());
-      if(state.phase !== 'results') throw new Error('A partida ainda está em andamento.');
-      state.gameNumber = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
-      state.phase = 'writing';
-      state.letter = stopRandomLetter();
-      state.roundStartedAt = Date.now();
-      state.roundEndedAt = null;
-      state.stoppedBy = null;
-      state.lastResults = null;
-      Object.values(state.players || {}).forEach(player => {
-        if(!player) return;
-        if((Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber){
-          player.answers = stopEmptyAnswers();
-        }
-      });
-      state.updatedAt = Date.now();
-      tx.set(ref, state, { merge: true });
-    });
-  }catch(err){
-    console.error(err);
-    alert(err.message || 'Não foi possível iniciar uma nova partida.');
-  }
-}
-
-function renderStopHistory(){
-  const list = document.getElementById('stopHistoryList');
-  if(!list || !gameState.stopState) return;
-  const history = Array.isArray(gameState.stopState.history) ? gameState.stopState.history.slice(0, 20) : [];
-  if(!history.length){
-    list.innerHTML = '<div class="stop-history-card"><small>Sem partidas registradas ainda.</small></div>';
-    return;
-  }
-  list.innerHTML = history.map(entry => {
-    const date = entry.endedAt ? new Date(entry.endedAt).toLocaleString() : 'Sem data';
-    const playersHtml = Object.values(entry.players || {}).map(p => `
-      <div class="stop-history-card">
-        <div class="stop-result-head">
-          <strong>${escapeHtml(p.name || 'Jogador')}</strong>
-          <span class="pill">${Number.isFinite(p.score) ? p.score : 0} pontos</span>
-        </div>
-        <div class="stop-result-grid">
-          ${STOP_CATEGORIES.map(label => `<div class="stop-result-item"><strong>${escapeHtml(label)}</strong><div>${escapeHtml(String(p.answers?.[label] || '')) || '<em>vazio</em>'}</div></div>`).join('')}
-        </div>
-      </div>
-    `).join('');
-    return `
-      <div class="stop-history-card">
-        <div class="stop-result-head">
-          <strong>Partida ${entry.gameNumber} · letra ${escapeHtml(entry.letter || '-')}</strong>
-          <span class="pill">${date}</span>
-        </div>
-        <div class="stop-history-players">${playersHtml || '<small>Sem respostas registradas.</small>'}</div>
-      </div>
-    `;
-  }).join('');
-}
-
-function openStopHistory(){
-  const modal = document.getElementById('stopHistoryModal');
-  if(!modal) return;
-  modal.style.display = 'flex';
-  renderStopHistory();
-}
-function closeStopHistory(){
-  const modal = document.getElementById('stopHistoryModal');
-  if(modal) modal.style.display = 'none';
-}
-
-// wrappers so existing rooms stay unchanged
-const _origRenderLobbyRooms = renderLobbyRooms;
-renderLobbyRooms = function(){
-  _origRenderLobbyRooms();
-  const container = document.getElementById('roomsList');
-  if(!container) return;
-  const stopCard = document.createElement('div');
-  stopCard.className = 'room-card';
-  stopCard.innerHTML = `
-    <div class="room-head">
-      <strong>Sala Stop</strong>
-      <span class="room-tag">STOP</span>
-    </div>
-    <small>Jogo de palavras por letra, com chat e pontuação.</small>
-    <div class="room-actions">
-      <button class="btn secondary" onclick="joinStopRoom()">Entrar</button>
-    </div>
-  `;
-  container.appendChild(stopCard);
-};
-
-const _origRenderGame = renderGame;
-renderGame = function(){
-  if(gameState.stopMode){
-    const table = document.getElementById('table');
-    const end = document.getElementById('endScreen');
-    if(table) table.style.display = 'block';
-    if(end) end.style.display = 'none';
-    stopSetBoardVisibility(true);
-    stopSetLayout();
-    const state = gameState.stopState;
-    if(!state){
-      const status = document.getElementById('statusNote');
-      if(status) status.textContent = 'Entrando na sala Stop...';
-      const hudTurn = document.getElementById('hudTurn');
-      if(hudTurn){
-        const last = hudTurn.querySelector('span:last-child');
-        if(last) last.textContent = 'STOP';
-      }
-      return;
-    }
-    const activePlayer = state.players?.[gameState.myId] || null;
-    const hasAccess = !!activePlayer && stopPlayerIsActive(state, gameState.myId);
-    const categories = document.getElementById('stopCategories');
-    const stopResults = document.getElementById('stopResults');
-    if(state.phase === 'writing'){
-      stopResults?.classList.add('hidden');
-      if(categories) categories.classList.remove('hidden');
-    } else {
-      categories?.classList.remove('hidden');
-      stopResults?.classList.remove('hidden');
-    }
-    stopRenderPlayersSummary(state);
-    return;
-  }
-  stopSetBoardVisibility(false);
-  _origRenderGame();
-};
-
-const _origGetPlayerName = getPlayerName;
-getPlayerName = function(slot){
-  if(gameState.stopMode && gameState.stopState){
-    const players = gameState.stopState.players || {};
-    const arr = Object.values(players);
-    const p = arr.find(item => item && item.id && item.name && item.slot === slot) || arr[slot - 1] || null;
-    if(p && p.name) return p.name;
-    return `Jogador ${slot}`;
-  }
-  return _origGetPlayerName(slot);
-};
-
-const _origSetupMusic = setupMusic;
-setupMusic = function(){
-  if(!gameState.musicAudio){
-    gameState.musicAudio = new Audio();
-    gameState.musicAudio.loop = false;
-    gameState.musicAudio.addEventListener('ended', () => nextTrack(true));
-  }
-  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
-  if(pl.length) gameState.musicAudio.src = pl[gameState.trackIndex % pl.length];
-  gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
-  document.getElementById('musicDisc')?.classList.remove('playing');
-};
-
-nextTrack = function(auto=false){
-  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
-  if(!pl.length) return;
-  gameState.trackIndex = (gameState.trackIndex + 1) % pl.length;
-  setupMusic();
-  if(gameState.musicPlaying || auto) playMusic();
-};
-
-prevTrack = function(){
-  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
-  if(!pl.length) return;
-  gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length;
-  setupMusic();
-  if(gameState.musicPlaying) playMusic();
-};
-
-const _origJoinRoom = joinRoom;
-joinRoom = async function(roomId){
-  gameState.stopMode = false;
-  return _origJoinRoom(roomId);
-};
-
-const _origJoinRobots = joinRobots;
-joinRobots = function(){
-  gameState.stopMode = false;
-  return _origJoinRobots();
-};
-
-const _origBackToLobby = backToLobby;
-backToLobby = async function(){
-  clearTimeout(gameState.botTimer);
-  if(gameState.stopMode){
-    await stopLeaveCurrentRoom();
-    gameState.stopMode = false;
-  }
-  return _origBackToLobby();
-};
-
-const _origShowGame = showGame;
-showGame = function(){
-  _origShowGame();
-  if(gameState.stopMode){
-    stopSetBoardVisibility(true);
-  }
-};
-
-const _origRenderPeopleModal = renderPeopleModal;
-renderPeopleModal = function(){
-  const list = document.getElementById('peopleList');
-  if(!list) return;
-  if(gameState.stopMode && gameState.stopState){
-    const state = gameState.stopState;
-    const active = stopActivePlayers(state);
-    const waiting = Object.values(state.players || {}).filter(p => p && p.id && !stopPlayerIsActive(state, p.id));
-    list.innerHTML = `
-      <div class="list-item"><strong>Jogadores</strong><span class="pill">${active.length}</span></div>
-      ${active.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(String(p.id).toUpperCase().slice(0,4))})</strong><div><small>Joga a partir da partida ${p.eligibleFromGame || 1}</small></div></div><span class="pill">ATIVO</span></div>`).join('') || '<div class="list-item"><small>Nenhum jogador ativo.</small></div>'}
-      <div class="list-item"><strong>Aguardando próxima partida</strong><span class="pill">${waiting.length}</span></div>
-      ${waiting.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(String(p.id).toUpperCase().slice(0,4))})</strong><div><small>Entra na próxima partida</small></div></div><span class="pill">AGUARDANDO</span></div>`).join('') || '<div class="list-item"><small>Ninguém aguardando.</small></div>'}
-    `;
-    return;
-  }
-  return _origRenderPeopleModal();
-};
-
-const _origRenderLobbyRooms2 = renderLobbyRooms;
-window.renderLobbyRooms = renderLobbyRooms;
-
-window.joinStopRoom = joinStopRoom;
-window.openStopHistory = openStopHistory;
-window.closeStopHistory = closeStopHistory;
-window.pressStop = pressStop;
-window.startStopNewGame = startStopNewGame;
-window.updateStopAnswer = updateStopAnswer;
-window.stopLeaveCurrentRoom = stopLeaveCurrentRoom;
-
-window.addEventListener('beforeunload', () => {
-  if(gameState.stopMode) stopLeaveCurrentRoom();
-});
 
   const oldBootstrapLobbyRooms = bootstrapLobbyRooms;
   bootstrapLobbyRooms = function(){
