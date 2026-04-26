@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ffCartas - Jogo Multiplayer com Chat</title>
+  <title>ttCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2221,6 +2221,13 @@ const STOP_STALE_MS = 18000;
 
     async function refreshVoiceChat(forceRestart = false){
       const ctx = getVoiceContext();
+
+      if(gameState.micEnabled && !gameState.audioEnabled){
+        gameState.audioEnabled = true;
+        const audioBtn = document.getElementById('audioBtn');
+        if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
+      }
+
       const voiceEnabled = !!ctx && (gameState.audioEnabled || gameState.micEnabled);
 
       if(!voiceEnabled){
@@ -2295,6 +2302,14 @@ const STOP_STALE_MS = 18000;
       gameState.micEnabled = !gameState.micEnabled;
       const micBtn = document.getElementById('micBtn');
       if(micBtn) micBtn.textContent = gameState.micEnabled ? 'Mic: ligado' : 'Mic: desligado';
+
+      // Ao falar, o áudio de retorno precisa estar disponível para ouvir os demais.
+      if(gameState.micEnabled && !gameState.audioEnabled){
+        gameState.audioEnabled = true;
+        const audioBtn = document.getElementById('audioBtn');
+        if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
+      }
+
       refreshVoiceChat(true);
     }
 
@@ -3238,10 +3253,13 @@ const STOP_STALE_MS = 18000;
     gameState.roomMode = true;
     gameState.roomId = roomId;
     gameState.mySlot = null;
+    gameState.audioEnabled = true;
     showGame();
     applyModeUI();
     refreshThemeForMode();
     renderGame();
+    const audioBtn = document.getElementById('audioBtn');
+    if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
     try{
       await ensureRoomDoc(roomId);
       const roomRef = db.collection('rooms').doc(roomId);
@@ -3886,12 +3904,15 @@ async function joinStopRoom(roomId = STOP_ROOM_ID){
   gameState.stopMode = true;
   stopClearDraftAnswers();
   gameState.roomMode = false;
+  gameState.audioEnabled = true;
   gameState.roomId = roomId || STOP_ROOM_ID;
   gameState.stopRoomId = roomId || STOP_ROOM_ID;
 
   showGame();
   applyModeUI();
   refreshThemeForMode();
+  const audioBtn = document.getElementById('audioBtn');
+  if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
   stopSetBoardVisibility(true);
   document.getElementById('table').style.display = 'block';
 
