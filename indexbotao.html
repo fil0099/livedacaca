@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>llkartas - Jogo Multiplayer com Chat</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -592,8 +592,11 @@
       box-shadow:var(--shadow);
       z-index:35;
       text-align:center;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
     }
-    .stop-panel.active{ display:block; }
+    .stop-panel.active{ display:flex; }
     .stop-head{
       display:flex;
       flex-direction:column;
@@ -657,6 +660,7 @@
       width:min(100%, 980px);
       margin-inline:auto;
       justify-items:stretch;
+      align-self:stretch;
     }
     .stop-category{
       display:flex;
@@ -3137,7 +3141,11 @@ function stopSetBoardVisibility(active){
     if(el) el.style.display = active ? 'none' : '';
   });
   const stopPanel = document.getElementById('stopPanel');
-  if(stopPanel) stopPanel.classList.toggle('hidden', !active);
+  if(stopPanel){
+    stopPanel.classList.toggle('hidden', !active);
+    stopPanel.classList.toggle('active', active);
+    stopPanel.style.display = active ? 'block' : 'none';
+  }
   const seatActions = document.querySelector('.seat-actions');
   if(seatActions) seatActions.style.display = active ? 'none' : '';
   const centerCardRow = document.querySelector('.center-card-row');
