@@ -959,8 +959,11 @@
 
     function ensureOccupiedHandsHaveSeven(state){
       for(let slot = 1; slot <= 4; slot++){
-        if(state.slots[slot] && !Array.isArray(state.hands[slot])){
-          state.hands[slot] = [];
+        if(state.slots[slot]){
+          if(!Array.isArray(state.hands[slot])) state.hands[slot] = [];
+          while(state.hands[slot].length < 7){
+            state.hands[slot].push(drawFromDeckShared(state));
+          }
         }
       }
       return state;
@@ -1144,7 +1147,6 @@
             };
           }
 
-          state = ensureOccupiedHandsHaveSeven(state);
 
           tx.set(roomRef, {
             roomId,
@@ -1176,20 +1178,6 @@
         const data = snapshot.data() || {};
         const state = cleanupStaleSlots(normalizeSharedState(data.state));
         gameState.roomState = state;
-        const needsRefill = Object.keys(state.slots).some(slot => state.slots[slot] && (!Array.isArray(state.hands[slot]) || state.hands[slot].length < 7));
-        if(needsRefill){
-          db.runTransaction(async (tx) => {
-            const freshSnap = await tx.get(roomRef);
-            if(!freshSnap.exists) return;
-            const freshData = freshSnap.data() || {};
-            let freshState = cleanupStaleSlots(normalizeSharedState(freshData.state));
-            freshState = ensureOccupiedHandsHaveSeven(freshState);
-            tx.update(roomRef, {
-              state: freshState,
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-          }).catch(() => {});
-        }
         if(gameState.myId){
           for(let slot = 1; slot <= 4; slot++){
             if(state.slots[slot] && state.slots[slot].id === gameState.myId){
@@ -1325,7 +1313,6 @@
           if(getOccupiedSlotsCount(state) >= 4){
             state.seatingOpen = false;
           }
-          state = ensureOccupiedHandsHaveSeven(state);
           state.turn = normalizeTurn(state);
           tx.set(roomRef, {
             roomId,
@@ -2216,44 +2203,21 @@
 
   async function createAdminRoom(){
     if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
-    let name = String(document.getElementById('newRoomNameInput')?.value || '').trim();
-    let id = String(document.getElementById('newRoomIdInput')?.value || '').trim();
-
+    let name = document.getElementById('newRoomNameInput')?.value.trim();
+    let id = document.getElementById('newRoomIdInput')?.value.trim();
     if(!name) name = 'Nova sala';
-
     if(!id){
       id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || 'sala';
+      id = `${id}${Math.floor(Math.random()*90+10)}`;
     }
-    id = id.toLowerCase().replace(/[^a-z0-9]+/g, '');
-    if(!id) id = 'sala';
-
-    const baseId = id;
-    let suffix = 1;
-    while(adminState.settings.rooms.some(r => r.id === id)){
-      suffix += 1;
-      id = `${baseId}${suffix}`;
-    }
-
-    const roomName = name.slice(0, 24);
-    adminState.settings.rooms.push({ id, name: roomName });
-    adminState.settings.roomMeta[id] = {
-      name: roomName,
-      password: '',
-      autoplay: true,
-      playlist: DEFAULT_PLAYLIST.slice()
-    };
-
+    if(adminState.settings.rooms.some(r => r.id === id)) return alert('Já existe uma sala com esse ID.');
+    adminState.settings.rooms.push({ id, name });
+    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() };
     saveSettings();
     await ensureRoomDoc(id);
-
-    adminState.selectedRoomId = id;
-    const rn = document.getElementById('newRoomNameInput'); if(rn) rn.value = '';
-    const ri = document.getElementById('newRoomIdInput'); if(ri) ri.value = '';
-
     refreshRoomListeners();
     renderLobbyRooms();
     renderAdminModal();
-    renderAdminRoomDetails();
   }
 
   async function deleteAdminRoom(roomId){
@@ -2602,8 +2566,9 @@
         if(Object.values(state.slots).filter(Boolean).length >= 4) state.seatingOpen = false;
         state.turn = normalizeTurn(state);
         state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
-        if(chosenSlot !== null && !Array.isArray(state.hands[chosenSlot])){
-          state.hands[chosenSlot] = [];
+        if(!state.topCard && chosenSlot !== null && !wasEmpty){
+          state = createFreshRoomState();
+          state.slots[chosenSlot] = { id: gameState.myId, name: userName, joinedAt: Date.now(), lastSeen: Date.now() };
         }
         tx.set(roomRef, { roomId, roomName: currentRoomLabel(roomId), state, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
         return { slot: chosenSlot, wasEmpty };
