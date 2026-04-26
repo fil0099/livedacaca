@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>aaCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -579,33 +579,65 @@
       display:none;
       margin-top:10px;
       width:100%;
-      padding:14px;
-      border-radius:18px;
+      padding:18px;
+      border-radius:22px;
       border:1px solid var(--stroke);
       background:var(--panel-strong);
       box-shadow:var(--shadow);
+      max-width: 1040px;
+      margin-inline:auto;
     }
     .stop-panel.active{ display:block; }
     .stop-head{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:10px;
+      gap:12px;
       flex-wrap:wrap;
-      margin-bottom:10px;
+      margin-bottom:12px;
     }
-    .stop-badge{
+    .stop-hero{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      min-width: 260px;
+    }
+    .stop-hero-label{
       display:inline-flex;
       align-items:center;
       gap:8px;
-      padding:10px 14px;
+      width:fit-content;
+      padding:6px 10px;
       border-radius:999px;
-      background:rgba(14,165,233,.12);
+      background:rgba(14,165,233,.10);
+      border:1px solid var(--stroke);
+      font-size:.78rem;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .stop-badge{
+      display:inline-flex;
+      align-items:baseline;
+      gap:10px;
+      width:fit-content;
+      padding:14px 18px;
+      border-radius:22px;
+      background:linear-gradient(135deg, rgba(14,165,233,.16), rgba(34,197,94,.12));
       border:1px solid var(--stroke);
       font-weight:900;
+      box-shadow:0 12px 24px rgba(15,23,42,.08);
     }
-    .stop-round{ color:var(--muted); font-size:.9rem; font-weight:700; }
-    .stop-note{ color:var(--muted); font-size:.92rem; line-height:1.5; margin-bottom:10px; }
+    .stop-badge strong{
+      font-size: clamp(2.1rem, 6vw, 4rem);
+      line-height:1;
+      letter-spacing:-0.06em;
+      color:var(--text);
+      text-shadow:0 1px 0 rgba(255,255,255,.25);
+    }
+    .stop-round{ color:var(--muted); font-size:.95rem; font-weight:700; text-align:right; }
+    .stop-note{ color:var(--muted); font-size:.98rem; line-height:1.5; margin-bottom:12px; }
     .stop-categories{
       display:grid;
       grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -622,19 +654,20 @@
       background:rgba(255,255,255,.06);
     }
     .stop-category label{
-      font-size:.82rem;
-      font-weight:800;
+      font-size:.95rem;
+      font-weight:900;
       color:var(--text);
     }
     .stop-category input{
       width:100%;
       border:1px solid var(--stroke);
       border-radius:12px;
-      padding:10px 12px;
+      padding:12px 12px;
       background:var(--panel);
       color:var(--text);
       outline:none;
-      font-size:.96rem;
+      font-size:1rem;
+      min-height: 46px;
     }
     .stop-actions-row{
       display:flex;
@@ -650,6 +683,19 @@
       border:1px solid var(--stroke);
       background:rgba(255,255,255,.06);
     }
+    .stop-toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .stop-button{
+      background:linear-gradient(135deg, #ef4444, #f97316);
+      color:#fff;
+      border:none;
+      box-shadow:0 16px 30px rgba(239,68,68,.22);
+    }
+    .stop-button:hover{ filter:brightness(1.03); }
     .stop-results{
       display:flex;
       flex-direction:column;
@@ -793,16 +839,19 @@
 
           <div id="stopPanel" class="stop-panel hidden">
             <div class="stop-head">
-              <div class="stop-badge">STOP <strong id="stopLetter">-</strong></div>
+              <div class="stop-hero">
+                <div class="stop-hero-label">Sala Stop</div>
+                <div class="stop-badge">LETRA <strong id="stopLetter">-</strong></div>
+              </div>
               <div class="stop-round" id="stopRoundInfo">Aguardando a sala Stop...</div>
             </div>
             <div class="stop-note" id="stopJoinNotice">Entre na sala para jogar a próxima partida.</div>
             <div id="stopCategories" class="stop-categories"></div>
-            <div class="stop-actions-row">
+            <div class="stop-actions-row stop-toolbar">
               <button class="btn secondary mini-toggle" type="button" onclick="openPeopleModal()">Pessoas</button>
               <button class="btn secondary mini-toggle" type="button" onclick="openStopHistory()">Últimos 20 jogos</button>
               <button class="btn secondary mini-toggle" type="button" onclick="startStopNewGame()">Nova partida</button>
-              <button class="btn mini-toggle" type="button" onclick="pressStop()">STOP</button>
+              <button class="btn mini-toggle stop-button" type="button" onclick="pressStop()">STOP</button>
             </div>
             <div id="stopResults" class="stop-results hidden"></div>
           </div>
