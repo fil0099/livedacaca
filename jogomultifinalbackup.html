@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>zzCartas - Jogo Multiplayer com Chat</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2371,7 +2371,7 @@ const STOP_STALE_MS = 120000;
             if(!gameState.voicePeers?.[remoteId] || gameState.voicePeers[remoteId].pc !== pc) return;
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            sendVoiceSignal(ctx, remoteId, 'offer', pc.localDescription);
+            sendVoiceSignal(ctx, remoteId, 'offer', {type: pc.localDescription.type, sdp: pc.localDescription.sdp});
           }catch(err){
             console.warn('Falha ao criar offer de voz:', err);
           }
