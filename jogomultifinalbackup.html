@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>22Cartas - Jogo Multiplayer com Chat</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -534,6 +534,13 @@
       width:min(1200px, 100%);
       min-height:calc(100vh - 24px);
       height:auto;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:16px;
+    }
+    body.chat-room-mode .hud{
+      width:min(1200px, 100%);
     }
     body.chat-room-mode .board{
       display:none !important;
@@ -544,11 +551,14 @@
       left:auto;
       top:auto;
       transform:none;
-      width:100%;
-      height:clamp(480px, 72vh, 860px);
-      max-height:none;
+      width:min(860px, 94vw);
+      height:clamp(420px, 62vh, 720px);
+      max-height:72vh;
       z-index:45;
-      margin-top:12px;
+      margin:18px auto 0;
+      border-radius:28px;
+      overflow:hidden;
+      align-self:center;
     }
     body.chat-room-mode #chatPanel .chat-messages{
       min-height:0;
