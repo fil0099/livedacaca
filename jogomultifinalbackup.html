@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>01Cartas - Jogo Multiplayer com Chat</title>
+  <title>22Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -519,20 +519,36 @@
     }
 
     body.chat-room-mode #lobbyScreen,
-    body.chat-room-mode #endScreen,
+    body.chat-room-mode #endScreen{
+      display:none !important;
+    }
     body.chat-room-mode #table{
+      display:flex !important;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+      overflow:auto;
+      padding:12px;
+    }
+    body.chat-room-mode .table-shell{
+      width:min(1200px, 100%);
+      min-height:calc(100vh - 24px);
+      height:auto;
+    }
+    body.chat-room-mode .board{
       display:none !important;
     }
     body.chat-room-mode #chatPanel{
       display:flex !important;
-      position:fixed;
-      left:50%;
-      top:50%;
-      transform:translate(-50%, -50%);
-      width:min(900px, calc(100vw - 24px));
-      height:min(82vh, 760px);
-      max-height:calc(100vh - 24px);
+      position:relative;
+      left:auto;
+      top:auto;
+      transform:none;
+      width:100%;
+      height:clamp(480px, 72vh, 860px);
+      max-height:none;
       z-index:45;
+      margin-top:12px;
     }
     body.chat-room-mode #chatPanel .chat-messages{
       min-height:0;
@@ -1847,6 +1863,7 @@ const STOP_STALE_MS = 120000;
     }
 
     function showChatRoom(roomId){
+      showGame();
       document.body.classList.add("chat-room-mode");
       const title = document.getElementById("chatPanelTitle");
       if(title) title.textContent = `💬 ${currentRoomLabel(roomId)}`;
@@ -1854,7 +1871,7 @@ const STOP_STALE_MS = 120000;
       if(backBtn) backBtn.classList.remove("hidden");
       document.getElementById("lobbyScreen").style.display = "none";
       document.getElementById("endScreen").style.display = "none";
-      document.getElementById("table").style.display = "none";
+      document.getElementById("table").style.display = "flex";
       document.getElementById("chatPanel").style.display = "flex";
     }
 
@@ -2084,6 +2101,15 @@ const STOP_STALE_MS = 120000;
     function renderGame(){
       if(gameState.roomMode){
         const state = gameState.roomState;
+        if(gameState.roomType === 'chat'){
+          document.getElementById("table").style.display = "flex";
+          document.getElementById("endScreen").style.display = "none";
+          document.getElementById("statusNote").textContent = "Sala de bate-papo ativa";
+          const hudTurn = document.getElementById("hudTurn");
+          if(hudTurn) hudTurn.querySelector('span:last-child').textContent = "Bate-papo";
+          updateSeatControls(null);
+          return;
+        }
         if(!state){
           document.getElementById("statusNote").textContent = "Entrando na sala...";
           updateSeatControls(null);
