@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ssCartas - Jogo Multiplayer com Chat e Voz</title>
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <style>
-    /* ========== ESTILOS COMPLETOS ORIGINAIS (não alterados) ========== */
+    /* ========== ESTILOS COMPLETOS ORIGINAIS ========== */
     :root{
       --bg1:#eef2ff;
       --bg2:#f8fafc;
@@ -27,6 +28,7 @@
       --board-glow: rgba(14, 165, 233, .12);
       --board-glow-2: rgba(34, 197, 94, .12);
     }
+
     body[data-theme="dark"]{
       --bg1:#07111f;
       --bg2:#0f172a;
@@ -41,6 +43,7 @@
       --board-glow: rgba(56, 189, 248, .16);
       --board-glow-2: rgba(34, 197, 94, .14);
     }
+
     *{ box-sizing:border-box; }
     html, body{ width:100%; height:100%; margin:0; }
     html{ overflow-y:scroll; scrollbar-gutter: stable; }
@@ -55,6 +58,7 @@
         linear-gradient(160deg, var(--bg1), var(--bg2));
       transition: background .25s ease, color .25s ease;
     }
+
     body::before{
       content:"";
       position:fixed; inset:0; pointer-events:none;
@@ -65,6 +69,7 @@
       mask-image: radial-gradient(circle at center, black 0%, black 55%, transparent 100%);
       opacity:.32;
     }
+
     .screen{
       position:fixed; inset:0;
       display:flex; align-items:center; justify-content:center;
@@ -80,6 +85,7 @@
         radial-gradient(circle at top, rgba(56,189,248,.18), transparent 35%),
         linear-gradient(180deg, rgba(2,6,23,.96), rgba(15,23,42,.92));
     }
+
     #lobbyScreen{
       align-items:flex-start;
       justify-content:center;
@@ -88,6 +94,7 @@
       padding-top:24px;
       padding-bottom:32px;
     }
+
     .panel{
       width:min(980px, 100%);
       border:1px solid var(--stroke);
@@ -97,6 +104,7 @@
       padding:clamp(22px, 4vw, 40px);
       backdrop-filter: blur(12px);
     }
+
     .centered{ text-align:center; }
     h1{
       margin:0;
@@ -135,6 +143,7 @@
       box-shadow:none;
     }
     .btn.small{ padding:6px 12px; font-size:0.8rem; }
+
     .lobby-grid{
       display:grid;
       grid-template-columns: 1fr;
@@ -170,6 +179,7 @@
     .room-tag{ padding:6px 10px; border-radius:999px; font-size:.75rem; font-weight:800; background:rgba(14,165,233,.12); color:var(--text); border:1px solid var(--stroke); }
     .room-actions{ display:flex; justify-content:space-between; gap:10px; align-items:center; margin-top:14px; }
     .room-actions .btn{ padding:10px 14px; }
+
     .room-name-row{
       display:flex; gap:10px; margin:12px 0 6px;
     }
@@ -183,6 +193,7 @@
       outline:none;
       font-size:.96rem;
     }
+
     #table{
       position:fixed; inset:0; display:none; overflow:hidden;
       background:
@@ -204,9 +215,11 @@
     .hud .title{ display:flex; flex-direction:column; gap:4px; }
     .hud .title strong{ font-size:1.02rem; letter-spacing:.02em; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     .hud .title small{ color:var(--muted); font-size:.9rem; }
+
     .header-inline{
       display:flex; align-items:center; gap:14px; flex-wrap:wrap;
     }
+
     .music-player{
       display:flex; align-items:center; gap:8px;
       padding:8px 10px;
@@ -228,6 +241,7 @@
       accent-color: var(--accent-2);
       height: 16px;
     }
+
     .hud-right{
       display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
     }
@@ -240,6 +254,7 @@
       white-space:nowrap;
     }
     .turn-dot{ width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(34,197,94,.14); }
+
     .theme-switch{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 10px; border-radius:999px;
@@ -263,6 +278,7 @@
       transform:scale(1.15);
       box-shadow:0 0 0 3px rgba(255,255,255,.35), 0 2px 6px rgba(15,23,42,.18);
     }
+
     .voice-group{
       display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
     }
@@ -276,6 +292,7 @@
     }
     .tiny-control span{ font-size:.73rem; font-weight:800; color:var(--muted); }
     .tiny-control input[type="range"]{ width:64px; accent-color: var(--accent-2); }
+
     .board{
       position:relative; width:100%; height:100%;
       display:grid;
@@ -283,9 +300,11 @@
       grid-template-rows: 1fr 1.1fr 1fr;
       gap:12px;
       min-height:0;
+      /* Garante que o layout nunca empilhe */
       grid-auto-flow: row;
       padding-top:6px;
     }
+
     .hand{
       min-width:0;
       display:flex; flex-direction:column; gap:8px;
@@ -298,18 +317,22 @@
       color:var(--text);
     }
     .hand .info small{ color:var(--muted); font-weight:700; }
+
+    /* MODIFICAÇÃO: só a posição/organização das cartas */
     .cards{
       display:flex;
       gap:8px;
       align-items:center;
       justify-content:center;
     }
+
     .player-top .cards,
     .player-bottom .cards{
       flex-direction:row;
       flex-wrap:wrap;
       justify-content:center;
     }
+
     .player-left .cards,
     .player-right .cards{
       flex-direction:row;
@@ -319,6 +342,7 @@
       gap:4px;
       max-width:100%;
     }
+
     .player-top .cards{
       gap:4px;
       max-width:100%;
@@ -336,6 +360,7 @@
     .player-right .card:hover{
       transform: translateY(-3px) scale(1.02);
     }
+
     .player-top{ grid-column:1 / 4; grid-row:1; align-self:start; justify-self:center; }
     .player-left{ grid-column:1; grid-row:2; align-self:center; justify-self:start; }
     .player-right{ grid-column:3; grid-row:2; align-self:center; justify-self:end; }
@@ -346,6 +371,7 @@
       position:relative;
     }
     .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; justify-self:center; }
+
     .center-card-row{ display:flex; align-items:center; gap:14px; justify-content:center; }
     .seat-actions{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
     .pile{
@@ -356,10 +382,12 @@
     .pile.draw{ background: linear-gradient(135deg, rgba(15,23,42,.92), rgba(30,41,59,.92)); }
     .pile.discard{ position:relative; overflow:hidden; }
     .pile.discard .card{ margin:0; }
+
     .board-note{
       padding:10px 14px; text-align:center; font-size:.9rem; color:var(--muted);
       max-width: 340px;
     }
+
     .card{
       width:var(--card-w);
       height:var(--card-h);
@@ -396,6 +424,8 @@
       cursor:default;
     }
     .card.back::after{ content:""; }
+
+    /* ========== CHAT ========== */
     .chat-panel{
       position:fixed;
       right:16px; bottom:16px;
@@ -481,12 +511,16 @@
       width:auto;
       max-height:none;
     }
+
+    /* Remove a quebra de layout em telas menores – mantém sempre 3 colunas */
     @media (max-width: 920px){
       .rooms{ grid-template-columns:1fr; }
+      /* NÃO altera mais o .board – ele permanece com 3 colunas e 3 linhas */
       .chat-panel{ position:relative; right:auto; bottom:auto; width:auto; margin-top:12px; }
       .stop-categories{ grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
       .stop-panel{ top:8px; width:calc(100vw - 12px); max-height:calc(100vh - 16px); padding:16px; }
     }
+
     .lobby-topbar{
       display:flex;
       justify-content:flex-end;
@@ -584,6 +618,7 @@
     .switch input:checked + .slider::before{
       transform:translateX(26px);
     }
+
     .stop-panel{
       display:none;
       position:fixed;
@@ -786,7 +821,12 @@
       margin-top:8px;
     }
     .hidden{ display:none !important; }
+  
+    /* ========== MELHORIAS RESPONSIVAS ADICIONADAS ========== */
+    /* Base mobile-first */
     img, video { max-width: 100%; height: auto; }
+    
+    /* Ajustes para telas médias e pequenas */
     @media (max-width: 1024px){
       :root{
         --card-w: clamp(52px, 7vw, 78px);
@@ -795,24 +835,45 @@
       .rooms{ grid-template-columns: repeat(2, 1fr); }
       .panel{ padding: clamp(18px, 3.5vw, 32px); }
     }
+
     @media (max-width: 768px){
       html{ overflow-y: auto; }
       body{ overflow-x: hidden; }
-      .screen{ padding: 12px; align-items: flex-start; }
+      
+      .screen{
+        padding: 12px;
+        align-items: flex-start;
+      }
       #lobbyScreen{ padding-top: 12px; padding-bottom: 24px; }
-      .panel{ width: 100%; border-radius: 20px; padding: 18px; }
+      
+      .panel{
+        width: 100%;
+        border-radius: 20px;
+        padding: 18px;
+      }
+      
       h1{ font-size: clamp(1.8rem, 8vw, 2.6rem); }
       .subtitle{ font-size: .95rem; }
+      
       .lobby-grid{ gap: 14px; }
       .rooms{ grid-template-columns: 1fr; gap: 12px; }
       .room-card{ padding: 14px; }
       .room-head{ flex-wrap: wrap; gap: 8px; }
+      
       .name-row{ flex-direction: column; }
       .name-row input, .name-row .btn{ width: 100%; }
       .btn{ padding: 14px 18px; font-size: 1rem; }
       .btn.small{ padding: 10px 14px; font-size: .9rem; }
-      .top-bar, .hud{ flex-direction: column; align-items: stretch; gap: 10px; }
+      
+      /* Top bar e HUD empilham */
+      .top-bar, .hud{
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
       .hud{ padding: 12px; }
+      
+      /* Tabuleiro e mesa com scroll horizontal suave */
       .board, .table, .hand, .players-bar{
         overflow-x: auto;
         overflow-y: hidden;
@@ -820,21 +881,41 @@
         scroll-snap-type: x proximity;
         padding-bottom: 6px;
       }
+      
+      /* Cartas menores em mobile */
       :root{
         --card-w: clamp(48px, 16vw, 70px);
         --card-small-w: clamp(36px, 12vw, 50px);
         --radius: 18px;
       }
-      .chat-panel, .music-player, .board-note{ width: 100%; border-radius: 18px; }
+      
+      /* Chat e painéis laterais viram full-width */
+      .chat-panel, .music-player, .board-note{
+        width: 100%;
+        border-radius: 18px;
+      }
+      
+      /* Grids genéricos viram 1 coluna */
       [style*="grid-template-columns: 1fr 1.2fr 1fr"],
       [style*="grid-template-columns:1fr 1.2fr 1fr"]{
         display: grid !important;
         grid-template-columns: 1fr !important;
       }
-      .modal, .panel.modal-content{ width: calc(100% - 24px); max-height: 90vh; overflow-y: auto; }
+      
+      /* Modais ocupam quase tela toda */
+      .modal, .panel.modal-content{
+        width: calc(100% - 24px);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      
+      /* Footer e controles de música */
       .music-controls{ flex-wrap: wrap; gap: 8px; }
+      
+      /* Evita zoom em inputs iOS */
       input, select, textarea{ font-size: 16px !important; }
     }
+
     @media (max-width: 480px){
       :root{
         --card-w: clamp(44px, 18vw, 62px);
@@ -846,16 +927,25 @@
       .btn{ width: 100%; justify-content: center; }
       .mini-note{ font-size: .85rem; }
     }
+
+    /* Landscape em celulares pequenos */
     @media (max-height: 500px) and (orientation: landscape){
       .screen{ padding: 8px; }
       .panel{ padding: 12px; }
       h1{ font-size: 1.6rem; }
       .rooms{ grid-template-columns: repeat(2, 1fr); }
     }
-    button, .btn, .card, .room-card, input[type="button"]{ touch-action: manipulation; }
+
+    /* Melhor toque e acessibilidade */
+    button, .btn, .card, .room-card, input[type="button"]{
+      touch-action: manipulation;
+    }
+    
+    /* Evita overflow horizontal geral */
     *{ min-width: 0; }
     .table, .board{ max-width: 100vw; }
-  </style>
+
+</style>
 </head>
 <body data-theme="light">
   <!-- LOBBY -->
@@ -917,7 +1007,7 @@
         </div>
         <div class="hud-right">
           <div id="voiceGroup" class="voice-group">
-            <button id="audioBtn" class="btn secondary mini-toggle" onclick="toggleAudio()">Áudio: ligado</button>
+            <button id="audioBtn" class="btn secondary mini-toggle" onclick="toggleAudio()">Áudio: desligado</button>
             <button id="micBtn" class="btn secondary mini-toggle" onclick="toggleMic()">Mic: desligado</button>
             <label class="tiny-control"><span>Mic</span><input id="micVolume" type="range" min="0" max="100" value="100" oninput="setMicVolume(this.value)" /></label>
             <label class="tiny-control"><span>Som</span><input id="masterVolume" type="range" min="0" max="100" value="100" oninput="setMasterVolume(this.value)" /></label>
@@ -931,7 +1021,9 @@
         </div>
       </div>
       <div class="board" id="gameBoard">
+        <!-- Jogador 4 no topo -->
         <div id="p4" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
+        <!-- Jogador 3 na esquerda -->
         <div id="p3" class="hand side player-left"><div class="info"></div><div class="cards"></div></div>
         <div class="center-area">
           <div class="center-card-row">
@@ -939,6 +1031,7 @@
             <div id="discardPile" class="pile discard"></div>
           </div>
           <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre</div>
+
           <div id="stopPanel" class="stop-panel hidden">
             <div class="stop-head">
               <div class="stop-hero">
@@ -964,7 +1057,9 @@
           </div>
           <button id="drawCardBtn" class="btn" onclick="drawCard()">Comprar carta</button>
         </div>
+        <!-- Jogador 2 na direita -->
         <div id="p2" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
+        <!-- Suas cartas (jogador 1) embaixo, no centro -->
         <div id="p1" class="hand player-bottom"><div class="info"></div><div class="cards"></div></div>
       </div>
     </div>
@@ -985,6 +1080,7 @@
     </div>
   </div>
 
+  
   <div id="stopHistoryModal" class="modal" style="display:none">
     <div class="modal-card" style="max-width:920px;">
       <div class="section-title">
@@ -1071,7 +1167,7 @@ const STOP_STALE_MS = 120000;
       musicVolume: 0.7,
       masterVolume: 1,
       micVolume: 1,
-      audioEnabled: true,
+      audioEnabled: false,
       micEnabled: false,
       micStream: null,
       micOutputStream: null,
@@ -2001,7 +2097,7 @@ const STOP_STALE_MS = 120000;
       document.getElementById("statusNote").textContent = gameState.penalty > 0 ? `Punição ativa: compre ${gameState.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
     }
 
-    // ========== MÚSICA E ÁUDIO (CORRIGIDO) ==========
+    // ========== MÚSICA E ÁUDIO ==========
     function setupMusic(){
       if(!gameState.musicAudio){
         gameState.musicAudio = new Audio();
@@ -2133,16 +2229,7 @@ const STOP_STALE_MS = 120000;
         throw new Error('Microfone não disponível');
       }
 
-      const rawStream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-          channelCount: 1,
-          sampleRate: 48000
-        }, 
-        video: false 
-      });
+      const rawStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
       gameState.micStream = rawStream;
 
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -2170,7 +2257,6 @@ const STOP_STALE_MS = 120000;
       return rawStream;
     }
 
-    // CORREÇÃO: attachRemoteAudio com fallback de autoplay
     function attachRemoteAudio(remoteId, stream){
       ensureVoiceContainers();
       let audio = gameState.voiceRemoteAudio?.[remoteId];
@@ -2186,18 +2272,8 @@ const STOP_STALE_MS = 120000;
       audio.srcObject = stream;
       audio.volume = gameState.masterVolume;
       audio.muted = !gameState.audioEnabled;
-      const playPromise = audio.play();
-      if(playPromise !== undefined){
-        playPromise.catch(e => {
-          console.warn(`Autoplay bloqueado para ${remoteId}, tentando novamente com interação`, e);
-          const unlock = () => {
-            audio.play().catch(()=>{});
-            document.removeEventListener('click', unlock);
-            document.removeEventListener('touchstart', unlock);
-          };
-          document.addEventListener('click', unlock);
-          document.addEventListener('touchstart', unlock);
-        });
+      if(gameState.audioEnabled){
+        audio.play().catch(() => {});
       }
     }
 
@@ -2219,23 +2295,6 @@ const STOP_STALE_MS = 120000;
       });
     }
 
-    // CORREÇÃO: servidores ICE mais confiáveis
-    const ICE_SERVERS = [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
-      {
-        urls: 'turn:turn.anyfirewall.com:443?transport=tcp',
-        username: 'anyfirewall',
-        credential: 'anyfirewall'
-      },
-      {
-        urls: 'turn:turn.anyfirewall.com:80?transport=udp',
-        username: 'anyfirewall',
-        credential: 'anyfirewall'
-      }
-    ];
-
     function ensureVoicePeer(ctx, remoteId){
       if(!remoteId || remoteId === gameState.myId) return null;
       if(gameState.voicePeers?.[remoteId]) return gameState.voicePeers[remoteId];
@@ -2245,9 +2304,14 @@ const STOP_STALE_MS = 120000;
         return null;
       }
 
-      const pc = new RTCPeer({ iceServers: ICE_SERVERS });
+      const pc = new RTCPeer({
+        iceServers: [
+          { urls: ['stun:stun.l.google.com:19302'] },
+          { urls: ['stun:global.stun.twilio.com:3478'] }
+        ]
+      });
 
-      const entry = { pc, remoteId, pendingCandidates: [] };
+      const entry = { pc, remoteId };
       if(!gameState.voicePeers) gameState.voicePeers = {};
       gameState.voicePeers[remoteId] = entry;
 
@@ -2283,7 +2347,7 @@ const STOP_STALE_MS = 120000;
             if(!gameState.voicePeers?.[remoteId] || gameState.voicePeers[remoteId].pc !== pc) return;
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            sendVoiceSignal(ctx, remoteId, 'offer', {type: pc.localDescription.type, sdp: pc.localDescription.sdp});
+            sendVoiceSignal(ctx, remoteId, 'offer', pc.localDescription);
           }catch(err){
             console.warn('Falha ao criar offer de voz:', err);
           }
@@ -2308,19 +2372,13 @@ const STOP_STALE_MS = 120000;
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           sendVoiceSignal(ctx, remoteId, 'answer', pc.localDescription);
-          for(const c of entry.pendingCandidates.splice(0)){
-            try{ await pc.addIceCandidate(new RTCIceCandidate(c)); }catch(e){}
-          }
         } else if(data.kind === 'answer' && data.payload){
           await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
-          for(const c of entry.pendingCandidates.splice(0)){
-            try{ await pc.addIceCandidate(new RTCIceCandidate(c)); }catch(e){}
-          }
         } else if(data.kind === 'candidate' && data.payload){
-          if(pc.remoteDescription){
+          try{
             await pc.addIceCandidate(new RTCIceCandidate(data.payload));
-          } else {
-            entry.pendingCandidates.push(data.payload);
+          }catch(err){
+            console.warn('Falha ao adicionar candidato ICE:', err);
           }
         }
       }catch(err){
@@ -2412,22 +2470,12 @@ const STOP_STALE_MS = 120000;
       const micBtn = document.getElementById('micBtn');
       if(micBtn) micBtn.textContent = gameState.micEnabled ? 'Mic: ligado' : 'Mic: desligado';
 
+      // Ao falar, o áudio de retorno precisa estar disponível para ouvir os demais.
       if(gameState.micEnabled && !gameState.audioEnabled){
         gameState.audioEnabled = true;
         const audioBtn = document.getElementById('audioBtn');
         if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
       }
-
-      // CORREÇÃO: Desbloquear AudioContext explicitamente no clique
-      try {
-        if (window.AudioContext || window.webkitAudioContext) {
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          if (ctx.state === 'suspended') ctx.resume();
-          ctx.close(); // apenas para ativar o desbloqueio
-        }
-        // Tenta também reproduzir qualquer áudio remoto pendente
-        document.querySelectorAll('#voiceHiddenAudioContainer audio').forEach(a => a.play().catch(()=>{}));
-      } catch(e){}
 
       refreshVoiceChat(true);
     }
@@ -2437,17 +2485,11 @@ const STOP_STALE_MS = 120000;
       const audioBtn = document.getElementById('audioBtn');
       if(audioBtn) audioBtn.textContent = gameState.audioEnabled ? 'Áudio: ligado' : 'Áudio: desligado';
       updateVoiceAudioVolumes();
-      try {
-        if (window.AudioContext || window.webkitAudioContext) {
-          const ctx = new (window.AudioContext || window.webkitAudioContext)();
-          if (ctx.state === 'suspended') ctx.resume();
-        }
-        document.querySelectorAll('#voiceHiddenAudioContainer audio').forEach(a => a.play().catch(()=>{}));
-      } catch(e){}
       refreshVoiceChat(true);
     }
 
-    // ========== CHAT (inalterado) ==========
+    // ========== CHAT ==========
+
     function initRoomChat(roomId){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
       const q = db.collection('chat').where('roomId', '==', roomId);
@@ -2569,23 +2611,2125 @@ const STOP_STALE_MS = 120000;
       renderLobbyRooms();
       bootstrapLobbyRooms();
     };
-
-  // ========== ADMIN E STOP (INALTERADO - MANTIDO ORIGINAL) ==========
-  // O restante do código (painel admin, sala stop, etc.) é exatamente igual ao original.
-  // Devido à extensão, ele está presente no seu arquivo original e não foi modificado.
-  // Para manter a resposta dentro do limite, os blocos admin e stop foram mantidos como estavam.
-  // Eles estão no seu arquivo original e funcionarão normalmente.
-  // Abaixo uma referência para garantir que as funções não quebrem.
-  // (Na implementação real, todo o conteúdo do script original deve ser mantido)
   </script>
 
-  <!-- Os modais e o restante do HTML (adminModal, peopleModal) estão inalterados -->
-  <div id="adminModal" class="modal">...</div>
-  <div id="peopleModal" class="modal">...</div>
-  <script>
-    // Recarregar a parte final do script original (admin e stop) que foi omitida por brevidade.
-    // Na prática, você deve manter todo o script original a partir daqui.
-    // Como o chat é longo, o código acima já contém todas as correções de áudio necessárias.
-  </script>
+
+  <div id="adminModal" class="modal">
+    <div class="modal-card">
+      <div class="section-title">
+        <h3>adm</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn secondary small" type="button" onclick="logoutAdmin()">Sair</button>
+          <button class="btn secondary small" type="button" onclick="closeAdminModal()">Fechar</button>
+        </div>
+      </div>
+
+      <div id="adminLoginBox" class="modal-section">
+        <strong>Senha de acesso</strong>
+        <div class="mini-note">Senha provisória: 123.</div>
+        <div class="modal-row" style="margin-top:10px;">
+          <input id="adminCodeInput" class="field" type="password" placeholder="Digite a senha" />
+          <button class="btn" type="button" onclick="loginAdmin()">Entrar</button>
+        </div>
+      </div>
+
+      <div id="adminPanel" class="hidden">
+        <div id="adminAccessInfo" class="modal-section"></div>
+
+        <div class="modal-section" data-permission="password">
+          <strong>Trocar senha</strong>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="newAdminPasswordInput" class="field" type="password" placeholder="Nova senha do adm" />
+            <button class="btn" type="button" onclick="saveAdminPassword()">Salvar</button>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="rooms">
+          <strong>Salas</strong>
+          <div class="mini-note">Criar novas salas, deletar salas existentes e colocar senha nas salas.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="newRoomNameInput" class="field" type="text" placeholder="Nome da nova sala" />
+            <input id="newRoomIdInput" class="field" type="text" placeholder="ID opcional (ex: sala4)" />
+            <select id="newRoomTypeInput" class="field">
+              <option value="card">Sala de cartas</option>
+              <option value="stop">Sala de stop</option>
+            </select>
+            <button class="btn" type="button" onclick="createAdminRoom()">Criar sala</button>
+          </div>
+          <div class="modal-row" style="margin-top:10px;">
+            <select id="adminRoomSelect" onchange="renderAdminRoomDetails()"></select>
+          </div>
+          <div id="adminRoomDetails" class="list"></div>
+        </div>
+
+        <div class="modal-section" data-permission="music">
+          <strong>Músicas da sala</strong>
+          <div class="mini-note">Cole uma URL por linha. Vale para a sala selecionada.</div>
+          <textarea id="roomMusicList" rows="6" placeholder="Uma URL por linha"></textarea>
+          <div class="modal-row" style="margin-top:10px;">
+            <button class="btn" type="button" onclick="saveRoomMusicList()">Salvar músicas</button>
+            <button class="btn secondary" type="button" onclick="resetRoomMusicList()">Restaurar padrão</button>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="autoplay">
+          <strong>Autoplay nas salas</strong>
+          <div class="mini-note">Quando ligado, ao entrar na sala a música do player começa automaticamente.</div>
+          <div class="modal-row" style="margin-top:10px; align-items:center;">
+            <label class="theme-switch" style="justify-content:flex-start;">
+              <span class="theme-label">Ativo</span>
+              <span class="switch"><input id="roomAutoPlayToggle" type="checkbox" onchange="toggleRoomAutoPlay()" /><span class="slider"></span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="delegate">
+          <strong>Delegar função</strong>
+          <div class="mini-note">Escolha um jogador e atribua permissões para ele abrir o adm sem senha.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="adminUserSearch" class="field" type="text" placeholder="Pesquisar por nome ou id" oninput="renderAdminDelegationSearch()" />
+          </div>
+          <div id="adminDelegationSearchResults" class="list"></div>
+          <div id="adminSelectedUser" class="modal-section" style="display:none;"></div>
+          <div class="permission-grid">
+            <label class="permission-chip"><input type="checkbox" id="perm_password"> Trocar senha</label>
+            <label class="permission-chip"><input type="checkbox" id="perm_rooms"> Salas</label>
+            <label class="permission-chip"><input type="checkbox" id="perm_music"> Músicas</label>
+            <label class="permission-chip"><input type="checkbox" id="perm_autoplay"> Autoplay</label>
+            <label class="permission-chip"><input type="checkbox" id="perm_delegate"> Delegar função</label>
+          </div>
+          <div class="modal-row" style="margin-top:10px;">
+            <button class="btn" type="button" onclick="saveDelegation()">Salvar delegação</button>
+            <button class="btn secondary" type="button" onclick="clearDelegation()">Limpar seleção</button>
+          </div>
+          <div style="margin-top:12px;">
+            <strong>Delegações salvas</strong>
+            <div id="delegationList" class="list"></div>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="rooms">
+          <strong>Resetar salas</strong>
+          <div class="mini-note">Clique para limpar todas as salas e reiniciar.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <button class="btn" type="button" onclick="resetAllRooms()">Resetar agora</button>
+          </div>
+          <div class="mini-note" style="margin-top:12px;">Reset automático diário (hora 0-23). Deixe vazio para desativar.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="autoResetHourInput" class="field" type="number" min="0" max="23" placeholder="Ex: 22" />
+            <button class="btn secondary" type="button" onclick="saveAutoResetHour()">Salvar hora</button>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="rooms">
+          <strong>Excluir jogadores</strong>
+          <div class="mini-note">Selecione um jogador do registro e remova do site.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <select id="deletePlayerSelect" class="field"></select>
+            <button class="btn" type="button" onclick="deleteSelectedPlayer()">Excluir jogador</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="peopleModal" class="modal">
+    <div class="modal-card">
+      <div class="section-title">
+        <h3>Pessoas na sala</h3>
+        <button class="btn secondary small" type="button" onclick="closePeopleModal()">Fechar</button>
+      </div>
+      <div class="mini-note">Lista de jogadores e de quem está assistindo.</div>
+      <div id="peopleList" class="list"></div>
+    </div>
+  </div>
+
+
+<script>
+(() => {
+  const SETTINGS_KEY = 'cartas_admin_settings_v4';
+  const USER_ID_KEY = 'cartas_user_id_v4';
+  const SETTINGS_DOC = db.collection('appMeta').doc('global');
+  const DEFAULT_PLAYLIST = [
+    'https://raw.githubusercontent.com/fil0099/livedacaca/main/music_for_video-just-relax-11157.mp3',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/main/sigmamusicart-jazz-lounge-relaxing-background-music-514554.mp3',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/main/sonican-lo-fi-music-loop-sentimental-jazzy-love-473154.mp3'
+  ];
+  const DEFAULT_ROOMS = [
+    { id: 'sala1', name: 'Sala 1', type: 'card' },
+    { id: 'sala2', name: 'Sala 2', type: 'card' },
+    { id: 'sala3', name: 'Sala 3', type: 'card' },
+    { id: 'stop-main', name: 'Sala Stop', type: 'stop' }
+  ];
+  const PERM_KEYS = ['password','rooms','music','autoplay','delegate'];
+  const allPerms = () => ({ password:true, rooms:true, music:true, autoplay:true, delegate:true });
+
+  let adminUnsubSettings = null;
+  let adminRoomUnsubs = [];
+  let adminSaveQueued = false;
+
+  const adminState = {
+    mode: 'none',
+    permissions: {},
+    selectedUserId: '',
+    selectedRoomId: 'sala1',
+    roomCache: {},
+    settings: loadSettings(),
+  };
+
+  function randomId4(){
+    return Math.floor(Math.random() * 0x10000).toString(16).toUpperCase().padStart(4, '0');
+  }
+
+  function getOrCreateUserId(){
+    let id = localStorage.getItem(USER_ID_KEY);
+    if(!id){ id = randomId4(); localStorage.setItem(USER_ID_KEY, id); }
+    return String(id).toUpperCase().slice(0,4).padStart(4,'0');
+  }
+
+  function loadSettings(){
+    const base = {
+      adminPassword: '123',
+      rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name, type:r.type || 'card' })),
+      roomMeta: DEFAULT_ROOMS.reduce((acc, r) => {
+        acc[r.id] = { name:r.name, password:'', autoplay:true, listenMode:false, playlist: DEFAULT_PLAYLIST.slice() };
+        return acc;
+      }, {}),
+      delegations: {},
+      userRegistry: []
+    };
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); } catch(e) {}
+    if(!local) return base;
+    const next = {
+      ...base,
+      ...local,
+      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : 'card') })).filter(r => r.id) : base.rooms.slice(),
+      roomMeta: { ...base.roomMeta, ...(local.roomMeta || {}) },
+      delegations: local.delegations && typeof local.delegations === 'object' ? local.delegations : {},
+      userRegistry: Array.isArray(local.userRegistry) ? local.userRegistry : []
+    };
+    next.rooms = next.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
+    next.rooms.forEach(room => {
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card' };
+      next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
+      next.roomMeta[room.id].type = next.roomMeta[room.id].type === 'stop' ? 'stop' : (room.type || 'card');
+      next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
+      next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
+      next.roomMeta[room.id].listenMode = next.roomMeta[room.id].listenMode === true;
+      next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
+    });
+    return next;
+  }
+
+  function saveSettings(){
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(adminState.settings));
+    SETTINGS_DOC.set(adminState.settings, { merge:true }).catch(()=>{});
+    scheduleRefresh();
+  }
+
+  function mergeRemoteSettings(remote){
+    if(!remote || typeof remote !== 'object') return;
+    const next = loadSettings();
+    if(typeof remote.adminPassword === 'string') next.adminPassword = remote.adminPassword;
+    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : 'card') })).filter(r => r.id);
+    if(remote.roomMeta && typeof remote.roomMeta === 'object') next.roomMeta = { ...next.roomMeta, ...remote.roomMeta };
+    if(remote.delegations && typeof remote.delegations === 'object') next.delegations = remote.delegations;
+    if(Array.isArray(remote.userRegistry)) next.userRegistry = remote.userRegistry;
+    next.rooms.forEach(room => {
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice() };
+      next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
+      next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
+      next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
+      next.roomMeta[room.id].listenMode = next.roomMeta[room.id].listenMode === true;
+      next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
+    });
+    adminState.settings = next;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+  }
+
+  function getRooms(type = null){
+    const seen = new Set();
+    return (adminState.settings.rooms || []).map(room => {
+      const id = String(room.id || '').trim();
+      const meta = adminState.settings.roomMeta?.[id] || {};
+      const roomType = String(meta.type || room.type || 'card').trim() === 'stop' ? 'stop' : 'card';
+      if(type && roomType !== type) return null;
+      const item = { id, name: String(meta.name || room.name || id).trim() || id, type: roomType };
+      if(seen.has(item.id)) return null;
+      seen.add(item.id);
+      return item;
+    }).filter(Boolean);
+  }
+
+  function getRoomMeta(roomId){
+    const id = String(roomId || '').trim();
+    const room = (adminState.settings.rooms || []).find(r => r.id === id);
+    const fallbackType = room && String(room.type || 'card').trim() === 'stop' ? 'stop' : 'card';
+    return adminState.settings.roomMeta?.[id] || { name:id, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:fallbackType };
+  }
+
+  function getRoomType(roomId){
+    const id = String(roomId || '').trim();
+    const meta = getRoomMeta(id);
+    return String(meta.type || 'card').trim() === 'stop' ? 'stop' : 'card';
+  }
+
+  function setRoomMeta(roomId, patch){
+    const id = String(roomId || '').trim();
+    if(!id) return;
+    adminState.settings.roomMeta[id] = {
+      ...(adminState.settings.roomMeta[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() }),
+      ...patch
+    };
+    if(!adminState.settings.rooms.some(r => r.id === id)) adminState.settings.rooms.push({ id, name: adminState.settings.roomMeta[id].name || id, type: adminState.settings.roomMeta[id].type || 'card' });
+    adminState.settings.rooms = adminState.settings.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
+    adminState.settings.rooms = adminState.settings.rooms.map(r => r.id === id ? { id, name: adminState.settings.roomMeta[id].name || r.name || id } : r);
+    saveSettings();
+    renderLobbyRooms();
+    renderAdminModal();
+  }
+
+  function getMyPermissions(){
+    if(adminState.mode === 'password') return allPerms();
+    return adminState.settings.delegations?.[gameState.myId] || {};
+  }
+  function hasPermission(key){
+    return adminState.mode === 'password' || !!getMyPermissions()[key];
+  }
+  function canOpenAdmin(){
+    return adminState.mode === 'password' || Object.values(getMyPermissions()).some(Boolean);
+  }
+
+  function syncCurrentUserId(){
+    gameState.myId = getOrCreateUserId();
+    if(!Array.isArray(gameState.botIds) || gameState.botIds.length !== 3){
+      gameState.botIds = [randomId4(), randomId4(), randomId4()];
+    }
+  }
+
+  syncCurrentUserId();
+
+  function currentRoomLabel(roomId){
+    const meta = getRoomMeta(roomId);
+    return meta.name || roomId;
+  }
+
+  function getStopRoomId(){
+    return String(gameState.stopRoomId || STOP_ROOM_ID || 'stop-main');
+  }
+
+  function roomPlayersFromState(state){
+    const out = [];
+    if(!state || !state.slots) return out;
+    for(let slot = 1; slot <= 4; slot++){
+      const s = state.slots[slot];
+      if(s && s.id) out.push({ slot, id:String(s.id).toUpperCase().slice(0,4), name:String(s.name || `Jogador ${slot}`), watching:false });
+    }
+    return out;
+  }
+
+  function registerPresence({ roomId = '', slot = null, watching = false } = {}){
+    const current = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry.slice() : [];
+    const id = gameState.myId;
+    const name = String(gameState.myName || 'Você').slice(0,18);
+    const idx = current.findIndex(u => String(u.id || '').toUpperCase() === id);
+    const payload = { id, name, roomId, slot, watching, lastSeen: Date.now() };
+    if(idx >= 0) current[idx] = { ...current[idx], ...payload };
+    else current.push(payload);
+    adminState.settings.userRegistry = current.slice(-200);
+    saveSettings();
+  }
+
+  function roomPlaylist(roomId){
+    return getRoomMeta(roomId).playlist || DEFAULT_PLAYLIST.slice();
+  }
+  function roomAutoplay(roomId){
+    return getRoomType(roomId) !== 'stop' && getRoomMeta(roomId).autoplay !== false;
+  }
+
+  function refreshRoomListeners(){
+    adminRoomUnsubs.forEach(fn => { try{ fn(); }catch(e){} });
+    adminRoomUnsubs = [];
+    const rooms = getRooms();
+    rooms.forEach(room => {
+      const col = room.type === 'stop' ? db.collection('stopRooms') : db.collection('rooms');
+      const unsub = col.doc(room.id).onSnapshot(snap => {
+        adminState.roomCache[room.id] = snap.exists ? snap.data() : null;
+        renderLobbyRooms();
+        renderAdminRoomDetails();
+        renderPeopleModal();
+      }, () => {
+        adminState.roomCache[room.id] = null;
+        renderLobbyRooms();
+      });
+      adminRoomUnsubs.push(unsub);
+    });
+  }
+
+  function listenSettings(){
+    if(adminUnsubSettings) { try{ adminUnsubSettings(); }catch(e){} }
+    adminUnsubSettings = SETTINGS_DOC.onSnapshot(snap => {
+      if(snap.exists) mergeRemoteSettings(snap.data());
+      renderLobbyRooms();
+      renderAdminModal();
+      renderPeopleModal();
+      refreshRoomListeners();
+    });
+  }
+
+  function scheduleRefresh(){
+    if(adminSaveQueued) return;
+    adminSaveQueued = true;
+    setTimeout(() => {
+      adminSaveQueued = false;
+      renderLobbyRooms();
+      renderAdminModal();
+      renderPeopleModal();
+      refreshRoomListeners();
+    }, 0);
+  }
+
+  function roomOccupancy(roomId){
+    const roomDoc = adminState.roomCache[roomId];
+    const state = roomDoc?.state || null;
+    if(!state) return { occupied: 0, state: null };
+    const occupied = state.slots ? Object.values(state.slots).filter(Boolean).length : 0;
+    return { occupied, state };
+  }
+
+  function renderLobbyRooms(){
+    const container = document.getElementById('roomsList');
+    if(!container) return;
+    container.innerHTML = '';
+    const rooms = getRooms();
+    rooms.forEach(room => {
+      const locked = !!getRoomMeta(room.id).password;
+      if(room.type === 'stop'){
+        const state = adminState.roomCache[room.id] || null;
+        const phase = state?.phase || 'waiting';
+        const status = phase === 'writing' ? 'Partida ativa' : (phase === 'results' ? 'Resultados' : 'Aguardando jogadores');
+        const div = document.createElement('div');
+        div.className = 'room-card';
+        div.innerHTML = `
+          <div class="room-head">
+            <strong>${escapeHtml(room.name)}</strong>
+            <span class="room-tag">STOP</span>
+          </div>
+          <small>${escapeHtml(status)}</small>
+          <div class="room-actions" style="align-items:center;">
+            <span class="pill">ID ${escapeHtml(room.id)}</span>
+            <button class="btn secondary" onclick="joinStopRoom('${room.id}')">${locked ? 'Entrar 🔒' : 'Entrar'}</button>
+          </div>
+        `;
+        container.appendChild(div);
+        return;
+      }
+      const { occupied, state } = roomOccupancy(room.id);
+      const status = state ? (state.gameRunning ? 'Partida ativa' : 'Sala pronta') : 'Aguardando jogadores';
+      const btnLabel = locked ? 'Entrar 🔒' : (state && state.seatingOpen === false ? 'Assistir' : 'Entrar');
+      const div = document.createElement('div');
+      div.className = 'room-card';
+      div.innerHTML = `
+        <div class="room-head">
+          <strong>${escapeHtml(room.name)}</strong>
+          <span class="room-tag">${occupied}/4</span>
+        </div>
+        <small>${escapeHtml(status)}</small>
+        <div class="room-actions" style="align-items:center;">
+          <span class="pill">ID ${escapeHtml(room.id)}</span>
+          <button class="btn secondary" onclick="joinRoom('${room.id}')">${btnLabel}</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  async function ensureRoomDoc(roomId){
+    const ref = db.collection('rooms').doc(roomId);
+    const snap = await ref.get();
+    if(!snap.exists){
+      await ref.set({
+        roomId,
+        roomName: currentRoomLabel(roomId),
+        state: createFreshRoomState(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  }
+
+  async function ensureStopRoomDoc(roomId){
+    const ref = db.collection('stopRooms').doc(roomId);
+    const snap = await ref.get();
+    if(!snap.exists){
+      await ref.set({
+        roomId,
+        roomName: currentRoomLabel(roomId),
+        gameNumber: 1,
+        phase: 'waiting',
+        letter: '-',
+        players: {},
+        history: [],
+        startedAt: Date.now(),
+        roundStartedAt: null,
+        roundEndedAt: null,
+        stoppedBy: null,
+        lastResults: null,
+        updatedAt: Date.now()
+      });
+    }
+  }
+
+  async function deleteRoomChatMessages(roomId){
+    try{
+      const snap = await db.collection('chat').where('roomId', '==', roomId).get();
+      if(snap.empty) return;
+      const batch = db.batch();
+      snap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    }catch(e){}
+  }
+
+  async function createAdminRoom(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    let name = document.getElementById('newRoomNameInput')?.value.trim();
+    let id = document.getElementById('newRoomIdInput')?.value.trim();
+    const type = String(document.getElementById('newRoomTypeInput')?.value || 'card') === 'stop' ? 'stop' : 'card';
+    if(!name) name = type === 'stop' ? 'Sala Stop' : 'Nova sala';
+    if(!id){
+      id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || (type === 'stop' ? 'stop' : 'sala');
+      id = `${id}${Math.floor(Math.random()*90+10)}`;
+    }
+    if(adminState.settings.rooms.some(r => r.id === id)) return alert('Já existe uma sala com esse ID.');
+    adminState.settings.rooms.push({ id, name, type });
+    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type };
+    saveSettings();
+    if(type === 'stop') await ensureStopRoomDoc(id);
+    else await ensureRoomDoc(id);
+    refreshRoomListeners();
+    renderLobbyRooms();
+    renderAdminModal();
+  }
+
+  async function deleteAdminRoom(roomId){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const id = String(roomId || '').trim();
+    if(!id) return;
+    if(!confirm(`Deletar a sala ${id}?`)) return;
+    const type = getRoomType(id);
+    adminState.settings.rooms = adminState.settings.rooms.filter(r => r.id !== id);
+    delete adminState.settings.roomMeta[id];
+    delete adminState.roomCache[id];
+    saveSettings();
+    try { await db.collection(type === 'stop' ? 'stopRooms' : 'rooms').doc(id).delete(); } catch(e) {}
+    await deleteRoomChatMessages(id);
+    refreshRoomListeners();
+    renderLobbyRooms();
+    renderAdminModal();
+  }
+
+  function renderAdminRoomDetails(){
+    const select = document.getElementById('adminRoomSelect');
+    const list = document.getElementById('adminRoomDetails');
+    if(!select || !list) return;
+    if(select.value){
+      adminState.selectedRoomId = String(select.value).trim();
+    }
+    const rooms = getRooms();
+    if(!rooms.length){
+      select.innerHTML = '<option value="">Sem salas</option>';
+      list.innerHTML = '<div class="list-item"><small>Nenhuma sala cadastrada.</small></div>';
+      return;
+    }
+    const current = rooms.some(r => r.id === adminState.selectedRoomId) ? adminState.selectedRoomId : rooms[0].id;
+    adminState.selectedRoomId = current;
+    select.innerHTML = rooms.map(r => `<option value="${escapeHtml(r.id)}" ${r.id===current?'selected':''}>${escapeHtml(r.name)} (${escapeHtml(r.id)})</option>`).join('');
+    select.value = current;
+    const meta = getRoomMeta(current);
+    const room = adminState.roomCache[current];
+    const occupied = room?.state ? Object.values(room.state.slots || {}).filter(Boolean).length : 0;
+    list.innerHTML = `
+      <div class="list-item"><div><strong>${escapeHtml(meta.name || current)}</strong><div><small>ID ${escapeHtml(current)} · ${occupied}/4 · tipo ${escapeHtml(getRoomType(current) === 'stop' ? 'stop' : 'cartas')}</small></div></div><button class="btn secondary small" onclick="deleteAdminRoom('${escapeHtml(current)}')">Deletar</button></div>
+      <div class="list-item"><input id="roomPasswordInput" type="text" placeholder="Senha da sala" value="${escapeHtml(meta.password || '')}" /><button class="btn" type="button" onclick="saveRoomPassword()">Salvar senha</button></div>
+      <div class="list-item"><input id="roomNameInput" type="text" placeholder="Nome da sala" value="${escapeHtml(meta.name || current)}" /><button class="btn secondary" type="button" onclick="saveRoomName()">Salvar nome</button></div>
+      <div class="list-item">
+        <label class="theme-switch" style="justify-content:flex-start;">
+          <span class="theme-label">Modo escuto</span>
+          <span class="switch"><input id="roomListenModeToggle" type="checkbox" onchange="toggleRoomListenMode()" /><span class="slider"></span></span>
+        </label>
+      </div>
+    `;
+    const music = document.getElementById('roomMusicList');
+    if(music) music.value = (meta.playlist || DEFAULT_PLAYLIST).join('\n');
+    const toggle = document.getElementById('roomAutoPlayToggle');
+    if(toggle) toggle.checked = meta.autoplay !== false;
+    const listenToggle = document.getElementById('roomListenModeToggle');
+    if(listenToggle) listenToggle.checked = meta.listenMode === true;
+  }
+
+  function saveRoomPassword(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const roomId = adminState.selectedRoomId;
+    const input = document.getElementById('roomPasswordInput');
+    setRoomMeta(roomId, { password: String(input?.value || '') });
+  }
+  function saveRoomName(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const roomId = adminState.selectedRoomId;
+    const input = document.getElementById('roomNameInput');
+    const name = String(input?.value || roomId).trim() || roomId;
+    setRoomMeta(roomId, { name });
+  }
+  function saveRoomMusicList(){
+    if(!hasPermission('music')) return alert('Sem permissão de músicas.');
+    const roomId = adminState.selectedRoomId;
+    const textarea = document.getElementById('roomMusicList');
+    const playlist = String(textarea?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
+    setRoomMeta(roomId, { playlist: playlist.length ? playlist : DEFAULT_PLAYLIST.slice() });
+  }
+  function resetRoomMusicList(){
+    if(!hasPermission('music')) return alert('Sem permissão de músicas.');
+    setRoomMeta(adminState.selectedRoomId, { playlist: DEFAULT_PLAYLIST.slice() });
+  }
+  function toggleRoomAutoPlay(){
+    if(!hasPermission('autoplay')) return alert('Sem permissão de autoplay.');
+    const toggle = document.getElementById('roomAutoPlayToggle');
+    setRoomMeta(adminState.selectedRoomId, { autoplay: !!toggle?.checked });
+    refreshCurrentRoomMusic();
+  }
+
+  function toggleRoomListenMode(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const toggle = document.getElementById('roomListenModeToggle');
+    setRoomMeta(adminState.selectedRoomId, { listenMode: !!toggle?.checked });
+  }
+
+  function renderAdminDelegationSearch(){
+    const q = String(document.getElementById('adminUserSearch')?.value || '').trim().toLowerCase();
+    const list = document.getElementById('adminDelegationSearchResults');
+    if(!list) return;
+    const users = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry.slice() : [];
+    const roomState = gameState.roomState;
+    if(roomState && roomState.slots){
+      for(let slot = 1; slot <= 4; slot++){
+        const s = roomState.slots[slot];
+        if(s && s.id){
+          const id = String(s.id).toUpperCase().slice(0,4);
+          if(!users.some(u => String(u.id||'').toUpperCase() === id)) users.push({ id, name: String(s.name || `Jogador ${slot}`), roomId: gameState.roomId, slot, watching:false, lastSeen: Date.now() });
+        }
+      }
+    }
+    const filtered = users.filter(u => !q || String(u.id||'').toLowerCase().includes(q) || String(u.name||'').toLowerCase().includes(q));
+    list.innerHTML = filtered.length ? filtered.map(u => `
+      <div class="list-item" onclick="selectDelegationUser('${escapeHtml(String(u.id||'').toUpperCase().slice(0,4))}')" style="cursor:pointer; ${adminState.selectedUserId === String(u.id||'').toUpperCase().slice(0,4) ? 'outline:2px solid rgba(14,165,233,.35);' : ''}">
+        <div><strong>${escapeHtml(u.name || 'Jogador')} (${escapeHtml(String(u.id||'').toUpperCase().slice(0,4))})</strong><div><small>${u.roomId ? 'Sala ' + escapeHtml(u.roomId) : 'Sem sala'}</small></div></div>
+        <span class="pill">Selecionar</span>
+      </div>
+    `).join('') : '<div class="list-item"><small>Nenhum jogador encontrado.</small></div>';
+  }
+
+  function selectDelegationUser(userId){
+    adminState.selectedUserId = String(userId || '').toUpperCase().slice(0,4);
+    const selected = (adminState.settings.userRegistry || []).find(u => String(u.id||'').toUpperCase().slice(0,4) === adminState.selectedUserId) || null;
+    const box = document.getElementById('adminSelectedUser');
+    if(box){
+      box.style.display = 'block';
+      box.innerHTML = selected ? `<strong>Selecionado:</strong> ${escapeHtml(selected.name || 'Jogador')} (${escapeHtml(selected.id || adminState.selectedUserId)})` : '<small>Selecionado: ' + escapeHtml(adminState.selectedUserId) + '</small>';
+    }
+    renderAdminModal();
+  }
+  function clearDelegation(){
+    adminState.selectedUserId = '';
+    const box = document.getElementById('adminSelectedUser');
+    if(box) box.style.display = 'none';
+    ['perm_password','perm_rooms','perm_music','perm_autoplay','perm_delegate'].forEach(id => { const el = document.getElementById(id); if(el) el.checked = false; });
+    renderAdminModal();
+  }
+  function saveDelegation(){
+    if(!hasPermission('delegate')) return alert('Sem permissão de delegação.');
+    if(!adminState.selectedUserId) return alert('Selecione um jogador.');
+    const payload = {};
+    PERM_KEYS.forEach(key => { const el = document.getElementById('perm_' + key); payload[key] = !!el?.checked; });
+    adminState.settings.delegations[adminState.selectedUserId] = payload;
+    saveSettings();
+    renderAdminModal();
+  }
+  function deleteDelegation(id){
+    if(!hasPermission('delegate')) return alert('Sem permissão de delegação.');
+    delete adminState.settings.delegations[String(id||'').toUpperCase().slice(0,4)];
+    saveSettings();
+    renderAdminModal();
+  }
+
+  function renderDelegationList(){
+    const list = document.getElementById('delegationList');
+    if(!list) return;
+    const entries = Object.entries(adminState.settings.delegations || {});
+    list.innerHTML = entries.length ? entries.map(([id, perms]) => `
+      <div class="list-item">
+        <div>
+          <strong>${escapeHtml(id)}</strong>
+          <div>${PERM_KEYS.filter(k => perms[k]).map(k => `<span class="pill">${escapeHtml(k)}</span>`).join(' ') || '<small>Sem permissões</small>'}</div>
+        </div>
+        <button class="btn secondary small" type="button" onclick="deleteDelegation('${escapeHtml(id)}')">Remover</button>
+      </div>
+    `).join('') : '<div class="list-item"><small>Nenhuma delegação salva.</small></div>';
+  }
+
+  function renderAdminModal(){
+    const modal = document.getElementById('adminModal');
+    const loginBox = document.getElementById('adminLoginBox');
+    const panel = document.getElementById('adminPanel');
+    const accessInfo = document.getElementById('adminAccessInfo');
+    if(!modal || !loginBox || !panel || !accessInfo) return;
+
+    const can = canOpenAdmin();
+    loginBox.classList.toggle('hidden', can);
+    panel.classList.toggle('hidden', !can);
+    accessInfo.innerHTML = can ? `
+      <strong>Acesso liberado</strong>
+      <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+        ${adminState.mode === 'password' ? '<span class="pill">Senha do adm</span>' : ''}
+        ${Object.keys(getMyPermissions()).filter(k => getMyPermissions()[k]).map(k => `<span class="pill">${escapeHtml(k)}</span>`).join('')}
+      </div>
+    ` : '<strong>Digite a senha para abrir as opções.</strong>';
+
+    // sections visibility
+    document.querySelectorAll('#adminPanel [data-permission]').forEach(sec => {
+      const perm = sec.getAttribute('data-permission');
+      sec.classList.toggle('hidden', !hasPermission(perm));
+    });
+
+    const rooms = getRooms();
+    const select = document.getElementById('adminRoomSelect');
+    if(select){
+      const current = rooms.some(r => r.id === adminState.selectedRoomId) ? adminState.selectedRoomId : (rooms[0]?.id || '');
+      adminState.selectedRoomId = current;
+      select.innerHTML = rooms.length ? rooms.map(r => `<option value="${escapeHtml(r.id)}" ${r.id===current?'selected':''}>${escapeHtml(r.name)} (${escapeHtml(r.id)})</option>`).join('') : '<option value="">Sem salas</option>';
+    }
+    renderAdminRoomDetails();
+    renderDelegationList();
+    renderAdminDelegationSearch();
+    const input = document.getElementById('newAdminPasswordInput');
+    if(input) input.value = '';
+    const autoInput = document.getElementById('autoResetHourInput');
+    if(autoInput) autoInput.value = adminState.settings.autoResetHour ?? '';
+    const delSelect = document.getElementById('deletePlayerSelect');
+    if(delSelect){
+      const users = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry.slice(-200).reverse() : [];
+      delSelect.innerHTML = users.length ? users.map(u => `<option value="${escapeHtml(String(u.id||'').toUpperCase())}">${escapeHtml(u.name || 'Jogador')} (${escapeHtml(String(u.id||'').toUpperCase().slice(0,4))})</option>`).join('') : '<option value="">Nenhum jogador</option>';
+    }
+  }
+
+  function openAdminModal(){
+    const modal = document.getElementById('adminModal');
+    if(!modal) return;
+    modal.style.display = 'flex';
+    if(canOpenAdmin()){
+      adminState.mode = adminState.mode === 'password' ? 'password' : 'delegated';
+    }
+    renderAdminModal();
+  }
+  function closeAdminModal(){ const modal = document.getElementById('adminModal'); if(modal) modal.style.display = 'none'; }
+  function loginAdmin(){
+    const typed = String(document.getElementById('adminCodeInput')?.value || '').trim();
+    if(typed === String(adminState.settings.adminPassword || '123').trim()){
+      adminState.mode = 'password';
+      adminState.permissions = allPerms();
+      renderAdminModal();
+      return;
+    }
+    alert('Senha incorreta.');
+  }
+  function logoutAdmin(){ adminState.mode = 'none'; adminState.permissions = {}; renderAdminModal(); }
+  function saveAdminPassword(){
+    if(!hasPermission('password')) return alert('Sem permissão de senha.');
+    const next = String(document.getElementById('newAdminPasswordInput')?.value || '').trim();
+    if(!next) return alert('Digite uma nova senha.');
+    adminState.settings.adminPassword = next;
+    saveSettings();
+    alert('Senha atualizada.');
+  }
+
+  async function resetAllRooms(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    if(!confirm('Tem certeza que deseja resetar TODAS as salas agora?')) return;
+    const rooms = getRooms();
+    for(const r of rooms){
+      const id = r.id;
+      const type = getRoomType(id);
+      try {
+        if(type === 'stop'){
+          await db.collection('stopRooms').doc(id).delete();
+          await ensureStopRoomDoc(id);
+        } else {
+          await db.collection('rooms').doc(id).delete();
+          await ensureRoomDoc(id);
+        }
+        await deleteRoomChatMessages(id);
+      } catch(e){ console.warn('Erro ao resetar sala', id, e); }
+    }
+    alert('Salas resetadas com sucesso.');
+    renderLobbyRooms();
+  }
+
+  function saveAutoResetHour(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const input = document.getElementById('autoResetHourInput');
+    const val = input?.value;
+    if(val === '' || val === null){
+      delete adminState.settings.autoResetHour;
+    } else {
+      const h = parseInt(val, 10);
+      if(isNaN(h) || h < 0 || h > 23) return alert('Digite uma hora entre 0 e 23.');
+      adminState.settings.autoResetHour = h;
+    }
+    saveSettings();
+    alert('Hora de reset automático salva.');
+    startAutoResetScheduler();
+  }
+
+  function deleteSelectedPlayer(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const select = document.getElementById('deletePlayerSelect');
+    const id = String(select?.value || '').trim();
+    if(!id) return alert('Selecione um jogador.');
+    if(!confirm(`Excluir o jogador ${id} do site?`)) return;
+    const registry = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry : [];
+    adminState.settings.userRegistry = registry.filter(u => String(u.id || '').toUpperCase() !== id.toUpperCase());
+    if(adminState.settings.delegations && adminState.settings.delegations[id]) delete adminState.settings.delegations[id];
+    saveSettings();
+    alert('Jogador excluído.');
+    renderAdminModal();
+  }
+
+  let autoResetTimer = null;
+  function startAutoResetScheduler(){
+    if(autoResetTimer) clearInterval(autoResetTimer);
+    autoResetTimer = setInterval(async () => {
+      const h = adminState.settings.autoResetHour;
+      if(h === undefined || h === null) return;
+      const now = new Date();
+      if(now.getHours() === Number(h) && now.getMinutes() === 0){
+        const today = now.toISOString().slice(0,10);
+        if(adminState.settings.lastAutoReset !== today){
+          adminState.settings.lastAutoReset = today;
+          saveSettings();
+          await resetAllRooms();
+        }
+      }
+    }, 60000);
+  }
+
+  function openPeopleModal(){ const modal = document.getElementById('peopleModal'); if(modal){ modal.style.display = 'flex'; renderPeopleModal(); } }
+  function closePeopleModal(){ const modal = document.getElementById('peopleModal'); if(modal) modal.style.display = 'none'; }
+  function renderPeopleModal(){
+    const list = document.getElementById('peopleList');
+    if(!list) return;
+    const roomId = gameState.roomId;
+    if(!roomId || !gameState.roomState){
+      list.innerHTML = '<div class="list-item"><small>Entre em uma sala para ver a lista de pessoas.</small></div>';
+      return;
+    }
+    const seated = [];
+    const watching = [];
+    for(let slot = 1; slot <= 4; slot++){
+      const s = gameState.roomState.slots[slot];
+      if(s && s.id) seated.push({ slot, id:String(s.id).toUpperCase().slice(0,4), name:String(s.name || `Jogador ${slot}`) });
+    }
+    (adminState.settings.userRegistry || []).forEach(u => {
+      const uid = String(u.id || '').toUpperCase().slice(0,4);
+      if(!uid) return;
+      if(String(u.roomId || '') === roomId && (u.watching || !seated.some(s => s.id === uid))) {
+        watching.push({ id:uid, name:String(u.name || 'Jogador'), slot: u.slot ?? null });
+      }
+    });
+    if(!watching.length){
+      (adminState.settings.userRegistry || []).forEach(u => {
+        const uid = String(u.id || '').toUpperCase().slice(0,4);
+        if(!uid || seated.some(s => s.id === uid)) return;
+        if(String(u.roomId || '') === roomId) watching.push({ id:uid, name:String(u.name || 'Jogador'), slot: u.slot ?? null });
+      });
+    }
+    list.innerHTML = `
+      <div class="list-item"><strong>Jogadores</strong><span class="pill">${seated.length}/4</span></div>
+      ${seated.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(p.id)})</strong><div><small>Assento ${p.slot}</small></div></div><span class="pill">JOGANDO</span></div>`).join('') || '<div class="list-item"><small>Nenhum jogador sentado.</small></div>'}
+      <div class="list-item"><strong>Assistindo</strong><span class="pill">${watching.length}</span></div>
+      ${watching.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(p.id)})</strong></div><span class="pill">VENDO</span></div>`).join('') || '<div class="list-item"><small>Ninguém assistindo.</small></div>'}
+    `;
+  }
+
+  function refreshCurrentRoomMusic(){
+    if(gameState.roomMode && gameState.roomId){
+      gameState.roomPlaylist = roomPlaylist(gameState.roomId);
+      setupMusic();
+      if(roomAutoplay(gameState.roomId)){
+        playMusic();
+        setTimeout(() => { if(roomAutoplay(gameState.roomId)) playMusic(); }, 180);
+      }
+    }
+  }
+
+  function getPlayerName(slot){
+    if(gameState.roomMode && gameState.roomState && gameState.roomState.slots[slot] && gameState.roomState.slots[slot].name){
+      const s = gameState.roomState.slots[slot];
+      return `${s.name} (${String(s.id || '').toUpperCase().slice(0,4)})`;
+    }
+    if(!gameState.roomMode && slot === 1) return `${gameState.myName} (${gameState.myId})`;
+    if(!gameState.roomMode){
+      const botId = gameState.botIds?.[slot-2] || 'BOT';
+      return `Bot ${slot} (${botId})`;
+    }
+    return `Jogador ${slot}`;
+  }
+
+  function setupMusic(){
+    if(!gameState.musicAudio){
+      gameState.musicAudio = new Audio();
+      gameState.musicAudio.loop = false;
+      gameState.musicAudio.addEventListener('ended', () => nextTrack(true));
+    }
+    const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist;
+    if(pl.length) gameState.musicAudio.src = pl[gameState.trackIndex % pl.length];
+    gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+    document.getElementById('musicDisc')?.classList.remove('playing');
+  }
+
+  function playMusic(){
+    if(!gameState.musicAudio) setupMusic();
+    if(gameState.musicAudio && gameState.musicAudio.src){
+      gameState.musicPlaying = true;
+      document.getElementById('musicDisc')?.classList.add('playing');
+      gameState.musicAudio.play().catch(()=>{});
+    }
+  }
+  function pauseMusic(){ if(gameState.musicAudio){ gameState.musicPlaying = false; gameState.musicAudio.pause(); document.getElementById('musicDisc')?.classList.remove('playing'); } }
+  function stopMusicPlayback(){
+    if(gameState.musicAudio){
+      gameState.musicPlaying = false;
+      gameState.musicAudio.pause();
+      try{ gameState.musicAudio.currentTime = 0; }catch(e){}
+      document.getElementById('musicDisc')?.classList.remove('playing');
+    }
+  }
+  function toggleMusic(){ gameState.musicPlaying ? pauseMusic() : playMusic(); }
+  function nextTrack(auto=false){ const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex + 1) % pl.length; setupMusic(); if(gameState.musicPlaying || auto) playMusic(); }
+  function prevTrack(){ const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
+
+  const oldJoinRoom = joinRoom;
+  joinRoom = async function(roomId){
+    if(getRoomType(roomId) === 'stop'){
+      return joinStopRoom(roomId);
+    }
+    const meta = getRoomMeta(roomId);
+    if(meta.password){
+      const typed = String(prompt(`Senha da sala ${roomId}:`) || '').trim();
+      if(typed !== String(meta.password || '').trim()){
+        alert('Senha incorreta.');
+        return;
+      }
+    }
+    let userName = document.getElementById('roomName').value.trim();
+    if(!userName){
+      alert('Digite seu nome antes de entrar na sala.');
+      return;
+    }
+    userName = userName.slice(0,18);
+    gameState.myName = userName;
+    gameState.roomMode = true;
+    gameState.roomId = roomId;
+    gameState.mySlot = null;
+    gameState.audioEnabled = true;
+    showGame();
+    applyModeUI();
+    refreshThemeForMode();
+    renderGame();
+    const audioBtn = document.getElementById('audioBtn');
+    if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
+    try{
+      await ensureRoomDoc(roomId);
+      const roomRef = db.collection('rooms').doc(roomId);
+      const joined = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists) throw new Error('Sala não encontrada');
+        const data = snap.data() || {};
+        let state = normalizeSharedState(data.state);
+        state = cleanupStaleSlots(state);
+        const wasEmpty = isRoomEmpty(state);
+        if(wasEmpty) state = createFreshRoomState();
+        let existingSlot = null;
+        for(let slot = 1; slot <= 4; slot++){
+          const s = state.slots[slot];
+          if(s && s.id === gameState.myId){ existingSlot = slot; break; }
+        }
+        let chosenSlot = existingSlot;
+        if(chosenSlot === null && state.seatingOpen !== false){
+          chosenSlot = getFirstVacantSlot(state);
+        }
+        if(chosenSlot !== null){
+          state.slots[chosenSlot] = { id: gameState.myId, name: userName, joinedAt: Date.now(), lastSeen: Date.now() };
+        }
+        if(Object.values(state.slots).filter(Boolean).length >= 4) state.seatingOpen = false;
+        state.turn = normalizeTurn(state);
+        state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
+        if(!state.topCard && chosenSlot !== null && !wasEmpty){
+          state = createFreshRoomState();
+          state.slots[chosenSlot] = { id: gameState.myId, name: userName, joinedAt: Date.now(), lastSeen: Date.now() };
+        }
+        tx.set(roomRef, { roomId, roomName: currentRoomLabel(roomId), state, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
+        return { slot: chosenSlot, wasEmpty };
+      });
+      gameState.mySlot = joined.slot;
+      subscribeRoom(roomId);
+      startRoomHeartbeat();
+      if(joined.wasEmpty) await deleteRoomChatMessages(roomId);
+      initRoomChat(roomId);
+      renderGame();
+      registerPresence({ roomId, slot: gameState.mySlot, watching: !gameState.mySlot });
+      refreshCurrentRoomMusic();
+      refreshCurrentMultiplayerPresence();
+      if(roomAutoplay(roomId)){
+        playMusic();
+        setTimeout(() => { if(roomAutoplay(roomId)) playMusic(); }, 180);
+      }
+    }catch(err){
+      console.error(err);
+      alert(err.message || 'Não foi possível entrar na sala.');
+      backToLobby();
+    }
+  };
+
+  const oldTakeSeat = takeSeat;
+  takeSeat = async function(){
+    await oldTakeSeat();
+    if(gameState.roomMode){
+      registerPresence({ roomId: gameState.roomId || '', slot: gameState.mySlot, watching: !gameState.mySlot });
+      refreshCurrentRoomMusic();
+      if(gameState.roomId && roomAutoplay(gameState.roomId)){
+        playMusic();
+        setTimeout(() => { if(gameState.roomId && roomAutoplay(gameState.roomId)) playMusic(); }, 180);
+      }
+    }
+  };
+
+  const oldLeaveSeat = leaveSeat;
+  leaveSeat = async function(){
+    await oldLeaveSeat();
+    if(gameState.roomMode){
+      registerPresence({ roomId: gameState.roomId || '', slot: null, watching: true });
+    }
+  };
+
+  const oldLeaveCurrentRoom = leaveCurrentRoom;
+  leaveCurrentRoom = async function(){
+    await oldLeaveCurrentRoom();
+    registerPresence({ roomId:'', slot:null, watching:false });
+  };
+
+  const oldBackToLobby = backToLobby;
+  backToLobby = async function(){
+    try{
+      await oldBackToLobby();
+    }catch(err){
+      console.warn('Falha ao sair da sala, retornando à lobby mesmo assim:', err);
+    }finally{
+      gameState.roomMode = false;
+      gameState.stopMode = false;
+      const table = document.getElementById('table');
+      const endScreen = document.getElementById('endScreen');
+      const lobbyScreen = document.getElementById('lobbyScreen');
+      const chatPanel = document.getElementById('chatPanel');
+      if(table) table.style.display = 'none';
+      if(endScreen) endScreen.style.display = 'none';
+      if(lobbyScreen) lobbyScreen.style.display = 'flex';
+      if(chatPanel) chatPanel.style.display = 'none';
+      if(typeof stopSetBoardVisibility === 'function') stopSetBoardVisibility(false);
+      if(typeof stopClearDraftAnswers === 'function') stopClearDraftAnswers();
+      closeRoomSession();
+      stopMusicPlayback();
+      closeAdminModal();
+      closePeopleModal();
+      adminState.mode = adminState.mode === 'password' ? 'password' : 'none';
+      renderLobbyRooms();
+      renderThemeDots();
+      bootstrapLobbyRooms();
+    }
+  };
+
+  const oldRenderChatMessages = renderChatMessages;
+  renderChatMessages = function(messages){
+    const enriched = (messages || []).map(msg => ({ ...msg, author: String(msg.author || 'Anônimo'), authorId: String(msg.authorId || '').toUpperCase().slice(0,4) }));
+    const container = document.getElementById('chatMessagesList');
+    if(!container) return;
+    if(enriched.length === 0){ container.innerHTML = '<div style="text-align:center; color:var(--muted);">Nenhuma mensagem ainda.</div>'; return; }
+    container.innerHTML = '';
+    enriched.forEach(msg => {
+      const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const div = document.createElement('div');
+      div.className = 'chat-message';
+      div.innerHTML = `
+        <div class="message-header"><span class="message-author">${escapeHtml(msg.author)}${msg.authorId ? ' (' + escapeHtml(msg.authorId) + ')' : ''}</span><span class="message-time">${time}</span></div>
+        <div class="message-text">${escapeHtml(msg.message || '')}</div>
+      `;
+      container.appendChild(div);
+    });
+    container.scrollTop = container.scrollHeight;
+  };
+
+  const oldInitRoomChat = initRoomChat;
+  initRoomChat = function(roomId){
+    if(window.chatUnsubscribe) window.chatUnsubscribe();
+    const q = db.collection('chat').where('roomId', '==', roomId);
+    window.chatUnsubscribe = q.onSnapshot(snapshot => {
+      const msgs = [];
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        msgs.push({
+          id: doc.id,
+          author: d.author || 'Anônimo',
+          authorId: d.authorId || '',
+          message: d.message || '',
+          timestamp: d.timestamp?.toDate?.() || new Date()
+        });
+      });
+      msgs.sort((a,b) => a.timestamp - b.timestamp);
+      renderChatMessages(msgs);
+    }, err => {
+      console.error('Erro no chat:', err);
+      document.getElementById('chatMessagesList').innerHTML = `<div style="text-align:center;color:red;">Erro no chat: ${err.message}</div>`;
+    });
+  };
+
+  const oldInitOfflineChat = initOfflineChat;
+  initOfflineChat = function(){
+    if(window.chatUnsubscribe) window.chatUnsubscribe();
+    const stored = localStorage.getItem('cartas_offline_chat');
+    let msgs = stored ? JSON.parse(stored) : [];
+    msgs.sort((a,b) => a.timestamp - b.timestamp);
+    renderChatMessages(msgs);
+  };
+
+  const oldSaveOfflineMessage = saveOfflineMessage;
+  saveOfflineMessage = function(author, message){
+    const stored = localStorage.getItem('cartas_offline_chat');
+    let msgs = stored ? JSON.parse(stored) : [];
+    msgs.push({ id: Date.now().toString(), author, authorId: gameState.myId, message, timestamp: new Date() });
+    if(msgs.length > 50) msgs = msgs.slice(-50);
+    localStorage.setItem('cartas_offline_chat', JSON.stringify(msgs));
+    msgs.sort((a,b) => a.timestamp - b.timestamp);
+    renderChatMessages(msgs);
+  };
+
+  const oldSendMessage = sendMessage;
+  sendMessage = async function(){
+    let msg = document.getElementById('chatMessageInput').value.trim();
+    if(!msg) return;
+    let author = gameState.myName;
+    if(author === 'Você' || author === 'Jogador' || author === ''){
+      alert('Por favor, defina seu nome na lobby antes de enviar mensagem.');
+      return;
+    }
+    if(gameState.roomMode && gameState.roomId){
+      try{
+        await db.collection('chat').add({
+          roomId: gameState.roomId,
+          author,
+          authorId: gameState.myId,
+          message: msg,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }catch(e){
+        console.error(e);
+        alert('Erro ao enviar mensagem: ' + e.message);
+      }
+    } else {
+      saveOfflineMessage(author, msg);
+    }
+    document.getElementById('chatMessageInput').value = '';
+  };
+
+
+// ========== SALA STOP ==========
+function stopNormalizeText(value){
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function stopRandomLetter(){
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  return letters[Math.floor(Math.random() * letters.length)];
+}
+
+function stopEmptyAnswers(){
+  const answers = {};
+  STOP_CATEGORY_KEYS.forEach(key => { answers[key] = ""; });
+  return answers;
+}
+
+function stopEmptyPlayer(id, name, gameNumber){
+  return {
+    id,
+    name,
+    joinedAt: Date.now(),
+    lastSeen: Date.now(),
+    eligibleFromGame: gameNumber,
+    totalScore: 0,
+    answers: stopEmptyAnswers()
+  };
+}
+
+function stopEmptyState(){
+  return {
+    roomId: STOP_ROOM_ID,
+    roomName: "Sala Stop",
+    gameNumber: 1,
+    phase: "waiting",
+    letter: "-",
+    players: {},
+    history: [],
+    startedAt: Date.now(),
+    roundStartedAt: null,
+    roundEndedAt: null,
+    stoppedBy: null,
+    lastResults: null,
+    updatedAt: Date.now()
+  };
+}
+
+function normalizeStopState(raw){
+  const source = raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : {};
+  const state = stopEmptyState();
+  state.roomId = source.roomId || STOP_ROOM_ID;
+  state.roomName = source.roomName || "Sala Stop";
+  state.gameNumber = Number.isFinite(source.gameNumber) ? source.gameNumber : 1;
+  state.phase = (source.phase === 'results' || source.phase === 'writing' || source.phase === 'waiting') ? source.phase : 'waiting';
+  state.letter = String(source.letter || '-').slice(0, 1).toUpperCase() || '-';
+  state.players = {};
+  state.history = Array.isArray(source.history) ? source.history.slice(0, 20) : [];
+  state.startedAt = source.startedAt || Date.now();
+  state.roundStartedAt = source.roundStartedAt || null;
+  state.roundEndedAt = source.roundEndedAt || null;
+  state.stoppedBy = source.stoppedBy || null;
+  state.lastResults = source.lastResults || null;
+  state.updatedAt = source.updatedAt || Date.now();
+
+  if(source.players && typeof source.players === 'object'){
+    Object.entries(source.players).forEach(([id, p]) => {
+      const pid = String(id || '').trim();
+      if(!pid) return;
+      const player = stopEmptyPlayer(pid, String(p?.name || 'Jogador'), Number.isFinite(p?.eligibleFromGame) ? p.eligibleFromGame : 1);
+      player.name = String(p?.name || 'Jogador');
+      player.joinedAt = p?.joinedAt || Date.now();
+      player.lastSeen = p?.lastSeen || Date.now();
+      player.eligibleFromGame = Number.isFinite(p?.eligibleFromGame) ? p?.eligibleFromGame : 1;
+      player.totalScore = Number.isFinite(p?.totalScore) ? p?.totalScore : 0;
+      const answers = p?.answers && typeof p.answers === 'object' ? p.answers : {};
+      STOP_CATEGORY_KEYS.forEach(key => { player.answers[key] = String(answers[key] || ''); });
+      player.lastRoundScore = Number.isFinite(p?.lastRoundScore) ? p?.lastRoundScore : 0;
+      player.lastRoundAnswers = p?.lastRoundAnswers && typeof p.lastRoundAnswers === 'object' ? p.lastRoundAnswers : null;
+      state.players[pid] = player;
+    });
+  }
+  return state;
+}
+
+function stopFreshRoomState(previousState = null){
+  const fresh = stopEmptyState();
+  fresh.history = Array.isArray(previousState?.history) ? previousState.history.slice(0, 20) : [];
+  fresh.gameNumber = 1;
+  fresh.letter = '-';
+  fresh.phase = 'waiting';
+  fresh.roundStartedAt = null;
+  fresh.roundEndedAt = null;
+  fresh.lastResults = null;
+  fresh.stoppedBy = null;
+  fresh.updatedAt = Date.now();
+  return fresh;
+}
+
+function stopIsPlayerFresh(player){
+  if(!player || !Number.isFinite(player.lastSeen)) return true;
+  return (Date.now() - player.lastSeen) <= STOP_STALE_MS;
+}
+
+function stopCleanupState(state){
+  const next = state && typeof state === 'object' ? state : stopEmptyState();
+  const cleanedPlayers = {};
+  Object.values(next.players || {}).forEach(player => {
+    if(!player || !player.id) return;
+    if(!stopIsPlayerFresh(player)) return;
+    cleanedPlayers[player.id] = player;
+  });
+  next.players = cleanedPlayers;
+  return next;
+}
+
+function stopActivePlayers(state){
+  return Object.values(state.players || {}).filter(p => {
+    if(!p || !p.id) return false;
+    if(!stopIsPlayerFresh(p)) return false;
+    return (Number.isFinite(p.eligibleFromGame) ? p.eligibleFromGame : 1) <= state.gameNumber;
+  });
+}
+
+function stopPlayerIsActive(state, playerId){
+  const player = state.players?.[playerId];
+  return !!player && stopIsPlayerFresh(player) && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
+}
+
+function stopResultsForState(state){
+  const activePlayers = stopActivePlayers(state);
+  const normalizedBuckets = {};
+  const perPlayer = {};
+  activePlayers.forEach(p => {
+    perPlayer[p.id] = {
+      id: p.id,
+      name: p.name,
+      score: 0,
+      answers: {},
+      categoryPoints: {}
+    };
+  });
+
+  STOP_CATEGORIES.forEach((label, idx) => {
+    const key = STOP_CATEGORY_KEYS[idx];
+    const buckets = {};
+    const letter = String(state.letter || '').toUpperCase();
+    activePlayers.forEach(p => {
+      const raw = String(p.answers?.[key] || '').trim();
+      const norm = stopNormalizeText(raw);
+      if(!norm) return;
+      if(norm.charAt(0).toUpperCase() !== letter) return;
+      if(!buckets[norm]) buckets[norm] = [];
+      buckets[norm].push(p.id);
+    });
+    activePlayers.forEach(p => {
+      const raw = String(p.answers?.[key] || '').trim();
+      const norm = stopNormalizeText(raw);
+      let pts = 0;
+      if(norm && norm.charAt(0).toUpperCase() === letter){
+        pts = ((buckets[norm] || []).length === 1 ? 10 : 5);
+      }
+      perPlayer[p.id].score += pts;
+      perPlayer[p.id].answers[label] = raw;
+      perPlayer[p.id].categoryPoints[label] = pts;
+    });
+    normalizedBuckets[key] = buckets;
+  });
+
+  const ranking = activePlayers
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      score: perPlayer[p.id].score,
+      answers: perPlayer[p.id].answers,
+      categoryPoints: perPlayer[p.id].categoryPoints
+    }))
+    .sort((a, b) => b.score - a.score || String(a.name).localeCompare(String(b.name)));
+
+  return { perPlayer, ranking, activePlayers, normalizedBuckets };
+}
+
+async function ensureStopRoomDoc(roomId = getStopRoomId()){
+  const resolvedId = String(roomId || getStopRoomId() || STOP_ROOM_ID).trim() || STOP_ROOM_ID;
+  const ref = db.collection('stopRooms').doc(resolvedId);
+  const snap = await ref.get();
+  if(!snap.exists){
+    const next = stopEmptyState();
+    next.roomId = resolvedId;
+    next.roomName = currentRoomLabel(resolvedId);
+    await ref.set(next);
+  }
+}
+
+function stopClearHeartbeat(){
+  if(gameState.stopHeartbeat){
+    clearInterval(gameState.stopHeartbeat);
+    gameState.stopHeartbeat = null;
+  }
+}
+
+function stopStopSubscriptions(){
+  if(gameState.stopUnsub){
+    try { gameState.stopUnsub(); } catch(e) {}
+    gameState.stopUnsub = null;
+  }
+}
+
+function stopSetBoardVisibility(active){
+  const ids = ['p1','p2','p3','p4','drawPile','discardPile','seatDownBtn','seatUpBtn','drawCardBtn'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = active ? 'none' : '';
+  });
+  const stopPanel = document.getElementById('stopPanel');
+  if(stopPanel){
+    stopPanel.classList.toggle('hidden', !active);
+    stopPanel.classList.toggle('active', active);
+    stopPanel.style.display = active ? 'block' : 'none';
+  }
+  const seatActions = document.querySelector('.seat-actions');
+  if(seatActions) seatActions.style.display = active ? 'none' : '';
+  const centerCardRow = document.querySelector('.center-card-row');
+  if(centerCardRow) centerCardRow.style.display = active ? 'none' : '';
+}
+
+
+function stopClearDraftAnswers(){
+  gameState.stopDraftAnswers = {};
+}
+
+function stopDraftAnswer(key, value){
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object'){
+    gameState.stopDraftAnswers = {};
+  }
+  gameState.stopDraftAnswers[key] = String(value ?? '');
+}
+
+function stopUpdateActionButtons(state){
+  const startBtn = document.getElementById('stopStartBtn');
+  const stopBtn = document.getElementById('stopStopBtn');
+  const playAgainBtn = document.getElementById('stopPlayAgainBtn');
+  const me = state?.players?.[gameState.myId];
+  const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
+
+  if(startBtn){
+    startBtn.classList.toggle('hidden', state?.phase !== 'waiting');
+    startBtn.textContent = 'Começar jogo';
+  }
+  if(stopBtn){
+    stopBtn.classList.toggle('hidden', state?.phase !== 'writing' || !eligible);
+  }
+  if(playAgainBtn){
+    playAgainBtn.classList.toggle('hidden', state?.phase !== 'results');
+  }
+}
+
+function stopRenderPlayersSummary(state){
+  const activePlayers = stopActivePlayers(state);
+  const me = state.players?.[gameState.myId];
+  const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
+  const notice = document.getElementById('stopJoinNotice');
+  if(notice){
+    if(!gameState.stopMode){
+      notice.textContent = 'Entre na sala Stop para jogar.';
+    } else if(state.phase === 'waiting'){
+      notice.textContent = activePlayers.length
+        ? `Sala pronta. Quando quiser, aperte Começar jogo.`
+        : 'Aguardando jogadores. Quando quiser, aperte Começar jogo.';
+    } else if(eligible){
+      notice.textContent = `Você joga nesta partida. Letra: ${state.letter}`;
+    } else {
+      notice.textContent = `Você entra na próxima partida. Letra atual: ${state.letter}`;
+    }
+  }
+
+  if(state.phase !== 'writing'){
+    stopClearDraftAnswers();
+  }
+
+  const letter = document.getElementById('stopLetter');
+  if(letter) letter.textContent = state.phase === 'waiting' ? '-' : (state.letter || '-');
+
+  const roundInfo = document.getElementById('stopRoundInfo');
+  if(roundInfo){
+    roundInfo.textContent = state.phase === 'waiting'
+      ? `Aguardando o começo da partida ${state.gameNumber}`
+      : state.phase === 'results'
+        ? `Partida ${state.gameNumber} encerrada`
+        : `Partida ${state.gameNumber} em andamento`;
+  }
+
+  const hudTurn = document.getElementById('hudTurn');
+  if(hudTurn){
+    const last = hudTurn.querySelector('span:last-child');
+    if(last){
+      last.textContent = state.phase === 'waiting'
+        ? 'Aguardando começo'
+        : state.phase === 'results'
+          ? 'Resultados da partida'
+          : `STOP · letra ${state.letter}`;
+    }
+  }
+
+  const status = document.getElementById('statusNote');
+  if(status){
+    status.textContent = state.phase === 'waiting'
+      ? 'Convide mais pessoas e clique em Começar jogo.'
+      : state.phase === 'results'
+        ? 'A rodada acabou. Veja os resultados ou volte para começar outra partida.'
+        : 'Escreva as respostas e aperte STOP quando quiser encerrar.';
+  }
+
+  stopUpdateActionButtons(state);
+
+  const categories = document.getElementById('stopCategories');
+  const resultsBox = document.getElementById('stopResults');
+  if(!categories || !resultsBox) return;
+
+  if(state.phase === 'waiting'){
+    categories.innerHTML = `
+      <div class="stop-status-card">
+        <strong>Sala pronta para começar</strong>
+        <div style="margin-top:6px; color:var(--muted);">Clique em <strong>Começar jogo</strong> para sortear a letra e iniciar a rodada.</div>
+      </div>
+    `;
+    resultsBox.innerHTML = '';
+    resultsBox.classList.add('hidden');
+    delete categories.dataset.game;
+    delete categories.dataset.letter;
+    return;
+  }
+
+  if(state.phase === 'writing'){
+    if(eligible){
+      const needsRebuild = categories.dataset.game !== String(state.gameNumber) || categories.dataset.letter !== state.letter || !categories.querySelector('input[data-key]');
+      if(needsRebuild){
+        categories.innerHTML = STOP_CATEGORIES.map((label, idx) => {
+          const key = STOP_CATEGORY_KEYS[idx];
+          const draftValue = gameState.stopDraftAnswers?.[key];
+          const currentValue = draftValue !== undefined ? draftValue : (me?.answers?.[key] || '');
+          const value = escapeHtml(String(currentValue));
+          return `
+            <div class="stop-category">
+              <label>${escapeHtml(label)}</label>
+              <input type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" data-key="${key}" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopDraftAnswer('${key}', this.value)" oninput="stopDraftAnswer('${key}', this.value)" onblur="updateStopAnswer('${key}', this.value)" />
+            </div>
+          `;
+        }).join('');
+        categories.dataset.game = state.gameNumber;
+        categories.dataset.letter = state.letter;
+      } else {
+        STOP_CATEGORIES.forEach((label, idx) => {
+          const key = STOP_CATEGORY_KEYS[idx];
+          const input = categories.querySelector(`input[data-key="${key}"]`);
+          if(input){
+            const ph = `Comece com ${state.letter}`;
+            if(input.placeholder !== ph) input.placeholder = ph;
+            if(document.activeElement !== input){
+              const draftValue = gameState.stopDraftAnswers?.[key];
+              const currentValue = draftValue !== undefined ? draftValue : (me?.answers?.[key] || '');
+              if(input.value !== currentValue) input.value = currentValue;
+            }
+          }
+        });
+      }
+    } else {
+      categories.innerHTML = `
+        <div class="stop-status-card">
+          <strong>Você entrou no meio da partida.</strong>
+          <div style="margin-top:6px; color:var(--muted);">Você poderá jogar na próxima partida.</div>
+        </div>
+      `;
+      delete categories.dataset.game;
+      delete categories.dataset.letter;
+    }
+    resultsBox.innerHTML = '';
+    resultsBox.classList.add('hidden');
+    return;
+  }
+
+  const results = state.lastResults || stopResultsForState(state);
+  resultsBox.classList.remove('hidden');
+  categories.innerHTML = `
+    <div class="stop-status-card">
+      <strong>Resultados da partida ${state.gameNumber}</strong>
+      <div style="margin-top:6px; color:var(--muted);">Letra usada: ${escapeHtml(state.letter)}</div>
+    </div>
+  `;
+  const rankingHtml = results.ranking.length ? results.ranking.map(p => {
+    const answers = STOP_CATEGORIES.map((label, idx) => {
+      const key = STOP_CATEGORY_KEYS[idx];
+      const ans = escapeHtml(String(p.answers?.[label] || ''));
+      const pts = p.categoryPoints?.[label] || 0;
+      return `<div class="stop-result-item"><strong>${escapeHtml(label)}</strong><div>${ans || '<em>vazio</em>'}</div><small>${pts} ponto(s)</small></div>`;
+    }).join('');
+    return `
+      <div class="stop-result-card">
+        <div class="stop-result-head">
+          <strong>${escapeHtml(p.name)}</strong>
+          <span class="pill">${p.score} pontos</span>
+        </div>
+        <div class="stop-result-grid">${answers}</div>
+      </div>
+    `;
+  }).join('') : '<div class="stop-status-card"><small>Nenhum jogador elegível nesta partida.</small></div>';
+  resultsBox.innerHTML = `
+    <div class="stop-result-card">
+      <div class="stop-result-head">
+        <strong>Pontuação final</strong>
+        <span class="pill">${results.ranking.length} jogador(es)</span>
+      </div>
+      ${rankingHtml}
+      <div class="stop-actions-row" style="margin-top:14px;">
+        <button class="btn secondary mini-toggle" type="button" onclick="stopPlayAgain()" style="min-width:190px;">Jogar mais</button>
+      </div>
+    </div>
+  `;
+}
+
+async function subscribeStopRoom(){
+  stopStopSubscriptions();
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  gameState.stopUnsub = ref.onSnapshot(snap => {
+    if(!snap.exists) return;
+    gameState.stopState = stopCleanupState(normalizeStopState(snap.data()));
+    renderGame();
+    renderPeopleModal();
+    renderStopHistory();
+    refreshVoiceChat();
+  }, err => {
+    console.error('Erro na sala Stop:', err);
+  });
+}
+
+async function updateStopAnswer(key, value){
+  if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
+  const state = gameState.stopState;
+  const player = state.players?.[gameState.myId];
+  if(!player || !stopPlayerIsActive(state, gameState.myId) || state.phase !== 'writing') return;
+  const nextValue = String(value || '');
+  if(!player.answers) player.answers = stopEmptyAnswers();
+  player.answers[key] = nextValue;
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object') gameState.stopDraftAnswers = {};
+  gameState.stopDraftAnswers[key] = nextValue;
+  player.lastSeen = Date.now();
+  try {
+    await db.collection('stopRooms').doc(getStopRoomId()).update({
+      [`players.${gameState.myId}.answers.${key}`]: nextValue,
+      [`players.${gameState.myId}.lastSeen`]: Date.now()
+    });
+  } catch(err) {
+    console.warn('Falha ao salvar resposta do Stop:', err);
+  }
+}
+
+async function joinStopRoom(roomId = STOP_ROOM_ID){
+  let userName = document.getElementById('roomName')?.value.trim();
+  if(!userName){
+    alert('Digite seu nome antes de entrar na sala.');
+    return;
+  }
+  userName = userName.slice(0, 18);
+
+  gameState.myName = userName;
+  gameState.stopMode = true;
+  stopClearDraftAnswers();
+  gameState.roomMode = false;
+  gameState.audioEnabled = true;
+  gameState.roomId = roomId || STOP_ROOM_ID;
+  gameState.stopRoomId = roomId || STOP_ROOM_ID;
+
+  showGame();
+  applyModeUI();
+  refreshThemeForMode();
+  const audioBtn = document.getElementById('audioBtn');
+  if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
+  stopSetBoardVisibility(true);
+  document.getElementById('table').style.display = 'block';
+
+  try{
+    await ensureStopRoomDoc(roomId || STOP_ROOM_ID);
+    const ref = db.collection('stopRooms').doc(getStopRoomId());
+    const joined = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      state.players = state.players || {};
+      const existing = state.players[gameState.myId] || null;
+      const roomWasEmpty = Object.keys(state.players || {}).length === 0;
+      if(roomWasEmpty){
+        state = stopFreshRoomState(state);
+      }
+      const currentGameNumber = Number.isFinite(state.gameNumber) ? state.gameNumber : 1;
+      const nextEligible = state.phase === 'waiting' ? currentGameNumber : currentGameNumber + 1;
+      state.players[gameState.myId] = {
+        ...(existing || stopEmptyPlayer(gameState.myId, userName, nextEligible)),
+        id: gameState.myId,
+        name: userName,
+        joinedAt: existing?.joinedAt || Date.now(),
+        lastSeen: Date.now(),
+        eligibleFromGame: existing?.eligibleFromGame || nextEligible,
+        totalScore: Number.isFinite(existing?.totalScore) ? existing.totalScore : 0,
+        answers: existing?.answers && typeof existing.answers === 'object' ? existing.answers : stopEmptyAnswers()
+      };
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+      return state;
+    });
+    gameState.stopState = normalizeStopState(joined);
+    await subscribeStopRoom();
+    stopStartHeartbeat();
+    initRoomChat(STOP_CHAT_ROOM_ID);
+    renderGame();
+    refreshCurrentMultiplayerPresence();
+    await refreshVoiceChat(true);
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível entrar na sala Stop.');
+    gameState.stopMode = false;
+    gameState.roomId = null;
+    backToLobby();
+  }
+}
+
+function stopStartHeartbeat(){
+  stopClearHeartbeat();
+  gameState.stopHeartbeat = setInterval(() => {
+    if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
+    const state = gameState.stopState;
+    if(!state.players?.[gameState.myId]) return;
+    db.collection('stopRooms').doc(getStopRoomId()).update({
+      [`players.${gameState.myId}.lastSeen`]: Date.now(),
+      [`players.${gameState.myId}.name`]: gameState.myName
+    }).catch(()=>{});
+  }, 3000);
+}
+
+function refreshCurrentMultiplayerPresence(){
+  try{
+    if(gameState.roomMode && gameState.roomId && gameState.mySlot){
+      const pathBase = `state.slots.${gameState.mySlot}`;
+      db.collection('rooms').doc(gameState.roomId).update({
+        [`${pathBase}.id`]: gameState.myId,
+        [`${pathBase}.name`]: gameState.myName,
+        [`${pathBase}.lastSeen`]: Date.now()
+      }).catch(()=>{});
+    }
+    if(gameState.stopMode && gameState.stopState && gameState.stopState.players?.[gameState.myId]){
+      db.collection('stopRooms').doc(getStopRoomId()).update({
+        [`players.${gameState.myId}.lastSeen`]: Date.now(),
+        [`players.${gameState.myId}.name`]: gameState.myName
+      }).catch(()=>{});
+    }
+  }catch(e){}
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden) refreshCurrentMultiplayerPresence();
+});
+window.addEventListener('focus', refreshCurrentMultiplayerPresence);
+
+async function stopLeaveCurrentRoom(){
+  if(!gameState.stopMode || !gameState.stopState) return;
+  stopClearHeartbeat();
+  stopStopSubscriptions();
+  stopVoiceChat();
+  stopMusicPlayback();
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const myId = gameState.myId;
+  let shouldReset = false;
+  try{
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) return;
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      if(state.players && state.players[myId]){
+        delete state.players[myId];
+      }
+      shouldReset = Object.keys(state.players || {}).length === 0;
+      if(shouldReset){
+        state = stopFreshRoomState(state);
+        tx.set(ref, state, { merge: true });
+      }else{
+        state.updatedAt = Date.now();
+        tx.set(ref, state, { merge: true });
+      }
+    });
+    if(shouldReset) await deleteRoomChatMessages(STOP_CHAT_ROOM_ID);
+  }catch(err){
+    console.warn('Não foi possível sair da sala Stop:', err);
+  }
+  gameState.stopState = null;
+  gameState.stopMode = false;
+  stopClearDraftAnswers();
+}
+
+function stopSetLayout(){
+  stopSetBoardVisibility(true);
+  const p1 = document.getElementById('p1');
+  const p2 = document.getElementById('p2');
+  const p3 = document.getElementById('p3');
+  const p4 = document.getElementById('p4');
+  if(p1) p1.style.display = 'none';
+  if(p2) p2.style.display = 'none';
+  if(p3) p3.style.display = 'none';
+  if(p4) p4.style.display = 'none';
+}
+
+async function pressStop(){
+  if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  try{
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      if(state.phase === 'results') return;
+      const results = stopResultsForState(state);
+      results.activePlayers.forEach(p => {
+        const player = state.players[p.id];
+        if(!player) return;
+        player.lastRoundScore = results.perPlayer[p.id].score;
+        player.totalScore = (Number.isFinite(player.totalScore) ? player.totalScore : 0) + results.perPlayer[p.id].score;
+        player.lastRoundAnswers = { ...results.perPlayer[p.id].answers };
+        player.answers = stopEmptyAnswers();
+      });
+      state.history = [
+        {
+          gameNumber: state.gameNumber,
+          letter: state.letter,
+          endedAt: Date.now(),
+          scores: Object.fromEntries(results.ranking.map(p => [p.id, p.score])),
+          players: results.ranking.reduce((acc, p) => {
+            acc[p.id] = {
+              name: p.name,
+              score: p.score,
+              answers: p.answers
+            };
+            return acc;
+          }, {})
+        },
+        ...(Array.isArray(state.history) ? state.history : [])
+      ].slice(0, 20);
+      state.phase = 'results';
+      state.roundEndedAt = Date.now();
+      state.stoppedBy = { id: gameState.myId, name: gameState.myName };
+      state.lastResults = results;
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+    });
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível parar a partida.');
+  }
+}
+
+async function startStopNewGame(){
+  if(!gameState.stopMode || !gameState.stopState) return;
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  try{
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      if(state.phase === 'writing') throw new Error('A partida ainda está em andamento.');
+
+      if(state.phase === 'results'){
+        throw new Error('Use Jogar mais para voltar à tela de espera.');
+      }
+
+      state.phase = 'writing';
+      state.letter = stopRandomLetter();
+      stopClearDraftAnswers();
+      state.roundStartedAt = Date.now();
+      state.roundEndedAt = null;
+      state.stoppedBy = null;
+      state.lastResults = null;
+      const currentGameNumber = Number.isFinite(state.gameNumber) ? state.gameNumber : 1;
+      Object.values(state.players || {}).forEach(player => {
+        if(!player) return;
+        if((Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= currentGameNumber){
+          player.answers = stopEmptyAnswers();
+          player.eligibleFromGame = currentGameNumber;
+        }
+      });
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+    });
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível iniciar a partida.');
+  }
+}
+
+async function stopPlayAgain(){
+  if(!gameState.stopMode || !gameState.stopState) return;
+  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  try{
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      state.gameNumber = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
+      state.phase = 'waiting';
+      stopClearDraftAnswers();
+      state.letter = '-';
+      state.roundStartedAt = null;
+      state.roundEndedAt = null;
+      state.stoppedBy = null;
+      state.lastResults = null;
+      Object.values(state.players || {}).forEach(player => {
+        if(!player) return;
+        player.answers = stopEmptyAnswers();
+        player.eligibleFromGame = state.gameNumber;
+      });
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+    });
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível voltar para a sala de espera.');
+  }
+}
+
+function renderStopHistory(){
+  const list = document.getElementById('stopHistoryList');
+  if(!list || !gameState.stopState) return;
+  const history = Array.isArray(gameState.stopState.history) ? gameState.stopState.history.slice(0, 20) : [];
+  if(!history.length){
+    list.innerHTML = '<div class="stop-history-card"><small>Sem partidas registradas ainda.</small></div>';
+    return;
+  }
+  list.innerHTML = history.map(entry => {
+    const date = entry.endedAt ? new Date(entry.endedAt).toLocaleString() : 'Sem data';
+    const playersHtml = Object.values(entry.players || {}).map(p => `
+      <div class="stop-history-card">
+        <div class="stop-result-head">
+          <strong>${escapeHtml(p.name || 'Jogador')}</strong>
+          <span class="pill">${Number.isFinite(p.score) ? p.score : 0} pontos</span>
+        </div>
+        <div class="stop-result-grid">
+          ${STOP_CATEGORIES.map(label => `<div class="stop-result-item"><strong>${escapeHtml(label)}</strong><div>${escapeHtml(String(p.answers?.[label] || '')) || '<em>vazio</em>'}</div></div>`).join('')}
+        </div>
+      </div>
+    `).join('');
+    return `
+      <div class="stop-history-card">
+        <div class="stop-result-head">
+          <strong>Partida ${entry.gameNumber} · letra ${escapeHtml(entry.letter || '-')}</strong>
+          <span class="pill">${date}</span>
+        </div>
+        <div class="stop-history-players">${playersHtml || '<small>Sem respostas registradas.</small>'}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openStopHistory(){
+  const modal = document.getElementById('stopHistoryModal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  renderStopHistory();
+}
+function closeStopHistory(){
+  const modal = document.getElementById('stopHistoryModal');
+  if(modal) modal.style.display = 'none';
+}
+
+// wrappers so existing rooms stay unchanged
+const _origRenderLobbyRooms = renderLobbyRooms;
+renderLobbyRooms = function(){
+  _origRenderLobbyRooms();
+};
+
+const _origRenderGame = renderGame;
+renderGame = function(){
+  if(gameState.stopMode){
+    const table = document.getElementById('table');
+    const end = document.getElementById('endScreen');
+    if(table) table.style.display = 'block';
+    if(end) end.style.display = 'none';
+    stopSetBoardVisibility(true);
+    stopSetLayout();
+    const state = gameState.stopState;
+    if(!state){
+      const status = document.getElementById('statusNote');
+      if(status) status.textContent = 'Entrando na sala Stop...';
+      const hudTurn = document.getElementById('hudTurn');
+      if(hudTurn){
+        const last = hudTurn.querySelector('span:last-child');
+        if(last) last.textContent = 'STOP';
+      }
+      return;
+    }
+    const activePlayer = state.players?.[gameState.myId] || null;
+    const hasAccess = !!activePlayer && stopPlayerIsActive(state, gameState.myId);
+    const categories = document.getElementById('stopCategories');
+    const stopResults = document.getElementById('stopResults');
+    if(state.phase === 'writing'){
+      stopResults?.classList.add('hidden');
+      if(categories) categories.classList.remove('hidden');
+    } else {
+      categories?.classList.remove('hidden');
+      stopResults?.classList.remove('hidden');
+    }
+    stopRenderPlayersSummary(state);
+    return;
+  }
+  stopSetBoardVisibility(false);
+  _origRenderGame();
+};
+
+const _origGetPlayerName = getPlayerName;
+getPlayerName = function(slot){
+  if(gameState.stopMode && gameState.stopState){
+    const players = gameState.stopState.players || {};
+    const arr = Object.values(players);
+    const p = arr.find(item => item && item.id && item.name && item.slot === slot) || arr[slot - 1] || null;
+    if(p && p.name) return p.name;
+    return `Jogador ${slot}`;
+  }
+  return _origGetPlayerName(slot);
+};
+
+const _origSetupMusic = setupMusic;
+setupMusic = function(){
+  if(!gameState.musicAudio){
+    gameState.musicAudio = new Audio();
+    gameState.musicAudio.loop = false;
+    gameState.musicAudio.addEventListener('ended', () => nextTrack(true));
+  }
+  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
+  if(pl.length) gameState.musicAudio.src = pl[gameState.trackIndex % pl.length];
+  gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+  document.getElementById('musicDisc')?.classList.remove('playing');
+};
+
+nextTrack = function(auto=false){
+  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
+  if(!pl.length) return;
+  gameState.trackIndex = (gameState.trackIndex + 1) % pl.length;
+  setupMusic();
+  if(gameState.musicPlaying || auto) playMusic();
+};
+
+prevTrack = function(){
+  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
+  if(!pl.length) return;
+  gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length;
+  setupMusic();
+  if(gameState.musicPlaying) playMusic();
+};
+
+const _origJoinRoom = joinRoom;
+joinRoom = async function(roomId){
+  gameState.stopMode = false;
+  return _origJoinRoom(roomId);
+};
+
+const _origJoinRobots = joinRobots;
+joinRobots = function(){
+  gameState.stopMode = false;
+  return _origJoinRobots();
+};
+
+const _origBackToLobby = backToLobby;
+backToLobby = async function(){
+  clearTimeout(gameState.botTimer);
+  if(gameState.stopMode){
+    await stopLeaveCurrentRoom();
+    gameState.stopMode = false;
+  }
+  return _origBackToLobby();
+};
+
+const _origShowGame = showGame;
+showGame = function(){
+  _origShowGame();
+  if(gameState.stopMode){
+    stopSetBoardVisibility(true);
+  }
+};
+
+const _origRenderPeopleModal = renderPeopleModal;
+renderPeopleModal = function(){
+  const list = document.getElementById('peopleList');
+  if(!list) return;
+  if(gameState.stopMode && gameState.stopState){
+    const state = gameState.stopState;
+    const active = stopActivePlayers(state);
+    const waiting = Object.values(state.players || {}).filter(p => p && p.id && !stopPlayerIsActive(state, p.id));
+    list.innerHTML = `
+      <div class="list-item"><strong>Jogadores</strong><span class="pill">${active.length}</span></div>
+      ${active.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(String(p.id).toUpperCase().slice(0,4))})</strong><div><small>Joga a partir da partida ${p.eligibleFromGame || 1}</small></div></div><span class="pill">ATIVO</span></div>`).join('') || '<div class="list-item"><small>Nenhum jogador ativo.</small></div>'}
+      <div class="list-item"><strong>Aguardando próxima partida</strong><span class="pill">${waiting.length}</span></div>
+      ${waiting.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(String(p.id).toUpperCase().slice(0,4))})</strong><div><small>Entra na próxima partida</small></div></div><span class="pill">AGUARDANDO</span></div>`).join('') || '<div class="list-item"><small>Ninguém aguardando.</small></div>'}
+    `;
+    return;
+  }
+  return _origRenderPeopleModal();
+};
+
+const _origRenderLobbyRooms2 = renderLobbyRooms;
+window.renderLobbyRooms = renderLobbyRooms;
+
+window.joinStopRoom = joinStopRoom;
+window.openStopHistory = openStopHistory;
+window.closeStopHistory = closeStopHistory;
+window.pressStop = pressStop;
+window.startStopNewGame = startStopNewGame;
+window.stopPlayAgain = stopPlayAgain;
+window.updateStopAnswer = updateStopAnswer;
+window.stopLeaveCurrentRoom = stopLeaveCurrentRoom;
+
+window.addEventListener('beforeunload', () => {
+  if(gameState.stopMode) stopLeaveCurrentRoom();
+  if(gameState.roomMode) leaveCurrentRoom();
+});
+
+  const oldBootstrapLobbyRooms = bootstrapLobbyRooms;
+  bootstrapLobbyRooms = function(){
+    stopLobbySubscriptions();
+    refreshRoomListeners();
+    renderLobbyRooms();
+  };
+
+  function boot(){
+    syncCurrentUserId();
+    listenSettings();
+    refreshRoomListeners();
+    renderLobbyRooms();
+    renderAdminModal();
+    renderPeopleModal();
+    startAutoResetScheduler();
+    if(!window.adminBootstrapStarted){
+      window.adminBootstrapStarted = true;
+      const origLoad = window.onload;
+      window.onload = async function(){
+        if(typeof origLoad === 'function') await origLoad();
+        syncCurrentUserId();
+        renderLobbyRooms();
+        renderAdminModal();
+        renderPeopleModal();
+        refreshRoomListeners();
+      };
+    }
+  }
+
+  window.addEventListener('load', boot);
+
+  window.openAdminModal = openAdminModal;
+  window.closeAdminModal = closeAdminModal;
+  window.loginAdmin = loginAdmin;
+  window.logoutAdmin = logoutAdmin;
+  window.saveAdminPassword = saveAdminPassword;
+  window.resetAllRooms = resetAllRooms;
+  window.saveAutoResetHour = saveAutoResetHour;
+  window.deleteSelectedPlayer = deleteSelectedPlayer;
+  window.createAdminRoom = createAdminRoom;
+  window.deleteAdminRoom = deleteAdminRoom;
+  window.saveRoomPassword = saveRoomPassword;
+  window.saveRoomName = saveRoomName;
+  window.saveRoomMusicList = saveRoomMusicList;
+  window.resetRoomMusicList = resetRoomMusicList;
+  window.toggleRoomAutoPlay = toggleRoomAutoPlay;
+  window.toggleRoomListenMode = toggleRoomListenMode;
+  window.renderAdminRoomDetails = renderAdminRoomDetails;
+  window.renderAdminDelegationSearch = renderAdminDelegationSearch;
+  window.selectDelegationUser = selectDelegationUser;
+  window.clearDelegation = clearDelegation;
+  window.saveDelegation = saveDelegation;
+  window.deleteDelegation = deleteDelegation;
+  window.openPeopleModal = openPeopleModal;
+  window.closePeopleModal = closePeopleModal;
+  window.renderPeopleModal = renderPeopleModal;
+})();
+</script>
+
 </body>
 </html>
