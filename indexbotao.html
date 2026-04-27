@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>22Cartas - Jogo Multiplayer com Chat</title>
+  <title>aaCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2581,9 +2581,32 @@ const STOP_STALE_MS = 120000;
             <div id="delegationList" class="list"></div>
           </div>
         </div>
+
+        <div class="modal-section" data-permission="rooms">
+          <strong>Resetar salas</strong>
+          <div class="mini-note">Clique para limpar todas as salas e reiniciar.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <button class="btn" type="button" onclick="resetAllRooms()">Resetar agora</button>
+          </div>
+          <div class="mini-note" style="margin-top:12px;">Reset automático diário (hora 0-23). Deixe vazio para desativar.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="autoResetHourInput" class="field" type="number" min="0" max="23" placeholder="Ex: 22" />
+            <button class="btn secondary" type="button" onclick="saveAutoResetHour()">Salvar hora</button>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="rooms">
+          <strong>Excluir jogadores</strong>
+          <div class="mini-note">Selecione um jogador do registro e remova do site.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <select id="deletePlayerSelect" class="field"></select>
+            <button class="btn" type="button" onclick="deleteSelectedPlayer()">Excluir jogador</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
 
   <div id="peopleModal" class="modal">
     <div class="modal-card">
@@ -3164,6 +3187,13 @@ const STOP_STALE_MS = 120000;
     renderAdminDelegationSearch();
     const input = document.getElementById('newAdminPasswordInput');
     if(input) input.value = '';
+    const autoInput = document.getElementById('autoResetHourInput');
+    if(autoInput) autoInput.value = adminState.settings.autoResetHour ?? '';
+    const delSelect = document.getElementById('deletePlayerSelect');
+    if(delSelect){
+      const users = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry.slice(-200).reverse() : [];
+      delSelect.innerHTML = users.length ? users.map(u => `<option value="${escapeHtml(String(u.id||'').toUpperCase())}">${escapeHtml(u.name || 'Jogador')} (${escapeHtml(String(u.id||'').toUpperCase().slice(0,4))})</option>`).join('') : '<option value="">Nenhum jogador</option>';
+    }
   }
 
   function openAdminModal(){
@@ -3194,6 +3224,76 @@ const STOP_STALE_MS = 120000;
     adminState.settings.adminPassword = next;
     saveSettings();
     alert('Senha atualizada.');
+  }
+
+  async function resetAllRooms(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    if(!confirm('Tem certeza que deseja resetar TODAS as salas agora?')) return;
+    const rooms = getRooms();
+    for(const r of rooms){
+      const id = r.id;
+      const type = getRoomType(id);
+      try {
+        if(type === 'stop'){
+          await db.collection('stopRooms').doc(id).delete();
+          await ensureStopRoomDoc(id);
+        } else {
+          await db.collection('rooms').doc(id).delete();
+          await ensureRoomDoc(id);
+        }
+        await deleteRoomChatMessages(id);
+      } catch(e){ console.warn('Erro ao resetar sala', id, e); }
+    }
+    alert('Salas resetadas com sucesso.');
+    renderLobbyRooms();
+  }
+
+  function saveAutoResetHour(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const input = document.getElementById('autoResetHourInput');
+    const val = input?.value;
+    if(val === '' || val === null){
+      delete adminState.settings.autoResetHour;
+    } else {
+      const h = parseInt(val, 10);
+      if(isNaN(h) || h < 0 || h > 23) return alert('Digite uma hora entre 0 e 23.');
+      adminState.settings.autoResetHour = h;
+    }
+    saveSettings();
+    alert('Hora de reset automático salva.');
+    startAutoResetScheduler();
+  }
+
+  function deleteSelectedPlayer(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const select = document.getElementById('deletePlayerSelect');
+    const id = String(select?.value || '').trim();
+    if(!id) return alert('Selecione um jogador.');
+    if(!confirm(`Excluir o jogador ${id} do site?`)) return;
+    const registry = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry : [];
+    adminState.settings.userRegistry = registry.filter(u => String(u.id || '').toUpperCase() !== id.toUpperCase());
+    if(adminState.settings.delegations && adminState.settings.delegations[id]) delete adminState.settings.delegations[id];
+    saveSettings();
+    alert('Jogador excluído.');
+    renderAdminModal();
+  }
+
+  let autoResetTimer = null;
+  function startAutoResetScheduler(){
+    if(autoResetTimer) clearInterval(autoResetTimer);
+    autoResetTimer = setInterval(async () => {
+      const h = adminState.settings.autoResetHour;
+      if(h === undefined || h === null) return;
+      const now = new Date();
+      if(now.getHours() === Number(h) && now.getMinutes() === 0){
+        const today = now.toISOString().slice(0,10);
+        if(adminState.settings.lastAutoReset !== today){
+          adminState.settings.lastAutoReset = today;
+          saveSettings();
+          await resetAllRooms();
+        }
+      }
+    }, 60000);
   }
 
   function openPeopleModal(){ const modal = document.getElementById('peopleModal'); if(modal){ modal.style.display = 'flex'; renderPeopleModal(); } }
@@ -4459,6 +4559,7 @@ window.addEventListener('beforeunload', () => {
     renderLobbyRooms();
     renderAdminModal();
     renderPeopleModal();
+    startAutoResetScheduler();
     if(!window.adminBootstrapStarted){
       window.adminBootstrapStarted = true;
       const origLoad = window.onload;
@@ -4480,6 +4581,9 @@ window.addEventListener('beforeunload', () => {
   window.loginAdmin = loginAdmin;
   window.logoutAdmin = logoutAdmin;
   window.saveAdminPassword = saveAdminPassword;
+  window.resetAllRooms = resetAllRooms;
+  window.saveAutoResetHour = saveAutoResetHour;
+  window.deleteSelectedPlayer = deleteSelectedPlayer;
   window.createAdminRoom = createAdminRoom;
   window.deleteAdminRoom = deleteAdminRoom;
   window.saveRoomPassword = saveRoomPassword;
