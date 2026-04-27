@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>nnCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2311,7 +2311,7 @@ const STOP_STALE_MS = 120000;
         ]
       });
 
-      const entry = { pc, remoteId };
+      const entry = { pc, remoteId, pendingCandidates: [] };
       if(!gameState.voicePeers) gameState.voicePeers = {};
       gameState.voicePeers[remoteId] = entry;
 
@@ -2372,13 +2372,19 @@ const STOP_STALE_MS = 120000;
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           sendVoiceSignal(ctx, remoteId, 'answer', pc.localDescription);
+          for(const c of entry.pendingCandidates.splice(0)){
+            try{ await pc.addIceCandidate(new RTCIceCandidate(c)); }catch(e){}
+          }
         } else if(data.kind === 'answer' && data.payload){
           await pc.setRemoteDescription(new RTCSessionDescription(data.payload));
+          for(const c of entry.pendingCandidates.splice(0)){
+            try{ await pc.addIceCandidate(new RTCIceCandidate(c)); }catch(e){}
+          }
         } else if(data.kind === 'candidate' && data.payload){
-          try{
+          if(pc.remoteDescription){
             await pc.addIceCandidate(new RTCIceCandidate(data.payload));
-          }catch(err){
-            console.warn('Falha ao adicionar candidato ICE:', err);
+          } else {
+            entry.pendingCandidates.push(data.payload);
           }
         }
       }catch(err){
