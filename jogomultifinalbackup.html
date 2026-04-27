@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>20Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -949,7 +949,7 @@
     @media (max-width: 768px) {
       /* Aplica só quando NÃO está no modo Stop (stopPanel escondido = jogo de cartas) */
       #table:has(#stopPanel.hidden) .hud {
-        justify-content: center;
+        justify-content: space-between;
         padding: 6px 8px;
         gap: 8px;
       }
@@ -968,12 +968,39 @@
         background: var(--panel-strong);
         border: 1px solid var(--stroke);
       }
-      /* Esconde mesa completa, deixa só suas cartas */
+      /* Mostra só nome e contagem dos outros jogadores */
       #table:has(#stopPanel.hidden) #gameBoard #p2,
       #table:has(#stopPanel.hidden) #gameBoard #p3,
-      #table:has(#stopPanel.hidden) #gameBoard #p4,
-      #table:has(#stopPanel.hidden) #gameBoard .center-area,
-      #table:has(#stopPanel.hidden) .board-note {
+      #table:has(#stopPanel.hidden) #gameBoard #p4 {
+        display: flex !important;
+        position: static !important;
+        width: auto !important;
+        flex-direction: row;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        margin: 2px;
+        background: var(--panel);
+        border: 1px solid var(--stroke);
+        border-radius: 10px;
+        font-size: 0.8rem;
+      }
+      #table:has(#stopPanel.hidden) #gameBoard #p2 .cards,
+      #table:has(#stopPanel.hidden) #gameBoard #p3 .cards,
+      #table:has(#stopPanel.hidden) #gameBoard #p4 .cards {
+        display: none !important;
+      }
+      #table:has(#stopPanel.hidden) #gameBoard #p2 .info,
+      #table:has(#stopPanel.hidden) #gameBoard #p3 .info,
+      #table:has(#stopPanel.hidden) #gameBoard #p4 .info {
+        display: block !important;
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      /* Esconde notas e botões extras, mas MANTÉM o baralho do meio */
+      #table:has(#stopPanel.hidden) .board-note,
+      #table:has(#stopPanel.hidden) #gameBoard .center-area .seat-actions,
+      #table:has(#stopPanel.hidden) #gameBoard .center-area #drawCardBtn {
         display: none !important;
       }
       #table:has(#stopPanel.hidden) #gameBoard {
@@ -981,12 +1008,23 @@
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        padding: 8px 0 0 0;
+        padding: 4px 0 0 0;
         min-height: auto;
         background: transparent;
         box-shadow: none;
         border: none;
+        gap: 6px;
       }
+      /* Baralho do meio visível e centralizado */
+      #table:has(#stopPanel.hidden) #gameBoard .center-area {
+        display: flex !important;
+        order: 2;
+        padding: 8px 0;
+      }
+      #table:has(#stopPanel.hidden) #gameBoard .center-area .center-card-row {
+        gap: 12px;
+      }
+      /* Suas cartas em destaque */
       #table:has(#stopPanel.hidden) #p1 {
         position: static !important;
         width: 100% !important;
@@ -996,9 +1034,10 @@
         align-items: center;
         margin: 0;
         padding: 0 8px;
+        order: 3;
       }
       #table:has(#stopPanel.hidden) #p1 .info {
-        display: none; /* esconde nome/pontos para limpar */
+        display: none;
       }
       #table:has(#stopPanel.hidden) #p1 .cards {
         justify-content: center;
@@ -1006,25 +1045,36 @@
         gap: 8px;
         padding-bottom: 12px;
       }
-      /* Chat sempre visível e fixo embaixo */
-      #table:has(#stopPanel.hidden) ~ #chatPanel,
+      /* Jogadores adversários em linha no topo */
+      #table:has(#stopPanel.hidden) #p4 { order: 0; }
+      #table:has(#stopPanel.hidden) #p3 { order: 0; }
+      #table:has(#stopPanel.hidden) #p2 { order: 0; }
+      #gameBoard > #p2, #gameBoard > #p3, #gameBoard > #p4 {
+        /* agrupa no topo */
+      }
+      /* Chat: aparece ao entrar, pode minimizar com "-" */
       body:has(#table #stopPanel.hidden) #chatPanel {
         position: fixed !important;
         left: 0; right: 0; bottom: 0;
         top: auto !important;
-        height: 42vh !important;
-        max-height: 42vh;
+        height: 38vh !important;
+        max-height: 38vh;
         width: 100% !important;
         border-radius: 18px 18px 0 0;
         z-index: 50;
-        display: flex !important;
+        /* NÃO força display, deixa o JS controlar */
+      }
+      /* Quando chat está minimizado (display:none), não ocupa espaço */
+      body:has(#table #stopPanel.hidden) #chatPanel[style*="display: none"] {
+        height: 0 !important;
       }
       /* Garante espaço para as cartas acima do chat */
       #table:has(#stopPanel.hidden) {
-        padding-bottom: 44vh !important;
+        padding-bottom: 40vh !important;
         min-height: 100vh;
       }
     }
+
 
 </style>
 </head>
