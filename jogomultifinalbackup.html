@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>kkCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <!-- Jitsi Meet Audio -->
-  <script src="https://meet.ffmuc.net/external_api.js"></script>
   <style>
     /* ========== ESTILOS COMPLETOS ORIGINAIS ========== */
     :root{
@@ -4749,51 +4747,101 @@ window.addEventListener('beforeunload', () => {
 })();
 </script>
 
-  
+<!-- ====== JITSI MEET INTEGRATION - VOZ EM TEMPO REAL ====== -->
+<script src="https://meet.jit.si/external_api.js"></script>
+<style>
+  #jitsiFloatBtn{
+    position:fixed; left:14px; top:50%; transform:translateY(-50%);
+    z-index:99999; width:56px; height:56px; border-radius:50%;
+    background: linear-gradient(135deg, #22c55e, #0ea5e9);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:26px; cursor:pointer; box-shadow:0 12px 28px rgba(14,165,233,.35);
+    border:2px solid rgba(255,255,255,.8); user-select:none;
+    transition:transform .15s ease;
+  }
+  #jitsiFloatBtn:hover{ transform:translateY(-50%) scale(1.06); }
+  #jitsiFloatBtn.hidden{ display:none; }
 
+  #jitsiModal{
+    position:fixed; inset:0; z-index:99998; display:none;
+    background:rgba(2,6,23,.72); backdrop-filter:blur(6px);
+    align-items:center; justify-content:center; padding:20px;
+  }
+  #jitsiModal.active{ display:flex; }
+  #jitsiWrapper{
+    position:relative; width:min(1100px,95vw); height:min(720px,88vh);
+    background:#000; border-radius:18px; overflow:hidden; box-shadow:0 25px 70px rgba(0,0,0,.5);
+  }
+  #jitsiContainer{ width:100%; height:100%; }
+  #jitsiClose{
+    position:absolute; top:8px; right:10px; z-index:2;
+    background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:10px;
+    width:36px; height:36px; font-size:22px; cursor:pointer;
+  }
+</style>
 
-
-<div id="jitsi-audio-container" style="position:fixed;bottom:8px;right:8px;width:320px;height:240px;border:2px solid #0ea5e9;border-radius:12px;overflow:hidden;z-index:9998;background:#000;box-shadow:0 8px 24px rgba(0,0,0,.4);"></div>
+<div id="jitsiFloatBtn" class="hidden" title="Abrir conversa por voz">🎙️</div>
+<div id="jitsiModal">
+  <div id="jitsiWrapper">
+    <button id="jitsiClose" aria-label="Fechar">×</button>
+    <div id="jitsiContainer"></div>
+  </div>
+</div>
 
 <script>
-// ===== INTEGRAÇÃO JITSI MEET ÁUDIO v2 - CORRIGIDO =====
 (function(){
-  window.voiceChat = { api: null, currentRoom: null, muted: false };
+  const btn = document.getElementById('jitsiFloatBtn');
+  const modal = document.getElementById('jitsiModal');
+  const closeBtn = document.getElementById('jitsiClose');
+  let api = null;
+  let currentJitsiRoom = null;
 
-  function getPlayerName(){
-    const el = document.getElementById('roomName');
-    return (el && el.value ? el.value.trim().slice(0,18) : (window.gameState?.myName || 'Jogador'));
+  function getGameId(){
+    try{
+      if(window.gameState?.stopMode && window.gameState?.stopState?.id){
+        return 'stop-' + String(window.gameState.stopState.id);
+      }
+      if(window.gameState?.roomMode && window.gameState?.roomId){
+        return 'cartas-' + String(window.gameState.roomId);
+      }
+    }catch(e){}
+    return null;
   }
 
-  async function ensureMicPermission(){
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      // fecha imediatamente, só para liberar permissão
-      stream.getTracks().forEach(t => t.stop());
-      return true;
-    } catch(e){
-      console.warn('[VOZ] Microfone negado:', e);
-      alert('Permita o microfone para falar com a sala.');
-      return false;
-    }
+  function makeRoomName(gameId){
+    // nome aleatório determinístico, sem dados do usuário
+    let h = 0;
+    for(let i=0;i<gameId.length;i++){ h = ((h<<5)-h) + gameId.charCodeAt(i); h |= 0; }
+    const base = Math.abs(h).toString(36);
+    // adiciona sufixo estável para parecer aleatório
+    return 'xc-' + base.padStart(6,'0').slice(0,10);
   }
 
-  async function startVoiceChat(roomId){
-    if(!roomId) return;
-    if(window.voiceChat.api && window.voiceChat.currentRoom === roomId) return;
-    
-    const ok = await ensureMicPermission();
-    if(!ok) return;
+  function shouldShowButton(){
+    return !!(window.gameState?.roomMode || window.gameState?.stopMode);
+  }
 
-    stopVoiceChat();
+  function updateButtonVisibility(){
+    if(shouldShowButton()){ btn.classList.remove('hidden'); }
+    else { btn.classList.add('hidden'); closeJitsi(); }
+  }
 
-    const domain = 'meet.ffmuc.net';
-    const container = document.getElementById('jitsi-audio-container');
-    const safeRoom = 'xcCartas_' + String(roomId).replace(/[^a-zA-Z0-9_-]/g,'');
-    
-    const options = {
-      roomName: safeRoom,
-      parentNode: container,
+  function openJitsi(){
+    const gameId = getGameId();
+    if(!gameId){ alert('Entre em uma sala de cartas ou STOP primeiro!'); return; }
+
+    const roomName = makeRoomName(gameId);
+    currentJitsiRoom = roomName;
+
+    modal.classList.add('active');
+
+    // destrói anterior se houver
+    if(api){ try{ api.dispose(); }catch(e){} api=null; }
+    document.getElementById('jitsiContainer').innerHTML='';
+
+    api = new JitsiMeetExternalAPI('meet.jit.si', {
+      roomName: roomName,
+      parentNode: document.getElementById('jitsiContainer'),
       width: '100%',
       height: '100%',
       configOverwrite: {
@@ -4802,130 +4850,59 @@ window.addEventListener('beforeunload', () => {
         startAudioOnly: true,
         prejoinPageEnabled: false,
         disableDeepLinking: true,
-        enableNoAudioDetection: true,
-        enableNoisyMicDetection: true,
-        disableSimulcast: true
+        // sem lobby, sem senha
+        enableLobbyChat: false,
+        enableWelcomePage: false,
+        // desativa moderação visível
+        enableUserRolesBasedOnToken: false,
+        disableModeratorIndicator: true,
+        // todos entram direto
+        requireDisplayName: false
       },
       interfaceConfigOverwrite: {
-        TOOLBAR_BUTTONS: ['microphone','hangup','tileview'],
+        TOOLBAR_BUTTONS: ['microphone','hangup','chat','raisehand','tileview','settings'],
+        // remove botões de segurança, gravação, kick, etc
         SHOW_JITSI_WATERMARK: false,
-        filmStripOnly: false
+        SHOW_WATERMARK_FOR_GUESTS: false,
+        SETTINGS_SECTIONS: ['devices'],
+        VIDEO_QUALITY_LABEL_DISABLED: true
       },
-      userInfo: { displayName: getPlayerName() }
-    };
-
-    try {
-      window.voiceChat.api = new JitsiMeetExternalAPI(domain, options);
-      window.voiceChat.currentRoom = roomId;
-      
-      window.voiceChat.api.addEventListener('videoConferenceJoined', () => {
-        console.log('[VOZ] Conectado:', safeRoom);
-        // garante áudio ligado
-        setTimeout(() => {
-          window.voiceChat.api.executeCommand('setAudioMuted', false);
-          window.voiceChat.api.executeCommand('setVideoMuted', true);
-        }, 1000);
-        updateVoiceButton();
-      });
-      
-      window.voiceChat.api.addEventListener('audioMuteStatusChanged', (e) => {
-        window.voiceChat.muted = e.muted;
-        updateVoiceButton();
-      });
-      
-      window.voiceChat.api.addEventListener('participantJoined', (p) => {
-        console.log('[VOZ] Entrou:', p.displayName);
-      });
-    } catch(err){
-      console.error('Erro Jitsi:', err);
-    }
-  }
-
-  function stopVoiceChat(){
-    try {
-      if(window.voiceChat.api){
-        window.voiceChat.api.executeCommand('hangup');
-        window.voiceChat.api.dispose();
+      userInfo: {
+        displayName: (window.gameState?.playerName || 'Jogador')
       }
-    } catch(e){}
-    window.voiceChat.api = null;
-    window.voiceChat.currentRoom = null;
-    updateVoiceButton();
+    });
+
+    api.addEventListener('videoConferenceJoined', () => {
+      // garante sem lobby
+      try{ api.executeCommand('toggleLobby', false); }catch(e){}
+    });
   }
 
-  function toggleVoiceMute(){
-    if(!window.voiceChat.api) return;
-    window.voiceChat.api.executeCommand('toggleAudio');
+  function closeJitsi(){
+    modal.classList.remove('active');
+    if(api){ try{ api.dispose(); }catch(e){} api=null; }
+    currentJitsiRoom = null;
   }
 
-  function updateVoiceButton(){
-    const btn = document.getElementById('voiceToggleBtn');
-    if(!btn) return;
-    if(!window.voiceChat.api){
-      btn.textContent = '🔇 Voz Off';
-      btn.className = 'btn small secondary';
-    } else {
-      btn.textContent = window.voiceChat.muted ? '🔇 Desmutar' : '🎤 Mutar';
-      btn.className = 'btn small' + (window.voiceChat.muted ? ' secondary' : '');
-    }
+  btn.addEventListener('click', openJitsi);
+  closeBtn.addEventListener('click', closeJitsi);
+  modal.addEventListener('click', (e)=>{ if(e.target===modal) closeJitsi(); });
+
+  // observa mudanças de sala
+  setInterval(updateButtonVisibility, 1000);
+
+  // integra com funções existentes
+  const origShowGame = window.showGame;
+  if(typeof origShowGame==='function'){
+    window.showGame = function(){ origShowGame.apply(this,arguments); setTimeout(updateButtonVisibility,300); };
   }
-
-  function injectVoiceButton(){
-    if(document.getElementById('voiceToggleBtn')) return;
-    const btn = document.createElement('button');
-    btn.id = 'voiceToggleBtn';
-    btn.className = 'btn small secondary';
-    btn.textContent = '🎤 Voz';
-    btn.style.position = 'fixed';
-    btn.style.bottom = '12px';
-    btn.style.right = '12px';
-    btn.style.zIndex = '9999';
-    btn.onclick = toggleVoiceMute;
-    document.body.appendChild(btn);
-    updateVoiceButton();
+  const origBack = window.backToLobby;
+  if(typeof origBack==='function'){
+    window.backToLobby = async function(){ const r=await origBack.apply(this,arguments); closeJitsi(); updateButtonVisibility(); return r; };
   }
-
-  const wait = setInterval(() => {
-    if(typeof window.joinRoom === 'function' && typeof window.joinStopRoom === 'function'){
-      clearInterval(wait);
-      
-      const origJoin = window.joinRoom;
-      window.joinRoom = async function(roomId){
-        const res = await origJoin.apply(this, arguments);
-        injectVoiceButton();
-        startVoiceChat(roomId);
-        return res;
-      };
-
-      const origStop = window.joinStopRoom;
-      window.joinStopRoom = async function(roomId){
-        const res = await origStop.apply(this, arguments);
-        injectVoiceButton();
-        startVoiceChat(roomId || 'STOP');
-        return res;
-      };
-
-      const origRobots = window.joinRobots;
-      if(origRobots){
-        window.joinRobots = function(){
-          const res = origRobots.apply(this, arguments);
-          injectVoiceButton();
-          startVoiceChat('ROBOTS_' + (window.gameState?.myId || Math.random().toString(36).slice(2,6)));
-          return res;
-        };
-      }
-
-      const origBack = window.backToLobby;
-      if(origBack){
-        window.backToLobby = async function(){
-          stopVoiceChat();
-          return await origBack.apply(this, arguments);
-        };
-      }
-    }
-  }, 400);
 })();
 </script>
+<!-- ====== FIM JITSI ====== -->
 
 </body>
 </html>
