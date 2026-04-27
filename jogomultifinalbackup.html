@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>nnCartas - Jogo Multiplayer com Chat</title>
+  <title>zzCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1007,7 +1007,7 @@
         </div>
         <div class="hud-right">
           <div id="voiceGroup" class="voice-group">
-            <button id="audioBtn" class="btn secondary mini-toggle" onclick="toggleAudio()">Áudio: desligado</button>
+            <button id="audioBtn" class="btn secondary mini-toggle" onclick="toggleAudio()">Áudio: ligado</button>
             <button id="micBtn" class="btn secondary mini-toggle" onclick="toggleMic()">Mic: desligado</button>
             <label class="tiny-control"><span>Mic</span><input id="micVolume" type="range" min="0" max="100" value="100" oninput="setMicVolume(this.value)" /></label>
             <label class="tiny-control"><span>Som</span><input id="masterVolume" type="range" min="0" max="100" value="100" oninput="setMasterVolume(this.value)" /></label>
@@ -1167,7 +1167,7 @@ const STOP_STALE_MS = 120000;
       musicVolume: 0.7,
       masterVolume: 1,
       micVolume: 1,
-      audioEnabled: false,
+      audioEnabled: true,
       micEnabled: false,
       micStream: null,
       micOutputStream: null,
@@ -2229,7 +2229,16 @@ const STOP_STALE_MS = 120000;
         throw new Error('Microfone não disponível');
       }
 
-      const rawStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      const rawStream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+          channelCount: 1,
+          sampleRate: 48000
+        }, 
+        video: false 
+      });
       gameState.micStream = rawStream;
 
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -2307,7 +2316,22 @@ const STOP_STALE_MS = 120000;
       const pc = new RTCPeer({
         iceServers: [
           { urls: ['stun:stun.l.google.com:19302'] },
-          { urls: ['stun:global.stun.twilio.com:3478'] }
+          { urls: ['stun:global.stun.twilio.com:3478'] },
+          { 
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          { 
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          },
+          {
+            urls: 'turns:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelayproject',
+            credential: 'openrelayproject'
+          }
         ]
       });
 
@@ -2483,6 +2507,14 @@ const STOP_STALE_MS = 120000;
         if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
       }
 
+      // Destrava autoplay
+      try {
+        if (window.AudioContext || window.webkitAudioContext) {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          if (ctx.state === 'suspended') ctx.resume();
+        }
+      } catch(e){}
+
       refreshVoiceChat(true);
     }
 
@@ -2491,6 +2523,14 @@ const STOP_STALE_MS = 120000;
       const audioBtn = document.getElementById('audioBtn');
       if(audioBtn) audioBtn.textContent = gameState.audioEnabled ? 'Áudio: ligado' : 'Áudio: desligado';
       updateVoiceAudioVolumes();
+      // Destrava autoplay no iOS/Chrome
+      try {
+        if (window.AudioContext || window.webkitAudioContext) {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          if (ctx.state === 'suspended') ctx.resume();
+        }
+        document.querySelectorAll('#voiceHiddenAudioContainer audio').forEach(a => a.play().catch(()=>{}));
+      } catch(e){}
       refreshVoiceChat(true);
     }
 
