@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>00Cartas - Jogo Multiplayer com Chat</title>
+  <title>vvCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -4911,5 +4911,210 @@ window.addEventListener('beforeunload', () => {
 })();
 </script>
 
+
+<script>
+(function(){
+  function getActiveRoomId(){
+    return String(gameState.roomId || gameState.stopRoomId || '').trim();
+  }
+
+  function isInsideRoom(){
+    return !!(gameState.roomMode || gameState.stopMode) && !!getActiveRoomId();
+  }
+
+  function getJitsiRoomName(){
+    const base = getActiveRoomId() || 'room';
+    return `xcCartas-${base.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+  }
+
+  function ensureJitsiContainer(){
+    const container = document.getElementById('jitsiMeetContainer');
+    if(!container) return null;
+    container.style.opacity = '0';
+    container.style.pointerEvents = 'none';
+    return container;
+  }
+
+  function destroyJitsiMeet(){
+    if(gameState.jitsiApi){
+      try{ gameState.jitsiApi.dispose(); }catch(e){}
+      gameState.jitsiApi = null;
+    }
+    gameState.jitsiRoomKey = null;
+    gameState.jitsiMicMuted = true;
+    const container = document.getElementById('jitsiMeetContainer');
+    if(container) container.innerHTML = '';
+  }
+
+  function stopVoiceChat(){
+    if(gameState.voiceSignalUnsub){
+      try{ gameState.voiceSignalUnsub(); }catch(e){}
+      gameState.voiceSignalUnsub = null;
+    }
+    Object.keys(gameState.voicePeers || {}).forEach(remoteId => {
+      try{
+        const entry = gameState.voicePeers[remoteId];
+        if(entry?.pc) entry.pc.close();
+      }catch(e){}
+      delete gameState.voicePeers[remoteId];
+    });
+    Object.values(gameState.voiceRemoteAudio || {}).forEach(audio => {
+      try{ audio.pause(); }catch(e){}
+      try{ audio.srcObject = null; }catch(e){}
+      try{ audio.remove(); }catch(e){}
+    });
+    gameState.voicePeers = {};
+    gameState.voiceRemoteAudio = {};
+    gameState.voiceRoomKey = null;
+    gameState.voiceBuiltWithMic = false;
+
+    if(gameState.micStream){
+      try{ gameState.micStream.getTracks().forEach(t => t.stop()); }catch(e){}
+    }
+    if(gameState.micAudioContext){
+      try{ gameState.micAudioContext.close(); }catch(e){}
+    }
+    gameState.micStream = null;
+    gameState.micOutputStream = null;
+    gameState.micAudioContext = null;
+    gameState.micGain = null;
+
+    destroyJitsiMeet();
+  }
+
+  function updateVoiceAudioVolumes(){
+    const audioBtn = document.getElementById('audioBtn');
+    if(audioBtn) audioBtn.textContent = gameState.audioEnabled ? 'Áudio: ligado' : 'Áudio: desligado';
+    const micBtn = document.getElementById('micBtn');
+    if(micBtn) micBtn.textContent = gameState.micEnabled ? 'Mic: ligado' : 'Mic: desligado';
+  }
+
+  function loadJitsiScriptIfNeeded(onReady){
+    if(typeof JitsiMeetExternalAPI !== 'undefined'){
+      onReady();
+      return;
+    }
+    let script = document.querySelector('script[data-jitsi-external-api]');
+    if(!script){
+      script = document.createElement('script');
+      script.src = 'https://meet.jit.si/external_api.js';
+      script.async = true;
+      script.dataset.jitsiExternalApi = '1';
+      script.onload = () => onReady();
+      document.head.appendChild(script);
+      return;
+    }
+    setTimeout(() => {
+      if(typeof JitsiMeetExternalAPI !== 'undefined') onReady();
+    }, 300);
+  }
+
+  async function refreshVoiceChat(forceRestart = false){
+    updateVoiceAudioVolumes();
+
+    if(!isInsideRoom()){
+      destroyJitsiMeet();
+      return;
+    }
+
+    const roomKey = `jitsi:${getActiveRoomId()}`;
+    const desiredMicMuted = !gameState.micEnabled;
+
+    if(forceRestart || gameState.jitsiRoomKey !== roomKey || !gameState.jitsiApi){
+      destroyJitsiMeet();
+      const container = ensureJitsiContainer();
+      if(!container) return;
+
+      if(typeof JitsiMeetExternalAPI === 'undefined'){
+        loadJitsiScriptIfNeeded(() => {
+          if(isInsideRoom()) refreshVoiceChat(true);
+        });
+        return;
+      }
+
+      gameState.jitsiRoomKey = roomKey;
+      gameState.jitsiMicMuted = desiredMicMuted;
+
+      gameState.jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
+        roomName: getJitsiRoomName(),
+        parentNode: container,
+        width: '100%',
+        height: '100%',
+        userInfo: {
+          displayName: gameState.myName || 'Jogador'
+        },
+        configOverwrite: {
+          prejoinPageEnabled: false,
+          startWithAudioMuted: desiredMicMuted,
+          startWithVideoMuted: true,
+          disableDeepLinking: true,
+          hideLobbyButton: true,
+          enableWelcomePage: false,
+          enableClosePage: false
+        },
+        interfaceConfigOverwrite: {
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          TOOLBAR_BUTTONS: ['microphone', 'hangup']
+        }
+      });
+
+      gameState.jitsiApi.addEventListener('videoConferenceJoined', () => {
+        try{ gameState.jitsiApi.executeCommand('displayName', gameState.myName || 'Jogador'); }catch(e){}
+        if(gameState.micEnabled && gameState.jitsiMicMuted){
+          try{ gameState.jitsiApi.executeCommand('toggleAudio'); }catch(e){}
+          gameState.jitsiMicMuted = false;
+        }
+      });
+
+      gameState.jitsiApi.addEventListener('audioMuteStatusChanged', event => {
+        if(typeof event?.muted === 'boolean'){
+          gameState.jitsiMicMuted = event.muted;
+          gameState.micEnabled = !event.muted;
+          updateVoiceAudioVolumes();
+        }
+      });
+
+      gameState.jitsiApi.addEventListener('readyToClose', () => {
+        destroyJitsiMeet();
+      });
+    } else {
+      try{ gameState.jitsiApi.executeCommand('displayName', gameState.myName || 'Jogador'); }catch(e){}
+      if(gameState.jitsiMicMuted !== desiredMicMuted){
+        try{ gameState.jitsiApi.executeCommand('toggleAudio'); }catch(e){}
+        gameState.jitsiMicMuted = desiredMicMuted;
+      }
+    }
+  }
+
+  function toggleMic(){
+    gameState.micEnabled = !gameState.micEnabled;
+    if(gameState.micEnabled && !gameState.audioEnabled){
+      gameState.audioEnabled = true;
+    }
+    refreshVoiceChat(false);
+  }
+
+  function toggleAudio(){
+    gameState.audioEnabled = !gameState.audioEnabled;
+    updateVoiceAudioVolumes();
+  }
+
+  window.getJitsiRoomName = getJitsiRoomName;
+  window.ensureJitsiContainer = ensureJitsiContainer;
+  window.destroyJitsiMeet = destroyJitsiMeet;
+  window.stopVoiceChat = stopVoiceChat;
+  window.updateVoiceAudioVolumes = updateVoiceAudioVolumes;
+  window.refreshVoiceChat = refreshVoiceChat;
+  window.toggleMic = toggleMic;
+  window.toggleAudio = toggleAudio;
+
+  if(document.readyState !== 'loading'){
+    updateVoiceAudioVolumes();
+  } else {
+    document.addEventListener('DOMContentLoaded', updateVoiceAudioVolumes, { once: true });
+  }
+})();
+</script>
 </body>
 </html>
