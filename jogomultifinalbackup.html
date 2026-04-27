@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xxCartas - Jogo Multiplayer com Chat</title>
+  <title>uuCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -2669,7 +2669,7 @@ const STOP_STALE_MS = 120000;
           <div class="modal-row" style="margin-top:10px;">
             <button class="btn" type="button" onclick="saveRoomMusicList()">Salvar músicas</button>
             <button class="btn secondary" type="button" onclick="resetRoomMusicList()">Restaurar padrão</button>
-            <button class="btn" type="button" onclick="saveRoomMusicListAll()" style="margin-left:6px">Todas as salas</button>
+            <button class="btn" type="button" onclick="saveRoomMusicListAll()">Todas as salas</button>
           </div>
         </div>
 
@@ -2977,6 +2977,7 @@ const STOP_STALE_MS = 120000;
       renderAdminModal();
       renderPeopleModal();
       refreshRoomListeners();
+      if(gameState.roomMode && gameState.roomId){ refreshCurrentRoomMusic(); }
     });
   }
 
@@ -3186,17 +3187,18 @@ const STOP_STALE_MS = 120000;
     if(!hasPermission('music')) return alert('Sem permissão de músicas.');
     const roomId = adminState.selectedRoomId;
     const textarea = document.getElementById('roomMusicList');
-    const playlist = String(textarea?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
-    setRoomMeta(roomId, { playlist: playlist.length ? playlist : DEFAULT_PLAYLIST.slice() }
+    const playlist = String(textarea?.value || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    setRoomMeta(roomId, { playlist: playlist.length ? playlist : DEFAULT_PLAYLIST.slice() });
+    if(gameState.roomMode && gameState.roomId === roomId){ refreshCurrentRoomMusic(); }
+  }
   function saveRoomMusicListAll(){
     if(!hasPermission('music')) return alert('Sem permissão de músicas.');
     const textarea = document.getElementById('roomMusicList');
-    const playlist = String(textarea?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
+    const playlist = String(textarea?.value || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
     const finalPlaylist = playlist.length ? playlist : DEFAULT_PLAYLIST.slice();
     const rooms = getRooms();
-    rooms.forEach(r => { setRoomMeta(r.id, { playlist: finalPlaylist }); });
-    alert('Playlist aplicada a todas as salas (' + rooms.length + ').');
-  });
+    rooms.forEach(r => setRoomMeta(r.id, { playlist: finalPlaylist }));
+    if(gameState.roomMode){ refreshCurrentRoomMusic(); }
   }
   function resetRoomMusicList(){
     if(!hasPermission('music')) return alert('Sem permissão de músicas.');
@@ -3472,11 +3474,12 @@ const STOP_STALE_MS = 120000;
 
   function refreshCurrentRoomMusic(){
     if(gameState.roomMode && gameState.roomId){
+      const wasPlaying = !!gameState.musicPlaying;
       gameState.roomPlaylist = roomPlaylist(gameState.roomId);
       setupMusic();
-      if(roomAutoplay(gameState.roomId)){
+      if(wasPlaying || roomAutoplay(gameState.roomId)){
         playMusic();
-        setTimeout(() => { if(roomAutoplay(gameState.roomId)) playMusic(); }, 180);
+        setTimeout(() => { if(wasPlaying || roomAutoplay(gameState.roomId)) playMusic(); }, 180);
       }
     }
   }
@@ -3552,6 +3555,7 @@ const STOP_STALE_MS = 120000;
     gameState.mySlot = null;
     gameState.audioEnabled = true;
     showGame();
+    if(roomAutoplay(roomId)){ gameState.trackIndex = 0; setupMusic(); playMusic(); }
     applyModeUI();
     refreshThemeForMode();
     renderGame();
@@ -4597,6 +4601,7 @@ setupMusic = function(){
   const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
   if(pl.length) gameState.musicAudio.src = pl[gameState.trackIndex % pl.length];
   gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+  try{ gameState.musicAudio.load(); }catch(e){}
   document.getElementById('musicDisc')?.classList.remove('playing');
 };
 
