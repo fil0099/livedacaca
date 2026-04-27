@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>155Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -523,42 +523,21 @@
       display:none !important;
     }
     body.chat-room-mode #table{
-      display:flex !important;
-      flex-direction:column;
-      align-items:center;
-      justify-content:flex-start;
-      overflow:auto;
-      padding:12px;
+      display:block !important;
     }
-    body.chat-room-mode .table-shell{
-      width:min(1200px, 100%);
-      min-height:calc(100vh - 24px);
-      height:auto;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:16px;
-    }
-    body.chat-room-mode .hud{
-      width:min(1200px, 100%);
-    }
-    body.chat-room-mode .board{
+    body.chat-room-mode #gameBoard{
       display:none !important;
     }
     body.chat-room-mode #chatPanel{
       display:flex !important;
-      position:relative;
-      left:auto;
-      top:auto;
-      transform:none;
-      width:min(860px, 94vw);
-      height:clamp(420px, 62vh, 720px);
-      max-height:72vh;
+      position:fixed;
+      left:50%;
+      top:58%;
+      transform:translate(-50%, -50%);
+      width:min(720px, calc(100vw - 32px));
+      height:min(60vh, 560px);
+      max-height:calc(100vh - 120px);
       z-index:45;
-      margin:18px auto 0;
-      border-radius:28px;
-      overflow:hidden;
-      align-self:center;
     }
     body.chat-room-mode #chatPanel .chat-messages{
       min-height:0;
@@ -1879,9 +1858,6 @@ const STOP_STALE_MS = 120000;
       if(title) title.textContent = `💬 ${currentRoomLabel(roomId)}`;
       const backBtn = document.getElementById("chatRoomBackBtn");
       if(backBtn) backBtn.classList.remove("hidden");
-      document.getElementById("lobbyScreen").style.display = "none";
-      document.getElementById("endScreen").style.display = "none";
-      document.getElementById("table").style.display = "flex";
       document.getElementById("chatPanel").style.display = "flex";
     }
 
@@ -1893,6 +1869,8 @@ const STOP_STALE_MS = 120000;
       gameState.roomType = null;
       document.body.classList.remove("chat-room-mode");
       document.getElementById("table").style.display = "none";
+      const board = document.getElementById("gameBoard");
+      if(board) board.style.display = "";
       document.getElementById("endScreen").style.display = "none";
       document.getElementById("lobbyScreen").style.display = "flex";
       document.getElementById("chatPanel").style.display = "none";
@@ -2110,16 +2088,21 @@ const STOP_STALE_MS = 120000;
 
     function renderGame(){
       if(gameState.roomMode){
-        const state = gameState.roomState;
         if(gameState.roomType === 'chat'){
-          document.getElementById("table").style.display = "flex";
+          document.getElementById("table").style.display = "block";
+          const board = document.getElementById("gameBoard");
+          if(board) board.style.display = "none";
           document.getElementById("endScreen").style.display = "none";
-          document.getElementById("statusNote").textContent = "Sala de bate-papo ativa";
           const hudTurn = document.getElementById("hudTurn");
-          if(hudTurn) hudTurn.querySelector('span:last-child').textContent = "Bate-papo";
+          if(hudTurn) hudTurn.querySelector('span:last-child').textContent = "Sala de bate-papo ativa";
+          const note = document.getElementById("statusNote");
+          if(note) note.textContent = "Sala de bate-papo ativa";
           updateSeatControls(null);
           return;
         }
+        const board = document.getElementById("gameBoard");
+        if(board) board.style.display = "";
+        const state = gameState.roomState;
         if(!state){
           document.getElementById("statusNote").textContent = "Entrando na sala...";
           updateSeatControls(null);
@@ -2899,9 +2882,9 @@ const STOP_STALE_MS = 120000;
   function loadSettings(){
     const base = {
       adminPassword: '123',
-      rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name, type:r.type || 'card' })),
+      rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name, type:r.type || 'card', hidden: !!r.hidden, baseFor: r.baseFor || '' })),
       roomMeta: DEFAULT_ROOMS.reduce((acc, r) => {
-        acc[r.id] = { name:r.name, password:'', autoplay:true, listenMode:false, playlist: DEFAULT_PLAYLIST.slice() };
+        acc[r.id] = { name:r.name, password:'', autoplay:true, listenMode:false, playlist: DEFAULT_PLAYLIST.slice(), type:r.type || 'card', hidden: !!r.hidden, baseFor: r.baseFor || '' };
         return acc;
       }, {}),
       delegations: {},
@@ -2913,16 +2896,18 @@ const STOP_STALE_MS = 120000;
     const next = {
       ...base,
       ...local,
-      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : 'card') })).filter(r => r.id) : base.rooms.slice(),
+      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : (String(r.type||'card').trim() === 'chat' ? 'chat' : 'card')), hidden: !!r.hidden, baseFor: String(r.baseFor || '').trim() })).filter(r => r.id) : base.rooms.slice(),
       roomMeta: { ...base.roomMeta, ...(local.roomMeta || {}) },
       delegations: local.delegations && typeof local.delegations === 'object' ? local.delegations : {},
       userRegistry: Array.isArray(local.userRegistry) ? local.userRegistry : []
     };
     next.rooms = next.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
     next.rooms.forEach(room => {
-      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card' };
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card', hidden: !!room.hidden, baseFor: room.baseFor || '' };
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
-      next.roomMeta[room.id].type = next.roomMeta[room.id].type === 'stop' ? 'stop' : (room.type || 'card');
+      next.roomMeta[room.id].type = ['stop','chat','card'].includes(String(next.roomMeta[room.id].type || room.type || 'card').trim()) ? String(next.roomMeta[room.id].type || room.type || 'card').trim() : 'card';
+      next.roomMeta[room.id].hidden = next.roomMeta[room.id].hidden === true || room.hidden === true;
+      next.roomMeta[room.id].baseFor = String(next.roomMeta[room.id].baseFor || room.baseFor || '').trim();
       next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
       next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
       next.roomMeta[room.id].listenMode = next.roomMeta[room.id].listenMode === true;
@@ -2941,13 +2926,16 @@ const STOP_STALE_MS = 120000;
     if(!remote || typeof remote !== 'object') return;
     const next = loadSettings();
     if(typeof remote.adminPassword === 'string') next.adminPassword = remote.adminPassword;
-    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : 'card') })).filter(r => r.id);
+    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : (String(r.type||'card').trim() === 'chat' ? 'chat' : 'card')), hidden: !!r.hidden, baseFor: String(r.baseFor || '').trim() })).filter(r => r.id);
     if(remote.roomMeta && typeof remote.roomMeta === 'object') next.roomMeta = { ...next.roomMeta, ...remote.roomMeta };
     if(remote.delegations && typeof remote.delegations === 'object') next.delegations = remote.delegations;
     if(Array.isArray(remote.userRegistry)) next.userRegistry = remote.userRegistry;
     next.rooms.forEach(room => {
-      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice() };
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card', hidden: !!room.hidden, baseFor: room.baseFor || '' };
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
+      next.roomMeta[room.id].type = ['stop','chat','card'].includes(String(next.roomMeta[room.id].type || room.type || 'card').trim()) ? String(next.roomMeta[room.id].type || room.type || 'card').trim() : 'card';
+      next.roomMeta[room.id].hidden = next.roomMeta[room.id].hidden === true || room.hidden === true;
+      next.roomMeta[room.id].baseFor = String(next.roomMeta[room.id].baseFor || room.baseFor || '').trim();
       next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
       next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
       next.roomMeta[room.id].listenMode = next.roomMeta[room.id].listenMode === true;
@@ -2962,6 +2950,7 @@ const STOP_STALE_MS = 120000;
     return (adminState.settings.rooms || []).map(room => {
       const id = String(room.id || '').trim();
       const meta = adminState.settings.roomMeta?.[id] || {};
+      if(meta.hidden === true || room.hidden === true) return null;
       const rawType = String(meta.type || room.type || 'card').trim();
       const roomType = ['stop','chat','card'].includes(rawType) ? rawType : 'card';
       if(type && roomType !== type) return null;
@@ -2976,7 +2965,19 @@ const STOP_STALE_MS = 120000;
     const id = String(roomId || '').trim();
     const room = (adminState.settings.rooms || []).find(r => r.id === id);
     const fallbackType = room ? (['stop','chat','card'].includes(String(room.type || 'card').trim()) ? String(room.type || 'card').trim() : 'card') : 'card';
-    return adminState.settings.roomMeta?.[id] || { name:id, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:fallbackType };
+    const meta = adminState.settings.roomMeta?.[id] || {};
+    return {
+      name: id,
+      password: '',
+      autoplay: true,
+      listenMode: false,
+      playlist: DEFAULT_PLAYLIST.slice(),
+      type: fallbackType,
+      hidden: false,
+      baseFor: '',
+      baseRoomId: '',
+      ...meta
+    };
   }
 
   function getRoomType(roomId){
@@ -3026,6 +3027,49 @@ const STOP_STALE_MS = 120000;
     return meta.name || roomId;
   }
 
+  function getChatBaseRoomId(roomId){
+    const id = String(roomId || '').trim();
+    return id ? `${id}__base` : '';
+  }
+
+  async function ensureChatBaseRoom(roomId){
+    const chatId = String(roomId || '').trim();
+    if(!chatId) return null;
+    const baseId = getChatBaseRoomId(chatId);
+    if(!baseId) return null;
+    const visibleMeta = getRoomMeta(chatId);
+    const baseName = `${String(visibleMeta.name || chatId).trim() || chatId} (base)`;
+    const existingIndex = (adminState.settings.rooms || []).findIndex(r => String(r.id || '').trim() === baseId);
+    const baseRoom = { id: baseId, name: baseName, type: 'card', hidden: true, baseFor: chatId };
+    if(existingIndex >= 0){
+      adminState.settings.rooms[existingIndex] = { ...adminState.settings.rooms[existingIndex], ...baseRoom };
+    } else {
+      adminState.settings.rooms.push(baseRoom);
+    }
+    adminState.settings.roomMeta[chatId] = {
+      ...(adminState.settings.roomMeta[chatId] || {}),
+      name: String(visibleMeta.name || chatId).trim() || chatId,
+      type: 'chat',
+      hidden: false,
+      baseFor: '',
+      baseRoomId: baseId
+    };
+    adminState.settings.roomMeta[baseId] = {
+      ...(adminState.settings.roomMeta[baseId] || {}),
+      name: baseName,
+      password: '',
+      autoplay: true,
+      listenMode: false,
+      playlist: DEFAULT_PLAYLIST.slice(),
+      type: 'card',
+      hidden: true,
+      baseFor: chatId
+    };
+    saveSettings();
+    await ensureRoomDoc(baseId);
+    return baseId;
+  }
+
   function getStopRoomId(){
     return String(gameState.stopRoomId || STOP_ROOM_ID || 'stop-main');
   }
@@ -3056,7 +3100,7 @@ const STOP_STALE_MS = 120000;
     return getRoomMeta(roomId).playlist || DEFAULT_PLAYLIST.slice();
   }
   function roomAutoplay(roomId){
-    return getRoomType(roomId) === 'card' && getRoomMeta(roomId).autoplay !== false;
+    return getRoomType(roomId) !== 'stop' && getRoomMeta(roomId).autoplay !== false;
   }
 
   function refreshRoomListeners(){
@@ -3233,11 +3277,22 @@ const STOP_STALE_MS = 120000;
       id = `${id}${Math.floor(Math.random()*90+10)}`;
     }
     if(adminState.settings.rooms.some(r => r.id === id)) return alert('Já existe uma sala com esse ID.');
-    adminState.settings.rooms.push({ id, name, type });
-    adminState.settings.roomMeta[id] = { name, password:'', autoplay:type !== 'chat', listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type };
+
+    adminState.settings.rooms.push({ id, name, type, hidden:false, baseFor:'' });
+    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type, hidden:false, baseFor:'' };
+
+    if(type === 'chat'){
+      const baseId = getChatBaseRoomId(id);
+      const baseName = `${name} (base)`;
+      adminState.settings.rooms.push({ id: baseId, name: baseName, type:'card', hidden:true, baseFor:id });
+      adminState.settings.roomMeta[baseId] = { name: baseName, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:'card', hidden:true, baseFor:id };
+      adminState.settings.roomMeta[id].baseRoomId = baseId;
+    }
+
     saveSettings();
     if(type === 'stop') await ensureStopRoomDoc(id);
     else await ensureRoomDoc(id);
+    if(type === 'chat') await ensureChatBaseRoom(id);
     refreshRoomListeners();
     renderLobbyRooms();
     renderAdminModal();
@@ -3249,11 +3304,21 @@ const STOP_STALE_MS = 120000;
     if(!id) return;
     if(!confirm(`Deletar a sala ${id}?`)) return;
     const type = getRoomType(id);
-    adminState.settings.rooms = adminState.settings.rooms.filter(r => r.id !== id);
+    const meta = getRoomMeta(id);
+    const baseId = type === 'chat' ? String(meta.baseRoomId || getChatBaseRoomId(id)).trim() : '';
+    adminState.settings.rooms = adminState.settings.rooms.filter(r => r.id !== id && r.id !== baseId);
     delete adminState.settings.roomMeta[id];
+    if(baseId){
+      delete adminState.settings.roomMeta[baseId];
+      delete adminState.roomCache[baseId];
+    }
     delete adminState.roomCache[id];
     saveSettings();
     try { await db.collection(type === 'stop' ? 'stopRooms' : 'rooms').doc(id).delete(); } catch(e) {}
+    if(baseId){
+      try { await db.collection('rooms').doc(baseId).delete(); } catch(e) {}
+      await deleteRoomChatMessages(baseId);
+    }
     await deleteRoomChatMessages(id);
     refreshRoomListeners();
     renderLobbyRooms();
@@ -3686,12 +3751,22 @@ const STOP_STALE_MS = 120000;
     gameState.mySlot = null;
 
     if(roomType === 'chat'){
+      gameState.audioEnabled = true;
       showChatRoom(roomId);
       applyModeUI();
       refreshThemeForMode();
       renderGame();
+      gameState.roomPlaylist = roomPlaylist(roomId);
       await ensureRoomDoc(roomId);
+      await ensureChatBaseRoom(roomId);
       initRoomChat(roomId);
+      if(roomAutoplay(roomId)){
+        gameState.trackIndex = 0;
+        setupMusic();
+        playMusic();
+      }
+      registerPresence({ roomId, slot: null, watching: true });
+      refreshCurrentRoomMusic();
       return;
     }
 
