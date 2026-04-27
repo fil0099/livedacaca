@@ -1,0 +1,4767 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <style>
+    /* ========== ESTILOS COMPLETOS ORIGINAIS ========== */
+    :root{
+      --bg1:#eef2ff;
+      --bg2:#f8fafc;
+      --panel: rgba(255,255,255,0.78);
+      --panel-strong: rgba(255,255,255,0.94);
+      --stroke: rgba(15,23,42,0.10);
+      --text:#0f172a;
+      --muted:#64748b;
+      --accent:#16a34a;
+      --accent-2:#0ea5e9;
+      --shadow: 0 20px 60px rgba(15,23,42,.12);
+      --card-w: clamp(58px, 6.4vw, 88px);
+      --card-h: calc(var(--card-w) * 1.42);
+      --card-small-w: clamp(42px, 4.8vw, 58px);
+      --card-small-h: calc(var(--card-small-w) * 1.42);
+      --radius: 22px;
+      --board-glow: rgba(14, 165, 233, .12);
+      --board-glow-2: rgba(34, 197, 94, .12);
+    }
+
+    body[data-theme="dark"]{
+      --bg1:#07111f;
+      --bg2:#0f172a;
+      --panel: rgba(15, 23, 42, 0.70);
+      --panel-strong: rgba(15, 23, 42, 0.92);
+      --stroke: rgba(255,255,255,0.10);
+      --text:#e5eefb;
+      --muted:#93a4bf;
+      --accent:#22c55e;
+      --accent-2:#38bdf8;
+      --shadow: 0 20px 60px rgba(0,0,0,.35);
+      --board-glow: rgba(56, 189, 248, .16);
+      --board-glow-2: rgba(34, 197, 94, .14);
+    }
+
+    *{ box-sizing:border-box; }
+    html, body{ width:100%; height:100%; margin:0; }
+    html{ overflow-y:scroll; scrollbar-gutter: stable; }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      overflow-x:hidden;
+      overflow-y:scroll;
+      background:
+        radial-gradient(circle at 20% 15%, var(--board-glow), transparent 24%),
+        radial-gradient(circle at 80% 20%, var(--board-glow-2), transparent 22%),
+        linear-gradient(160deg, var(--bg1), var(--bg2));
+      transition: background .25s ease, color .25s ease;
+    }
+
+    body::before{
+      content:"";
+      position:fixed; inset:0; pointer-events:none;
+      background:
+        linear-gradient(transparent 0, rgba(255,255,255,0.02) 1px, transparent 2px),
+        linear-gradient(90deg, transparent 0, rgba(255,255,255,0.02) 1px, transparent 2px);
+      background-size:26px 26px;
+      mask-image: radial-gradient(circle at center, black 0%, black 55%, transparent 100%);
+      opacity:.32;
+    }
+
+    .screen{
+      position:fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      padding:24px;
+      z-index:20;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,.12), transparent 35%),
+        linear-gradient(180deg, rgba(248,250,252,.78), rgba(241,245,249,.90));
+      backdrop-filter: blur(12px);
+    }
+    body[data-theme="dark"] .screen{
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,.18), transparent 35%),
+        linear-gradient(180deg, rgba(2,6,23,.96), rgba(15,23,42,.92));
+    }
+
+    #lobbyScreen{
+      align-items:flex-start;
+      justify-content:center;
+      overflow-y:scroll;
+      overflow-x:hidden;
+      padding-top:24px;
+      padding-bottom:32px;
+    }
+
+    .panel{
+      width:min(980px, 100%);
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      box-shadow:var(--shadow);
+      border-radius:30px;
+      padding:clamp(22px, 4vw, 40px);
+      backdrop-filter: blur(12px);
+    }
+
+    .centered{ text-align:center; }
+    h1{
+      margin:0;
+      font-size:clamp(2rem, 5vw, 4rem);
+      line-height:1;
+      letter-spacing:-0.04em;
+    }
+    h1 span{
+      display:inline-block;
+      padding:0 .35em;
+      border-radius:999px;
+      background: linear-gradient(135deg, rgba(14,165,233,.16), rgba(34,197,94,.16));
+      border:1px solid var(--stroke);
+    }
+    .subtitle{
+      color:var(--muted);
+      font-size:clamp(.98rem, 2.3vw, 1.05rem);
+      line-height:1.6;
+      margin:10px auto 0;
+      max-width:64ch;
+    }
+    .btn{
+      appearance:none; border:none; cursor:pointer;
+      padding:12px 18px; border-radius:999px;
+      font-weight:800; color:white;
+      background: linear-gradient(135deg, #22c55e, #0ea5e9);
+      box-shadow:0 16px 30px rgba(14,165,233,.22);
+      transition: transform .15s ease, filter .15s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform: translateY(-1px); filter:brightness(1.02); }
+    .btn.secondary{
+      background:var(--panel-strong);
+      color:var(--text);
+      border:1px solid var(--stroke);
+      box-shadow:none;
+    }
+    .btn.small{ padding:6px 12px; font-size:0.8rem; }
+
+    .lobby-grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:18px;
+      margin-top:24px;
+      text-align:left;
+    }
+    .hero-card, .lobby-card, .room-card, .chat-panel, .music-player, .hud, .board-note{
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      box-shadow:var(--shadow);
+      border-radius:24px;
+      backdrop-filter: blur(12px);
+    }
+    .hero-card{ padding:22px; }
+    .hero-card label, .room-card small, .lobby-card small{ color:var(--muted); }
+    .name-row{ display:flex; gap:10px; margin-top:14px; }
+    .name-row input{
+      flex:1;
+      min-width:0;
+      padding:14px 16px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      color:var(--text);
+      outline:none;
+      font-size:1rem;
+    }
+    .mini-note{ font-size:.9rem; color:var(--muted); margin-top:12px; line-height:1.5; }
+    .rooms{ display:grid; grid-template-columns: repeat(3, 1fr); gap:14px; }
+    .room-card{ padding:18px; }
+    .room-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
+    .room-tag{ padding:6px 10px; border-radius:999px; font-size:.75rem; font-weight:800; background:rgba(14,165,233,.12); color:var(--text); border:1px solid var(--stroke); }
+    .room-actions{ display:flex; justify-content:space-between; gap:10px; align-items:center; margin-top:14px; }
+    .room-actions .btn{ padding:10px 14px; }
+
+    .room-name-row{
+      display:flex; gap:10px; margin:12px 0 6px;
+    }
+    .room-name-row input{
+      flex:1; min-width:0;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      color:var(--text);
+      outline:none;
+      font-size:.96rem;
+    }
+
+    #table{
+      position:fixed; inset:0; display:none; overflow:hidden;
+      background:
+        radial-gradient(circle at 50% 45%, var(--board-glow-2), transparent 30%),
+        radial-gradient(circle at 50% 45%, var(--board-glow), transparent 42%);
+    }
+    .table-shell{
+      position:relative; width:100%; height:100%;
+      padding:16px;
+      display:grid;
+      grid-template-rows:auto 1fr;
+      gap:12px;
+    }
+    .hud{
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      padding:14px 16px;
+      flex-wrap:wrap;
+    }
+    .hud .title{ display:flex; flex-direction:column; gap:4px; }
+    .hud .title strong{ font-size:1.02rem; letter-spacing:.02em; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    .hud .title small{ color:var(--muted); font-size:.9rem; }
+
+    .header-inline{
+      display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    }
+
+    .music-player{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border-radius:18px;
+    }
+    .music-row{ display:flex; align-items:center; gap:6px; }
+    .music-btn{
+      width:28px; height:28px; padding:0; border-radius:10px; font-size:.9rem; line-height:1;
+    }
+    .music-disc{
+      width:34px; height:34px; border-radius:50%; object-fit:cover; cursor:pointer;
+      box-shadow:0 8px 18px rgba(0,0,0,.14);
+    }
+    .music-disc.playing{ animation: spin 4s linear infinite; }
+    @keyframes spin{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
+    .music-controls{ display:flex; flex-direction:column; gap:4px; align-items:stretch; min-width:120px; }
+    .music-volume{
+      width:120px;
+      accent-color: var(--accent-2);
+      height: 16px;
+    }
+
+    .hud-right{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .turn-badge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border-radius:999px;
+      background:rgba(34,197,94,.14);
+      border:1px solid rgba(34,197,94,.25);
+      font-weight:800;
+      white-space:nowrap;
+    }
+    .turn-dot{ width:9px; height:9px; border-radius:50%; background:var(--accent); box-shadow:0 0 0 4px rgba(34,197,94,.14); }
+
+    .theme-switch{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:999px;
+      background:var(--panel-strong); border:1px solid var(--stroke);
+      white-space:nowrap;
+    }
+    .theme-label{
+      font-size:.78rem; font-weight:800; color:var(--muted);
+      margin-right:2px;
+    }
+    .theme-dots{ display:inline-flex; align-items:center; gap:6px; }
+    .theme-dot{
+      width:14px; height:14px; border-radius:50%;
+      border:1px solid rgba(255,255,255,.55);
+      box-shadow:0 2px 6px rgba(15,23,42,.18);
+      cursor:pointer;
+      padding:0;
+      outline:none;
+    }
+    .theme-dot.active{
+      transform:scale(1.15);
+      box-shadow:0 0 0 3px rgba(255,255,255,.35), 0 2px 6px rgba(15,23,42,.18);
+    }
+
+    .voice-group{
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .mini-toggle{
+      min-width:98px; padding:8px 11px; font-size:.84rem; border-radius:999px;
+    }
+    .tiny-control{
+      display:flex; align-items:center; gap:6px; padding:6px 8px;
+      border:1px solid var(--stroke); border-radius:999px; background:var(--panel-strong);
+      color:var(--text);
+    }
+    .tiny-control span{ font-size:.73rem; font-weight:800; color:var(--muted); }
+    .tiny-control input[type="range"]{ width:64px; accent-color: var(--accent-2); }
+
+    .board{
+      position:relative; width:100%; height:100%;
+      display:grid;
+      grid-template-columns: 1fr 1.2fr 1fr;
+      grid-template-rows: 1fr 1.1fr 1fr;
+      gap:12px;
+      min-height:0;
+      /* Garante que o layout nunca empilhe */
+      grid-auto-flow: row;
+      padding-top:6px;
+    }
+
+    .hand{
+      min-width:0;
+      display:flex; flex-direction:column; gap:8px;
+      padding:10px;
+      overflow:hidden;
+    }
+    .hand .info{
+      display:flex; align-items:center; gap:8px;
+      font-size:.88rem; font-weight:800;
+      color:var(--text);
+    }
+    .hand .info small{ color:var(--muted); font-weight:700; }
+
+    /* MODIFICAÇÃO: só a posição/organização das cartas */
+    .cards{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .player-top .cards,
+    .player-bottom .cards{
+      flex-direction:row;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+
+    .player-left .cards,
+    .player-right .cards{
+      flex-direction:row;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:center;
+      gap:4px;
+      max-width:100%;
+    }
+
+    .player-top .cards{
+      gap:4px;
+      max-width:100%;
+    }
+    .player-top .card,
+    .player-left .card,
+    .player-right .card{
+      width:clamp(34px, 3.2vw, 48px);
+      height:calc(clamp(34px, 3.2vw, 48px) * 1.42);
+      transform: none;
+      transform-origin:center;
+    }
+    .player-top .card:hover,
+    .player-left .card:hover,
+    .player-right .card:hover{
+      transform: translateY(-3px) scale(1.02);
+    }
+
+    .player-top{ grid-column:1 / 4; grid-row:1; align-self:start; justify-self:center; }
+    .player-left{ grid-column:1; grid-row:2; align-self:center; justify-self:start; }
+    .player-right{ grid-column:3; grid-row:2; align-self:center; justify-self:end; }
+    .center-area{
+      grid-column:2; grid-row:2;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+      min-height:0;
+      position:relative;
+    }
+    .player-bottom{ grid-column:1 / 4; grid-row:3; align-self:end; justify-self:center; }
+
+    .center-card-row{ display:flex; align-items:center; gap:14px; justify-content:center; }
+    .seat-actions{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; }
+    .pile{
+      width:var(--card-w); height:var(--card-h); border-radius:16px; border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      box-shadow: var(--shadow);
+    }
+    .pile.draw{ background: linear-gradient(135deg, rgba(15,23,42,.92), rgba(30,41,59,.92)); }
+    .pile.discard{ position:relative; overflow:hidden; }
+    .pile.discard .card{ margin:0; }
+
+    .board-note{
+      padding:10px 14px; text-align:center; font-size:.9rem; color:var(--muted);
+      max-width: 340px;
+    }
+
+    .card{
+      width:var(--card-w);
+      height:var(--card-h);
+      border-radius:16px;
+      position:relative;
+      border:2px solid rgba(255,255,255,.25);
+      background-size:cover;
+      background-position:center;
+      box-shadow:0 10px 22px rgba(15,23,42,.18);
+      transform:translateY(0) scale(1);
+      transition: transform .16s ease, box-shadow .16s ease;
+      overflow:hidden;
+      user-select:none;
+    }
+    .card::after{
+      content: attr(data-value);
+      position:absolute;
+      top:6px; left:6px;
+      padding:4px 6px;
+      border-radius:999px;
+      font-size:.72rem;
+      font-weight:900;
+      color:white;
+      background:rgba(15,23,42,.64);
+      backdrop-filter: blur(4px);
+      min-width: 20px;
+      text-align:center;
+    }
+    .card:hover{ transform:translateY(-4px) scale(1.02); cursor:pointer; }
+    .card.playable{ transform: translateY(-8px) scale(1.04); box-shadow:0 18px 34px rgba(15,23,42,.26); }
+    .card.back{
+      background: linear-gradient(135deg, #0f172a, #334155);
+      border:2px solid rgba(255,255,255,.12);
+      cursor:default;
+    }
+    .card.back::after{ content:""; }
+
+    /* ========== CHAT ========== */
+    .chat-panel{
+      position:fixed;
+      right:16px; bottom:16px;
+      width:min(350px, calc(100vw - 32px));
+      max-height: 48vh;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding:14px;
+      z-index:15;
+      background:var(--panel-strong);
+      border-radius:24px;
+      border:1px solid var(--stroke);
+      backdrop-filter: blur(12px);
+      box-shadow:var(--shadow);
+    }
+    .chat-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      border-bottom:1px solid var(--stroke);
+      padding-bottom:6px;
+    }
+    .chat-header strong{ font-size:0.95rem; }
+    .chat-messages{
+      flex:1;
+      min-height:150px;
+      max-height:260px;
+      overflow-y:auto;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding-right:4px;
+    }
+    .chat-message{
+      background:rgba(128,128,128,0.08);
+      border-radius:14px;
+      padding:8px 10px;
+      border-left:3px solid var(--accent-2);
+    }
+    .chat-message .message-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:4px;
+      font-size:0.75rem;
+    }
+    .chat-message .message-author{
+      font-weight:800;
+      color:var(--accent-2);
+    }
+    .chat-message .message-time{
+      color:var(--muted);
+    }
+    .chat-message .message-text{
+      font-size:0.85rem;
+      word-break:break-word;
+    }
+    .chat-input-area{
+      display:flex;
+      gap:8px;
+    }
+    .chat-input-area input{
+      flex:1;
+      padding:8px 12px;
+      border-radius:40px;
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      color:var(--text);
+    }
+    .chat-collapse-btn{
+      background:none;
+      border:none;
+      font-size:1.2rem;
+      cursor:pointer;
+      color:var(--text);
+    }
+    .collapsed .chat-messages,
+    .collapsed .chat-input-area{
+      display:none;
+    }
+    .collapsed{
+      width:auto;
+      max-height:none;
+    }
+
+    .chat-header-actions{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    body.chat-room-mode #lobbyScreen,
+    body.chat-room-mode #endScreen{
+      display:none !important;
+    }
+    body.chat-room-mode #table{
+      display:block !important;
+    }
+    body.chat-room-mode #gameBoard{
+      display:none !important;
+    }
+    body.chat-room-mode #chatPanel{
+      display:flex !important;
+      position:fixed;
+      left:50%;
+      top:58%;
+      transform:translate(-50%, -50%);
+      width:min(720px, calc(100vw - 32px));
+      height:min(60vh, 560px);
+      max-height:calc(100vh - 120px);
+      z-index:45;
+    }
+    body.chat-room-mode #chatPanel .chat-messages{
+      min-height:0;
+      max-height:none;
+      flex:1;
+    }
+    body.chat-room-mode #chatPanel .chat-header strong{
+      font-size:1.08rem;
+    }
+    body.chat-room-mode #chatPanel .chat-input-area input{
+      padding:14px 16px;
+      font-size:1rem;
+    }
+    body.chat-room-mode #chatPanel .chat-input-area .btn{
+      padding:14px 18px;
+    }
+    body.chat-room-mode #chatPanel .chat-header{
+      gap:10px;
+    }
+
+    /* Remove a quebra de layout em telas menores – mantém sempre 3 colunas */
+    @media (max-width: 920px){
+      .rooms{ grid-template-columns:1fr; }
+      /* NÃO altera mais o .board – ele permanece com 3 colunas e 3 linhas */
+      .chat-panel{ position:relative; right:auto; bottom:auto; width:auto; margin-top:12px; }
+      .stop-categories{ grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+      .stop-panel{ top:8px; width:calc(100vw - 12px); max-height:calc(100vh - 16px); padding:16px; }
+    }
+
+    .lobby-topbar{
+      display:flex;
+      justify-content:flex-end;
+      margin-bottom:12px;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .admin-btn, .people-btn{ padding:10px 14px; }
+    .modal{
+      position:fixed; inset:0; display:none;
+      align-items:center; justify-content:center;
+      padding:24px; z-index:40;
+      background:rgba(15,23,42,.44);
+      backdrop-filter: blur(10px);
+    }
+    .modal-card{
+      width:min(900px, 100%);
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      box-shadow:var(--shadow);
+      border-radius:24px;
+      padding:22px;
+      backdrop-filter: blur(12px);
+      max-height: calc(100vh - 48px);
+      overflow:auto;
+    }
+    .modal-card h3{ margin:0 0 10px; font-size:1.2rem; }
+    .modal-row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .modal-row .field,
+    .modal-section input,
+    .modal-section textarea,
+    .modal-section select{
+      flex:1; min-width:0;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      color:var(--text);
+      outline:none;
+      font-size:1rem;
+    }
+    .modal-section{
+      padding:14px;
+      border-radius:18px;
+      background:rgba(255,255,255,.10);
+      border:1px solid var(--stroke);
+      margin-top:12px;
+    }
+    .section-title{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .pill{ display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; border:1px solid var(--stroke); background:var(--panel-strong); font-size:.72rem; font-weight:800; }
+    .list{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+    .list-item{ border:1px solid var(--stroke); background:rgba(255,255,255,.10); border-radius:16px; padding:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+    .list-item small{ color:var(--muted); }
+    .permission-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:8px; margin-top:10px; }
+    .permission-chip{ display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:14px; border:1px solid var(--stroke); background:rgba(255,255,255,.10); }
+    .permission-chip input{ width:16px; height:16px; }
+    .switch{
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+      width:54px;
+      height:28px;
+      flex:0 0 auto;
+    }
+    .switch input{
+      opacity:0;
+      width:0;
+      height:0;
+      position:absolute;
+    }
+    .slider{
+      position:absolute;
+      inset:0;
+      cursor:pointer;
+      background:rgba(100,116,139,.35);
+      transition:.2s ease;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+    }
+    .slider::before{
+      content:"";
+      position:absolute;
+      width:20px;
+      height:20px;
+      left:4px;
+      top:3px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:0 2px 6px rgba(15,23,42,.2);
+      transition:.2s ease;
+    }
+    .switch input:checked + .slider{
+      background:linear-gradient(135deg, #22c55e, #0ea5e9);
+    }
+    .switch input:checked + .slider::before{
+      transform:translateX(26px);
+    }
+
+    .stop-panel{
+      display:none;
+      position:fixed;
+      left:50%;
+      top:16px;
+      transform:translateX(-50%);
+      width:min(1100px, calc(100vw - 16px));
+      max-height:calc(100vh - 32px);
+      overflow:auto;
+      -webkit-overflow-scrolling: touch;
+      padding:20px;
+      border-radius:24px;
+      border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      box-shadow:var(--shadow);
+      z-index:35;
+      text-align:center;
+      flex-direction:column;
+      align-items:center;
+      justify-content:flex-start;
+    }
+    .stop-panel.active{ display:flex; }
+    .stop-head{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+      width:100%;
+    }
+    .stop-hero{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:center;
+      justify-content:center;
+      min-width: 260px;
+      width:100%;
+    }
+    .stop-hero-label{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      width:fit-content;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(14,165,233,.10);
+      border:1px solid var(--stroke);
+      font-size:.78rem;
+      font-weight:900;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .stop-badge{
+      display:inline-flex;
+      align-items:baseline;
+      gap:10px;
+      width:fit-content;
+      padding:14px 18px;
+      border-radius:22px;
+      background:linear-gradient(135deg, rgba(14,165,233,.16), rgba(34,197,94,.12));
+      border:1px solid var(--stroke);
+      font-weight:900;
+      box-shadow:0 12px 24px rgba(15,23,42,.08);
+    }
+    .stop-badge strong{
+      font-size: clamp(2.1rem, 6vw, 4rem);
+      line-height:1;
+      letter-spacing:-0.06em;
+      color:var(--text);
+      text-shadow:0 1px 0 rgba(255,255,255,.25);
+    }
+    .stop-round{ color:var(--muted); font-size:.95rem; font-weight:700; text-align:center; }
+    .stop-note{ color:var(--muted); font-size:1rem; line-height:1.6; margin:0 auto 18px; max-width:760px; text-align:center; }
+    .stop-categories{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap:12px;
+      margin-top:14px;
+      width:min(100%, 980px);
+      margin-inline:auto;
+      justify-items:stretch;
+      align-self:stretch;
+    }
+    .stop-category{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      padding:14px;
+      border-radius:18px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+      text-align:left;
+    }
+    .stop-category label{
+      font-size:.95rem;
+      font-weight:900;
+      color:var(--text);
+    }
+    .stop-category input{
+      width:100%;
+      border:1px solid var(--stroke);
+      border-radius:12px;
+      padding:12px 12px;
+      background:var(--panel);
+      color:var(--text);
+      outline:none;
+      font-size:16px;
+      min-height: 46px;
+      touch-action: manipulation;
+    }
+    .stop-actions-row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+      margin-top:18px;
+      width:100%;
+    }
+    .stop-status-card{
+      margin-top:12px;
+      padding:12px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+    }
+    .stop-toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+    .stop-button{
+      background:linear-gradient(135deg, #ef4444, #f97316);
+      color:#fff;
+      border:none;
+      box-shadow:0 16px 30px rgba(239,68,68,.22);
+      min-width:220px;
+      font-size:1.05rem;
+      padding:16px 26px;
+      font-weight:900;
+      letter-spacing:.08em;
+    }
+    .stop-button:hover{ filter:brightness(1.03); }
+    .stop-results{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      margin-top:12px;
+    }
+    .stop-result-card{
+      padding:12px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.06);
+    }
+    .stop-result-head{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:8px;
+    }
+    .stop-result-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap:8px;
+      margin-top:8px;
+    }
+    .stop-result-item{
+      padding:8px 10px;
+      border-radius:12px;
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.05);
+      font-size:.88rem;
+    }
+    .stop-history-list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      max-height:60vh;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .stop-history-card{
+      border:1px solid var(--stroke);
+      background:rgba(255,255,255,.08);
+      border-radius:16px;
+      padding:12px;
+    }
+    .stop-history-players{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:8px;
+    }
+    .hidden{ display:none !important; }
+  
+    /* ========== MELHORIAS RESPONSIVAS ADICIONADAS ========== */
+    /* Base mobile-first */
+    img, video { max-width: 100%; height: auto; }
+    
+    /* Ajustes para telas médias e pequenas */
+    @media (max-width: 1024px){
+      :root{
+        --card-w: clamp(52px, 7vw, 78px);
+        --card-small-w: clamp(38px, 5.2vw, 52px);
+      }
+      .rooms{ grid-template-columns: repeat(2, 1fr); }
+      .panel{ padding: clamp(18px, 3.5vw, 32px); }
+    }
+
+    @media (max-width: 768px){
+      html{ overflow-y: auto; }
+      body{ overflow-x: hidden; }
+      
+      .screen{
+        padding: 12px;
+        align-items: flex-start;
+      }
+      #lobbyScreen{ padding-top: 12px; padding-bottom: 24px; }
+      
+      .panel{
+        width: 100%;
+        border-radius: 20px;
+        padding: 18px;
+      }
+      
+      h1{ font-size: clamp(1.8rem, 8vw, 2.6rem); }
+      .subtitle{ font-size: .95rem; }
+      
+      .lobby-grid{ gap: 14px; }
+      .rooms{ grid-template-columns: 1fr; gap: 12px; }
+      .room-card{ padding: 14px; }
+      .room-head{ flex-wrap: wrap; gap: 8px; }
+      
+      .name-row{ flex-direction: column; }
+      .name-row input, .name-row .btn{ width: 100%; }
+      .btn{ padding: 14px 18px; font-size: 1rem; }
+      .btn.small{ padding: 10px 14px; font-size: .9rem; }
+      
+      /* Top bar e HUD empilham */
+      .top-bar, .hud{
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .hud{ padding: 12px; }
+      
+      /* Tabuleiro e mesa com scroll horizontal suave */
+      .board, .table, .hand, .players-bar{
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+        padding-bottom: 6px;
+      }
+      
+      /* Cartas menores em mobile */
+      :root{
+        --card-w: clamp(48px, 16vw, 70px);
+        --card-small-w: clamp(36px, 12vw, 50px);
+        --radius: 18px;
+      }
+      
+      /* Chat e painéis laterais viram full-width */
+      .chat-panel, .music-player, .board-note{
+        width: 100%;
+        border-radius: 18px;
+      }
+      
+      /* Grids genéricos viram 1 coluna */
+      [style*="grid-template-columns: 1fr 1.2fr 1fr"],
+      [style*="grid-template-columns:1fr 1.2fr 1fr"]{
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+      }
+      
+      /* Modais ocupam quase tela toda */
+      .modal, .panel.modal-content{
+        width: calc(100% - 24px);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      
+      /* Footer e controles de música */
+      .music-controls{ flex-wrap: wrap; gap: 8px; }
+      
+      /* Evita zoom em inputs iOS */
+      input, select, textarea{ font-size: 16px !important; }
+    }
+
+    @media (max-width: 480px){
+      :root{
+        --card-w: clamp(44px, 18vw, 62px);
+        --card-small-w: clamp(32px, 14vw, 46px);
+      }
+      .panel{ border-radius: 16px; padding: 14px; }
+      h1 span{ padding: 0 .25em; }
+      .hero-card{ padding: 16px; }
+      .btn{ width: 100%; justify-content: center; }
+      .mini-note{ font-size: .85rem; }
+    }
+
+    /* Landscape em celulares pequenos */
+    @media (max-height: 500px) and (orientation: landscape){
+      .screen{ padding: 8px; }
+      .panel{ padding: 12px; }
+      h1{ font-size: 1.6rem; }
+      .rooms{ grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Melhor toque e acessibilidade */
+    button, .btn, .card, .room-card, input[type="button"]{
+      touch-action: manipulation;
+    }
+    
+    /* Evita overflow horizontal geral */
+    *{ min-width: 0; }
+    .table, .board{ max-width: 100vw; }
+
+</style>
+</head>
+<body data-theme="light">
+  <!-- LOBBY -->
+  <div id="lobbyScreen" class="screen">
+    <div class="panel centered">
+      <div class="lobby-topbar">
+        <button class="btn secondary small admin-btn" type="button" onclick="openAdminModal()">adm</button>
+      </div>
+      <h1><span>Cartas</span></h1>
+      <p class="subtitle">Combine cor ou valor e zere sua mão.</p>
+      <div class="lobby-grid">
+        <div class="hero-card">
+          <strong>Jogar com robôs</strong>
+          <div class="name-row">
+            <input id="playerName" type="text" placeholder="Digite seu nome" maxlength="18" />
+            <button class="btn" onclick="joinRobots()">Jogar com robôs</button>
+          </div>
+          <div class="mini-note">Modo offline contra robôs. Mantém todos os controles de música e áudio.</div>
+        </div>
+        <div class="lobby-card" style="padding:22px;">
+          <strong>Salas multiplayer</strong>
+          <div class="room-name-row">
+            <input id="roomName" type="text" placeholder="Seu nome na sala" maxlength="18" />
+          </div>
+          <div class="rooms" id="roomsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELA DE FIM DE JOGO -->
+  <div id="endScreen" class="screen" style="display:none">
+    <div class="panel centered end-card">
+      <h1 id="winnerText"></h1>
+      <button type="button" class="btn" onclick="backToLobby()">Voltar à lobby</button>
+    </div>
+  </div>
+
+  <!-- MESA DE JOGO -->
+  <div id="table" style="display:none">
+    <div class="table-shell">
+      <div class="hud">
+        <div class="title">
+          <div class="header-inline">
+            <button type="button" class="btn secondary mini-toggle" onclick="backToLobby()">Voltar</button>
+            <strong>Cartas</strong>
+            <div id="musicPlayer" class="music-player">
+              <div class="music-row">
+                <button class="btn secondary music-btn" onclick="prevTrack()">&lt;</button>
+                <img id="musicDisc" class="music-disc" src="https://raw.githubusercontent.com/fil0099/livedacaca/main/vini2.png" onclick="toggleMusic()" />
+                <button class="btn secondary music-btn" onclick="nextTrack()">&gt;</button>
+              </div>
+              <div class="music-controls">
+                <input id="musicVolume" class="music-volume" type="range" min="0" max="100" value="70" oninput="setMusicVolume(this.value)" />
+              </div>
+            </div>
+          </div>
+          <small>Combine cor ou valor e zere sua mão</small>
+        </div>
+        <div class="hud-right">
+          <div id="hudTurn" class="turn-badge"><span class="turn-dot"></span><span>Sua vez</span></div>
+          <button class="btn secondary mini-toggle people-btn" type="button" onclick="openPeopleModal()">Pessoas</button>
+          <div id="themeSwitch" class="theme-switch">
+            <span class="theme-label">Tema</span>
+            <div id="themeDots" class="theme-dots"></div>
+          </div>
+        </div>
+      </div>
+      <div class="board" id="gameBoard">
+        <!-- Jogador 4 no topo -->
+        <div id="p4" class="hand player-top"><div class="info"></div><div class="cards"></div></div>
+        <!-- Jogador 3 na esquerda -->
+        <div id="p3" class="hand side player-left"><div class="info"></div><div class="cards"></div></div>
+        <div class="center-area">
+          <div class="center-card-row">
+            <div id="drawPile" class="pile draw"></div>
+            <div id="discardPile" class="pile discard"></div>
+          </div>
+          <div class="board-note" id="statusNote">Escolha uma carta da sua mão ou compre</div>
+
+          <div id="stopPanel" class="stop-panel hidden">
+            <div class="stop-head">
+              <div class="stop-hero">
+                <div class="stop-hero-label">Sala Stop</div>
+                <div class="stop-badge">LETRA <strong id="stopLetter">-</strong></div>
+              </div>
+              <div class="stop-round" id="stopRoundInfo">Aguardando a sala Stop...</div>
+            </div>
+            <div class="stop-note" id="stopJoinNotice">Digite uma palavra para cada categoria usando a letra sorteada. Quando quiser encerrar, aperte STOP.</div>
+            <div id="stopCategories" class="stop-categories"></div>
+            <div class="stop-actions-row stop-toolbar">
+              <button class="btn secondary mini-toggle" type="button" onclick="openPeopleModal()">Pessoas</button>
+              <button class="btn secondary mini-toggle" type="button" onclick="openStopHistory()">Últimos 20 jogos</button>
+              <button id="stopStartBtn" class="btn mini-toggle stop-button" type="button" onclick="startStopNewGame()" style="min-width:180px; font-size:1rem; padding:14px 20px;">Começar jogo</button>
+              <button id="stopPlayAgainBtn" class="btn secondary mini-toggle hidden" type="button" onclick="stopPlayAgain()" style="min-width:180px; font-size:1rem; padding:14px 20px;">Jogar mais</button>
+              <button id="stopStopBtn" class="btn mini-toggle stop-button hidden" type="button" onclick="pressStop()" style="min-width:180px; font-size:1rem; padding:14px 20px;">STOP</button>
+            </div>
+            <div id="stopResults" class="stop-results hidden"></div>
+          </div>
+          <div class="seat-actions">
+            <button id="seatDownBtn" class="btn secondary mini-toggle" onclick="leaveSeat()">Descer</button>
+            <button id="seatUpBtn" class="btn secondary mini-toggle" onclick="takeSeat()">Subir</button>
+          </div>
+          <button id="drawCardBtn" class="btn" onclick="drawCard()">Comprar carta</button>
+        </div>
+        <!-- Jogador 2 na direita -->
+        <div id="p2" class="hand side player-right"><div class="info"></div><div class="cards"></div></div>
+        <!-- Suas cartas (jogador 1) embaixo, no centro -->
+        <div id="p1" class="hand player-bottom"><div class="info"></div><div class="cards"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chatPanel" class="chat-panel" style="display:none">
+    <div class="chat-header">
+      <strong id="chatPanelTitle">💬 Chat</strong>
+      <div class="chat-header-actions">
+        <button class="btn secondary small hidden" id="chatRoomBackBtn" type="button" onclick="backToLobby()">Voltar</button>
+        <button class="chat-collapse-btn" onclick="toggleChatPanel()">−</button>
+      </div>
+    </div>
+    <div id="chatMessagesList" class="chat-messages">
+      <div style="text-align:center; color:var(--muted);">Aguardando mensagens...</div>
+    </div>
+    <div class="chat-input-area">
+      <input type="text" id="chatMessageInput" placeholder="Digite sua mensagem..." maxlength="200">
+      <button class="btn" id="sendChatBtn">Enviar</button>
+    </div>
+  </div>
+
+  
+  <div id="stopHistoryModal" class="modal" style="display:none">
+    <div class="modal-card" style="max-width:920px;">
+      <div class="section-title">
+        <h3 style="margin:0;">Histórico das últimas 20 partidas</h3>
+        <button class="btn secondary small" type="button" onclick="closeStopHistory()">Fechar</button>
+      </div>
+      <div id="stopHistoryList" class="stop-history-list" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // ========== FIREBASE ==========
+    // Base atual: bate-papo
+    const firebaseConfigChat = {
+      apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
+      authDomain: "testbotao.firebaseapp.com",
+      databaseURL: "https://testbotao-default-rtdb.firebaseio.com",
+      projectId: "testbotao",
+      storageBucket: "testbotao.firebasestorage.app",
+      messagingSenderId: "940068631746",
+      appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
+    };
+
+    // Vai receber o banco das cartas
+    const firebaseConfigCartas = {
+      apiKey: "AIzaSyBhq3yPc927yrj5xT1UBaJSxJ4S9H7tEgI",
+      authDomain: "sitecaca2.firebaseapp.com",
+      projectId: "sitecaca2",
+      storageBucket: "sitecaca2.firebasestorage.app",
+      messagingSenderId: "391187353901",
+      appId: "1:391187353901:web:050289706c2fbb0d0343a4"
+    };
+
+    // Vai receber o banco do stop
+    const firebaseConfigStop = {
+      apiKey: "AIzaSyDWo1b9MPpBUvsUWzqQ4vUOl9IdenrTMWo",
+      authDomain: "sitecaca3.firebaseapp.com",
+      projectId: "sitecaca3",
+      storageBucket: "sitecaca3.firebasestorage.app",
+      messagingSenderId: "148597735991",
+      appId: "1:148597735991:web:e1b9640eb954098b75f5b2"
+    };
+
+    const appChat = firebase.initializeApp(firebaseConfigChat, "chatApp");
+    const appCartas = firebase.initializeApp(firebaseConfigCartas, "cartasApp");
+    const appStop = firebase.initializeApp(firebaseConfigStop, "stopApp");
+
+    const dbChat = appChat.firestore();
+    const dbCartas = appCartas.firestore();
+    const dbStop = appStop.firestore();
+
+    // ========== CONFIGURAÇÃO DAS SALAS ==========
+    const ROOMS = [
+      { id: "sala1", name: "Sala 1" },
+      { id: "sala2", name: "Sala 2" },
+      { id: "sala3", name: "Sala 3" }
+    ];
+
+    // ========== JOGO ==========
+    const imgs = [
+      "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000404.webp",
+      "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/0005563.webp",
+      "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/000569.webp",
+      "https://raw.githubusercontent.com/fil0099/livedacaca/refs/heads/main/001013.webp"
+    ];
+    const colors = ["red", "blue", "green", "yellow"];
+    const colorMap = { red: "#ef4444", blue: "#3b82f6", green: "#22c55e", yellow: "#eab308" };
+    const THEME_OPTIONS = [
+      { id: "green", label: "Verde", bg1: "#eef2ff", bg2: "#f8fafc", glow1: "rgba(34,197,94,.12)", glow2: "rgba(14,165,233,.12)" },
+      { id: "blue", label: "Azul", bg1: "#eff6ff", bg2: "#f8fafc", glow1: "rgba(59,130,246,.14)", glow2: "rgba(14,165,233,.12)" },
+      { id: "purple", label: "Roxo", bg1: "#f5f3ff", bg2: "#faf5ff", glow1: "rgba(168,85,247,.14)", glow2: "rgba(236,72,153,.10)" },
+      { id: "orange", label: "Laranja", bg1: "#fff7ed", bg2: "#fffbeb", glow1: "rgba(249,115,22,.14)", glow2: "rgba(245,158,11,.10)" },
+      { id: "pink", label: "Rosa", bg1: "#fdf2f8", bg2: "#fff1f2", glow1: "rgba(236,72,153,.14)", glow2: "rgba(244,63,94,.10)" }
+    ];
+    const STALE_SLOT_MS = 120000;
+
+const STOP_ROOM_ID = "stop-main";
+const STOP_CHAT_ROOM_ID = STOP_ROOM_ID;
+const STOP_CATEGORIES = [
+  "A cacá é...",
+  "Nome",
+  "Animal",
+  "Fruta",
+  "Cor",
+  "Cidade/Estado/País (CEP)",
+  "Objeto",
+  "Marca"
+];
+const STOP_CATEGORY_KEYS = STOP_CATEGORIES.map((_, idx) => `c${idx + 1}`);
+const STOP_STALE_MS = 120000;
+
+    let gameState = {
+      roomMode: false,
+      roomType: null,
+      roomId: null,
+      myName: "Você",
+      myId: Math.random().toString(36).substr(2, 8),
+      mySlot: null,
+      roomState: null,
+      roomHeartbeat: null,
+      roomListeners: [],
+      roomMembers: [],
+      deck: [],
+      players: [[],[],[],[]],
+      topCard: null,
+      turn: 0,
+      penalty: 0,
+      gameRunning: false,
+      botTimer: null,
+      musicAudio: null,
+      musicPlaying: false,
+      musicVolume: 0.7,
+      masterVolume: 1,
+      micVolume: 1,
+      micEnabled: false,
+      trackIndex: 0,
+      roomPlaylist: [],
+      robotPlaylist: [],
+      botIds: [],
+      stopMode: false,
+      stopRoomId: STOP_ROOM_ID,
+      stopState: null,
+      stopHeartbeat: null,
+      stopUnsub: null,
+      stopPlaylist: [],
+      stopDraftAnswers: {}
+    };
+
+    const DEFAULT_PLAYLIST = [
+      "https://raw.githubusercontent.com/fil0099/livedacaca/main/music_for_video-just-relax-11157.mp3",
+      "https://raw.githubusercontent.com/fil0099/livedacaca/main/sigmamusicart-jazz-lounge-relaxing-background-music-514554.mp3",
+      "https://raw.githubusercontent.com/fil0099/livedacaca/main/sonican-lo-fi-music-loop-sentimental-jazzy-love-473154.mp3"
+    ];
+    gameState.roomPlaylist = [...DEFAULT_PLAYLIST];
+    gameState.robotPlaylist = [...DEFAULT_PLAYLIST];
+    gameState.stopPlaylist = [...DEFAULT_PLAYLIST];
+
+    let lobbyRoomUnsubs = [];
+    let activeRoomUnsubs = [];
+    const OFFLINE_THEME_KEY = "cartas_theme_offline";
+    const ROOM_THEME_KEY = "cartas_theme_room";
+    const THEME_KEY = "cartas_theme_selected";
+
+    function getThemeStorageKey(){
+      return gameState.roomMode ? ROOM_THEME_KEY : OFFLINE_THEME_KEY;
+    }
+
+    function applyTheme(themeId){
+      const theme = THEME_OPTIONS.find(t => t.id === themeId) || THEME_OPTIONS[0];
+      document.body.style.setProperty("--bg1", theme.bg1);
+      document.body.style.setProperty("--bg2", theme.bg2);
+      document.body.style.setProperty("--board-glow", theme.glow1);
+      document.body.style.setProperty("--board-glow-2", theme.glow2);
+      localStorage.setItem(getThemeStorageKey(), theme.id);
+      localStorage.setItem(THEME_KEY, theme.id);
+      renderThemeDots();
+    }
+
+    function renderThemeDots(){
+      const container = document.getElementById("themeDots");
+      if(!container) return;
+      const saved = localStorage.getItem(getThemeStorageKey()) || localStorage.getItem(THEME_KEY) || THEME_OPTIONS[0].id;
+      container.innerHTML = THEME_OPTIONS.map(theme => {
+        const active = theme.id === saved ? "active" : "";
+        return `<button type="button" class="theme-dot ${active}" title="${theme.label}" aria-label="${theme.label}" onclick="applyTheme('${theme.id}')" style="background:${theme.bg1}"></button>`;
+      }).join("");
+    }
+
+    function loadTheme(){
+      const saved = localStorage.getItem(getThemeStorageKey()) || localStorage.getItem(THEME_KEY) || THEME_OPTIONS[0].id;
+      applyTheme(saved);
+    }
+
+    function refreshThemeForMode(){
+      const saved = localStorage.getItem(getThemeStorageKey()) || localStorage.getItem(THEME_KEY) || THEME_OPTIONS[0].id;
+      applyTheme(saved);
+    }
+
+    function shuffle(array){
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function createCard(){
+      const r = Math.random();
+      let value = Math.floor(Math.random() * 10).toString();
+      if(r < 0.12) value = "+2";
+      else if(r < 0.18) value = "+4";
+      return {
+        color: colors[Math.floor(Math.random() * colors.length)],
+        value,
+        img: imgs[Math.floor(Math.random() * imgs.length)]
+      };
+    }
+
+    function createFreshDeck(){
+      const deck = [];
+      for(let i = 0; i < 100; i++) deck.push(createCard());
+      return shuffle(deck);
+    }
+
+    function emptyRoomSlots(){
+      return { 1: null, 2: null, 3: null, 4: null };
+    }
+
+    function emptyRoomHands(){
+      return { 1: [], 2: [], 3: [], 4: [] };
+    }
+
+    function createFreshRoomState(){
+      const deck = createFreshDeck();
+      const hands = emptyRoomHands();
+      for(let slot = 1; slot <= 4; slot++){
+        for(let i = 0; i < 7; i++) hands[slot].push(deck.pop());
+      }
+      return {
+        slots: emptyRoomSlots(),
+        hands,
+        deck,
+        topCard: deck.pop(),
+        turn: 1,
+        penalty: 0,
+        gameRunning: true,
+        seatingOpen: true,
+        winnerSlot: null,
+        startedAt: Date.now(),
+        updatedAt: Date.now()
+      };
+    }
+
+    function normalizeSharedState(raw){
+      const state = raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : {};
+      const slots = emptyRoomSlots();
+      const hands = emptyRoomHands();
+
+      if(state.slots && typeof state.slots === 'object'){
+        for(let slot = 1; slot <= 4; slot++) slots[slot] = state.slots[slot] ?? null;
+      }
+      if(Array.isArray(state.players)){
+        for(let slot = 1; slot <= 4; slot++) slots[slot] = state.players[slot - 1] ?? slots[slot];
+      }
+      if(state.hands && typeof state.hands === 'object'){
+        for(let slot = 1; slot <= 4; slot++){
+          if(Array.isArray(state.hands[slot])) hands[slot] = state.hands[slot].slice();
+        }
+      }
+      if(Array.isArray(state.playersHands)){
+        for(let slot = 1; slot <= 4; slot++){
+          if(Array.isArray(state.playersHands[slot - 1])) hands[slot] = state.playersHands[slot - 1].slice();
+        }
+      }
+
+      return {
+        slots,
+        hands,
+        deck: Array.isArray(state.deck) ? state.deck.slice() : [],
+        topCard: state.topCard || null,
+        turn: Number.isFinite(state.turn) ? state.turn : 1,
+        penalty: Number.isFinite(state.penalty) ? state.penalty : 0,
+        gameRunning: state.gameRunning !== undefined ? !!state.gameRunning : false,
+        seatingOpen: state.seatingOpen !== undefined ? !!state.seatingOpen : true,
+        winnerSlot: Number.isFinite(state.winnerSlot) ? state.winnerSlot : null,
+        startedAt: state.startedAt || null,
+        updatedAt: state.updatedAt || null
+      };
+    }
+
+    function slotIsActive(slotData){
+      return !!(slotData && slotData.id && (!slotData.lastSeen || (Date.now() - slotData.lastSeen) <= STALE_SLOT_MS));
+    }
+
+    function cleanupStaleSlots(state){
+      for(let slot = 1; slot <= 4; slot++){
+        if(state.slots[slot] && !slotIsActive(state.slots[slot])){
+          state.slots[slot] = null;
+        }
+      }
+      return state;
+    }
+
+    function firstOccupiedSlot(state){
+      for(let slot = 1; slot <= 4; slot++) if(state.slots[slot]) return slot;
+      return null;
+    }
+
+    function nextOccupiedSlot(state, fromSlot){
+      for(let step = 1; step <= 4; step++){
+        const slot = ((fromSlot - 1 + step) % 4) + 1;
+        if(state.slots[slot]) return slot;
+      }
+      return fromSlot;
+    }
+
+    function normalizeTurn(state){
+      const current = state.turn || 1;
+      if(state.slots[current]) return current;
+      const next = nextOccupiedSlot(state, current);
+      return next || current;
+    }
+
+    function getFirstVacantSlot(state){
+      for(let slot = 1; slot <= 4; slot++){
+        if(!state.slots[slot]) return slot;
+      }
+      return null;
+    }
+
+    function anyVacantSlot(state){
+      return getFirstVacantSlot(state) !== null;
+    }
+
+    function drawFromDeckShared(state){
+      if(!state.deck || state.deck.length === 0){
+        state.deck = createFreshDeck();
+      }
+      return state.deck.pop();
+    }
+
+    function ensureOccupiedHandsHaveSeven(state){
+      for(let slot = 1; slot <= 4; slot++){
+        if(state.slots[slot]){
+          if(!Array.isArray(state.hands[slot])) state.hands[slot] = [];
+          while(state.hands[slot].length < 7){
+            state.hands[slot].push(drawFromDeckShared(state));
+          }
+        }
+      }
+      return state;
+    }
+
+    function canPlay(c, topCard){
+      if(!topCard) return true;
+      if(c.value === "+4") return true;
+      if(c.value === "+2") return c.color === topCard.color || topCard.value === "+2";
+      return c.color === topCard.color || c.value === topCard.value;
+    }
+
+    function getPlayerName(slot){
+      if(gameState.roomMode && gameState.roomState && gameState.roomState.slots[slot] && gameState.roomState.slots[slot].name){
+        return gameState.roomState.slots[slot].name;
+      }
+      if(!gameState.roomMode && slot === 1) return gameState.myName;
+      return `Jogador ${slot}`;
+    }
+
+    function renderLobbyRooms(){
+      const container = document.getElementById("roomsList");
+      if(!container) return;
+      container.innerHTML = "";
+      ROOMS.forEach(room => {
+        const roomState = room.state ? normalizeSharedState(room.state) : null;
+        const occupied = roomState ? Object.values(roomState.slots).filter(Boolean).length : 0;
+        const isFull = occupied >= 4;
+        const statusText = roomState ? (roomState.gameRunning ? "Partida ativa" : "Sala pronta") : "Aguardando primeiro jogador";
+        const joinLabel = roomState && roomState.seatingOpen === false ? "Assistir" : "Entrar";
+        const div = document.createElement("div");
+        div.className = "room-card";
+        div.innerHTML = `
+          <div class="room-head">
+            <strong>${escapeHtml(room.name)}</strong>
+            <span class="room-tag">${occupied}/4</span>
+          </div>
+          <small>${escapeHtml(statusText)}</small>
+          <div class="room-actions">
+            <button class="btn secondary" onclick="joinRoom('${room.id}')">${joinLabel}</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function stopRoomSubscriptions(){
+      activeRoomUnsubs.forEach(fn => { try { fn(); } catch(e) {} });
+      activeRoomUnsubs = [];
+    }
+
+    function stopLobbySubscriptions(){
+      lobbyRoomUnsubs.forEach(fn => { try { fn(); } catch(e) {} });
+      lobbyRoomUnsubs = [];
+    }
+
+    function stopRoomHeartbeat(){
+      if(gameState.roomHeartbeat){
+        clearInterval(gameState.roomHeartbeat);
+        gameState.roomHeartbeat = null;
+      }
+    }
+
+    function closeRoomSession(){
+      stopRoomHeartbeat();
+      stopRoomSubscriptions();
+      gameState.roomState = null;
+      gameState.roomId = null;
+      gameState.mySlot = null;
+    }
+
+    function getOccupiedSlotsCount(state){
+      return Object.values(state?.slots || {}).filter(Boolean).length;
+    }
+
+    function isRoomEmpty(state){
+      return getOccupiedSlotsCount(state) === 0;
+    }
+
+    async function deleteRoomChatMessages(roomId){
+      try {
+        const snap = await dbChat.collection('chat').where('roomId', '==', roomId).get();
+        if(snap.empty) return;
+        const batch = dbChat.batch();
+        snap.forEach(doc => batch.delete(doc.ref));
+        await batch.commit();
+      } catch(err){
+        console.warn("Não foi possível limpar o chat da sala:", err);
+      }
+    }
+
+    async function resetEmptyRoom(roomId){
+      try {
+        await dbCartas.collection('rooms').doc(roomId).delete();
+      } catch(err){
+        console.warn("Não foi possível apagar a sala vazia:", err);
+      }
+      await deleteRoomChatMessages(roomId);
+    }
+
+    async function ensureRoomDoc(roomId){
+      const ref = dbCartas.collection('rooms').doc(roomId);
+      const snap = await ref.get();
+      if(!snap.exists){
+        await ref.set({
+          roomId,
+          roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
+          state: createFreshRoomState(),
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    }
+
+    async function joinRoom(roomId){
+      let userName = document.getElementById("roomName").value.trim();
+      if(!userName){
+        alert("Digite seu nome antes de entrar na sala.");
+        return;
+      }
+      userName = userName.slice(0, 18);
+
+      gameState.myName = userName;
+      gameState.roomMode = true;
+      gameState.roomId = roomId;
+      gameState.mySlot = null;
+
+      showGame();
+      applyModeUI();
+      refreshThemeForMode();
+      renderGame();
+
+      try {
+        await ensureRoomDoc(roomId);
+        const roomRef = dbCartas.collection('rooms').doc(roomId);
+        const joined = await dbCartas.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error("Sala não encontrada");
+          const data = snap.data() || {};
+          let state = normalizeSharedState(data.state);
+          state = cleanupStaleSlots(state);
+          const wasEmpty = isRoomEmpty(state);
+
+          if(wasEmpty){
+            state = createFreshRoomState();
+          }
+
+          let existingSlot = null;
+          for(let slot = 1; slot <= 4; slot++){
+            const s = state.slots[slot];
+            if(s && s.id === gameState.myId){
+              existingSlot = slot;
+              break;
+            }
+          }
+
+          let chosenSlot = existingSlot;
+          if(chosenSlot === null){
+            chosenSlot = getFirstVacantSlot(state);
+          }
+          if(chosenSlot !== null){
+            state.slots[chosenSlot] = {
+              id: gameState.myId,
+              name: userName,
+              joinedAt: Date.now(),
+              lastSeen: Date.now()
+            };
+          }
+
+          const occupiedAfterJoin = getOccupiedSlotsCount(state);
+          state.seatingOpen = anyVacantSlot(state);
+
+          state.turn = normalizeTurn(state);
+          state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
+          if(!state.topCard && chosenSlot !== null && !wasEmpty){
+            state = createFreshRoomState();
+            state.slots[chosenSlot] = {
+              id: gameState.myId,
+              name: userName,
+              joinedAt: Date.now(),
+              lastSeen: Date.now()
+            };
+          }
+
+
+          tx.set(roomRef, {
+            roomId,
+            roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
+            state,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          return { slot: chosenSlot, wasEmpty };
+        });
+
+        gameState.mySlot = joined.slot;
+        subscribeRoom(roomId);
+        startRoomHeartbeat();
+        if(joined.wasEmpty) await deleteRoomChatMessages(roomId);
+        initRoomChat(roomId);
+        renderGame();
+      } catch(err){
+        console.error(err);
+        alert(err.message || "Não foi possível entrar na sala.");
+        backToLobby();
+      }
+    }
+
+    function subscribeRoom(roomId){
+      stopRoomSubscriptions();
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
+      const unsub = roomRef.onSnapshot(snapshot => {
+        if(!snapshot.exists) return;
+        const data = snapshot.data() || {};
+        const state = cleanupStaleSlots(normalizeSharedState(data.state));
+        gameState.roomState = state;
+        if(gameState.myId){
+          for(let slot = 1; slot <= 4; slot++){
+            if(state.slots[slot] && state.slots[slot].id === gameState.myId){
+              gameState.mySlot = slot;
+            }
+          }
+        }
+        renderGame();
+      }, err => {
+        console.error("Erro ao ouvir sala:", err);
+      });
+      activeRoomUnsubs.push(unsub);
+    }
+
+    function startRoomHeartbeat(){
+      stopRoomHeartbeat();
+      gameState.roomHeartbeat = setInterval(() => {
+        if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+        const pathBase = `state.slots.${gameState.mySlot}`;
+        dbCartas.collection('rooms').doc(gameState.roomId).update({
+          [`${pathBase}.id`]: gameState.myId,
+          [`${pathBase}.name`]: gameState.myName,
+          [`${pathBase}.lastSeen`]: Date.now()
+        }).catch(() => {});
+      }, 3000);
+    }
+
+    async function leaveCurrentRoom(){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      const roomId = gameState.roomId;
+      const mySlot = gameState.mySlot;
+      const myId = gameState.myId;
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
+      stopRoomHeartbeat();
+      gameState.mySlot = null;
+      stopMusicPlayback();
+      let shouldReset = false;
+      try {
+        await dbCartas.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) return;
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          if(state.slots[mySlot] && state.slots[mySlot].id === myId){
+            state.slots[mySlot] = null;
+            if(state.turn === mySlot) state.turn = normalizeTurn(state);
+            shouldReset = isRoomEmpty(state);
+            if(!shouldReset) state.seatingOpen = anyVacantSlot(state);
+            if(shouldReset){
+              tx.delete(roomRef);
+            } else {
+              tx.update(roomRef, {
+                state,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            }
+          }
+        });
+        if(shouldReset) await deleteRoomChatMessages(roomId);
+      } catch(e) {
+        console.warn("Não foi possível liberar a sala imediatamente:", e);
+      }
+      stopRoomSubscriptions();
+      gameState.roomId = null;
+    }
+
+    async function leaveSeat(){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      const roomId = gameState.roomId;
+      const mySlot = gameState.mySlot;
+      const myId = gameState.myId;
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
+      stopRoomHeartbeat();
+      let shouldReset = false;
+      try {
+        await dbCartas.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          if(!snap.exists) throw new Error("Sala não encontrada");
+          const data = snap.data() || {};
+          let state = cleanupStaleSlots(normalizeSharedState(data.state));
+          if(state.slots[mySlot] && state.slots[mySlot].id === myId){
+            state.slots[mySlot] = null;
+            if(state.turn === mySlot) state.turn = normalizeTurn(state);
+            shouldReset = isRoomEmpty(state);
+            if(!shouldReset) state.seatingOpen = anyVacantSlot(state);
+            if(shouldReset){
+              tx.delete(roomRef);
+            } else {
+              tx.update(roomRef, {
+                state,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+            }
+          }
+        });
+        if(shouldReset) await deleteRoomChatMessages(roomId);
+        gameState.mySlot = null;
+        renderGame();
+      } catch(e) {
+        console.warn("Não foi possível sair da mesa:", e);
+        alert(e.message || "Não foi possível sair da mesa.");
+      }
+    }
+
+    async function takeSeat(){
+      if(!gameState.roomMode || !gameState.roomId || gameState.mySlot) return;
+      const roomId = gameState.roomId;
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
+      try {
+        await ensureRoomDoc(roomId);
+        const result = await dbCartas.runTransaction(async (tx) => {
+          const snap = await tx.get(roomRef);
+          let data = snap.exists ? (snap.data() || {}) : null;
+          let state = data ? cleanupStaleSlots(normalizeSharedState(data.state)) : createFreshRoomState();
+          const wasEmpty = !data || isRoomEmpty(state);
+          if(wasEmpty){
+            state = createFreshRoomState();
+          }
+
+          let existingSlot = null;
+          for(let slot = 1; slot <= 4; slot++){
+            const s = state.slots[slot];
+            if(s && s.id === gameState.myId){
+              existingSlot = slot;
+              break;
+            }
+          }
+
+          let chosenSlot = existingSlot ?? getFirstVacantSlot(state);
+          if(chosenSlot === null) throw new Error("Não há lugar vazio na mesa");
+
+          state.slots[chosenSlot] = {
+            id: gameState.myId,
+            name: gameState.myName,
+            joinedAt: Date.now(),
+            lastSeen: Date.now()
+          };
+          state.seatingOpen = anyVacantSlot(state);
+          state.turn = normalizeTurn(state);
+          tx.set(roomRef, {
+            roomId,
+            roomName: ROOMS.find(r => r.id === roomId)?.name || roomId,
+            state,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+          return { chosenSlot, wasEmpty };
+        });
+        gameState.mySlot = result.chosenSlot;
+        startRoomHeartbeat();
+        if(result.wasEmpty) await deleteRoomChatMessages(roomId);
+        renderGame();
+      } catch(e) {
+        console.warn("Não foi possível subir para a mesa:", e);
+        alert(e.message || "Não foi possível subir para a mesa.");
+      }
+    }
+
+    function joinRobots(){
+      let userName = document.getElementById("playerName").value.trim();
+      if(!userName) userName = "Você";
+      gameState.myName = userName.slice(0,18);
+      gameState.roomMode = false;
+      gameState.roomType = null;
+      closeRoomSession();
+      showGame();
+      initGame();
+      initOfflineChat();
+      applyModeUI();
+      refreshThemeForMode();
+    }
+
+    function applyModeUI(){
+      const music = document.getElementById("musicPlayer");
+      const theme = document.getElementById("themeSwitch");
+
+      if(music) music.style.display = "";
+      if(theme) theme.style.display = "";
+    }
+
+    function showGame(){
+      document.body.classList.remove("chat-room-mode");
+      const chatTitle = document.getElementById("chatPanelTitle");
+      if(chatTitle) chatTitle.textContent = "💬 Chat";
+      const backBtn = document.getElementById("chatRoomBackBtn");
+      if(backBtn) backBtn.classList.add("hidden");
+      document.getElementById("lobbyScreen").style.display = "none";
+      document.getElementById("endScreen").style.display = "none";
+      document.getElementById("table").style.display = "block";
+      document.getElementById("chatPanel").style.display = "flex";
+    }
+
+    function showChatRoom(roomId){
+      showGame();
+      document.body.classList.add("chat-room-mode");
+      const title = document.getElementById("chatPanelTitle");
+      if(title) title.textContent = `💬 ${currentRoomLabel(roomId)}`;
+      const backBtn = document.getElementById("chatRoomBackBtn");
+      if(backBtn) backBtn.classList.remove("hidden");
+      document.getElementById("chatPanel").style.display = "flex";
+    }
+
+    async function backToLobby(){
+      clearTimeout(gameState.botTimer);
+      if(window.chatUnsubscribe){ try{ window.chatUnsubscribe(); }catch(e){} window.chatUnsubscribe = null; }
+      await leaveCurrentRoom();
+      gameState.roomMode = false;
+      gameState.roomType = null;
+      document.body.classList.remove("chat-room-mode");
+      document.getElementById("table").style.display = "none";
+      const board = document.getElementById("gameBoard");
+      if(board) board.style.display = "";
+      document.getElementById("endScreen").style.display = "none";
+      document.getElementById("lobbyScreen").style.display = "flex";
+      document.getElementById("chatPanel").style.display = "none";
+      const backBtn = document.getElementById("chatRoomBackBtn");
+      if(backBtn) backBtn.classList.add("hidden");
+      const chatTitle = document.getElementById("chatPanelTitle");
+      if(chatTitle) chatTitle.textContent = "💬 Chat";
+      closeRoomSession();
+      refreshThemeForMode();
+      renderLobbyRooms();
+      bootstrapLobbyRooms();
+      renderThemeDots();
+    }
+
+    function initGame(){
+      clearTimeout(gameState.botTimer);
+      gameState.deck = [];
+      gameState.players = [[],[],[],[]];
+      gameState.penalty = 0;
+      gameState.turn = 0;
+      gameState.gameRunning = true;
+      for(let i = 0; i < 100; i++) gameState.deck.push(createCard());
+      for(let p = 0; p < 4; p++) for(let i = 0; i < 7; i++) gameState.players[p].push(drawFromDeckOffline());
+      gameState.topCard = drawFromDeckOffline();
+      renderGame();
+      scheduleBotTurn();
+    }
+
+    function drawFromDeckOffline(){
+      if(gameState.deck.length === 0) for(let i = 0; i < 60; i++) gameState.deck.push(createCard());
+      return gameState.deck.pop();
+    }
+
+    function drawFromDeck(){
+      return gameState.roomMode ? null : drawFromDeckOffline();
+    }
+
+    function canPlayOffline(c){
+      if(!gameState.topCard) return true;
+      if(c.value === "+4") return true;
+      if(c.value === "+2") return c.color === gameState.topCard.color || gameState.topCard.value === "+2";
+      return c.color === gameState.topCard.color || c.value === gameState.topCard.value;
+    }
+
+    function playCard(i){
+      if(gameState.roomMode) return playRoomCard(i);
+      if(!gameState.gameRunning || gameState.turn !== 0 || gameState.penalty > 0) return;
+      const c = gameState.players[0][i];
+      if(!canPlayOffline(c)) return;
+      applyCardOffline(c);
+      gameState.players[0].splice(i, 1);
+      renderGame();
+      nextTurnOffline();
+    }
+
+    function playRoomCard(i){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      performRoomAction({ type: 'play', index: i });
+    }
+
+    function applyCardOffline(c){
+      gameState.topCard = c;
+      if(c.value === "+2") gameState.penalty += 2;
+      if(c.value === "+4") gameState.penalty += 4;
+    }
+
+    function drawCard(){
+      if(gameState.roomMode) return drawRoomCard();
+      if(!gameState.gameRunning || gameState.turn !== 0 || gameState.penalty > 0) return;
+      gameState.players[0].push(drawFromDeckOffline());
+      renderGame();
+      nextTurnOffline();
+    }
+
+    function drawRoomCard(){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      performRoomAction({ type: 'draw' });
+    }
+
+    function nextTurnOffline(){
+      if(checkWinOffline()) return;
+      gameState.turn = (gameState.turn + 1) % 4;
+      renderGame();
+      clearTimeout(gameState.botTimer);
+      gameState.botTimer = setTimeout(resolveTurnOffline, 220);
+    }
+
+    function resolveTurnOffline(){
+      if(!gameState.gameRunning) return;
+      if(gameState.penalty > 0){
+        for(let i = 0; i < gameState.penalty; i++) gameState.players[gameState.turn].push(drawFromDeckOffline());
+        gameState.penalty = 0;
+        renderGame();
+        nextTurnOffline();
+        return;
+      }
+      if(!gameState.roomMode && gameState.turn !== 0) botTurn();
+    }
+
+    function botTurn(){
+      clearTimeout(gameState.botTimer);
+      gameState.botTimer = setTimeout(() => {
+        if(!gameState.gameRunning || gameState.turn === 0) return;
+        const hand = gameState.players[gameState.turn];
+        const idx = hand.findIndex(c => canPlayOffline(c));
+        if(idx !== -1){
+          applyCardOffline(hand[idx]);
+          hand.splice(idx, 1);
+        } else {
+          hand.push(drawFromDeckOffline());
+        }
+        renderGame();
+        nextTurnOffline();
+      }, 1200 + Math.random() * 800);
+    }
+
+    function scheduleBotTurn(){
+      clearTimeout(gameState.botTimer);
+      gameState.botTimer = setTimeout(resolveTurnOffline, 160);
+    }
+
+    function checkWinOffline(){
+      for(let i = 0; i < 4; i++){
+        if(gameState.players[i].length === 0){
+          gameState.gameRunning = false;
+          document.getElementById("table").style.display = "none";
+          document.getElementById("endScreen").style.display = "flex";
+          document.getElementById("winnerText").innerHTML = i === 0 ? "Você venceu!" : `${getPlayerName(i + 1)} venceu!`;
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function performRoomAction(action){
+      if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
+      const roomRef = dbCartas.collection('rooms').doc(gameState.roomId);
+      dbCartas.runTransaction(async (tx) => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists) throw new Error("Sala não encontrada");
+        const data = snap.data() || {};
+        let state = cleanupStaleSlots(normalizeSharedState(data.state));
+
+        if(!state.slots[gameState.mySlot] || state.slots[gameState.mySlot].id !== gameState.myId){
+          throw new Error("Você não está mais nessa sala");
+        }
+
+        state.turn = normalizeTurn(state);
+        if(state.turn !== gameState.mySlot) throw new Error("Não é sua vez");
+        if(!state.gameRunning) throw new Error("A partida já terminou");
+
+        const hand = state.hands[gameState.mySlot] || (state.hands[gameState.mySlot] = []);
+
+        if(action.type === 'draw'){
+          if(state.penalty > 0){
+            for(let i = 0; i < state.penalty; i++) hand.push(drawFromDeckShared(state));
+            state.penalty = 0;
+          } else {
+            hand.push(drawFromDeckShared(state));
+          }
+          state.turn = nextOccupiedSlot(state, gameState.mySlot);
+        }
+
+        if(action.type === 'play'){
+          const card = hand[action.index];
+          if(!card) throw new Error("Carta inválida");
+          if(!canPlay(card, state.topCard)) throw new Error("Essa carta não pode ser jogada agora");
+          state.topCard = card;
+          hand.splice(action.index, 1);
+          if(card.value === "+2") state.penalty += 2;
+          if(card.value === "+4") state.penalty += 4;
+          if(hand.length === 0){
+            state.gameRunning = false;
+            state.winnerSlot = gameState.mySlot;
+          } else {
+            state.turn = nextOccupiedSlot(state, gameState.mySlot);
+          }
+        }
+
+        state.updatedAt = Date.now();
+        tx.update(roomRef, {
+          state,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }).catch(err => {
+        console.error(err);
+        alert(err.message || "Não foi possível atualizar a sala.");
+      });
+    }
+
+    function checkWinRoom(state){
+      if(!state) return false;
+      if(state.gameRunning) return false;
+      return state.winnerSlot !== null;
+    }
+
+    function updateSeatControls(state){
+      const downBtn = document.getElementById("seatDownBtn");
+      const upBtn = document.getElementById("seatUpBtn");
+      if(!downBtn || !upBtn) return;
+
+      if(!gameState.roomMode || !state){
+        downBtn.style.display = "none";
+        upBtn.style.display = "none";
+        return;
+      }
+
+      const hasVacancy = anyVacantSlot(state);
+      const seated = !!gameState.mySlot;
+
+      downBtn.style.display = seated ? "" : "none";
+      upBtn.style.display = !seated && hasVacancy ? "" : "none";
+    }
+
+    function renderGame(){
+      if(gameState.roomMode){
+        if(gameState.roomType === 'chat'){
+          document.getElementById("table").style.display = "block";
+          const board = document.getElementById("gameBoard");
+          if(board) board.style.display = "none";
+          document.getElementById("endScreen").style.display = "none";
+          const hudTurn = document.getElementById("hudTurn");
+          if(hudTurn) hudTurn.querySelector('span:last-child').textContent = "Sala de bate-papo ativa";
+          const note = document.getElementById("statusNote");
+          if(note) note.textContent = "Sala de bate-papo ativa";
+          updateSeatControls(null);
+          return;
+        }
+        const board = document.getElementById("gameBoard");
+        if(board) board.style.display = "";
+        const state = gameState.roomState;
+        if(!state){
+          document.getElementById("statusNote").textContent = "Entrando na sala...";
+          updateSeatControls(null);
+          return;
+        }
+
+        if(checkWinRoom(state)){
+          document.getElementById("table").style.display = "none";
+          document.getElementById("endScreen").style.display = "flex";
+          document.getElementById("winnerText").innerHTML = `${getPlayerName(state.winnerSlot)} venceu!`;
+          return;
+        }
+
+        document.getElementById("table").style.display = "block";
+        document.getElementById("endScreen").style.display = "none";
+
+        updateSeatControls(state);
+        const currentTurn = normalizeTurn(state);
+        const turnName = getPlayerName(currentTurn);
+        const hudTurn = document.getElementById("hudTurn");
+        hudTurn.querySelector('span:last-child').textContent = currentTurn === gameState.mySlot ? "Sua vez" : `Vez de ${turnName}`;
+
+        document.getElementById("discardPile").innerHTML = state.topCard ? `<div class="card" data-value="${state.topCard.value}" style="background-image:url('${state.topCard.img}'); border-color:${colorMap[state.topCard.color]}"></div>` : '';
+        document.getElementById("statusNote").textContent = state.penalty > 0 ? `Punição ativa: compre ${state.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
+
+        const displayOrder = [];
+        const usedSlots = new Set();
+        const pushSlot = (slot) => {
+          if(!slot || usedSlots.has(slot) || !state.slots[slot]) return;
+          usedSlots.add(slot);
+          displayOrder.push(slot);
+        };
+        if(gameState.mySlot){
+          pushSlot(gameState.mySlot);
+          for(let step = 1; step <= 4; step++){
+            const slot = ((gameState.mySlot - 1 + step) % 4) + 1;
+            pushSlot(slot);
+          }
+        } else {
+          for(let slot = 1; slot <= 4; slot++) pushSlot(slot);
+        }
+
+        const displayIds = ["p1", "p2", "p4", "p3"]; // baixo, direita, topo, esquerda
+        displayIds.forEach((id, idx) => {
+          const h = document.getElementById(id);
+          if(!h) return;
+          const actualSlot = displayOrder[idx];
+          const info = h.querySelector('.info');
+          const cardsEl = h.querySelector('.cards');
+
+          if(!actualSlot){
+            info.innerHTML = '';
+            cardsEl.innerHTML = '';
+            return;
+          }
+
+          const slotName = getPlayerName(actualSlot);
+          const hand = state.hands[actualSlot] || [];
+          info.innerHTML = `<span>${escapeHtml(slotName)}${gameState.mySlot === actualSlot ? ' (você)' : ''}</span><small>${hand.length}</small>`;
+
+          if(gameState.mySlot === actualSlot){
+            cardsEl.innerHTML = hand.map((c, i) => `<div class="card ${canPlay(c, state.topCard) ? 'playable' : ''}" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`).join('');
+          } else {
+            cardsEl.innerHTML = Array(hand.length).fill('<div class="card back"></div>').join('');
+          }
+        });
+        return;
+      }
+
+      if(!gameState.gameRunning) return;
+      document.getElementById("discardPile").innerHTML = gameState.topCard ? `<div class="card" data-value="${gameState.topCard.value}" style="background-image:url('${gameState.topCard.img}'); border-color:${colorMap[gameState.topCard.color]}"></div>` : '';
+      document.getElementById("hudTurn").querySelector('span:last-child').textContent = gameState.turn === 0 ? "Sua vez" : `Vez de ${getPlayerName(gameState.turn + 1)}`;
+      const p1 = document.getElementById("p1");
+      p1.querySelector('.info').innerHTML = `<span>${getPlayerName(1)}</span><small>${gameState.players[0].length}</small>`;
+      p1.querySelector('.cards').innerHTML = gameState.players[0].map((c, i) => `<div class="card ${canPlayOffline(c) ? 'playable' : ''}" data-value="${c.value}" style="background-image:url('${c.img}'); border-color:${colorMap[c.color]}" onclick="playCard(${i})"></div>`).join('');
+      for(let i = 1; i <= 3; i++){
+        const h = document.getElementById(`p${i + 1}`);
+        h.querySelector('.info').innerHTML = `<span>${getPlayerName(i + 1)}</span><small>${gameState.players[i].length}</small>`;
+        h.querySelector('.cards').innerHTML = Array(gameState.players[i].length).fill('<div class="card back"></div>').join('');
+      }
+      document.getElementById("statusNote").textContent = gameState.penalty > 0 ? `Punição ativa: compre ${gameState.penalty} carta(s)` : "Escolha uma carta da sua mão ou compre";
+    }
+    // ========== MÚSICA ==========
+    function setupMusic(){
+      if(!gameState.musicAudio){
+        gameState.musicAudio = new Audio();
+        gameState.musicAudio.loop = false;
+        gameState.musicAudio.addEventListener("ended", () => nextTrack(true));
+      }
+      const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist;
+      if(pl.length) gameState.musicAudio.src = pl[gameState.trackIndex % pl.length];
+      gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+      document.getElementById("musicDisc").classList.remove("playing");
+    }
+    function playMusic(){ if(!gameState.musicAudio) setupMusic(); if(gameState.musicAudio && gameState.musicAudio.src){ gameState.musicPlaying = true; document.getElementById("musicDisc").classList.add("playing"); gameState.musicAudio.play().catch(()=>{}); } }
+    function pauseMusic(){ if(gameState.musicAudio){ gameState.musicPlaying = false; gameState.musicAudio.pause(); document.getElementById("musicDisc").classList.remove("playing"); } }
+    function toggleMusic(){ gameState.musicPlaying ? pauseMusic() : playMusic(); }
+    function nextTrack(auto=false){ const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex + 1) % pl.length; setupMusic(); if(gameState.musicPlaying || auto) playMusic(); }
+    function prevTrack(){ const pl = gameState.roomMode ? gameState.roomPlaylist : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
+    function setMusicVolume(v){ gameState.musicVolume = v / 100; if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume; }
+    function setMasterVolume(v){
+      gameState.masterVolume = v / 100;
+      if(gameState.musicAudio) gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+    }
+    function setMicVolume(v){
+      gameState.micVolume = v / 100;
+    }
+    function toggleMic(){}
+    function toggleAudio(){}
+
+    // ========== CHAT ==========
+
+    function initRoomChat(roomId){
+      if(window.chatUnsubscribe) window.chatUnsubscribe();
+      const q = dbChat.collection('chat').where('roomId', '==', roomId);
+      window.chatUnsubscribe = q.onSnapshot(snapshot => {
+        const msgs = [];
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          msgs.push({
+            id: doc.id,
+            author: d.author || "Anônimo",
+            message: d.message || "",
+            timestamp: d.timestamp?.toDate?.() || new Date()
+          });
+        });
+        msgs.sort((a,b) => a.timestamp - b.timestamp);
+        renderChatMessages(msgs);
+      }, err => {
+        console.error("Erro no chat:", err);
+        document.getElementById("chatMessagesList").innerHTML = `<div style="text-align:center;color:red;">Erro no chat: ${err.message}</div>`;
+      });
+    }
+
+    function initOfflineChat(){
+      if(window.chatUnsubscribe) window.chatUnsubscribe();
+      const stored = localStorage.getItem("cartas_offline_chat");
+      let msgs = stored ? JSON.parse(stored) : [];
+      msgs.sort((a,b) => a.timestamp - b.timestamp);
+      renderChatMessages(msgs);
+    }
+
+    function saveOfflineMessage(author, message){
+      const stored = localStorage.getItem("cartas_offline_chat");
+      let msgs = stored ? JSON.parse(stored) : [];
+      msgs.push({ id:Date.now().toString(), author, message, timestamp:new Date() });
+      if(msgs.length > 50) msgs = msgs.slice(-50);
+      localStorage.setItem("cartas_offline_chat", JSON.stringify(msgs));
+      msgs.sort((a,b) => a.timestamp - b.timestamp);
+      renderChatMessages(msgs);
+    }
+
+    async function sendMessage(){
+      let msg = document.getElementById("chatMessageInput").value.trim();
+      if(!msg) return;
+      let author = gameState.myName;
+      if(author === "Você" || author === "Jogador" || author === ""){
+        alert("Por favor, defina seu nome na lobby antes de enviar mensagem.");
+        return;
+      }
+      const chatRoomId = gameState.stopMode ? STOP_CHAT_ROOM_ID : (gameState.roomMode && gameState.roomId ? gameState.roomId : null);
+      if(chatRoomId){
+        try {
+          await dbChat.collection('chat').add({
+            roomId: chatRoomId,
+            author: author,
+            message: msg,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        } catch(e){
+          console.error(e);
+          alert("Erro ao enviar mensagem: " + e.message);
+        }
+      } else {
+        saveOfflineMessage(author, msg);
+      }
+      document.getElementById("chatMessageInput").value = "";
+    }
+
+    function renderChatMessages(messages){
+      const container = document.getElementById("chatMessagesList");
+      if(!container) return;
+      if(messages.length === 0){ container.innerHTML = '<div style="text-align:center; color:var(--muted);">Nenhuma mensagem ainda.</div>'; return; }
+      container.innerHTML = "";
+      messages.forEach(msg => {
+        const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        const div = document.createElement("div");
+        div.className = "chat-message";
+        div.innerHTML = `
+          <div class="message-header"><span class="message-author">${escapeHtml(msg.author)}</span><span class="message-time">${time}</span></div>
+          <div class="message-text">${escapeHtml(msg.message)}</div>
+        `;
+        container.appendChild(div);
+      });
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function toggleChatPanel(){
+      const p = document.getElementById("chatPanel");
+      p.classList.toggle("collapsed");
+      p.querySelector(".chat-collapse-btn").textContent = p.classList.contains("collapsed") ? "+" : "−";
+    }
+
+    function toggleTheme(){ }
+    function loadTheme(){
+      refreshThemeForMode();
+    }
+    function escapeHtml(s){ if(!s) return ""; return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+
+    document.getElementById("sendChatBtn")?.addEventListener("click", sendMessage);
+    document.getElementById("chatMessageInput")?.addEventListener("keypress", e => { if(e.key === "Enter") sendMessage(); });
+
+    window.addEventListener('beforeunload', () => {
+      stopRoomHeartbeat();
+      if(gameState.roomMode) leaveCurrentRoom();
+    });
+
+    async function bootstrapLobbyRooms(){
+      stopLobbySubscriptions();
+      lobbyRoomUnsubs = ROOMS.map(room => dbCartas.collection('rooms').doc(room.id).onSnapshot(snapshot => {
+        room.state = snapshot.exists ? snapshot.data().state : null;
+        renderLobbyRooms();
+      }, () => {
+        room.state = null;
+        renderLobbyRooms();
+      }));
+    }
+
+    window.onload = async () => {
+      loadTheme();
+      renderLobbyRooms();
+      bootstrapLobbyRooms();
+    };
+  </script>
+
+
+  <div id="adminModal" class="modal">
+    <div class="modal-card">
+      <div class="section-title">
+        <h3>adm</h3>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn secondary small" type="button" onclick="logoutAdmin()">Sair</button>
+          <button class="btn secondary small" type="button" onclick="closeAdminModal()">Fechar</button>
+        </div>
+      </div>
+
+      <div id="adminLoginBox" class="modal-section">
+        <strong>Senha de acesso</strong>
+        <div class="mini-note">Senha provisória: 123.</div>
+        <div class="modal-row" style="margin-top:10px;">
+          <input id="adminCodeInput" class="field" type="password" placeholder="Digite a senha" />
+          <button class="btn" type="button" onclick="loginAdmin()">Entrar</button>
+        </div>
+      </div>
+
+      <div id="adminPanel" class="hidden">
+        <div id="adminAccessInfo" class="modal-section"></div>
+
+        <div class="modal-section" data-permission="password">
+          <strong>Trocar senha</strong>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="newAdminPasswordInput" class="field" type="password" placeholder="Nova senha do adm" />
+            <button class="btn" type="button" onclick="saveAdminPassword()">Salvar</button>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="rooms">
+          <strong>Salas</strong>
+          <div class="mini-note">Criar novas salas, deletar salas existentes e colocar senha nas salas.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="newRoomNameInput" class="field" type="text" placeholder="Nome da nova sala" />
+            <input id="newRoomIdInput" class="field" type="text" placeholder="ID opcional (ex: sala4)" />
+            <select id="newRoomTypeInput" class="field">
+              <option value="card">Sala de cartas</option>
+              <option value="chat">Sala de bate-papo</option>
+              <option value="stop">Sala de stop</option>
+            </select>
+            <button class="btn" type="button" onclick="createAdminRoom()">Criar sala</button>
+          </div>
+          <div class="modal-row" style="margin-top:10px;">
+            <select id="adminRoomSelect" onchange="renderAdminRoomDetails()"></select>
+          </div>
+          <div id="adminRoomDetails" class="list"></div>
+        </div>
+
+        <div class="modal-section" data-permission="music">
+          <strong>Músicas da sala</strong>
+          <div class="mini-note">Cole uma URL por linha. Vale para a sala selecionada.</div>
+          <textarea id="roomMusicList" rows="6" placeholder="Uma URL por linha"></textarea>
+          <div class="modal-row" style="margin-top:10px;">
+            <button class="btn" type="button" onclick="saveRoomMusicList()">Salvar músicas</button>
+            <button class="btn secondary" type="button" onclick="resetRoomMusicList()">Restaurar padrão</button>
+            <button class="btn" type="button" onclick="saveRoomMusicListAll()">Todas as salas</button>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="autoplay">
+          <strong>Autoplay nas salas</strong>
+          <div class="mini-note">Quando ligado, ao entrar na sala a música do player começa automaticamente.</div>
+          <div class="modal-row" style="margin-top:10px; align-items:center;">
+            <label class="theme-switch" style="justify-content:flex-start;">
+              <span class="theme-label">Ativo</span>
+              <span class="switch"><input id="roomAutoPlayToggle" type="checkbox" onchange="toggleRoomAutoPlay()" /><span class="slider"></span></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="delegate">
+          <strong>Delegar função</strong>
+          <div class="mini-note">Escolha um jogador e atribua permissões para ele abrir o adm sem senha.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="adminUserSearch" class="field" type="text" placeholder="Pesquisar por nome ou id" oninput="renderAdminDelegationSearch()" />
+          </div>
+          <div id="adminDelegationSearchResults" class="list"></div>
+          <div id="adminSelectedUser" class="modal-section" style="display:none;"></div>
+          <div class="permission-grid">
+            <label class="permission-chip"><input type="checkbox" id="perm_password"> Trocar senha</label>
+            <label class="permission-chip"><input type="checkbox" id="perm_rooms"> Salas</label>
+            <label class="permission-chip"><input type="checkbox" id="perm_music"> Músicas</label>
+            <label class="permission-chip"><input type="checkbox" id="perm_autoplay"> Autoplay</label>
+            <label class="permission-chip"><input type="checkbox" id="perm_delegate"> Delegar função</label>
+          </div>
+          <div class="modal-row" style="margin-top:10px;">
+            <button class="btn" type="button" onclick="saveDelegation()">Salvar delegação</button>
+            <button class="btn secondary" type="button" onclick="clearDelegation()">Limpar seleção</button>
+          </div>
+          <div style="margin-top:12px;">
+            <strong>Delegações salvas</strong>
+            <div id="delegationList" class="list"></div>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="rooms">
+          <strong>Resetar salas</strong>
+          <div class="mini-note">Clique para limpar todas as salas e reiniciar.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <button class="btn" type="button" onclick="resetAllRooms()">Resetar agora</button>
+          </div>
+          <div class="mini-note" style="margin-top:12px;">Reset automático diário (hora 0-23). Deixe vazio para desativar.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <input id="autoResetHourInput" class="field" type="number" min="0" max="23" placeholder="Ex: 22" />
+            <button class="btn secondary" type="button" onclick="saveAutoResetHour()">Salvar hora</button>
+          </div>
+        </div>
+
+        <div class="modal-section" data-permission="rooms">
+          <strong>Excluir jogadores</strong>
+          <div class="mini-note">Selecione um jogador do registro e remova do site.</div>
+          <div class="modal-row" style="margin-top:10px;">
+            <select id="deletePlayerSelect" class="field"></select>
+            <button class="btn" type="button" onclick="deleteSelectedPlayer()">Excluir jogador</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="peopleModal" class="modal">
+    <div class="modal-card">
+      <div class="section-title">
+        <h3>Pessoas na sala</h3>
+        <button class="btn secondary small" type="button" onclick="closePeopleModal()">Fechar</button>
+      </div>
+      <div class="mini-note">Lista de jogadores e de quem está assistindo.</div>
+      <div id="peopleList" class="list"></div>
+    </div>
+  </div>
+
+
+<script>
+(() => {
+  const SETTINGS_KEY = 'cartas_admin_settings_v4';
+  const USER_ID_KEY = 'cartas_user_id_v4';
+  const SETTINGS_DOC = dbCartas.collection('appMeta').doc('global');
+  const DEFAULT_PLAYLIST = [
+    'https://raw.githubusercontent.com/fil0099/livedacaca/main/music_for_video-just-relax-11157.mp3',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/main/sigmamusicart-jazz-lounge-relaxing-background-music-514554.mp3',
+    'https://raw.githubusercontent.com/fil0099/livedacaca/main/sonican-lo-fi-music-loop-sentimental-jazzy-love-473154.mp3'
+  ];
+  const DEFAULT_ROOMS = [
+    { id: 'sala1', name: 'Sala 1', type: 'card' },
+    { id: 'sala2', name: 'Sala 2', type: 'card' },
+    { id: 'sala3', name: 'Sala 3', type: 'card' },
+    { id: 'stop-main', name: 'Sala Stop', type: 'stop' }
+  ];
+  const PERM_KEYS = ['password','rooms','music','autoplay','delegate'];
+  const allPerms = () => ({ password:true, rooms:true, music:true, autoplay:true, delegate:true });
+
+  let adminUnsubSettings = null;
+  let adminRoomUnsubs = [];
+  let adminSaveQueued = false;
+
+  const adminState = {
+    mode: 'none',
+    permissions: {},
+    selectedUserId: '',
+    selectedRoomId: 'sala1',
+    roomCache: {},
+    settings: loadSettings(),
+  };
+
+  function randomId4(){
+    return Math.floor(Math.random() * 0x10000).toString(16).toUpperCase().padStart(4, '0');
+  }
+
+  function getOrCreateUserId(){
+    let id = localStorage.getItem(USER_ID_KEY);
+    if(!id){ id = randomId4(); localStorage.setItem(USER_ID_KEY, id); }
+    return String(id).toUpperCase().slice(0,4).padStart(4,'0');
+  }
+
+  function loadSettings(){
+    const base = {
+      adminPassword: '123',
+      rooms: DEFAULT_ROOMS.map(r => ({ id:r.id, name:r.name, type:r.type || 'card', hidden: !!r.hidden, baseFor: r.baseFor || '' })),
+      roomMeta: DEFAULT_ROOMS.reduce((acc, r) => {
+        acc[r.id] = { name:r.name, password:'', autoplay:true, listenMode:false, playlist: DEFAULT_PLAYLIST.slice(), type:r.type || 'card', hidden: !!r.hidden, baseFor: r.baseFor || '' };
+        return acc;
+      }, {}),
+      delegations: {},
+      userRegistry: []
+    };
+    let local = null;
+    try { local = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null'); } catch(e) {}
+    if(!local) return base;
+    const next = {
+      ...base,
+      ...local,
+      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : (String(r.type||'card').trim() === 'chat' ? 'chat' : 'card')), hidden: !!r.hidden, baseFor: String(r.baseFor || '').trim() })).filter(r => r.id) : base.rooms.slice(),
+      roomMeta: { ...base.roomMeta, ...(local.roomMeta || {}) },
+      delegations: local.delegations && typeof local.delegations === 'object' ? local.delegations : {},
+      userRegistry: Array.isArray(local.userRegistry) ? local.userRegistry : []
+    };
+    next.rooms = next.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
+    next.rooms.forEach(room => {
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card', hidden: !!room.hidden, baseFor: room.baseFor || '' };
+      next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
+      next.roomMeta[room.id].type = ['stop','chat','card'].includes(String(next.roomMeta[room.id].type || room.type || 'card').trim()) ? String(next.roomMeta[room.id].type || room.type || 'card').trim() : 'card';
+      next.roomMeta[room.id].hidden = next.roomMeta[room.id].hidden === true || room.hidden === true;
+      next.roomMeta[room.id].baseFor = String(next.roomMeta[room.id].baseFor || room.baseFor || '').trim();
+      next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
+      next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
+      next.roomMeta[room.id].listenMode = next.roomMeta[room.id].listenMode === true;
+      next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
+    });
+    return next;
+  }
+
+  function saveSettings(){
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(adminState.settings));
+    SETTINGS_DOC.set(adminState.settings, { merge:true }).catch(()=>{});
+    scheduleRefresh();
+  }
+
+  function mergeRemoteSettings(remote){
+    if(!remote || typeof remote !== 'object') return;
+    const next = loadSettings();
+    if(typeof remote.adminPassword === 'string') next.adminPassword = remote.adminPassword;
+    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : (String(r.type||'card').trim() === 'chat' ? 'chat' : 'card')), hidden: !!r.hidden, baseFor: String(r.baseFor || '').trim() })).filter(r => r.id);
+    if(remote.roomMeta && typeof remote.roomMeta === 'object') next.roomMeta = { ...next.roomMeta, ...remote.roomMeta };
+    if(remote.delegations && typeof remote.delegations === 'object') next.delegations = remote.delegations;
+    if(Array.isArray(remote.userRegistry)) next.userRegistry = remote.userRegistry;
+    next.rooms.forEach(room => {
+      if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card', hidden: !!room.hidden, baseFor: room.baseFor || '' };
+      next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
+      next.roomMeta[room.id].type = ['stop','chat','card'].includes(String(next.roomMeta[room.id].type || room.type || 'card').trim()) ? String(next.roomMeta[room.id].type || room.type || 'card').trim() : 'card';
+      next.roomMeta[room.id].hidden = next.roomMeta[room.id].hidden === true || room.hidden === true;
+      next.roomMeta[room.id].baseFor = String(next.roomMeta[room.id].baseFor || room.baseFor || '').trim();
+      next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
+      next.roomMeta[room.id].autoplay = next.roomMeta[room.id].autoplay !== false;
+      next.roomMeta[room.id].listenMode = next.roomMeta[room.id].listenMode === true;
+      next.roomMeta[room.id].playlist = Array.isArray(next.roomMeta[room.id].playlist) ? next.roomMeta[room.id].playlist.slice() : DEFAULT_PLAYLIST.slice();
+    });
+    adminState.settings = next;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+  }
+
+  function getRooms(type = null){
+    const seen = new Set();
+    return (adminState.settings.rooms || []).map(room => {
+      const id = String(room.id || '').trim();
+      const meta = adminState.settings.roomMeta?.[id] || {};
+      if(meta.hidden === true || room.hidden === true) return null;
+      const rawType = String(meta.type || room.type || 'card').trim();
+      const roomType = ['stop','chat','card'].includes(rawType) ? rawType : 'card';
+      if(type && roomType !== type) return null;
+      const item = { id, name: String(meta.name || room.name || id).trim() || id, type: roomType };
+      if(seen.has(item.id)) return null;
+      seen.add(item.id);
+      return item;
+    }).filter(Boolean);
+  }
+
+  function getRoomMeta(roomId){
+    const id = String(roomId || '').trim();
+    const room = (adminState.settings.rooms || []).find(r => r.id === id);
+    const fallbackType = room ? (['stop','chat','card'].includes(String(room.type || 'card').trim()) ? String(room.type || 'card').trim() : 'card') : 'card';
+    const meta = adminState.settings.roomMeta?.[id] || {};
+    return {
+      name: id,
+      password: '',
+      autoplay: true,
+      listenMode: false,
+      playlist: DEFAULT_PLAYLIST.slice(),
+      type: fallbackType,
+      hidden: false,
+      baseFor: '',
+      baseRoomId: '',
+      ...meta
+    };
+  }
+
+  function getRoomType(roomId){
+    const id = String(roomId || '').trim();
+    const meta = getRoomMeta(id);
+    const rawType = String(meta.type || 'card').trim();
+    return ['stop','chat','card'].includes(rawType) ? rawType : 'card';
+  }
+
+  function setRoomMeta(roomId, patch){
+    const id = String(roomId || '').trim();
+    if(!id) return;
+    adminState.settings.roomMeta[id] = {
+      ...(adminState.settings.roomMeta[id] || { name:id, password:'', autoplay:true, playlist:DEFAULT_PLAYLIST.slice() }),
+      ...patch
+    };
+    if(!adminState.settings.rooms.some(r => r.id === id)) adminState.settings.rooms.push({ id, name: adminState.settings.roomMeta[id].name || id, type: adminState.settings.roomMeta[id].type || 'card' });
+    adminState.settings.rooms = adminState.settings.rooms.filter((r, idx, arr) => r.id && arr.findIndex(x => x.id === r.id) === idx);
+    adminState.settings.rooms = adminState.settings.rooms.map(r => r.id === id ? { id, name: adminState.settings.roomMeta[id].name || r.name || id } : r);
+    saveSettings();
+    renderLobbyRooms();
+    renderAdminModal();
+  }
+
+  function getMyPermissions(){
+    if(adminState.mode === 'password') return allPerms();
+    return adminState.settings.delegations?.[gameState.myId] || {};
+  }
+  function hasPermission(key){
+    return adminState.mode === 'password' || !!getMyPermissions()[key];
+  }
+  function canOpenAdmin(){
+    return adminState.mode === 'password' || Object.values(getMyPermissions()).some(Boolean);
+  }
+
+  function syncCurrentUserId(){
+    gameState.myId = getOrCreateUserId();
+    if(!Array.isArray(gameState.botIds) || gameState.botIds.length !== 3){
+      gameState.botIds = [randomId4(), randomId4(), randomId4()];
+    }
+  }
+
+  syncCurrentUserId();
+
+  function currentRoomLabel(roomId){
+    const meta = getRoomMeta(roomId);
+    return meta.name || roomId;
+  }
+
+  function getChatBaseRoomId(roomId){
+    const id = String(roomId || '').trim();
+    return id ? `${id}__base` : '';
+  }
+
+  async function ensureChatBaseRoom(roomId){
+    const chatId = String(roomId || '').trim();
+    if(!chatId) return null;
+    const baseId = getChatBaseRoomId(chatId);
+    if(!baseId) return null;
+    const visibleMeta = getRoomMeta(chatId);
+    const baseName = `${String(visibleMeta.name || chatId).trim() || chatId} (base)`;
+    const existingIndex = (adminState.settings.rooms || []).findIndex(r => String(r.id || '').trim() === baseId);
+    const baseRoom = { id: baseId, name: baseName, type: 'card', hidden: true, baseFor: chatId };
+    if(existingIndex >= 0){
+      adminState.settings.rooms[existingIndex] = { ...adminState.settings.rooms[existingIndex], ...baseRoom };
+    } else {
+      adminState.settings.rooms.push(baseRoom);
+    }
+    adminState.settings.roomMeta[chatId] = {
+      ...(adminState.settings.roomMeta[chatId] || {}),
+      name: String(visibleMeta.name || chatId).trim() || chatId,
+      type: 'chat',
+      hidden: false,
+      baseFor: '',
+      baseRoomId: baseId
+    };
+    adminState.settings.roomMeta[baseId] = {
+      ...(adminState.settings.roomMeta[baseId] || {}),
+      name: baseName,
+      password: '',
+      autoplay: true,
+      listenMode: false,
+      playlist: DEFAULT_PLAYLIST.slice(),
+      type: 'card',
+      hidden: true,
+      baseFor: chatId
+    };
+    saveSettings();
+    await ensureRoomDoc(baseId);
+    return baseId;
+  }
+
+  function getStopRoomId(){
+    return String(gameState.stopRoomId || STOP_ROOM_ID || 'stop-main');
+  }
+
+  function roomPlayersFromState(state){
+    const out = [];
+    if(!state || !state.slots) return out;
+    for(let slot = 1; slot <= 4; slot++){
+      const s = state.slots[slot];
+      if(s && s.id) out.push({ slot, id:String(s.id).toUpperCase().slice(0,4), name:String(s.name || `Jogador ${slot}`), watching:false });
+    }
+    return out;
+  }
+
+  function registerPresence({ roomId = '', slot = null, watching = false } = {}){
+    const current = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry.slice() : [];
+    const id = gameState.myId;
+    const name = String(gameState.myName || 'Você').slice(0,18);
+    const idx = current.findIndex(u => String(u.id || '').toUpperCase() === id);
+    const payload = { id, name, roomId, slot, watching, lastSeen: Date.now() };
+    if(idx >= 0) current[idx] = { ...current[idx], ...payload };
+    else current.push(payload);
+    adminState.settings.userRegistry = current.slice(-200);
+    saveSettings();
+  }
+
+  function roomPlaylist(roomId){
+    return getRoomMeta(roomId).playlist || DEFAULT_PLAYLIST.slice();
+  }
+  function roomAutoplay(roomId){
+    return getRoomType(roomId) !== 'stop' && getRoomMeta(roomId).autoplay !== false;
+  }
+
+  function refreshRoomListeners(){
+    adminRoomUnsubs.forEach(fn => { try{ fn(); }catch(e){} });
+    adminRoomUnsubs = [];
+    const rooms = getRooms();
+    rooms.forEach(room => {
+      const col = room.type === 'stop' ? dbStop.collection('stopRooms') : dbCartas.collection('rooms');
+      const unsub = col.doc(room.id).onSnapshot(snap => {
+        adminState.roomCache[room.id] = snap.exists ? snap.data() : null;
+        renderLobbyRooms();
+        renderAdminRoomDetails();
+        renderPeopleModal();
+      }, () => {
+        adminState.roomCache[room.id] = null;
+        renderLobbyRooms();
+      });
+      adminRoomUnsubs.push(unsub);
+    });
+  }
+
+  function listenSettings(){
+    if(adminUnsubSettings) { try{ adminUnsubSettings(); }catch(e){} }
+    adminUnsubSettings = SETTINGS_DOC.onSnapshot(snap => {
+      if(snap.exists) mergeRemoteSettings(snap.data());
+      renderLobbyRooms();
+      renderAdminModal();
+      renderPeopleModal();
+      refreshRoomListeners();
+      if(gameState.roomMode && gameState.roomId){ refreshCurrentRoomMusic(); }
+    });
+  }
+
+  function scheduleRefresh(){
+    if(adminSaveQueued) return;
+    adminSaveQueued = true;
+    setTimeout(() => {
+      adminSaveQueued = false;
+      renderLobbyRooms();
+      renderAdminModal();
+      renderPeopleModal();
+      refreshRoomListeners();
+    }, 0);
+  }
+
+  function roomOccupancy(roomId){
+    const roomDoc = adminState.roomCache[roomId];
+    const state = roomDoc?.state || null;
+    if(!state) return { occupied: 0, state: null };
+    const occupied = state.slots ? Object.values(state.slots).filter(Boolean).length : 0;
+    return { occupied, state };
+  }
+
+  function renderLobbyRooms(){
+    const container = document.getElementById('roomsList');
+    if(!container) return;
+    container.innerHTML = '';
+    const rooms = getRooms();
+    rooms.forEach(room => {
+      const locked = !!getRoomMeta(room.id).password;
+      if(room.type === 'stop'){
+        const state = adminState.roomCache[room.id] || null;
+        const phase = state?.phase || 'waiting';
+        const status = phase === 'writing' ? 'Partida ativa' : (phase === 'results' ? 'Resultados' : 'Aguardando jogadores');
+        const div = document.createElement('div');
+        div.className = 'room-card';
+        div.innerHTML = `
+          <div class="room-head">
+            <strong>${escapeHtml(room.name)}</strong>
+            <span class="room-tag">STOP</span>
+          </div>
+          <small>${escapeHtml(status)}</small>
+          <div class="room-actions" style="align-items:center;">
+            <span class="pill">ID ${escapeHtml(room.id)}</span>
+            <button class="btn secondary" onclick="joinStopRoom('${room.id}')">${locked ? 'Entrar 🔒' : 'Entrar'}</button>
+          </div>
+        `;
+        container.appendChild(div);
+        return;
+      }
+      if(room.type === 'chat'){
+        const div = document.createElement('div');
+        div.className = 'room-card';
+        div.innerHTML = `
+          <div class="room-head">
+            <strong>${escapeHtml(room.name)}</strong>
+            <span class="room-tag">CHAT</span>
+          </div>
+          <small>Sala de bate-papo centralizada</small>
+          <div class="room-actions" style="align-items:center;">
+            <span class="pill">ID ${escapeHtml(room.id)}</span>
+            <button class="btn secondary" onclick="joinRoom('${room.id}')">${locked ? 'Entrar 🔒' : 'Entrar'}</button>
+          </div>
+        `;
+        container.appendChild(div);
+        return;
+      }
+      const { occupied, state } = roomOccupancy(room.id);
+      const status = state ? (state.gameRunning ? 'Partida ativa' : 'Sala pronta') : 'Aguardando jogadores';
+      const btnLabel = locked ? 'Entrar 🔒' : (state && state.seatingOpen === false ? 'Assistir' : 'Entrar');
+      const div = document.createElement('div');
+      div.className = 'room-card';
+      div.innerHTML = `
+        <div class="room-head">
+          <strong>${escapeHtml(room.name)}</strong>
+          <span class="room-tag">${occupied}/4</span>
+        </div>
+        <small>${escapeHtml(status)}</small>
+        <div class="room-actions" style="align-items:center;">
+          <span class="pill">ID ${escapeHtml(room.id)}</span>
+          <button class="btn secondary" onclick="joinRoom('${room.id}')">${btnLabel}</button>
+        </div>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  async function ensureRoomDoc(roomId){
+    const ref = dbCartas.collection('rooms').doc(roomId);
+    const snap = await ref.get();
+    if(!snap.exists){
+      const type = getRoomType(roomId);
+      await ref.set({
+        roomId,
+        roomName: currentRoomLabel(roomId),
+        type,
+        state: type === 'chat' ? null : createFreshRoomState(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  }
+
+  async function ensureStopRoomDoc(roomId){
+    const ref = dbStop.collection('stopRooms').doc(roomId);
+    const snap = await ref.get();
+    if(!snap.exists){
+      await ref.set({
+        roomId,
+        roomName: currentRoomLabel(roomId),
+        gameNumber: 1,
+        phase: 'waiting',
+        letter: '-',
+        players: {},
+        history: [],
+        startedAt: Date.now(),
+        roundStartedAt: null,
+        roundEndedAt: null,
+        stoppedBy: null,
+        lastResults: null,
+        updatedAt: Date.now()
+      });
+    }
+  }
+
+  async function deleteRoomChatMessages(roomId){
+    try{
+      const snap = await dbChat.collection('chat').where('roomId', '==', roomId).get();
+      if(snap.empty) return;
+      const batch = dbChat.batch();
+      snap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    }catch(e){}
+  }
+
+  async function createAdminRoom(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    let name = document.getElementById('newRoomNameInput')?.value.trim();
+    let id = document.getElementById('newRoomIdInput')?.value.trim();
+    const rawType = String(document.getElementById('newRoomTypeInput')?.value || 'card').trim();
+    const type = ['card','chat','stop'].includes(rawType) ? rawType : 'card';
+    if(!name) name = type === 'stop' ? 'Sala Stop' : (type === 'chat' ? 'Sala de bate-papo' : 'Nova sala');
+    if(!id){
+      id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || (type === 'stop' ? 'stop' : (type === 'chat' ? 'chat' : 'sala'));
+      id = `${id}${Math.floor(Math.random()*90+10)}`;
+    }
+    if(adminState.settings.rooms.some(r => r.id === id)) return alert('Já existe uma sala com esse ID.');
+
+    adminState.settings.rooms.push({ id, name, type, hidden:false, baseFor:'' });
+    adminState.settings.roomMeta[id] = { name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type, hidden:false, baseFor:'' };
+
+    if(type === 'chat'){
+      const baseId = getChatBaseRoomId(id);
+      const baseName = `${name} (base)`;
+      adminState.settings.rooms.push({ id: baseId, name: baseName, type:'card', hidden:true, baseFor:id });
+      adminState.settings.roomMeta[baseId] = { name: baseName, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:'card', hidden:true, baseFor:id };
+      adminState.settings.roomMeta[id].baseRoomId = baseId;
+    }
+
+    saveSettings();
+    if(type === 'stop') await ensureStopRoomDoc(id);
+    else await ensureRoomDoc(id);
+    if(type === 'chat') await ensureChatBaseRoom(id);
+    refreshRoomListeners();
+    renderLobbyRooms();
+    renderAdminModal();
+  }
+
+  async function deleteAdminRoom(roomId){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const id = String(roomId || '').trim();
+    if(!id) return;
+    if(!confirm(`Deletar a sala ${id}?`)) return;
+    const type = getRoomType(id);
+    const meta = getRoomMeta(id);
+    const baseId = type === 'chat' ? String(meta.baseRoomId || getChatBaseRoomId(id)).trim() : '';
+    adminState.settings.rooms = adminState.settings.rooms.filter(r => r.id !== id && r.id !== baseId);
+    delete adminState.settings.roomMeta[id];
+    if(baseId){
+      delete adminState.settings.roomMeta[baseId];
+      delete adminState.roomCache[baseId];
+    }
+    delete adminState.roomCache[id];
+    saveSettings();
+    try { await (type === 'stop' ? dbStop : dbCartas).collection(type === 'stop' ? 'stopRooms' : 'rooms').doc(id).delete(); } catch(e) {}
+    if(baseId){
+      try { await dbCartas.collection('rooms').doc(baseId).delete(); } catch(e) {}
+      await deleteRoomChatMessages(baseId);
+    }
+    await deleteRoomChatMessages(id);
+    refreshRoomListeners();
+    renderLobbyRooms();
+    renderAdminModal();
+  }
+
+  function renderAdminRoomDetails(){
+    const select = document.getElementById('adminRoomSelect');
+    const list = document.getElementById('adminRoomDetails');
+    if(!select || !list) return;
+    if(select.value){
+      adminState.selectedRoomId = String(select.value).trim();
+    }
+    const rooms = getRooms();
+    if(!rooms.length){
+      select.innerHTML = '<option value="">Sem salas</option>';
+      list.innerHTML = '<div class="list-item"><small>Nenhuma sala cadastrada.</small></div>';
+      return;
+    }
+    const current = rooms.some(r => r.id === adminState.selectedRoomId) ? adminState.selectedRoomId : rooms[0].id;
+    adminState.selectedRoomId = current;
+    select.innerHTML = rooms.map(r => `<option value="${escapeHtml(r.id)}" ${r.id===current?'selected':''}>${escapeHtml(r.name)} (${escapeHtml(r.id)})</option>`).join('');
+    select.value = current;
+    const meta = getRoomMeta(current);
+    const room = adminState.roomCache[current];
+    const occupied = room?.state ? Object.values(room.state.slots || {}).filter(Boolean).length : 0;
+    list.innerHTML = `
+      <div class="list-item"><div><strong>${escapeHtml(meta.name || current)}</strong><div><small>ID ${escapeHtml(current)} · ${occupied}/4 · tipo ${escapeHtml(getRoomType(current) === 'stop' ? 'stop' : (getRoomType(current) === 'chat' ? 'bate-papo' : 'cartas'))}</small></div></div><button class="btn secondary small" onclick="deleteAdminRoom('${escapeHtml(current)}')">Deletar</button></div>
+      <div class="list-item"><input id="roomPasswordInput" type="text" placeholder="Senha da sala" value="${escapeHtml(meta.password || '')}" /><button class="btn" type="button" onclick="saveRoomPassword()">Salvar senha</button></div>
+      <div class="list-item"><input id="roomNameInput" type="text" placeholder="Nome da sala" value="${escapeHtml(meta.name || current)}" /><button class="btn secondary" type="button" onclick="saveRoomName()">Salvar nome</button></div>
+      <div class="list-item">
+        <label class="theme-switch" style="justify-content:flex-start;">
+          <span class="theme-label">Modo escuto</span>
+          <span class="switch"><input id="roomListenModeToggle" type="checkbox" onchange="toggleRoomListenMode()" /><span class="slider"></span></span>
+        </label>
+      </div>
+    `;
+    const music = document.getElementById('roomMusicList');
+    if(music) music.value = (meta.playlist || DEFAULT_PLAYLIST).join('\n');
+    const toggle = document.getElementById('roomAutoPlayToggle');
+    if(toggle) toggle.checked = meta.autoplay !== false;
+    const listenToggle = document.getElementById('roomListenModeToggle');
+    if(listenToggle) listenToggle.checked = meta.listenMode === true;
+  }
+
+  function saveRoomPassword(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const roomId = adminState.selectedRoomId;
+    const input = document.getElementById('roomPasswordInput');
+    setRoomMeta(roomId, { password: String(input?.value || '') });
+  }
+  function saveRoomName(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const roomId = adminState.selectedRoomId;
+    const input = document.getElementById('roomNameInput');
+    const name = String(input?.value || roomId).trim() || roomId;
+    setRoomMeta(roomId, { name });
+  }
+  function saveRoomMusicList(){
+    if(!hasPermission('music')) return alert('Sem permissão de músicas.');
+    const roomId = adminState.selectedRoomId;
+    const textarea = document.getElementById('roomMusicList');
+    const playlist = String(textarea?.value || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    setRoomMeta(roomId, { playlist: playlist.length ? playlist : DEFAULT_PLAYLIST.slice() });
+    if(gameState.roomMode && gameState.roomId === roomId){ refreshCurrentRoomMusic(); }
+  }
+  function saveRoomMusicListAll(){
+    if(!hasPermission('music')) return alert('Sem permissão de músicas.');
+    const textarea = document.getElementById('roomMusicList');
+    const playlist = String(textarea?.value || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+    const finalPlaylist = playlist.length ? playlist : DEFAULT_PLAYLIST.slice();
+    const rooms = getRooms();
+    rooms.forEach(r => setRoomMeta(r.id, { playlist: finalPlaylist }));
+    if(gameState.roomMode){ refreshCurrentRoomMusic(); }
+  }
+  function resetRoomMusicList(){
+    if(!hasPermission('music')) return alert('Sem permissão de músicas.');
+    setRoomMeta(adminState.selectedRoomId, { playlist: DEFAULT_PLAYLIST.slice() });
+  }
+  function toggleRoomAutoPlay(){
+    if(!hasPermission('autoplay')) return alert('Sem permissão de autoplay.');
+    const toggle = document.getElementById('roomAutoPlayToggle');
+    setRoomMeta(adminState.selectedRoomId, { autoplay: !!toggle?.checked });
+    refreshCurrentRoomMusic();
+  }
+
+  function toggleRoomListenMode(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const toggle = document.getElementById('roomListenModeToggle');
+    setRoomMeta(adminState.selectedRoomId, { listenMode: !!toggle?.checked });
+  }
+
+  function renderAdminDelegationSearch(){
+    const q = String(document.getElementById('adminUserSearch')?.value || '').trim().toLowerCase();
+    const list = document.getElementById('adminDelegationSearchResults');
+    if(!list) return;
+    const users = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry.slice() : [];
+    const roomState = gameState.roomState;
+    if(roomState && roomState.slots){
+      for(let slot = 1; slot <= 4; slot++){
+        const s = roomState.slots[slot];
+        if(s && s.id){
+          const id = String(s.id).toUpperCase().slice(0,4);
+          if(!users.some(u => String(u.id||'').toUpperCase() === id)) users.push({ id, name: String(s.name || `Jogador ${slot}`), roomId: gameState.roomId, slot, watching:false, lastSeen: Date.now() });
+        }
+      }
+    }
+    const filtered = users.filter(u => !q || String(u.id||'').toLowerCase().includes(q) || String(u.name||'').toLowerCase().includes(q));
+    list.innerHTML = filtered.length ? filtered.map(u => `
+      <div class="list-item" onclick="selectDelegationUser('${escapeHtml(String(u.id||'').toUpperCase().slice(0,4))}')" style="cursor:pointer; ${adminState.selectedUserId === String(u.id||'').toUpperCase().slice(0,4) ? 'outline:2px solid rgba(14,165,233,.35);' : ''}">
+        <div><strong>${escapeHtml(u.name || 'Jogador')} (${escapeHtml(String(u.id||'').toUpperCase().slice(0,4))})</strong><div><small>${u.roomId ? 'Sala ' + escapeHtml(u.roomId) : 'Sem sala'}</small></div></div>
+        <span class="pill">Selecionar</span>
+      </div>
+    `).join('') : '<div class="list-item"><small>Nenhum jogador encontrado.</small></div>';
+  }
+
+  function selectDelegationUser(userId){
+    adminState.selectedUserId = String(userId || '').toUpperCase().slice(0,4);
+    const selected = (adminState.settings.userRegistry || []).find(u => String(u.id||'').toUpperCase().slice(0,4) === adminState.selectedUserId) || null;
+    const box = document.getElementById('adminSelectedUser');
+    if(box){
+      box.style.display = 'block';
+      box.innerHTML = selected ? `<strong>Selecionado:</strong> ${escapeHtml(selected.name || 'Jogador')} (${escapeHtml(selected.id || adminState.selectedUserId)})` : '<small>Selecionado: ' + escapeHtml(adminState.selectedUserId) + '</small>';
+    }
+    renderAdminModal();
+  }
+  function clearDelegation(){
+    adminState.selectedUserId = '';
+    const box = document.getElementById('adminSelectedUser');
+    if(box) box.style.display = 'none';
+    ['perm_password','perm_rooms','perm_music','perm_autoplay','perm_delegate'].forEach(id => { const el = document.getElementById(id); if(el) el.checked = false; });
+    renderAdminModal();
+  }
+  function saveDelegation(){
+    if(!hasPermission('delegate')) return alert('Sem permissão de delegação.');
+    if(!adminState.selectedUserId) return alert('Selecione um jogador.');
+    const payload = {};
+    PERM_KEYS.forEach(key => { const el = document.getElementById('perm_' + key); payload[key] = !!el?.checked; });
+    adminState.settings.delegations[adminState.selectedUserId] = payload;
+    saveSettings();
+    renderAdminModal();
+  }
+  function deleteDelegation(id){
+    if(!hasPermission('delegate')) return alert('Sem permissão de delegação.');
+    delete adminState.settings.delegations[String(id||'').toUpperCase().slice(0,4)];
+    saveSettings();
+    renderAdminModal();
+  }
+
+  function renderDelegationList(){
+    const list = document.getElementById('delegationList');
+    if(!list) return;
+    const entries = Object.entries(adminState.settings.delegations || {});
+    list.innerHTML = entries.length ? entries.map(([id, perms]) => `
+      <div class="list-item">
+        <div>
+          <strong>${escapeHtml(id)}</strong>
+          <div>${PERM_KEYS.filter(k => perms[k]).map(k => `<span class="pill">${escapeHtml(k)}</span>`).join(' ') || '<small>Sem permissões</small>'}</div>
+        </div>
+        <button class="btn secondary small" type="button" onclick="deleteDelegation('${escapeHtml(id)}')">Remover</button>
+      </div>
+    `).join('') : '<div class="list-item"><small>Nenhuma delegação salva.</small></div>';
+  }
+
+  function renderAdminModal(){
+    const modal = document.getElementById('adminModal');
+    const loginBox = document.getElementById('adminLoginBox');
+    const panel = document.getElementById('adminPanel');
+    const accessInfo = document.getElementById('adminAccessInfo');
+    if(!modal || !loginBox || !panel || !accessInfo) return;
+
+    const can = canOpenAdmin();
+    loginBox.classList.toggle('hidden', can);
+    panel.classList.toggle('hidden', !can);
+    accessInfo.innerHTML = can ? `
+      <strong>Acesso liberado</strong>
+      <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+        ${adminState.mode === 'password' ? '<span class="pill">Senha do adm</span>' : ''}
+        ${Object.keys(getMyPermissions()).filter(k => getMyPermissions()[k]).map(k => `<span class="pill">${escapeHtml(k)}</span>`).join('')}
+      </div>
+    ` : '<strong>Digite a senha para abrir as opções.</strong>';
+
+    // sections visibility
+    document.querySelectorAll('#adminPanel [data-permission]').forEach(sec => {
+      const perm = sec.getAttribute('data-permission');
+      sec.classList.toggle('hidden', !hasPermission(perm));
+    });
+
+    const rooms = getRooms();
+    const select = document.getElementById('adminRoomSelect');
+    if(select){
+      const current = rooms.some(r => r.id === adminState.selectedRoomId) ? adminState.selectedRoomId : (rooms[0]?.id || '');
+      adminState.selectedRoomId = current;
+      select.innerHTML = rooms.length ? rooms.map(r => `<option value="${escapeHtml(r.id)}" ${r.id===current?'selected':''}>${escapeHtml(r.name)} (${escapeHtml(r.id)})</option>`).join('') : '<option value="">Sem salas</option>';
+    }
+    renderAdminRoomDetails();
+    renderDelegationList();
+    renderAdminDelegationSearch();
+    const input = document.getElementById('newAdminPasswordInput');
+    if(input) input.value = '';
+    const autoInput = document.getElementById('autoResetHourInput');
+    if(autoInput) autoInput.value = adminState.settings.autoResetHour ?? '';
+    const delSelect = document.getElementById('deletePlayerSelect');
+    if(delSelect){
+      const users = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry.slice(-200).reverse() : [];
+      delSelect.innerHTML = users.length ? users.map(u => `<option value="${escapeHtml(String(u.id||'').toUpperCase())}">${escapeHtml(u.name || 'Jogador')} (${escapeHtml(String(u.id||'').toUpperCase().slice(0,4))})</option>`).join('') : '<option value="">Nenhum jogador</option>';
+    }
+  }
+
+  function openAdminModal(){
+    const modal = document.getElementById('adminModal');
+    if(!modal) return;
+    modal.style.display = 'flex';
+    if(canOpenAdmin()){
+      adminState.mode = adminState.mode === 'password' ? 'password' : 'delegated';
+    }
+    renderAdminModal();
+  }
+  function closeAdminModal(){ const modal = document.getElementById('adminModal'); if(modal) modal.style.display = 'none'; }
+  function loginAdmin(){
+    const typed = String(document.getElementById('adminCodeInput')?.value || '').trim();
+    if(typed === String(adminState.settings.adminPassword || '123').trim()){
+      adminState.mode = 'password';
+      adminState.permissions = allPerms();
+      renderAdminModal();
+      return;
+    }
+    alert('Senha incorreta.');
+  }
+  function logoutAdmin(){ adminState.mode = 'none'; adminState.permissions = {}; renderAdminModal(); }
+  function saveAdminPassword(){
+    if(!hasPermission('password')) return alert('Sem permissão de senha.');
+    const next = String(document.getElementById('newAdminPasswordInput')?.value || '').trim();
+    if(!next) return alert('Digite uma nova senha.');
+    adminState.settings.adminPassword = next;
+    saveSettings();
+    alert('Senha atualizada.');
+  }
+
+  async function resetAllRooms(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    if(!confirm('Tem certeza que deseja resetar TODAS as salas agora?')) return;
+    const rooms = getRooms();
+    for(const r of rooms){
+      const id = r.id;
+      const type = getRoomType(id);
+      try {
+        if(type === 'stop'){
+          await dbStop.collection('stopRooms').doc(id).delete();
+          await ensureStopRoomDoc(id);
+        } else {
+          await dbCartas.collection('rooms').doc(id).delete();
+          await ensureRoomDoc(id);
+        }
+        await deleteRoomChatMessages(id);
+      } catch(e){ console.warn('Erro ao resetar sala', id, e); }
+    }
+    alert('Salas resetadas com sucesso.');
+    renderLobbyRooms();
+  }
+
+  function saveAutoResetHour(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const input = document.getElementById('autoResetHourInput');
+    const val = input?.value;
+    if(val === '' || val === null){
+      delete adminState.settings.autoResetHour;
+    } else {
+      const h = parseInt(val, 10);
+      if(isNaN(h) || h < 0 || h > 23) return alert('Digite uma hora entre 0 e 23.');
+      adminState.settings.autoResetHour = h;
+    }
+    saveSettings();
+    alert('Hora de reset automático salva.');
+    startAutoResetScheduler();
+  }
+
+  function deleteSelectedPlayer(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const select = document.getElementById('deletePlayerSelect');
+    const id = String(select?.value || '').trim();
+    if(!id) return alert('Selecione um jogador.');
+    if(!confirm(`Excluir o jogador ${id} do site?`)) return;
+    const registry = Array.isArray(adminState.settings.userRegistry) ? adminState.settings.userRegistry : [];
+    adminState.settings.userRegistry = registry.filter(u => String(u.id || '').toUpperCase() !== id.toUpperCase());
+    if(adminState.settings.delegations && adminState.settings.delegations[id]) delete adminState.settings.delegations[id];
+    saveSettings();
+    alert('Jogador excluído.');
+    renderAdminModal();
+  }
+
+  let autoResetTimer = null;
+  function startAutoResetScheduler(){
+    if(autoResetTimer) clearInterval(autoResetTimer);
+    autoResetTimer = setInterval(async () => {
+      const h = adminState.settings.autoResetHour;
+      if(h === undefined || h === null) return;
+      const now = new Date();
+      if(now.getHours() === Number(h) && now.getMinutes() === 0){
+        const today = now.toISOString().slice(0,10);
+        if(adminState.settings.lastAutoReset !== today){
+          adminState.settings.lastAutoReset = today;
+          saveSettings();
+          await resetAllRooms();
+        }
+      }
+    }, 60000);
+  }
+
+  function openPeopleModal(){ const modal = document.getElementById('peopleModal'); if(modal){ modal.style.display = 'flex'; renderPeopleModal(); } }
+  function closePeopleModal(){ const modal = document.getElementById('peopleModal'); if(modal) modal.style.display = 'none'; }
+  function renderPeopleModal(){
+    const list = document.getElementById('peopleList');
+    if(!list) return;
+    const roomId = gameState.roomId;
+    if(!roomId || !gameState.roomState){
+      list.innerHTML = '<div class="list-item"><small>Entre em uma sala para ver a lista de pessoas.</small></div>';
+      return;
+    }
+    const seated = [];
+    const watching = [];
+    for(let slot = 1; slot <= 4; slot++){
+      const s = gameState.roomState.slots[slot];
+      if(s && s.id) seated.push({ slot, id:String(s.id).toUpperCase().slice(0,4), name:String(s.name || `Jogador ${slot}`) });
+    }
+    (adminState.settings.userRegistry || []).forEach(u => {
+      const uid = String(u.id || '').toUpperCase().slice(0,4);
+      if(!uid) return;
+      if(String(u.roomId || '') === roomId && (u.watching || !seated.some(s => s.id === uid))) {
+        watching.push({ id:uid, name:String(u.name || 'Jogador'), slot: u.slot ?? null });
+      }
+    });
+    if(!watching.length){
+      (adminState.settings.userRegistry || []).forEach(u => {
+        const uid = String(u.id || '').toUpperCase().slice(0,4);
+        if(!uid || seated.some(s => s.id === uid)) return;
+        if(String(u.roomId || '') === roomId) watching.push({ id:uid, name:String(u.name || 'Jogador'), slot: u.slot ?? null });
+      });
+    }
+    list.innerHTML = `
+      <div class="list-item"><strong>Jogadores</strong><span class="pill">${seated.length}/4</span></div>
+      ${seated.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(p.id)})</strong><div><small>Assento ${p.slot}</small></div></div><span class="pill">JOGANDO</span></div>`).join('') || '<div class="list-item"><small>Nenhum jogador sentado.</small></div>'}
+      <div class="list-item"><strong>Assistindo</strong><span class="pill">${watching.length}</span></div>
+      ${watching.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(p.id)})</strong></div><span class="pill">VENDO</span></div>`).join('') || '<div class="list-item"><small>Ninguém assistindo.</small></div>'}
+    `;
+  }
+
+  function refreshCurrentRoomMusic(){
+    if(gameState.roomMode && gameState.roomId){
+      const wasPlaying = !!gameState.musicPlaying;
+      gameState.roomPlaylist = roomPlaylist(gameState.roomId);
+      setupMusic();
+      if(wasPlaying || roomAutoplay(gameState.roomId)){
+        playMusic();
+        setTimeout(() => { if(wasPlaying || roomAutoplay(gameState.roomId)) playMusic(); }, 180);
+      }
+    }
+  }
+
+  function getPlayerName(slot){
+    if(gameState.roomMode && gameState.roomState && gameState.roomState.slots[slot] && gameState.roomState.slots[slot].name){
+      const s = gameState.roomState.slots[slot];
+      return `${s.name} (${String(s.id || '').toUpperCase().slice(0,4)})`;
+    }
+    if(!gameState.roomMode && slot === 1) return `${gameState.myName} (${gameState.myId})`;
+    if(!gameState.roomMode){
+      const botId = gameState.botIds?.[slot-2] || 'BOT';
+      return `Bot ${slot} (${botId})`;
+    }
+    return `Jogador ${slot}`;
+  }
+
+  function setupMusic(){
+    if(!gameState.musicAudio){
+      gameState.musicAudio = new Audio();
+      gameState.musicAudio.loop = false;
+      gameState.musicAudio.addEventListener('ended', () => nextTrack(true));
+    }
+    const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist;
+    if(pl.length) gameState.musicAudio.src = pl[gameState.trackIndex % pl.length];
+    gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+    document.getElementById('musicDisc')?.classList.remove('playing');
+  }
+
+  function playMusic(){
+    if(!gameState.musicAudio) setupMusic();
+    if(gameState.musicAudio && gameState.musicAudio.src){
+      gameState.musicPlaying = true;
+      document.getElementById('musicDisc')?.classList.add('playing');
+      gameState.musicAudio.play().catch(()=>{});
+    }
+  }
+  function pauseMusic(){ if(gameState.musicAudio){ gameState.musicPlaying = false; gameState.musicAudio.pause(); document.getElementById('musicDisc')?.classList.remove('playing'); } }
+  function stopMusicPlayback(){
+    if(gameState.musicAudio){
+      gameState.musicPlaying = false;
+      gameState.musicAudio.pause();
+      try{ gameState.musicAudio.currentTime = 0; }catch(e){}
+      document.getElementById('musicDisc')?.classList.remove('playing');
+    }
+  }
+  function toggleMusic(){ gameState.musicPlaying ? pauseMusic() : playMusic(); }
+  function nextTrack(auto=false){ const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex + 1) % pl.length; setupMusic(); if(gameState.musicPlaying || auto) playMusic(); }
+  function prevTrack(){ const pl = gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist; if(!pl.length) return; gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length; setupMusic(); if(gameState.musicPlaying) playMusic(); }
+
+  const oldJoinRoom = joinRoom;
+  joinRoom = async function(roomId){
+    const roomType = getRoomType(roomId);
+    if(roomType === 'stop'){
+      return joinStopRoom(roomId);
+    }
+    const meta = getRoomMeta(roomId);
+    if(meta.password){
+      const typed = String(prompt(`Senha da sala ${roomId}:`) || '').trim();
+      if(typed !== String(meta.password || '').trim()){
+        alert('Senha incorreta.');
+        return;
+      }
+    }
+    let userName = document.getElementById('roomName').value.trim();
+    if(!userName){
+      alert('Digite seu nome antes de entrar na sala.');
+      return;
+    }
+    userName = userName.slice(0,18);
+    gameState.myName = userName;
+    gameState.roomMode = true;
+    gameState.roomType = roomType;
+    gameState.roomId = roomId;
+    gameState.mySlot = null;
+
+    if(roomType === 'chat'){
+        showChatRoom(roomId);
+      applyModeUI();
+      refreshThemeForMode();
+      renderGame();
+      gameState.roomPlaylist = roomPlaylist(roomId);
+      await ensureRoomDoc(roomId);
+      await ensureChatBaseRoom(roomId);
+      initRoomChat(roomId);
+      if(roomAutoplay(roomId)){
+        gameState.trackIndex = 0;
+        setupMusic();
+        playMusic();
+      }
+      registerPresence({ roomId, slot: null, watching: true });
+      refreshCurrentRoomMusic();
+      return;
+    }
+
+    showGame();
+    if(roomAutoplay(roomId)){ gameState.trackIndex = 0; setupMusic(); playMusic(); }
+    applyModeUI();
+    refreshThemeForMode();
+    renderGame();
+    try{
+      await ensureRoomDoc(roomId);
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
+      const joined = await dbCartas.runTransaction(async (tx) => {
+        const snap = await tx.get(roomRef);
+        if(!snap.exists) throw new Error('Sala não encontrada');
+        const data = snap.data() || {};
+        let state = normalizeSharedState(data.state);
+        state = cleanupStaleSlots(state);
+        const wasEmpty = isRoomEmpty(state);
+        if(wasEmpty) state = createFreshRoomState();
+        let existingSlot = null;
+        for(let slot = 1; slot <= 4; slot++){
+          const s = state.slots[slot];
+          if(s && s.id === gameState.myId){ existingSlot = slot; break; }
+        }
+        let chosenSlot = existingSlot;
+        if(chosenSlot === null && state.seatingOpen !== false){
+          chosenSlot = getFirstVacantSlot(state);
+        }
+        if(chosenSlot !== null){
+          state.slots[chosenSlot] = { id: gameState.myId, name: userName, joinedAt: Date.now(), lastSeen: Date.now() };
+        }
+        if(Object.values(state.slots).filter(Boolean).length >= 4) state.seatingOpen = false;
+        state.turn = normalizeTurn(state);
+        state.gameRunning = state.gameRunning !== undefined ? !!state.gameRunning : true;
+        if(!state.topCard && chosenSlot !== null && !wasEmpty){
+          state = createFreshRoomState();
+          state.slots[chosenSlot] = { id: gameState.myId, name: userName, joinedAt: Date.now(), lastSeen: Date.now() };
+        }
+        tx.set(roomRef, { roomId, roomName: currentRoomLabel(roomId), state, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true });
+        return { slot: chosenSlot, wasEmpty };
+      });
+      gameState.mySlot = joined.slot;
+      subscribeRoom(roomId);
+      startRoomHeartbeat();
+      if(joined.wasEmpty) await deleteRoomChatMessages(roomId);
+      initRoomChat(roomId);
+      renderGame();
+      registerPresence({ roomId, slot: gameState.mySlot, watching: !gameState.mySlot });
+      refreshCurrentRoomMusic();
+      refreshCurrentMultiplayerPresence();
+      if(roomAutoplay(roomId)){
+        playMusic();
+        setTimeout(() => { if(roomAutoplay(roomId)) playMusic(); }, 180);
+      }
+    }catch(err){
+      console.error(err);
+      alert(err.message || 'Não foi possível entrar na sala.');
+      backToLobby();
+    }
+  };
+
+  const oldTakeSeat = takeSeat;
+  takeSeat = async function(){
+    await oldTakeSeat();
+    if(gameState.roomMode){
+      registerPresence({ roomId: gameState.roomId || '', slot: gameState.mySlot, watching: !gameState.mySlot });
+      refreshCurrentRoomMusic();
+      if(gameState.roomId && roomAutoplay(gameState.roomId)){
+        playMusic();
+        setTimeout(() => { if(gameState.roomId && roomAutoplay(gameState.roomId)) playMusic(); }, 180);
+      }
+    }
+  };
+
+  const oldLeaveSeat = leaveSeat;
+  leaveSeat = async function(){
+    await oldLeaveSeat();
+    if(gameState.roomMode){
+      registerPresence({ roomId: gameState.roomId || '', slot: null, watching: true });
+    }
+  };
+
+  const oldLeaveCurrentRoom = leaveCurrentRoom;
+  leaveCurrentRoom = async function(){
+    await oldLeaveCurrentRoom();
+    registerPresence({ roomId:'', slot:null, watching:false });
+  };
+
+  const oldBackToLobby = backToLobby;
+  backToLobby = async function(){
+    try{
+      await oldBackToLobby();
+    }catch(err){
+      console.warn('Falha ao sair da sala, retornando à lobby mesmo assim:', err);
+    }finally{
+      gameState.roomMode = false;
+      gameState.stopMode = false;
+      const table = document.getElementById('table');
+      const endScreen = document.getElementById('endScreen');
+      const lobbyScreen = document.getElementById('lobbyScreen');
+      const chatPanel = document.getElementById('chatPanel');
+      if(table) table.style.display = 'none';
+      if(endScreen) endScreen.style.display = 'none';
+      if(lobbyScreen) lobbyScreen.style.display = 'flex';
+      if(chatPanel) chatPanel.style.display = 'none';
+      if(typeof stopSetBoardVisibility === 'function') stopSetBoardVisibility(false);
+      if(typeof stopClearDraftAnswers === 'function') stopClearDraftAnswers();
+      closeRoomSession();
+      stopMusicPlayback();
+      closeAdminModal();
+      closePeopleModal();
+      adminState.mode = adminState.mode === 'password' ? 'password' : 'none';
+      renderLobbyRooms();
+      renderThemeDots();
+      bootstrapLobbyRooms();
+    }
+  };
+
+  const oldRenderChatMessages = renderChatMessages;
+  renderChatMessages = function(messages){
+    const enriched = (messages || []).map(msg => ({ ...msg, author: String(msg.author || 'Anônimo'), authorId: String(msg.authorId || '').toUpperCase().slice(0,4) }));
+    const container = document.getElementById('chatMessagesList');
+    if(!container) return;
+    if(enriched.length === 0){ container.innerHTML = '<div style="text-align:center; color:var(--muted);">Nenhuma mensagem ainda.</div>'; return; }
+    container.innerHTML = '';
+    enriched.forEach(msg => {
+      const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const div = document.createElement('div');
+      div.className = 'chat-message';
+      div.innerHTML = `
+        <div class="message-header"><span class="message-author">${escapeHtml(msg.author)}${msg.authorId ? ' (' + escapeHtml(msg.authorId) + ')' : ''}</span><span class="message-time">${time}</span></div>
+        <div class="message-text">${escapeHtml(msg.message || '')}</div>
+      `;
+      container.appendChild(div);
+    });
+    container.scrollTop = container.scrollHeight;
+  };
+
+  const oldInitRoomChat = initRoomChat;
+  initRoomChat = function(roomId){
+    if(window.chatUnsubscribe) window.chatUnsubscribe();
+    const q = dbChat.collection('chat').where('roomId', '==', roomId);
+    window.chatUnsubscribe = q.onSnapshot(snapshot => {
+      const msgs = [];
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        msgs.push({
+          id: doc.id,
+          author: d.author || 'Anônimo',
+          authorId: d.authorId || '',
+          message: d.message || '',
+          timestamp: d.timestamp?.toDate?.() || new Date()
+        });
+      });
+      msgs.sort((a,b) => a.timestamp - b.timestamp);
+      renderChatMessages(msgs);
+    }, err => {
+      console.error('Erro no chat:', err);
+      document.getElementById('chatMessagesList').innerHTML = `<div style="text-align:center;color:red;">Erro no chat: ${err.message}</div>`;
+    });
+  };
+
+  const oldInitOfflineChat = initOfflineChat;
+  initOfflineChat = function(){
+    if(window.chatUnsubscribe) window.chatUnsubscribe();
+    const stored = localStorage.getItem('cartas_offline_chat');
+    let msgs = stored ? JSON.parse(stored) : [];
+    msgs.sort((a,b) => a.timestamp - b.timestamp);
+    renderChatMessages(msgs);
+  };
+
+  const oldSaveOfflineMessage = saveOfflineMessage;
+  saveOfflineMessage = function(author, message){
+    const stored = localStorage.getItem('cartas_offline_chat');
+    let msgs = stored ? JSON.parse(stored) : [];
+    msgs.push({ id: Date.now().toString(), author, authorId: gameState.myId, message, timestamp: new Date() });
+    if(msgs.length > 50) msgs = msgs.slice(-50);
+    localStorage.setItem('cartas_offline_chat', JSON.stringify(msgs));
+    msgs.sort((a,b) => a.timestamp - b.timestamp);
+    renderChatMessages(msgs);
+  };
+
+  const oldSendMessage = sendMessage;
+  sendMessage = async function(){
+    let msg = document.getElementById('chatMessageInput').value.trim();
+    if(!msg) return;
+    let author = gameState.myName;
+    if(author === 'Você' || author === 'Jogador' || author === ''){
+      alert('Por favor, defina seu nome na lobby antes de enviar mensagem.');
+      return;
+    }
+    if(gameState.roomMode && gameState.roomId){
+      try{
+        await dbChat.collection('chat').add({
+          roomId: gameState.roomId,
+          author,
+          authorId: gameState.myId,
+          message: msg,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }catch(e){
+        console.error(e);
+        alert('Erro ao enviar mensagem: ' + e.message);
+      }
+    } else {
+      saveOfflineMessage(author, msg);
+    }
+    document.getElementById('chatMessageInput').value = '';
+  };
+
+
+// ========== SALA STOP ==========
+function stopNormalizeText(value){
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function stopRandomLetter(){
+  const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  return letters[Math.floor(Math.random() * letters.length)];
+}
+
+function stopEmptyAnswers(){
+  const answers = {};
+  STOP_CATEGORY_KEYS.forEach(key => { answers[key] = ""; });
+  return answers;
+}
+
+function stopEmptyPlayer(id, name, gameNumber){
+  return {
+    id,
+    name,
+    joinedAt: Date.now(),
+    lastSeen: Date.now(),
+    eligibleFromGame: gameNumber,
+    totalScore: 0,
+    answers: stopEmptyAnswers()
+  };
+}
+
+function stopEmptyState(){
+  return {
+    roomId: STOP_ROOM_ID,
+    roomName: "Sala Stop",
+    gameNumber: 1,
+    phase: "waiting",
+    letter: "-",
+    players: {},
+    history: [],
+    startedAt: Date.now(),
+    roundStartedAt: null,
+    roundEndedAt: null,
+    stoppedBy: null,
+    lastResults: null,
+    updatedAt: Date.now()
+  };
+}
+
+function normalizeStopState(raw){
+  const source = raw && typeof raw === 'object' ? JSON.parse(JSON.stringify(raw)) : {};
+  const state = stopEmptyState();
+  state.roomId = source.roomId || STOP_ROOM_ID;
+  state.roomName = source.roomName || "Sala Stop";
+  state.gameNumber = Number.isFinite(source.gameNumber) ? source.gameNumber : 1;
+  state.phase = (source.phase === 'results' || source.phase === 'writing' || source.phase === 'waiting') ? source.phase : 'waiting';
+  state.letter = String(source.letter || '-').slice(0, 1).toUpperCase() || '-';
+  state.players = {};
+  state.history = Array.isArray(source.history) ? source.history.slice(0, 20) : [];
+  state.startedAt = source.startedAt || Date.now();
+  state.roundStartedAt = source.roundStartedAt || null;
+  state.roundEndedAt = source.roundEndedAt || null;
+  state.stoppedBy = source.stoppedBy || null;
+  state.lastResults = source.lastResults || null;
+  state.updatedAt = source.updatedAt || Date.now();
+
+  if(source.players && typeof source.players === 'object'){
+    Object.entries(source.players).forEach(([id, p]) => {
+      const pid = String(id || '').trim();
+      if(!pid) return;
+      const player = stopEmptyPlayer(pid, String(p?.name || 'Jogador'), Number.isFinite(p?.eligibleFromGame) ? p.eligibleFromGame : 1);
+      player.name = String(p?.name || 'Jogador');
+      player.joinedAt = p?.joinedAt || Date.now();
+      player.lastSeen = p?.lastSeen || Date.now();
+      player.eligibleFromGame = Number.isFinite(p?.eligibleFromGame) ? p?.eligibleFromGame : 1;
+      player.totalScore = Number.isFinite(p?.totalScore) ? p?.totalScore : 0;
+      const answers = p?.answers && typeof p.answers === 'object' ? p.answers : {};
+      STOP_CATEGORY_KEYS.forEach(key => { player.answers[key] = String(answers[key] || ''); });
+      player.lastRoundScore = Number.isFinite(p?.lastRoundScore) ? p?.lastRoundScore : 0;
+      player.lastRoundAnswers = p?.lastRoundAnswers && typeof p.lastRoundAnswers === 'object' ? p.lastRoundAnswers : null;
+      state.players[pid] = player;
+    });
+  }
+  return state;
+}
+
+function stopFreshRoomState(previousState = null){
+  const fresh = stopEmptyState();
+  fresh.history = Array.isArray(previousState?.history) ? previousState.history.slice(0, 20) : [];
+  fresh.gameNumber = 1;
+  fresh.letter = '-';
+  fresh.phase = 'waiting';
+  fresh.roundStartedAt = null;
+  fresh.roundEndedAt = null;
+  fresh.lastResults = null;
+  fresh.stoppedBy = null;
+  fresh.updatedAt = Date.now();
+  return fresh;
+}
+
+function stopIsPlayerFresh(player){
+  if(!player || !Number.isFinite(player.lastSeen)) return true;
+  return (Date.now() - player.lastSeen) <= STOP_STALE_MS;
+}
+
+function stopCleanupState(state){
+  const next = state && typeof state === 'object' ? state : stopEmptyState();
+  const cleanedPlayers = {};
+  Object.values(next.players || {}).forEach(player => {
+    if(!player || !player.id) return;
+    if(!stopIsPlayerFresh(player)) return;
+    cleanedPlayers[player.id] = player;
+  });
+  next.players = cleanedPlayers;
+  return next;
+}
+
+function stopActivePlayers(state){
+  return Object.values(state.players || {}).filter(p => {
+    if(!p || !p.id) return false;
+    if(!stopIsPlayerFresh(p)) return false;
+    return (Number.isFinite(p.eligibleFromGame) ? p.eligibleFromGame : 1) <= state.gameNumber;
+  });
+}
+
+function stopPlayerIsActive(state, playerId){
+  const player = state.players?.[playerId];
+  return !!player && stopIsPlayerFresh(player) && (Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= state.gameNumber;
+}
+
+function stopResultsForState(state){
+  const activePlayers = stopActivePlayers(state);
+  const normalizedBuckets = {};
+  const perPlayer = {};
+  activePlayers.forEach(p => {
+    perPlayer[p.id] = {
+      id: p.id,
+      name: p.name,
+      score: 0,
+      answers: {},
+      categoryPoints: {}
+    };
+  });
+
+  STOP_CATEGORIES.forEach((label, idx) => {
+    const key = STOP_CATEGORY_KEYS[idx];
+    const buckets = {};
+    const letter = String(state.letter || '').toUpperCase();
+    activePlayers.forEach(p => {
+      const raw = String(p.answers?.[key] || '').trim();
+      const norm = stopNormalizeText(raw);
+      if(!norm) return;
+      if(norm.charAt(0).toUpperCase() !== letter) return;
+      if(!buckets[norm]) buckets[norm] = [];
+      buckets[norm].push(p.id);
+    });
+    activePlayers.forEach(p => {
+      const raw = String(p.answers?.[key] || '').trim();
+      const norm = stopNormalizeText(raw);
+      let pts = 0;
+      if(norm && norm.charAt(0).toUpperCase() === letter){
+        pts = ((buckets[norm] || []).length === 1 ? 10 : 5);
+      }
+      perPlayer[p.id].score += pts;
+      perPlayer[p.id].answers[label] = raw;
+      perPlayer[p.id].categoryPoints[label] = pts;
+    });
+    normalizedBuckets[key] = buckets;
+  });
+
+  const ranking = activePlayers
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      score: perPlayer[p.id].score,
+      answers: perPlayer[p.id].answers,
+      categoryPoints: perPlayer[p.id].categoryPoints
+    }))
+    .sort((a, b) => b.score - a.score || String(a.name).localeCompare(String(b.name)));
+
+  return { perPlayer, ranking, activePlayers, normalizedBuckets };
+}
+
+async function ensureStopRoomDoc(roomId = getStopRoomId()){
+  const resolvedId = String(roomId || getStopRoomId() || STOP_ROOM_ID).trim() || STOP_ROOM_ID;
+  const ref = dbStop.collection('stopRooms').doc(resolvedId);
+  const snap = await ref.get();
+  if(!snap.exists){
+    const next = stopEmptyState();
+    next.roomId = resolvedId;
+    next.roomName = currentRoomLabel(resolvedId);
+    await ref.set(next);
+  }
+}
+
+function stopClearHeartbeat(){
+  if(gameState.stopHeartbeat){
+    clearInterval(gameState.stopHeartbeat);
+    gameState.stopHeartbeat = null;
+  }
+}
+
+function stopStopSubscriptions(){
+  if(gameState.stopUnsub){
+    try { gameState.stopUnsub(); } catch(e) {}
+    gameState.stopUnsub = null;
+  }
+}
+
+function stopSetBoardVisibility(active){
+  const ids = ['p1','p2','p3','p4','drawPile','discardPile','seatDownBtn','seatUpBtn','drawCardBtn'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.style.display = active ? 'none' : '';
+  });
+  const stopPanel = document.getElementById('stopPanel');
+  if(stopPanel){
+    stopPanel.classList.toggle('hidden', !active);
+    stopPanel.classList.toggle('active', active);
+    stopPanel.style.display = active ? 'block' : 'none';
+  }
+  const seatActions = document.querySelector('.seat-actions');
+  if(seatActions) seatActions.style.display = active ? 'none' : '';
+  const centerCardRow = document.querySelector('.center-card-row');
+  if(centerCardRow) centerCardRow.style.display = active ? 'none' : '';
+}
+
+
+function stopClearDraftAnswers(){
+  gameState.stopDraftAnswers = {};
+}
+
+function stopDraftAnswer(key, value){
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object'){
+    gameState.stopDraftAnswers = {};
+  }
+  gameState.stopDraftAnswers[key] = String(value ?? '');
+}
+
+function stopUpdateActionButtons(state){
+  const startBtn = document.getElementById('stopStartBtn');
+  const stopBtn = document.getElementById('stopStopBtn');
+  const playAgainBtn = document.getElementById('stopPlayAgainBtn');
+  const me = state?.players?.[gameState.myId];
+  const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
+
+  if(startBtn){
+    startBtn.classList.toggle('hidden', state?.phase !== 'waiting');
+    startBtn.textContent = 'Começar jogo';
+  }
+  if(stopBtn){
+    stopBtn.classList.toggle('hidden', state?.phase !== 'writing' || !eligible);
+  }
+  if(playAgainBtn){
+    playAgainBtn.classList.toggle('hidden', state?.phase !== 'results');
+  }
+}
+
+function stopRenderPlayersSummary(state){
+  const activePlayers = stopActivePlayers(state);
+  const me = state.players?.[gameState.myId];
+  const eligible = !!me && stopPlayerIsActive(state, gameState.myId);
+  const notice = document.getElementById('stopJoinNotice');
+  if(notice){
+    if(!gameState.stopMode){
+      notice.textContent = 'Entre na sala Stop para jogar.';
+    } else if(state.phase === 'waiting'){
+      notice.textContent = activePlayers.length
+        ? `Sala pronta. Quando quiser, aperte Começar jogo.`
+        : 'Aguardando jogadores. Quando quiser, aperte Começar jogo.';
+    } else if(eligible){
+      notice.textContent = `Você joga nesta partida. Letra: ${state.letter}`;
+    } else {
+      notice.textContent = `Você entra na próxima partida. Letra atual: ${state.letter}`;
+    }
+  }
+
+  if(state.phase !== 'writing'){
+    stopClearDraftAnswers();
+  }
+
+  const letter = document.getElementById('stopLetter');
+  if(letter) letter.textContent = state.phase === 'waiting' ? '-' : (state.letter || '-');
+
+  const roundInfo = document.getElementById('stopRoundInfo');
+  if(roundInfo){
+    roundInfo.textContent = state.phase === 'waiting'
+      ? `Aguardando o começo da partida ${state.gameNumber}`
+      : state.phase === 'results'
+        ? `Partida ${state.gameNumber} encerrada`
+        : `Partida ${state.gameNumber} em andamento`;
+  }
+
+  const hudTurn = document.getElementById('hudTurn');
+  if(hudTurn){
+    const last = hudTurn.querySelector('span:last-child');
+    if(last){
+      last.textContent = state.phase === 'waiting'
+        ? 'Aguardando começo'
+        : state.phase === 'results'
+          ? 'Resultados da partida'
+          : `STOP · letra ${state.letter}`;
+    }
+  }
+
+  const status = document.getElementById('statusNote');
+  if(status){
+    status.textContent = state.phase === 'waiting'
+      ? 'Convide mais pessoas e clique em Começar jogo.'
+      : state.phase === 'results'
+        ? 'A rodada acabou. Veja os resultados ou volte para começar outra partida.'
+        : 'Escreva as respostas e aperte STOP quando quiser encerrar.';
+  }
+
+  stopUpdateActionButtons(state);
+
+  const categories = document.getElementById('stopCategories');
+  const resultsBox = document.getElementById('stopResults');
+  if(!categories || !resultsBox) return;
+
+  if(state.phase === 'waiting'){
+    categories.innerHTML = `
+      <div class="stop-status-card">
+        <strong>Sala pronta para começar</strong>
+        <div style="margin-top:6px; color:var(--muted);">Clique em <strong>Começar jogo</strong> para sortear a letra e iniciar a rodada.</div>
+      </div>
+    `;
+    resultsBox.innerHTML = '';
+    resultsBox.classList.add('hidden');
+    delete categories.dataset.game;
+    delete categories.dataset.letter;
+    return;
+  }
+
+  if(state.phase === 'writing'){
+    if(eligible){
+      const needsRebuild = categories.dataset.game !== String(state.gameNumber) || categories.dataset.letter !== state.letter || !categories.querySelector('input[data-key]');
+      if(needsRebuild){
+        categories.innerHTML = STOP_CATEGORIES.map((label, idx) => {
+          const key = STOP_CATEGORY_KEYS[idx];
+          const draftValue = gameState.stopDraftAnswers?.[key];
+          const currentValue = draftValue !== undefined ? draftValue : (me?.answers?.[key] || '');
+          const value = escapeHtml(String(currentValue));
+          return `
+            <div class="stop-category">
+              <label>${escapeHtml(label)}</label>
+              <input type="text" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next" data-key="${key}" value="${value}" placeholder="Comece com ${escapeHtml(state.letter)}" onfocus="stopDraftAnswer('${key}', this.value)" oninput="stopDraftAnswer('${key}', this.value)" onblur="updateStopAnswer('${key}', this.value)" />
+            </div>
+          `;
+        }).join('');
+        categories.dataset.game = state.gameNumber;
+        categories.dataset.letter = state.letter;
+      } else {
+        STOP_CATEGORIES.forEach((label, idx) => {
+          const key = STOP_CATEGORY_KEYS[idx];
+          const input = categories.querySelector(`input[data-key="${key}"]`);
+          if(input){
+            const ph = `Comece com ${state.letter}`;
+            if(input.placeholder !== ph) input.placeholder = ph;
+            if(document.activeElement !== input){
+              const draftValue = gameState.stopDraftAnswers?.[key];
+              const currentValue = draftValue !== undefined ? draftValue : (me?.answers?.[key] || '');
+              if(input.value !== currentValue) input.value = currentValue;
+            }
+          }
+        });
+      }
+    } else {
+      categories.innerHTML = `
+        <div class="stop-status-card">
+          <strong>Você entrou no meio da partida.</strong>
+          <div style="margin-top:6px; color:var(--muted);">Você poderá jogar na próxima partida.</div>
+        </div>
+      `;
+      delete categories.dataset.game;
+      delete categories.dataset.letter;
+    }
+    resultsBox.innerHTML = '';
+    resultsBox.classList.add('hidden');
+    return;
+  }
+
+  const results = state.lastResults || stopResultsForState(state);
+  resultsBox.classList.remove('hidden');
+  categories.innerHTML = `
+    <div class="stop-status-card">
+      <strong>Resultados da partida ${state.gameNumber}</strong>
+      <div style="margin-top:6px; color:var(--muted);">Letra usada: ${escapeHtml(state.letter)}</div>
+    </div>
+  `;
+  const rankingHtml = results.ranking.length ? results.ranking.map(p => {
+    const answers = STOP_CATEGORIES.map((label, idx) => {
+      const key = STOP_CATEGORY_KEYS[idx];
+      const ans = escapeHtml(String(p.answers?.[label] || ''));
+      const pts = p.categoryPoints?.[label] || 0;
+      return `<div class="stop-result-item"><strong>${escapeHtml(label)}</strong><div>${ans || '<em>vazio</em>'}</div><small>${pts} ponto(s)</small></div>`;
+    }).join('');
+    return `
+      <div class="stop-result-card">
+        <div class="stop-result-head">
+          <strong>${escapeHtml(p.name)}</strong>
+          <span class="pill">${p.score} pontos</span>
+        </div>
+        <div class="stop-result-grid">${answers}</div>
+      </div>
+    `;
+  }).join('') : '<div class="stop-status-card"><small>Nenhum jogador elegível nesta partida.</small></div>';
+  resultsBox.innerHTML = `
+    <div class="stop-result-card">
+      <div class="stop-result-head">
+        <strong>Pontuação final</strong>
+        <span class="pill">${results.ranking.length} jogador(es)</span>
+      </div>
+      ${rankingHtml}
+      <div class="stop-actions-row" style="margin-top:14px;">
+        <button class="btn secondary mini-toggle" type="button" onclick="stopPlayAgain()" style="min-width:190px;">Jogar mais</button>
+      </div>
+    </div>
+  `;
+}
+
+async function subscribeStopRoom(){
+  stopStopSubscriptions();
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
+  gameState.stopUnsub = ref.onSnapshot(snap => {
+    if(!snap.exists) return;
+    gameState.stopState = stopCleanupState(normalizeStopState(snap.data()));
+    renderGame();
+    renderPeopleModal();
+    renderStopHistory();
+  }, err => {
+    console.error('Erro na sala Stop:', err);
+  });
+}
+
+async function updateStopAnswer(key, value){
+  if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
+  const state = gameState.stopState;
+  const player = state.players?.[gameState.myId];
+  if(!player || !stopPlayerIsActive(state, gameState.myId) || state.phase !== 'writing') return;
+  const nextValue = String(value || '');
+  if(!player.answers) player.answers = stopEmptyAnswers();
+  player.answers[key] = nextValue;
+  if(!gameState.stopDraftAnswers || typeof gameState.stopDraftAnswers !== 'object') gameState.stopDraftAnswers = {};
+  gameState.stopDraftAnswers[key] = nextValue;
+  player.lastSeen = Date.now();
+  try {
+    await dbStop.collection('stopRooms').doc(getStopRoomId()).update({
+      [`players.${gameState.myId}.answers.${key}`]: nextValue,
+      [`players.${gameState.myId}.lastSeen`]: Date.now()
+    });
+  } catch(err) {
+    console.warn('Falha ao salvar resposta do Stop:', err);
+  }
+}
+
+async function joinStopRoom(roomId = STOP_ROOM_ID){
+  let userName = document.getElementById('roomName')?.value.trim();
+  if(!userName){
+    alert('Digite seu nome antes de entrar na sala.');
+    return;
+  }
+  userName = userName.slice(0, 18);
+
+  gameState.myName = userName;
+  gameState.stopMode = true;
+  stopClearDraftAnswers();
+  gameState.roomMode = false;
+  gameState.roomId = roomId || STOP_ROOM_ID;
+  gameState.stopRoomId = roomId || STOP_ROOM_ID;
+
+  showGame();
+  applyModeUI();
+  refreshThemeForMode();
+  stopSetBoardVisibility(true);
+  document.getElementById('table').style.display = 'block';
+
+  try{
+    await ensureStopRoomDoc(roomId || STOP_ROOM_ID);
+    const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
+    const joined = await dbCartas.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      state.players = state.players || {};
+      const existing = state.players[gameState.myId] || null;
+      const roomWasEmpty = Object.keys(state.players || {}).length === 0;
+      if(roomWasEmpty){
+        state = stopFreshRoomState(state);
+      }
+      const currentGameNumber = Number.isFinite(state.gameNumber) ? state.gameNumber : 1;
+      const nextEligible = state.phase === 'waiting' ? currentGameNumber : currentGameNumber + 1;
+      state.players[gameState.myId] = {
+        ...(existing || stopEmptyPlayer(gameState.myId, userName, nextEligible)),
+        id: gameState.myId,
+        name: userName,
+        joinedAt: existing?.joinedAt || Date.now(),
+        lastSeen: Date.now(),
+        eligibleFromGame: existing?.eligibleFromGame || nextEligible,
+        totalScore: Number.isFinite(existing?.totalScore) ? existing.totalScore : 0,
+        answers: existing?.answers && typeof existing.answers === 'object' ? existing.answers : stopEmptyAnswers()
+      };
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+      return state;
+    });
+    gameState.stopState = normalizeStopState(joined);
+    await subscribeStopRoom();
+    stopStartHeartbeat();
+    initRoomChat(STOP_CHAT_ROOM_ID);
+    renderGame();
+    refreshCurrentMultiplayerPresence();
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível entrar na sala Stop.');
+    gameState.stopMode = false;
+    gameState.roomId = null;
+    backToLobby();
+  }
+}
+
+function stopStartHeartbeat(){
+  stopClearHeartbeat();
+  gameState.stopHeartbeat = setInterval(() => {
+    if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
+    const state = gameState.stopState;
+    if(!state.players?.[gameState.myId]) return;
+    dbStop.collection('stopRooms').doc(getStopRoomId()).update({
+      [`players.${gameState.myId}.lastSeen`]: Date.now(),
+      [`players.${gameState.myId}.name`]: gameState.myName
+    }).catch(()=>{});
+  }, 3000);
+}
+
+function refreshCurrentMultiplayerPresence(){
+  try{
+    if(gameState.roomMode && gameState.roomId && gameState.mySlot){
+      const pathBase = `state.slots.${gameState.mySlot}`;
+      dbCartas.collection('rooms').doc(gameState.roomId).update({
+        [`${pathBase}.id`]: gameState.myId,
+        [`${pathBase}.name`]: gameState.myName,
+        [`${pathBase}.lastSeen`]: Date.now()
+      }).catch(()=>{});
+    }
+    if(gameState.stopMode && gameState.stopState && gameState.stopState.players?.[gameState.myId]){
+      dbStop.collection('stopRooms').doc(getStopRoomId()).update({
+        [`players.${gameState.myId}.lastSeen`]: Date.now(),
+        [`players.${gameState.myId}.name`]: gameState.myName
+      }).catch(()=>{});
+    }
+  }catch(e){}
+}
+
+document.addEventListener('visibilitychange', () => {
+  if(!document.hidden) refreshCurrentMultiplayerPresence();
+});
+window.addEventListener('focus', refreshCurrentMultiplayerPresence);
+
+async function stopLeaveCurrentRoom(){
+  if(!gameState.stopMode || !gameState.stopState) return;
+  stopClearHeartbeat();
+  stopStopSubscriptions();
+  stopMusicPlayback();
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
+  const myId = gameState.myId;
+  let shouldReset = false;
+  try{
+    await dbCartas.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) return;
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      if(state.players && state.players[myId]){
+        delete state.players[myId];
+      }
+      shouldReset = Object.keys(state.players || {}).length === 0;
+      if(shouldReset){
+        state = stopFreshRoomState(state);
+        tx.set(ref, state, { merge: true });
+      }else{
+        state.updatedAt = Date.now();
+        tx.set(ref, state, { merge: true });
+      }
+    });
+    if(shouldReset) await deleteRoomChatMessages(STOP_CHAT_ROOM_ID);
+  }catch(err){
+    console.warn('Não foi possível sair da sala Stop:', err);
+  }
+  gameState.stopState = null;
+  gameState.stopMode = false;
+  stopClearDraftAnswers();
+}
+
+function stopSetLayout(){
+  stopSetBoardVisibility(true);
+  const p1 = document.getElementById('p1');
+  const p2 = document.getElementById('p2');
+  const p3 = document.getElementById('p3');
+  const p4 = document.getElementById('p4');
+  if(p1) p1.style.display = 'none';
+  if(p2) p2.style.display = 'none';
+  if(p3) p3.style.display = 'none';
+  if(p4) p4.style.display = 'none';
+}
+
+async function pressStop(){
+  if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
+  try{
+    await dbCartas.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      if(state.phase === 'results') return;
+      const results = stopResultsForState(state);
+      results.activePlayers.forEach(p => {
+        const player = state.players[p.id];
+        if(!player) return;
+        player.lastRoundScore = results.perPlayer[p.id].score;
+        player.totalScore = (Number.isFinite(player.totalScore) ? player.totalScore : 0) + results.perPlayer[p.id].score;
+        player.lastRoundAnswers = { ...results.perPlayer[p.id].answers };
+        player.answers = stopEmptyAnswers();
+      });
+      state.history = [
+        {
+          gameNumber: state.gameNumber,
+          letter: state.letter,
+          endedAt: Date.now(),
+          scores: Object.fromEntries(results.ranking.map(p => [p.id, p.score])),
+          players: results.ranking.reduce((acc, p) => {
+            acc[p.id] = {
+              name: p.name,
+              score: p.score,
+              answers: p.answers
+            };
+            return acc;
+          }, {})
+        },
+        ...(Array.isArray(state.history) ? state.history : [])
+      ].slice(0, 20);
+      state.phase = 'results';
+      state.roundEndedAt = Date.now();
+      state.stoppedBy = { id: gameState.myId, name: gameState.myName };
+      state.lastResults = results;
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+    });
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível parar a partida.');
+  }
+}
+
+async function startStopNewGame(){
+  if(!gameState.stopMode || !gameState.stopState) return;
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
+  try{
+    await dbCartas.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      if(state.phase === 'writing') throw new Error('A partida ainda está em andamento.');
+
+      if(state.phase === 'results'){
+        throw new Error('Use Jogar mais para voltar à tela de espera.');
+      }
+
+      state.phase = 'writing';
+      state.letter = stopRandomLetter();
+      stopClearDraftAnswers();
+      state.roundStartedAt = Date.now();
+      state.roundEndedAt = null;
+      state.stoppedBy = null;
+      state.lastResults = null;
+      const currentGameNumber = Number.isFinite(state.gameNumber) ? state.gameNumber : 1;
+      Object.values(state.players || {}).forEach(player => {
+        if(!player) return;
+        if((Number.isFinite(player.eligibleFromGame) ? player.eligibleFromGame : 1) <= currentGameNumber){
+          player.answers = stopEmptyAnswers();
+          player.eligibleFromGame = currentGameNumber;
+        }
+      });
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+    });
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível iniciar a partida.');
+  }
+}
+
+async function stopPlayAgain(){
+  if(!gameState.stopMode || !gameState.stopState) return;
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
+  try{
+    await dbCartas.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if(!snap.exists) throw new Error('Sala Stop não encontrada');
+      let state = stopCleanupState(normalizeStopState(snap.data()));
+      state.gameNumber = (Number.isFinite(state.gameNumber) ? state.gameNumber : 1) + 1;
+      state.phase = 'waiting';
+      stopClearDraftAnswers();
+      state.letter = '-';
+      state.roundStartedAt = null;
+      state.roundEndedAt = null;
+      state.stoppedBy = null;
+      state.lastResults = null;
+      Object.values(state.players || {}).forEach(player => {
+        if(!player) return;
+        player.answers = stopEmptyAnswers();
+        player.eligibleFromGame = state.gameNumber;
+      });
+      state.updatedAt = Date.now();
+      tx.set(ref, state, { merge: true });
+    });
+  }catch(err){
+    console.error(err);
+    alert(err.message || 'Não foi possível voltar para a sala de espera.');
+  }
+}
+
+function renderStopHistory(){
+  const list = document.getElementById('stopHistoryList');
+  if(!list || !gameState.stopState) return;
+  const history = Array.isArray(gameState.stopState.history) ? gameState.stopState.history.slice(0, 20) : [];
+  if(!history.length){
+    list.innerHTML = '<div class="stop-history-card"><small>Sem partidas registradas ainda.</small></div>';
+    return;
+  }
+  list.innerHTML = history.map(entry => {
+    const date = entry.endedAt ? new Date(entry.endedAt).toLocaleString() : 'Sem data';
+    const playersHtml = Object.values(entry.players || {}).map(p => `
+      <div class="stop-history-card">
+        <div class="stop-result-head">
+          <strong>${escapeHtml(p.name || 'Jogador')}</strong>
+          <span class="pill">${Number.isFinite(p.score) ? p.score : 0} pontos</span>
+        </div>
+        <div class="stop-result-grid">
+          ${STOP_CATEGORIES.map(label => `<div class="stop-result-item"><strong>${escapeHtml(label)}</strong><div>${escapeHtml(String(p.answers?.[label] || '')) || '<em>vazio</em>'}</div></div>`).join('')}
+        </div>
+      </div>
+    `).join('');
+    return `
+      <div class="stop-history-card">
+        <div class="stop-result-head">
+          <strong>Partida ${entry.gameNumber} · letra ${escapeHtml(entry.letter || '-')}</strong>
+          <span class="pill">${date}</span>
+        </div>
+        <div class="stop-history-players">${playersHtml || '<small>Sem respostas registradas.</small>'}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openStopHistory(){
+  const modal = document.getElementById('stopHistoryModal');
+  if(!modal) return;
+  modal.style.display = 'flex';
+  renderStopHistory();
+}
+function closeStopHistory(){
+  const modal = document.getElementById('stopHistoryModal');
+  if(modal) modal.style.display = 'none';
+}
+
+// wrappers so existing rooms stay unchanged
+const _origRenderLobbyRooms = renderLobbyRooms;
+renderLobbyRooms = function(){
+  _origRenderLobbyRooms();
+};
+
+const _origRenderGame = renderGame;
+renderGame = function(){
+  if(gameState.stopMode){
+    const table = document.getElementById('table');
+    const end = document.getElementById('endScreen');
+    if(table) table.style.display = 'block';
+    if(end) end.style.display = 'none';
+    stopSetBoardVisibility(true);
+    stopSetLayout();
+    const state = gameState.stopState;
+    if(!state){
+      const status = document.getElementById('statusNote');
+      if(status) status.textContent = 'Entrando na sala Stop...';
+      const hudTurn = document.getElementById('hudTurn');
+      if(hudTurn){
+        const last = hudTurn.querySelector('span:last-child');
+        if(last) last.textContent = 'STOP';
+      }
+      return;
+    }
+    const activePlayer = state.players?.[gameState.myId] || null;
+    const hasAccess = !!activePlayer && stopPlayerIsActive(state, gameState.myId);
+    const categories = document.getElementById('stopCategories');
+    const stopResults = document.getElementById('stopResults');
+    if(state.phase === 'writing'){
+      stopResults?.classList.add('hidden');
+      if(categories) categories.classList.remove('hidden');
+    } else {
+      categories?.classList.remove('hidden');
+      stopResults?.classList.remove('hidden');
+    }
+    stopRenderPlayersSummary(state);
+    return;
+  }
+  stopSetBoardVisibility(false);
+  _origRenderGame();
+};
+
+const _origGetPlayerName = getPlayerName;
+getPlayerName = function(slot){
+  if(gameState.stopMode && gameState.stopState){
+    const players = gameState.stopState.players || {};
+    const arr = Object.values(players);
+    const p = arr.find(item => item && item.id && item.name && item.slot === slot) || arr[slot - 1] || null;
+    if(p && p.name) return p.name;
+    return `Jogador ${slot}`;
+  }
+  return _origGetPlayerName(slot);
+};
+
+const _origSetupMusic = setupMusic;
+setupMusic = function(){
+  if(!gameState.musicAudio){
+    gameState.musicAudio = new Audio();
+    gameState.musicAudio.loop = false;
+    gameState.musicAudio.addEventListener('ended', () => nextTrack(true));
+  }
+  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
+  if(pl.length) gameState.musicAudio.src = pl[gameState.trackIndex % pl.length];
+  gameState.musicAudio.volume = gameState.musicVolume * gameState.masterVolume;
+  try{ gameState.musicAudio.load(); }catch(e){}
+  document.getElementById('musicDisc')?.classList.remove('playing');
+};
+
+nextTrack = function(auto=false){
+  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
+  if(!pl.length) return;
+  gameState.trackIndex = (gameState.trackIndex + 1) % pl.length;
+  setupMusic();
+  if(gameState.musicPlaying || auto) playMusic();
+};
+
+prevTrack = function(){
+  const pl = gameState.stopMode ? gameState.stopPlaylist : (gameState.roomMode ? roomPlaylist(gameState.roomId) : gameState.robotPlaylist);
+  if(!pl.length) return;
+  gameState.trackIndex = (gameState.trackIndex - 1 + pl.length) % pl.length;
+  setupMusic();
+  if(gameState.musicPlaying) playMusic();
+};
+
+const _origJoinRoom = joinRoom;
+joinRoom = async function(roomId){
+  gameState.stopMode = false;
+  return _origJoinRoom(roomId);
+};
+
+const _origJoinRobots = joinRobots;
+joinRobots = function(){
+  gameState.stopMode = false;
+  return _origJoinRobots();
+};
+
+const _origBackToLobby = backToLobby;
+backToLobby = async function(){
+  clearTimeout(gameState.botTimer);
+  if(gameState.stopMode){
+    await stopLeaveCurrentRoom();
+    gameState.stopMode = false;
+  }
+  return _origBackToLobby();
+};
+
+const _origShowGame = showGame;
+showGame = function(){
+  _origShowGame();
+  if(gameState.stopMode){
+    stopSetBoardVisibility(true);
+  }
+};
+
+const _origRenderPeopleModal = renderPeopleModal;
+renderPeopleModal = function(){
+  const list = document.getElementById('peopleList');
+  if(!list) return;
+  if(gameState.stopMode && gameState.stopState){
+    const state = gameState.stopState;
+    const active = stopActivePlayers(state);
+    const waiting = Object.values(state.players || {}).filter(p => p && p.id && !stopPlayerIsActive(state, p.id));
+    list.innerHTML = `
+      <div class="list-item"><strong>Jogadores</strong><span class="pill">${active.length}</span></div>
+      ${active.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(String(p.id).toUpperCase().slice(0,4))})</strong><div><small>Joga a partir da partida ${p.eligibleFromGame || 1}</small></div></div><span class="pill">ATIVO</span></div>`).join('') || '<div class="list-item"><small>Nenhum jogador ativo.</small></div>'}
+      <div class="list-item"><strong>Aguardando próxima partida</strong><span class="pill">${waiting.length}</span></div>
+      ${waiting.map(p => `<div class="list-item"><div><strong>${escapeHtml(p.name)} (${escapeHtml(String(p.id).toUpperCase().slice(0,4))})</strong><div><small>Entra na próxima partida</small></div></div><span class="pill">AGUARDANDO</span></div>`).join('') || '<div class="list-item"><small>Ninguém aguardando.</small></div>'}
+    `;
+    return;
+  }
+  return _origRenderPeopleModal();
+};
+
+const _origRenderLobbyRooms2 = renderLobbyRooms;
+window.renderLobbyRooms = renderLobbyRooms;
+
+window.joinStopRoom = joinStopRoom;
+window.openStopHistory = openStopHistory;
+window.closeStopHistory = closeStopHistory;
+window.pressStop = pressStop;
+window.startStopNewGame = startStopNewGame;
+window.stopPlayAgain = stopPlayAgain;
+window.updateStopAnswer = updateStopAnswer;
+window.stopLeaveCurrentRoom = stopLeaveCurrentRoom;
+
+window.addEventListener('beforeunload', () => {
+  if(gameState.stopMode) stopLeaveCurrentRoom();
+  if(gameState.roomMode) leaveCurrentRoom();
+});
+
+  const oldBootstrapLobbyRooms = bootstrapLobbyRooms;
+  bootstrapLobbyRooms = function(){
+    stopLobbySubscriptions();
+    refreshRoomListeners();
+    renderLobbyRooms();
+  };
+
+  function boot(){
+    syncCurrentUserId();
+    listenSettings();
+    refreshRoomListeners();
+    renderLobbyRooms();
+    renderAdminModal();
+    renderPeopleModal();
+    startAutoResetScheduler();
+    if(!window.adminBootstrapStarted){
+      window.adminBootstrapStarted = true;
+      const origLoad = window.onload;
+      window.onload = async function(){
+        if(typeof origLoad === 'function') await origLoad();
+        syncCurrentUserId();
+        renderLobbyRooms();
+        renderAdminModal();
+        renderPeopleModal();
+        refreshRoomListeners();
+      };
+    }
+  }
+
+  window.addEventListener('load', boot);
+
+  window.openAdminModal = openAdminModal;
+  window.closeAdminModal = closeAdminModal;
+  window.loginAdmin = loginAdmin;
+  window.logoutAdmin = logoutAdmin;
+  window.saveAdminPassword = saveAdminPassword;
+  window.resetAllRooms = resetAllRooms;
+  window.saveAutoResetHour = saveAutoResetHour;
+  window.deleteSelectedPlayer = deleteSelectedPlayer;
+  window.createAdminRoom = createAdminRoom;
+  window.deleteAdminRoom = deleteAdminRoom;
+  window.saveRoomPassword = saveRoomPassword;
+  window.saveRoomName = saveRoomName;
+  window.saveRoomMusicList = saveRoomMusicList;
+  window.saveRoomMusicListAll = saveRoomMusicListAll;
+  window.resetRoomMusicList = resetRoomMusicList;
+  window.toggleRoomAutoPlay = toggleRoomAutoPlay;
+  window.toggleRoomListenMode = toggleRoomListenMode;
+  window.renderAdminRoomDetails = renderAdminRoomDetails;
+  window.renderAdminDelegationSearch = renderAdminDelegationSearch;
+  window.selectDelegationUser = selectDelegationUser;
+  window.clearDelegation = clearDelegation;
+  window.saveDelegation = saveDelegation;
+  window.deleteDelegation = deleteDelegation;
+  window.openPeopleModal = openPeopleModal;
+  window.closePeopleModal = closePeopleModal;
+  window.renderPeopleModal = renderPeopleModal;
+})();
+</script>
+
+<!-- ====== JITSI MEET INTEGRATION - VOZ EM TEMPO REAL ====== -->
+<script src="https://meet.jit.si/external_api.js"></script>
+<style>
+  #jitsiFloatBtn{
+    position:fixed; left:14px; top:50%; transform:translateY(-50%);
+    z-index:99999; width:60px; height:60px; border-radius:50%;
+    background: linear-gradient(135deg, #22c55e, #0ea5e9);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:28px; cursor:pointer; box-shadow:0 12px 28px rgba(14,165,233,.35);
+    border:2px solid rgba(255,255,255,.9); user-select:none;
+    transition:transform .15s ease, opacity .2s;
+  }
+  #jitsiFloatBtn:hover{ transform:translateY(-50%) scale(1.08); }
+  #jitsiFloatBtn.hidden{ opacity:0; pointer-events:none; }
+
+  #jitsiModal{
+    position:fixed; left:90px; bottom:20px; z-index:99998; display:none;
+    width:340px; height:220px;
+    background:rgba(2,6,23,.92); border:1px solid rgba(255,255,255,.15);
+    border-radius:14px; overflow:hidden; box-shadow:0 15px 40px rgba(0,0,0,.5);
+  }
+  #jitsiModal.active{ display:block; }
+  #jitsiWrapper{ position:relative; width:100%; height:100%; background:#000; }
+  #jitsiContainer{ width:100%; height:100%; }
+  #jitsiRestart{
+    position:absolute; top:4px; right:40px; z-index:3;
+    background:rgba(14,165,233,.9); color:#fff; border:none; border-radius:8px;
+    width:28px; height:28px; font-size:18px; cursor:pointer; line-height:1;
+    display:none;
+  }
+  #jitsiClose{
+    position:absolute; top:4px; right:6px; z-index:3;
+    background:rgba(0,0,0,.7); color:#fff; border:none; border-radius:8px;
+    width:28px; height:28px; font-size:18px; cursor:pointer; line-height:1;
+  }
+  #jitsiMiniLabel{
+    position:absolute; top:4px; left:8px; z-index:3;
+    color:#9ad1ff; font-size:11px; font-weight:700; letter-spacing:.04em;
+    background:rgba(0,0,0,.5); padding:2px 6px; border-radius:6px;
+  }
+</style>
+
+<div id="jitsiFloatBtn" title="Abrir conversa por voz">🎙️</div>
+<div id="jitsiModal">
+  <div id="jitsiWrapper">
+    <div id="jitsiMiniLabel">VOZ DA SALA</div>
+    <button id="jitsiRestart" aria-label="Reiniciar sala" title="Reiniciar sala">↻</button>
+    <button id="jitsiClose" aria-label="Minimizar">−</button>
+    <div id="jitsiContainer"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const btn = document.getElementById('jitsiFloatBtn');
+  const modal = document.getElementById('jitsiModal');
+  const closeBtn = document.getElementById('jitsiClose');
+  const restartBtn = document.getElementById('jitsiRestart');
+  let api = null;
+  let jitsiReady = false;
+
+  function getGameId(){
+    try{
+      if(typeof gameState !== 'undefined'){
+        if(gameState.stopMode && gameState.stopState && gameState.stopState.id){
+          return 'stop-' + String(gameState.stopState.id);
+        }
+        if(gameState.roomMode && gameState.roomId){
+          return 'cartas-' + String(gameState.roomId);
+        }
+      }
+    }catch(e){}
+    return 'lobby';
+  }
+
+  function makeRoomName(gameId){
+    let h = 0;
+    for(let i=0;i<gameId.length;i++){ h = ((h<<5)-h) + gameId.charCodeAt(i); h |= 0; }
+    const base36 = Math.abs(h).toString(36);
+    return 'xc-' + base36.padStart(8,'0').slice(0,10);
+  }
+
+  function ensureJitsi(){
+    const gameId = getGameId();
+    const roomName = makeRoomName(gameId);
+    
+    if(api && jitsiReady){ return; }
+    
+    document.getElementById('jitsiContainer').innerHTML = '';
+    api = new JitsiMeetExternalAPI('meet.jit.si', {
+      roomName: roomName,
+      parentNode: document.getElementById('jitsiContainer'),
+      width: '100%',
+      height: '100%',
+      configOverwrite: {
+        startWithAudioMuted: false,
+        startWithVideoMuted: true,
+        startAudioOnly: true,
+        prejoinPageEnabled: false,
+        disableDeepLinking: true,
+        enableWelcomePage: false,
+        enableLobbyChat: false,
+        requireDisplayName: false,
+        disableModeratorIndicator: true,
+        lobby: { enabled: false }
+      },
+      interfaceConfigOverwrite: {
+        TOOLBAR_BUTTONS: ['microphone','hangup','settings'],
+        SHOW_JITSI_WATERMARK: false,
+        SHOW_WATERMARK_FOR_GUESTS: false,
+        SETTINGS_SECTIONS: ['devices'],
+        VIDEO_QUALITY_LABEL_DISABLED: true
+      },
+      userInfo: {
+        displayName: (typeof gameState !== 'undefined' && gameState.myName) ? gameState.myName : 'Jogador'
+      }
+    });
+
+    api.addEventListener('videoConferenceJoined', () => {
+      jitsiReady = true;
+      try{ api.executeCommand('toggleLobby', false); }catch(e){}
+    });
+  }
+
+  function openJitsi(){
+    ensureJitsi();
+    modal.classList.add('active');
+    btn.style.opacity = '0.5';
+    if(restartBtn) restartBtn.style.display = 'block';
+  }
+
+  function closeJitsi(){
+    modal.classList.remove('active');
+    btn.style.opacity = '1';
+    if(restartBtn) restartBtn.style.display = 'none';
+    // NÃO destrói - áudio continua
+  }
+
+  function restartJitsi(){
+    try{
+      if(api){
+        api.dispose();
+      }
+    }catch(e){}
+    api = null;
+    jitsiReady = false;
+    const container = document.getElementById('jitsiContainer');
+    if(container) container.innerHTML = '';
+    modal.classList.add('active');
+    btn.style.opacity = '0.5';
+    if(restartBtn) restartBtn.style.display = 'block';
+    setTimeout(ensureJitsi, 120);
+  }
+
+  btn.addEventListener('click', () => {
+    if(modal.classList.contains('active')){ closeJitsi(); }
+    else { openJitsi(); }
+  });
+  closeBtn.addEventListener('click', closeJitsi);
+  if(restartBtn) restartBtn.addEventListener('click', restartJitsi);
+
+  // Mostra sempre para teste
+  btn.classList.remove('hidden');
+  setTimeout(ensureJitsi, 1500);
+})();
+</script>
+<!-- ====== FIM JITSI ====== -->
+
+</body>
+</html>
