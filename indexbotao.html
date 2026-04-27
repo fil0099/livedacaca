@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>ssCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1334,7 +1334,7 @@ const STOP_STALE_MS = 120000;
     }
 
     function slotIsActive(slotData){
-      return !!(slotData && slotData.id);
+      return !!(slotData && slotData.id && (!slotData.lastSeen || (Date.now() - slotData.lastSeen) <= STALE_SLOT_MS));
     }
 
     function cleanupStaleSlots(state){
@@ -1641,6 +1641,7 @@ const STOP_STALE_MS = 120000;
       const myId = gameState.myId;
       const roomRef = db.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
+      gameState.mySlot = null;
       stopVoiceChat();
       stopMusicPlayback();
       let shouldReset = false;
@@ -1670,6 +1671,7 @@ const STOP_STALE_MS = 120000;
         console.warn("Não foi possível liberar a sala imediatamente:", e);
       }
       stopRoomSubscriptions();
+      gameState.roomId = null;
     }
 
     async function leaveSeat(){
@@ -4667,6 +4669,7 @@ window.stopLeaveCurrentRoom = stopLeaveCurrentRoom;
 
 window.addEventListener('beforeunload', () => {
   if(gameState.stopMode) stopLeaveCurrentRoom();
+  if(gameState.roomMode) leaveCurrentRoom();
 });
 
   const oldBootstrapLobbyRooms = bootstrapLobbyRooms;
