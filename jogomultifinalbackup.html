@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>bbCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -3187,6 +3187,10 @@ const STOP_STALE_MS = 120000;
     const textarea = document.getElementById('roomMusicList');
     const playlist = String(textarea?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
     setRoomMeta(roomId, { playlist: playlist.length ? playlist : DEFAULT_PLAYLIST.slice() });
+    if(gameState.roomMode && gameState.roomId === roomId){
+      refreshCurrentRoomMusic();
+      if(roomAutoplay(roomId)) playMusic();
+    }
   }
   function resetRoomMusicList(){
     if(!hasPermission('music')) return alert('Sem permissão de músicas.');
@@ -3195,8 +3199,13 @@ const STOP_STALE_MS = 120000;
   function toggleRoomAutoPlay(){
     if(!hasPermission('autoplay')) return alert('Sem permissão de autoplay.');
     const toggle = document.getElementById('roomAutoPlayToggle');
-    setRoomMeta(adminState.selectedRoomId, { autoplay: !!toggle?.checked });
-    refreshCurrentRoomMusic();
+    const roomId = adminState.selectedRoomId;
+    setRoomMeta(roomId, { autoplay: !!toggle?.checked });
+    if(gameState.roomMode && gameState.roomId === roomId){
+      refreshCurrentRoomMusic();
+      if(toggle?.checked) playMusic();
+      else pauseMusic();
+    }
   }
 
   function toggleRoomListenMode(){
@@ -3547,6 +3556,8 @@ const STOP_STALE_MS = 120000;
     renderGame();
     const audioBtn = document.getElementById('audioBtn');
     if(audioBtn) audioBtn.textContent = 'Áudio: ligado';
+    refreshCurrentRoomMusic();
+    if(roomAutoplay(roomId)) playMusic();
     try{
       await ensureRoomDoc(roomId);
       const roomRef = db.collection('rooms').doc(roomId);
