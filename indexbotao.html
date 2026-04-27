@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>qqCartas - Jogo Multiplayer com Chat</title>
+  <title>22Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1004,7 +1004,7 @@
       { id: "orange", label: "Laranja", bg1: "#fff7ed", bg2: "#fffbeb", glow1: "rgba(249,115,22,.14)", glow2: "rgba(245,158,11,.10)" },
       { id: "pink", label: "Rosa", bg1: "#fdf2f8", bg2: "#fff1f2", glow1: "rgba(236,72,153,.14)", glow2: "rgba(244,63,94,.10)" }
     ];
-    const STALE_SLOT_MS = 15000;
+    const STALE_SLOT_MS = 120000;
 
 const STOP_ROOM_ID = "stop-main";
 const STOP_CHAT_ROOM_ID = STOP_ROOM_ID;
@@ -2635,8 +2635,8 @@ const STOP_STALE_MS = 120000;
 
   function getOrCreateUserId(){
     let id = localStorage.getItem(USER_ID_KEY);
-    if(!id || id.length < 8){ id = Math.random().toString(36).substr(2,9) + Date.now().toString(36); localStorage.setItem(USER_ID_KEY, id); }
-    return String(id);
+    if(!id){ id = randomId4(); localStorage.setItem(USER_ID_KEY, id); }
+    return String(id).toUpperCase().slice(0,4).padStart(4,'0');
   }
 
   function loadSettings(){
@@ -3672,17 +3672,22 @@ function stopResultsForState(state){
   STOP_CATEGORIES.forEach((label, idx) => {
     const key = STOP_CATEGORY_KEYS[idx];
     const buckets = {};
+    const letter = String(state.letter || '').toUpperCase();
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
       if(!norm) return;
+      if(norm.charAt(0).toUpperCase() !== letter) return;
       if(!buckets[norm]) buckets[norm] = [];
       buckets[norm].push(p.id);
     });
     activePlayers.forEach(p => {
       const raw = String(p.answers?.[key] || '').trim();
       const norm = stopNormalizeText(raw);
-      const pts = norm ? ((buckets[norm] || []).length === 1 ? 10 : 5) : 0;
+      let pts = 0;
+      if(norm && norm.charAt(0).toUpperCase() === letter){
+        pts = ((buckets[norm] || []).length === 1 ? 10 : 5);
+      }
       perPlayer[p.id].score += pts;
       perPlayer[p.id].answers[label] = raw;
       perPlayer[p.id].categoryPoints[label] = pts;
