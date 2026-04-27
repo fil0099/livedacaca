@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xcCartas - Jogo Multiplayer com Chat</title>
+  <title>cdCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -4748,7 +4748,7 @@ window.addEventListener('beforeunload', () => {
 </script>
 
 <!-- ====== JITSI MEET INTEGRATION - VOZ EM TEMPO REAL ====== -->
-<script src="https://meet.jit.si/external_api.js"></script>
+<script src="https://meet.evolix.org/external_api.js"></script>
 <style>
   #jitsiFloatBtn{
     position:fixed; left:14px; top:50%; transform:translateY(-50%);
@@ -4828,7 +4828,7 @@ window.addEventListener('beforeunload', () => {
     if(api && jitsiReady){ return; }
     
     document.getElementById('jitsiContainer').innerHTML = '';
-    api = new JitsiMeetExternalAPI('meet.jit.si', {
+    api = new JitsiMeetExternalAPI('meet.calyx.net', {
       roomName: roomName,
       parentNode: document.getElementById('jitsiContainer'),
       width: '100%',
