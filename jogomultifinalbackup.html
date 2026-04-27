@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>ddCartas - Jogo Multiplayer com Chat</title>
+  <title>200Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -4749,71 +4749,95 @@ window.addEventListener('beforeunload', () => {
 })();
 </script>
 
-  <div id="jitsi-audio-container" style="position:fixed;width:1px;height:1px;left:-9999px;top:-9999px;overflow:hidden;"></div>
+  
+
+
+
+<div id="jitsi-audio-container" style="position:fixed;bottom:4px;right:4px;width:280px;height:180px;opacity:0.02;pointer-events:none;z-index:1;"></div>
 
 <script>
-// ===== INTEGRAÇÃO JITSI MEET ÁUDIO PARA TODAS AS SALAS =====
+// ===== INTEGRAÇÃO JITSI MEET ÁUDIO v2 - CORRIGIDO =====
 (function(){
-  window.voiceChat = {
-    api: null,
-    currentRoom: null,
-    muted: false
-  };
+  window.voiceChat = { api: null, currentRoom: null, muted: false };
 
   function getPlayerName(){
-    try {
-      const el = document.getElementById('roomName');
-      return (el && el.value ? el.value.trim().slice(0,18) : (window.gameState?.myName || 'Jogador'));
-    } catch(e){ return 'Jogador'; }
+    const el = document.getElementById('roomName');
+    return (el && el.value ? el.value.trim().slice(0,18) : (window.gameState?.myName || 'Jogador'));
   }
 
-  function startVoiceChat(roomId){
+  async function ensureMicPermission(){
     try {
-      if(!roomId) return;
-      // se já está na mesma sala, não recria
-      if(window.voiceChat.api && window.voiceChat.currentRoom === roomId) return;
-      stopVoiceChat();
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // fecha imediatamente, só para liberar permissão
+      stream.getTracks().forEach(t => t.stop());
+      return true;
+    } catch(e){
+      console.warn('[VOZ] Microfone negado:', e);
+      alert('Permita o microfone para falar com a sala.');
+      return false;
+    }
+  }
 
-      const domain = 'meet.jit.si';
-      const container = document.getElementById('jitsi-audio-container');
-      const options = {
-        roomName: 'xcCartas_' + String(roomId).replace(/[^a-zA-Z0-9_-]/g,''),
-        parentNode: container,
-        width: 1,
-        height: 1,
-        configOverwrite: {
-          startWithAudioMuted: false,
-          startWithVideoMuted: true,
-          startAudioOnly: true,
-          prejoinPageEnabled: false,
-          disableDeepLinking: true,
-          enableNoAudioDetection: true,
-          enableNoisyMicDetection: true
-        },
-        interfaceConfigOverwrite: {
-          TOOLBAR_BUTTONS: [],
-          SHOW_JITSI_WATERMARK: false,
-          DISABLE_VIDEO_BACKGROUND: true
-        },
-        userInfo: {
-          displayName: getPlayerName()
-        }
-      };
+  async function startVoiceChat(roomId){
+    if(!roomId) return;
+    if(window.voiceChat.api && window.voiceChat.currentRoom === roomId) return;
+    
+    const ok = await ensureMicPermission();
+    if(!ok) return;
+
+    stopVoiceChat();
+
+    const domain = 'meet.jit.si';
+    const container = document.getElementById('jitsi-audio-container');
+    const safeRoom = 'xcCartas_' + String(roomId).replace(/[^a-zA-Z0-9_-]/g,'');
+    
+    const options = {
+      roomName: safeRoom,
+      parentNode: container,
+      width: '100%',
+      height: '100%',
+      configOverwrite: {
+        startWithAudioMuted: false,
+        startWithVideoMuted: true,
+        startAudioOnly: true,
+        prejoinPageEnabled: false,
+        disableDeepLinking: true,
+        enableNoAudioDetection: true,
+        enableNoisyMicDetection: true,
+        disableSimulcast: true
+      },
+      interfaceConfigOverwrite: {
+        TOOLBAR_BUTTONS: ['microphone','hangup'],
+        SHOW_JITSI_WATERMARK: false,
+        filmStripOnly: true
+      },
+      userInfo: { displayName: getPlayerName() }
+    };
+
+    try {
       window.voiceChat.api = new JitsiMeetExternalAPI(domain, options);
       window.voiceChat.currentRoom = roomId;
-      window.voiceChat.muted = false;
       
-      // eventos úteis
+      window.voiceChat.api.addEventListener('videoConferenceJoined', () => {
+        console.log('[VOZ] Conectado:', safeRoom);
+        // garante áudio ligado
+        setTimeout(() => {
+          window.voiceChat.api.executeCommand('setAudioMuted', false);
+          window.voiceChat.api.executeCommand('setVideoMuted', true);
+        }, 1000);
+        updateVoiceButton();
+      });
+      
       window.voiceChat.api.addEventListener('audioMuteStatusChanged', (e) => {
         window.voiceChat.muted = e.muted;
         updateVoiceButton();
       });
-      window.voiceChat.api.addEventListener('videoConferenceJoined', () => {
-        console.log('[VOZ] Conectado à sala:', roomId);
-        updateVoiceButton();
+      
+      window.voiceChat.api.addEventListener('participantJoined', (p) => {
+        console.log('[VOZ] Entrou:', p.displayName);
       });
     } catch(err){
-      console.error('Erro ao iniciar voz:', err);
+      console.error('Erro Jitsi:', err);
     }
   }
 
@@ -4839,46 +4863,45 @@ window.addEventListener('beforeunload', () => {
     if(!btn) return;
     if(!window.voiceChat.api){
       btn.textContent = '🔇 Voz Off';
-      btn.classList.add('secondary');
+      btn.className = 'btn small secondary';
     } else {
       btn.textContent = window.voiceChat.muted ? '🔇 Desmutar' : '🎤 Mutar';
-      btn.classList.toggle('secondary', window.voiceChat.muted);
+      btn.className = 'btn small' + (window.voiceChat.muted ? ' secondary' : '');
     }
   }
 
-  // Injeta botão de voz no HUD (canto superior)
   function injectVoiceButton(){
     if(document.getElementById('voiceToggleBtn')) return;
-    const hud = document.querySelector('.hud') || document.body;
     const btn = document.createElement('button');
     btn.id = 'voiceToggleBtn';
-    btn.className = 'btn small';
-    btn.style.marginLeft = '8px';
+    btn.className = 'btn small secondary';
     btn.textContent = '🎤 Voz';
+    btn.style.position = 'fixed';
+    btn.style.bottom = '12px';
+    btn.style.right = '12px';
+    btn.style.zIndex = '9999';
     btn.onclick = toggleVoiceMute;
-    // tenta colocar junto aos outros botões
-    const target = document.querySelector('.hud') || document.querySelector('.panel');
-    if(target) target.appendChild(btn);
-    else document.body.appendChild(btn);
+    document.body.appendChild(btn);
     updateVoiceButton();
   }
 
-  // Patches nas funções do jogo
-  const waitForGame = setInterval(() => {
+  const wait = setInterval(() => {
     if(typeof window.joinRoom === 'function' && typeof window.joinStopRoom === 'function'){
-      clearInterval(waitForGame);
+      clearInterval(wait);
       
-      const origJoinRoom = window.joinRoom;
+      const origJoin = window.joinRoom;
       window.joinRoom = async function(roomId){
-        const res = await origJoinRoom.apply(this, arguments);
-        setTimeout(() => { injectVoiceButton(); startVoiceChat(roomId); }, 800);
+        const res = await origJoin.apply(this, arguments);
+        injectVoiceButton();
+        startVoiceChat(roomId);
         return res;
       };
 
-      const origJoinStop = window.joinStopRoom;
+      const origStop = window.joinStopRoom;
       window.joinStopRoom = async function(roomId){
-        const res = await origJoinStop.apply(this, arguments);
-        setTimeout(() => { injectVoiceButton(); startVoiceChat(roomId || 'STOP'); }, 800);
+        const res = await origStop.apply(this, arguments);
+        injectVoiceButton();
+        startVoiceChat(roomId || 'STOP');
         return res;
       };
 
@@ -4886,7 +4909,8 @@ window.addEventListener('beforeunload', () => {
       if(origRobots){
         window.joinRobots = function(){
           const res = origRobots.apply(this, arguments);
-          setTimeout(() => { injectVoiceButton(); startVoiceChat('ROBOTS_' + (window.gameState?.myId || 'solo')); }, 800);
+          injectVoiceButton();
+          startVoiceChat('ROBOTS_' + (window.gameState?.myId || Math.random().toString(36).slice(2,6)));
           return res;
         };
       }
@@ -4898,11 +4922,8 @@ window.addEventListener('beforeunload', () => {
           return await origBack.apply(this, arguments);
         };
       }
-
-      // também para sair
-      window.addEventListener('beforeunload', stopVoiceChat);
     }
-  }, 500);
+  }, 400);
 })();
 </script>
 
