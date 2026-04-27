@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>001Cartas - Jogo Multiplayer com Chat</title>
+  <title>33Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1136,7 +1136,8 @@
 
   <script>
     // ========== FIREBASE ==========
-    const firebaseConfig = {
+    // Base atual: bate-papo
+    const firebaseConfigChat = {
       apiKey: "AIzaSyBcSfnaRwXZPJ2Z6MUoednrqZug2YJwzEc",
       authDomain: "testbotao.firebaseapp.com",
       databaseURL: "https://testbotao-default-rtdb.firebaseio.com",
@@ -1145,8 +1146,34 @@
       messagingSenderId: "940068631746",
       appId: "1:940068631746:web:2df2dee1d918a0f55bb75b"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+
+    // Vai receber o banco das cartas
+    const firebaseConfigCartas = {
+      apiKey: "AIzaSyBhq3yPc927yrj5xT1UBaJSxJ4S9H7tEgI",
+      authDomain: "sitecaca2.firebaseapp.com",
+      projectId: "sitecaca2",
+      storageBucket: "sitecaca2.firebasestorage.app",
+      messagingSenderId: "391187353901",
+      appId: "1:391187353901:web:050289706c2fbb0d0343a4"
+    };
+
+    // Vai receber o banco do stop
+    const firebaseConfigStop = {
+      apiKey: "AIzaSyDWo1b9MPpBUvsUWzqQ4vUOl9IdenrTMWo",
+      authDomain: "sitecaca3.firebaseapp.com",
+      projectId: "sitecaca3",
+      storageBucket: "sitecaca3.firebasestorage.app",
+      messagingSenderId: "148597735991",
+      appId: "1:148597735991:web:e1b9640eb954098b75f5b2"
+    };
+
+    const appChat = firebase.initializeApp(firebaseConfigChat, "chatApp");
+    const appCartas = firebase.initializeApp(firebaseConfigCartas, "cartasApp");
+    const appStop = firebase.initializeApp(firebaseConfigStop, "stopApp");
+
+    const dbChat = appChat.firestore();
+    const dbCartas = appCartas.firestore();
+    const dbStop = appStop.firestore();
 
     // ========== CONFIGURAÇÃO DAS SALAS ==========
     const ROOMS = [
@@ -1506,9 +1533,9 @@ const STOP_STALE_MS = 120000;
 
     async function deleteRoomChatMessages(roomId){
       try {
-        const snap = await db.collection('chat').where('roomId', '==', roomId).get();
+        const snap = await dbChat.collection('chat').where('roomId', '==', roomId).get();
         if(snap.empty) return;
-        const batch = db.batch();
+        const batch = dbChat.batch();
         snap.forEach(doc => batch.delete(doc.ref));
         await batch.commit();
       } catch(err){
@@ -1518,7 +1545,7 @@ const STOP_STALE_MS = 120000;
 
     async function resetEmptyRoom(roomId){
       try {
-        await db.collection('rooms').doc(roomId).delete();
+        await dbCartas.collection('rooms').doc(roomId).delete();
       } catch(err){
         console.warn("Não foi possível apagar a sala vazia:", err);
       }
@@ -1526,7 +1553,7 @@ const STOP_STALE_MS = 120000;
     }
 
     async function ensureRoomDoc(roomId){
-      const ref = db.collection('rooms').doc(roomId);
+      const ref = dbCartas.collection('rooms').doc(roomId);
       const snap = await ref.get();
       if(!snap.exists){
         await ref.set({
@@ -1558,8 +1585,8 @@ const STOP_STALE_MS = 120000;
 
       try {
         await ensureRoomDoc(roomId);
-        const roomRef = db.collection('rooms').doc(roomId);
-        const joined = await db.runTransaction(async (tx) => {
+        const roomRef = dbCartas.collection('rooms').doc(roomId);
+        const joined = await dbCartas.runTransaction(async (tx) => {
           const snap = await tx.get(roomRef);
           if(!snap.exists) throw new Error("Sala não encontrada");
           const data = snap.data() || {};
@@ -1633,7 +1660,7 @@ const STOP_STALE_MS = 120000;
 
     function subscribeRoom(roomId){
       stopRoomSubscriptions();
-      const roomRef = db.collection('rooms').doc(roomId);
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
       const unsub = roomRef.onSnapshot(snapshot => {
         if(!snapshot.exists) return;
         const data = snapshot.data() || {};
@@ -1658,7 +1685,7 @@ const STOP_STALE_MS = 120000;
       gameState.roomHeartbeat = setInterval(() => {
         if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
         const pathBase = `state.slots.${gameState.mySlot}`;
-        db.collection('rooms').doc(gameState.roomId).update({
+        dbCartas.collection('rooms').doc(gameState.roomId).update({
           [`${pathBase}.id`]: gameState.myId,
           [`${pathBase}.name`]: gameState.myName,
           [`${pathBase}.lastSeen`]: Date.now()
@@ -1671,13 +1698,13 @@ const STOP_STALE_MS = 120000;
       const roomId = gameState.roomId;
       const mySlot = gameState.mySlot;
       const myId = gameState.myId;
-      const roomRef = db.collection('rooms').doc(roomId);
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
       gameState.mySlot = null;
       stopMusicPlayback();
       let shouldReset = false;
       try {
-        await db.runTransaction(async (tx) => {
+        await dbCartas.runTransaction(async (tx) => {
           const snap = await tx.get(roomRef);
           if(!snap.exists) return;
           const data = snap.data() || {};
@@ -1710,11 +1737,11 @@ const STOP_STALE_MS = 120000;
       const roomId = gameState.roomId;
       const mySlot = gameState.mySlot;
       const myId = gameState.myId;
-      const roomRef = db.collection('rooms').doc(roomId);
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
       stopRoomHeartbeat();
       let shouldReset = false;
       try {
-        await db.runTransaction(async (tx) => {
+        await dbCartas.runTransaction(async (tx) => {
           const snap = await tx.get(roomRef);
           if(!snap.exists) throw new Error("Sala não encontrada");
           const data = snap.data() || {};
@@ -1746,10 +1773,10 @@ const STOP_STALE_MS = 120000;
     async function takeSeat(){
       if(!gameState.roomMode || !gameState.roomId || gameState.mySlot) return;
       const roomId = gameState.roomId;
-      const roomRef = db.collection('rooms').doc(roomId);
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
       try {
         await ensureRoomDoc(roomId);
-        const result = await db.runTransaction(async (tx) => {
+        const result = await dbCartas.runTransaction(async (tx) => {
           const snap = await tx.get(roomRef);
           let data = snap.exists ? (snap.data() || {}) : null;
           let state = data ? cleanupStaleSlots(normalizeSharedState(data.state)) : createFreshRoomState();
@@ -1986,8 +2013,8 @@ const STOP_STALE_MS = 120000;
 
     function performRoomAction(action){
       if(!gameState.roomMode || !gameState.roomId || !gameState.mySlot) return;
-      const roomRef = db.collection('rooms').doc(gameState.roomId);
-      db.runTransaction(async (tx) => {
+      const roomRef = dbCartas.collection('rooms').doc(gameState.roomId);
+      dbCartas.runTransaction(async (tx) => {
         const snap = await tx.get(roomRef);
         if(!snap.exists) throw new Error("Sala não encontrada");
         const data = snap.data() || {};
@@ -2195,7 +2222,7 @@ const STOP_STALE_MS = 120000;
 
     function initRoomChat(roomId){
       if(window.chatUnsubscribe) window.chatUnsubscribe();
-      const q = db.collection('chat').where('roomId', '==', roomId);
+      const q = dbChat.collection('chat').where('roomId', '==', roomId);
       window.chatUnsubscribe = q.onSnapshot(snapshot => {
         const msgs = [];
         snapshot.forEach(doc => {
@@ -2244,7 +2271,7 @@ const STOP_STALE_MS = 120000;
       const chatRoomId = gameState.stopMode ? STOP_CHAT_ROOM_ID : (gameState.roomMode && gameState.roomId ? gameState.roomId : null);
       if(chatRoomId){
         try {
-          await db.collection('chat').add({
+          await dbChat.collection('chat').add({
             roomId: chatRoomId,
             author: author,
             message: msg,
@@ -2300,7 +2327,7 @@ const STOP_STALE_MS = 120000;
 
     async function bootstrapLobbyRooms(){
       stopLobbySubscriptions();
-      lobbyRoomUnsubs = ROOMS.map(room => db.collection('rooms').doc(room.id).onSnapshot(snapshot => {
+      lobbyRoomUnsubs = ROOMS.map(room => dbCartas.collection('rooms').doc(room.id).onSnapshot(snapshot => {
         room.state = snapshot.exists ? snapshot.data().state : null;
         renderLobbyRooms();
       }, () => {
@@ -2455,7 +2482,7 @@ const STOP_STALE_MS = 120000;
 (() => {
   const SETTINGS_KEY = 'cartas_admin_settings_v4';
   const USER_ID_KEY = 'cartas_user_id_v4';
-  const SETTINGS_DOC = db.collection('appMeta').doc('global');
+  const SETTINGS_DOC = dbCartas.collection('appMeta').doc('global');
   const DEFAULT_PLAYLIST = [
     'https://raw.githubusercontent.com/fil0099/livedacaca/main/music_for_video-just-relax-11157.mp3',
     'https://raw.githubusercontent.com/fil0099/livedacaca/main/sigmamusicart-jazz-lounge-relaxing-background-music-514554.mp3',
@@ -2722,7 +2749,7 @@ const STOP_STALE_MS = 120000;
     adminRoomUnsubs = [];
     const rooms = getRooms();
     rooms.forEach(room => {
-      const col = room.type === 'stop' ? db.collection('stopRooms') : db.collection('rooms');
+      const col = room.type === 'stop' ? dbStop.collection('stopRooms') : dbCartas.collection('rooms');
       const unsub = col.doc(room.id).onSnapshot(snap => {
         adminState.roomCache[room.id] = snap.exists ? snap.data() : null;
         renderLobbyRooms();
@@ -2833,7 +2860,7 @@ const STOP_STALE_MS = 120000;
   }
 
   async function ensureRoomDoc(roomId){
-    const ref = db.collection('rooms').doc(roomId);
+    const ref = dbCartas.collection('rooms').doc(roomId);
     const snap = await ref.get();
     if(!snap.exists){
       const type = getRoomType(roomId);
@@ -2848,7 +2875,7 @@ const STOP_STALE_MS = 120000;
   }
 
   async function ensureStopRoomDoc(roomId){
-    const ref = db.collection('stopRooms').doc(roomId);
+    const ref = dbStop.collection('stopRooms').doc(roomId);
     const snap = await ref.get();
     if(!snap.exists){
       await ref.set({
@@ -2871,9 +2898,9 @@ const STOP_STALE_MS = 120000;
 
   async function deleteRoomChatMessages(roomId){
     try{
-      const snap = await db.collection('chat').where('roomId', '==', roomId).get();
+      const snap = await dbChat.collection('chat').where('roomId', '==', roomId).get();
       if(snap.empty) return;
-      const batch = db.batch();
+      const batch = dbChat.batch();
       snap.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
     }catch(e){}
@@ -2928,9 +2955,9 @@ const STOP_STALE_MS = 120000;
     }
     delete adminState.roomCache[id];
     saveSettings();
-    try { await db.collection(type === 'stop' ? 'stopRooms' : 'rooms').doc(id).delete(); } catch(e) {}
+    try { await (type === 'stop' ? dbStop : dbCartas).collection(type === 'stop' ? 'stopRooms' : 'rooms').doc(id).delete(); } catch(e) {}
     if(baseId){
-      try { await db.collection('rooms').doc(baseId).delete(); } catch(e) {}
+      try { await dbCartas.collection('rooms').doc(baseId).delete(); } catch(e) {}
       await deleteRoomChatMessages(baseId);
     }
     await deleteRoomChatMessages(id);
@@ -3181,10 +3208,10 @@ const STOP_STALE_MS = 120000;
       const type = getRoomType(id);
       try {
         if(type === 'stop'){
-          await db.collection('stopRooms').doc(id).delete();
+          await dbStop.collection('stopRooms').doc(id).delete();
           await ensureStopRoomDoc(id);
         } else {
-          await db.collection('rooms').doc(id).delete();
+          await dbCartas.collection('rooms').doc(id).delete();
           await ensureRoomDoc(id);
         }
         await deleteRoomChatMessages(id);
@@ -3390,8 +3417,8 @@ const STOP_STALE_MS = 120000;
     renderGame();
     try{
       await ensureRoomDoc(roomId);
-      const roomRef = db.collection('rooms').doc(roomId);
-      const joined = await db.runTransaction(async (tx) => {
+      const roomRef = dbCartas.collection('rooms').doc(roomId);
+      const joined = await dbCartas.runTransaction(async (tx) => {
         const snap = await tx.get(roomRef);
         if(!snap.exists) throw new Error('Sala não encontrada');
         const data = snap.data() || {};
@@ -3521,7 +3548,7 @@ const STOP_STALE_MS = 120000;
   const oldInitRoomChat = initRoomChat;
   initRoomChat = function(roomId){
     if(window.chatUnsubscribe) window.chatUnsubscribe();
-    const q = db.collection('chat').where('roomId', '==', roomId);
+    const q = dbChat.collection('chat').where('roomId', '==', roomId);
     window.chatUnsubscribe = q.onSnapshot(snapshot => {
       const msgs = [];
       snapshot.forEach(doc => {
@@ -3573,7 +3600,7 @@ const STOP_STALE_MS = 120000;
     }
     if(gameState.roomMode && gameState.roomId){
       try{
-        await db.collection('chat').add({
+        await dbChat.collection('chat').add({
           roomId: gameState.roomId,
           author,
           authorId: gameState.myId,
@@ -3777,7 +3804,7 @@ function stopResultsForState(state){
 
 async function ensureStopRoomDoc(roomId = getStopRoomId()){
   const resolvedId = String(roomId || getStopRoomId() || STOP_ROOM_ID).trim() || STOP_ROOM_ID;
-  const ref = db.collection('stopRooms').doc(resolvedId);
+  const ref = dbStop.collection('stopRooms').doc(resolvedId);
   const snap = await ref.get();
   if(!snap.exists){
     const next = stopEmptyState();
@@ -4015,7 +4042,7 @@ function stopRenderPlayersSummary(state){
 
 async function subscribeStopRoom(){
   stopStopSubscriptions();
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
   gameState.stopUnsub = ref.onSnapshot(snap => {
     if(!snap.exists) return;
     gameState.stopState = stopCleanupState(normalizeStopState(snap.data()));
@@ -4039,7 +4066,7 @@ async function updateStopAnswer(key, value){
   gameState.stopDraftAnswers[key] = nextValue;
   player.lastSeen = Date.now();
   try {
-    await db.collection('stopRooms').doc(getStopRoomId()).update({
+    await dbStop.collection('stopRooms').doc(getStopRoomId()).update({
       [`players.${gameState.myId}.answers.${key}`]: nextValue,
       [`players.${gameState.myId}.lastSeen`]: Date.now()
     });
@@ -4071,8 +4098,8 @@ async function joinStopRoom(roomId = STOP_ROOM_ID){
 
   try{
     await ensureStopRoomDoc(roomId || STOP_ROOM_ID);
-    const ref = db.collection('stopRooms').doc(getStopRoomId());
-    const joined = await db.runTransaction(async (tx) => {
+    const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
+    const joined = await dbCartas.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
@@ -4119,7 +4146,7 @@ function stopStartHeartbeat(){
     if(!gameState.stopMode || !gameState.stopState || !gameState.myId) return;
     const state = gameState.stopState;
     if(!state.players?.[gameState.myId]) return;
-    db.collection('stopRooms').doc(getStopRoomId()).update({
+    dbStop.collection('stopRooms').doc(getStopRoomId()).update({
       [`players.${gameState.myId}.lastSeen`]: Date.now(),
       [`players.${gameState.myId}.name`]: gameState.myName
     }).catch(()=>{});
@@ -4130,14 +4157,14 @@ function refreshCurrentMultiplayerPresence(){
   try{
     if(gameState.roomMode && gameState.roomId && gameState.mySlot){
       const pathBase = `state.slots.${gameState.mySlot}`;
-      db.collection('rooms').doc(gameState.roomId).update({
+      dbCartas.collection('rooms').doc(gameState.roomId).update({
         [`${pathBase}.id`]: gameState.myId,
         [`${pathBase}.name`]: gameState.myName,
         [`${pathBase}.lastSeen`]: Date.now()
       }).catch(()=>{});
     }
     if(gameState.stopMode && gameState.stopState && gameState.stopState.players?.[gameState.myId]){
-      db.collection('stopRooms').doc(getStopRoomId()).update({
+      dbStop.collection('stopRooms').doc(getStopRoomId()).update({
         [`players.${gameState.myId}.lastSeen`]: Date.now(),
         [`players.${gameState.myId}.name`]: gameState.myName
       }).catch(()=>{});
@@ -4155,11 +4182,11 @@ async function stopLeaveCurrentRoom(){
   stopClearHeartbeat();
   stopStopSubscriptions();
   stopMusicPlayback();
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
   const myId = gameState.myId;
   let shouldReset = false;
   try{
-    await db.runTransaction(async (tx) => {
+    await dbCartas.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) return;
       let state = stopCleanupState(normalizeStopState(snap.data()));
@@ -4198,9 +4225,9 @@ function stopSetLayout(){
 
 async function pressStop(){
   if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
   try{
-    await db.runTransaction(async (tx) => {
+    await dbCartas.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
@@ -4246,9 +4273,9 @@ async function pressStop(){
 
 async function startStopNewGame(){
   if(!gameState.stopMode || !gameState.stopState) return;
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
   try{
-    await db.runTransaction(async (tx) => {
+    await dbCartas.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
@@ -4284,9 +4311,9 @@ async function startStopNewGame(){
 
 async function stopPlayAgain(){
   if(!gameState.stopMode || !gameState.stopState) return;
-  const ref = db.collection('stopRooms').doc(getStopRoomId());
+  const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
   try{
-    await db.runTransaction(async (tx) => {
+    await dbCartas.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
