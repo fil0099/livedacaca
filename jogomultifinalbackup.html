@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>33Cartas - Jogo Multiplayer com Chat</title>
+  <title>Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -4099,7 +4099,7 @@ async function joinStopRoom(roomId = STOP_ROOM_ID){
   try{
     await ensureStopRoomDoc(roomId || STOP_ROOM_ID);
     const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
-    const joined = await dbCartas.runTransaction(async (tx) => {
+    const joined = await dbStop.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
@@ -4186,7 +4186,7 @@ async function stopLeaveCurrentRoom(){
   const myId = gameState.myId;
   let shouldReset = false;
   try{
-    await dbCartas.runTransaction(async (tx) => {
+    await dbStop.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) return;
       let state = stopCleanupState(normalizeStopState(snap.data()));
@@ -4227,7 +4227,7 @@ async function pressStop(){
   if(!gameState.stopMode || !gameState.stopState || gameState.stopState.phase !== 'writing') return;
   const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
   try{
-    await dbCartas.runTransaction(async (tx) => {
+    await dbStop.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
@@ -4275,7 +4275,7 @@ async function startStopNewGame(){
   if(!gameState.stopMode || !gameState.stopState) return;
   const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
   try{
-    await dbCartas.runTransaction(async (tx) => {
+    await dbStop.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
@@ -4313,7 +4313,7 @@ async function stopPlayAgain(){
   if(!gameState.stopMode || !gameState.stopState) return;
   const ref = dbStop.collection('stopRooms').doc(getStopRoomId());
   try{
-    await dbCartas.runTransaction(async (tx) => {
+    await dbStop.runTransaction(async (tx) => {
       const snap = await tx.get(ref);
       if(!snap.exists) throw new Error('Sala Stop não encontrada');
       let state = stopCleanupState(normalizeStopState(snap.data()));
