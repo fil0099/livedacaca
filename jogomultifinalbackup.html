@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Cartas - Jogo Multiplayer com Chat</title>
+  <title>xCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -556,6 +556,134 @@
     }
     body.chat-room-mode #chatPanel .chat-header{
       gap:10px;
+    }
+
+    body.karaoke-room-mode #musicPlayer{
+      display:none !important;
+    }
+    body.karaoke-room-mode #chatPanel{
+      display:none !important;
+    }
+    body.karaoke-room-mode #karaokePanel{
+      display:flex !important;
+      position:fixed;
+      left:50%;
+      top:58%;
+      transform:translate(-50%, -50%);
+      width:min(880px, calc(100vw - 32px));
+      height:min(68vh, 620px);
+      max-height:calc(100vh - 120px);
+      z-index:45;
+      flex-direction:column;
+      gap:12px;
+    }
+    body.karaoke-room-mode #karaokePanel .karaoke-stage{
+      flex:1;
+      min-height:0;
+    }
+
+    .karaoke-panel{
+      border:1px solid var(--stroke);
+      background:var(--panel-strong);
+      box-shadow:var(--shadow);
+      border-radius:24px;
+      backdrop-filter: blur(12px);
+    }
+    .karaoke-panel .karaoke-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:14px 16px 0;
+    }
+    .karaoke-head strong{ font-size:1rem; }
+    .karaoke-controls{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+      padding:0 16px 14px;
+    }
+    .karaoke-controls input, .karaoke-controls textarea{
+      flex:1;
+      min-width:0;
+      padding:12px 14px;
+      border-radius:16px;
+      border:1px solid var(--stroke);
+      background:var(--panel);
+      color:var(--text);
+      outline:none;
+      font-size:1rem;
+    }
+    .karaoke-stage{
+      display:grid;
+      grid-template-columns: 1.05fr .95fr;
+      gap:12px;
+      padding:0 16px 16px;
+      min-height:0;
+    }
+    .karaoke-video{
+      border-radius:20px;
+      overflow:hidden;
+      border:1px solid var(--stroke);
+      background:#000;
+      min-height:320px;
+      position:relative;
+    }
+    .karaoke-video iframe{
+      width:100%;
+      height:100%;
+      border:0;
+      display:block;
+    }
+    .karaoke-lyrics{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+      overflow:auto;
+      padding-right:4px;
+    }
+    .karaoke-lyrics-box{
+      border:1px solid var(--stroke);
+      border-radius:20px;
+      background:rgba(255,255,255,.08);
+      padding:16px;
+      min-height:320px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:14px;
+    }
+    .karaoke-line{
+      font-size:clamp(1.2rem, 2.8vw, 2rem);
+      line-height:1.5;
+      font-weight:900;
+      letter-spacing:-0.03em;
+      word-break:break-word;
+    }
+    .karaoke-line .word{
+      display:inline-block;
+      padding:0 .16em;
+      border-radius:8px;
+      transition:background .12s ease, color .12s ease, transform .12s ease;
+    }
+    .karaoke-line .word.active{
+      background:linear-gradient(135deg, rgba(34,197,94,.28), rgba(14,165,233,.20));
+      color:var(--text);
+      transform:translateY(-1px);
+    }
+    .karaoke-line.muted{
+      color:var(--muted);
+      font-weight:700;
+      font-size:clamp(.95rem, 2vw, 1.1rem);
+    }
+    .karaoke-status{
+      padding:10px 16px 14px;
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.5;
     }
 
     /* Remove a quebra de layout em telas menores – mantém sempre 3 colunas */
@@ -1124,6 +1252,38 @@
   </div>
 
   
+  <div id="karaokePanel" class="karaoke-panel chat-panel" style="display:none">
+    <div class="karaoke-head">
+      <strong id="karaokePanelTitle">🎤 Karaoke</strong>
+      <div class="chat-header-actions">
+        <button class="btn secondary small hidden" id="karaokeBackBtn" type="button" onclick="backToLobby()">Voltar</button>
+        <button class="chat-collapse-btn" onclick="toggleKaraokePanel()">−</button>
+      </div>
+    </div>
+    <div class="karaoke-controls">
+      <input type="text" id="karaokeQueryInput" placeholder="Cole a URL do YouTube ou escreva o nome da música" />
+      <button class="btn secondary" type="button" onclick="loadKaraokeTrack()">Carregar</button>
+      <button class="btn secondary" type="button" onclick="searchKaraokeOnYouTube()">Pesquisar no YouTube</button>
+    </div>
+    <div class="karaoke-stage">
+      <div class="karaoke-video">
+        <div id="karaokePlayer"></div>
+      </div>
+      <div class="karaoke-lyrics">
+        <div class="karaoke-lyrics-box">
+          <div id="karaokeLyricLine" class="karaoke-line muted">Adicione uma música para começar.</div>
+          <div id="karaokeLyricNext" class="karaoke-line muted" style="font-size:clamp(.95rem, 2vw, 1.1rem);"></div>
+        </div>
+      </div>
+    </div>
+    <div class="karaoke-status" id="karaokeStatus">Você pode colar uma URL do YouTube e, abaixo, colar a letra com marcação de tempo no formato LRC.</div>
+    <div class="karaoke-controls" style="padding-top:0;">
+      <textarea id="karaokeLyricsInput" rows="5" placeholder="[00:12.00]Primeira linha\n[00:18.00]Segunda linha\n[00:24.00]Terceira linha"></textarea>
+      <button class="btn secondary" type="button" onclick="saveKaraokeLyrics()">Salvar letra</button>
+      <button class="btn secondary" type="button" onclick="syncKaraokeFromPlayer()">Sincronizar</button>
+    </div>
+  </div>
+
   <div id="stopHistoryModal" class="modal" style="display:none">
     <div class="modal-card" style="max-width:920px;">
       <div class="section-title">
@@ -2383,6 +2543,7 @@ const STOP_STALE_MS = 120000;
             <select id="newRoomTypeInput" class="field">
               <option value="card">Sala de cartas</option>
               <option value="chat">Sala de bate-papo</option>
+              <option value="karaoke">Sala de karaoke</option>
               <option value="stop">Sala de stop</option>
             </select>
             <button class="btn" type="button" onclick="createAdminRoom()">Criar sala</button>
@@ -2492,6 +2653,7 @@ const STOP_STALE_MS = 120000;
     { id: 'sala1', name: 'Sala 1', type: 'card' },
     { id: 'sala2', name: 'Sala 2', type: 'card' },
     { id: 'sala3', name: 'Sala 3', type: 'card' },
+    { id: 'karaoke-main', name: 'Sala Karaoke', type: 'karaoke' },
     { id: 'stop-main', name: 'Sala Stop', type: 'stop' }
   ];
   const PERM_KEYS = ['password','rooms','music','autoplay','delegate'];
@@ -2537,7 +2699,7 @@ const STOP_STALE_MS = 120000;
     const next = {
       ...base,
       ...local,
-      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : (String(r.type||'card').trim() === 'chat' ? 'chat' : 'card')), hidden: !!r.hidden, baseFor: String(r.baseFor || '').trim() })).filter(r => r.id) : base.rooms.slice(),
+      rooms: Array.isArray(local.rooms) && local.rooms.length ? local.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : (String(r.type||'card').trim() === 'chat' ? 'chat' : (String(r.type||'card').trim() === 'karaoke' ? 'karaoke' : 'card'))), hidden: !!r.hidden, baseFor: String(r.baseFor || '').trim() })).filter(r => r.id) : base.rooms.slice(),
       roomMeta: { ...base.roomMeta, ...(local.roomMeta || {}) },
       delegations: local.delegations && typeof local.delegations === 'object' ? local.delegations : {},
       userRegistry: Array.isArray(local.userRegistry) ? local.userRegistry : []
@@ -2546,7 +2708,7 @@ const STOP_STALE_MS = 120000;
     next.rooms.forEach(room => {
       if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card', hidden: !!room.hidden, baseFor: room.baseFor || '' };
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
-      next.roomMeta[room.id].type = ['stop','chat','card'].includes(String(next.roomMeta[room.id].type || room.type || 'card').trim()) ? String(next.roomMeta[room.id].type || room.type || 'card').trim() : 'card';
+      next.roomMeta[room.id].type = ['stop','chat','karaoke','card'].includes(String(next.roomMeta[room.id].type || room.type || 'card').trim()) ? String(next.roomMeta[room.id].type || room.type || 'card').trim() : 'card';
       next.roomMeta[room.id].hidden = next.roomMeta[room.id].hidden === true || room.hidden === true;
       next.roomMeta[room.id].baseFor = String(next.roomMeta[room.id].baseFor || room.baseFor || '').trim();
       next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
@@ -2567,14 +2729,14 @@ const STOP_STALE_MS = 120000;
     if(!remote || typeof remote !== 'object') return;
     const next = loadSettings();
     if(typeof remote.adminPassword === 'string') next.adminPassword = remote.adminPassword;
-    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : (String(r.type||'card').trim() === 'chat' ? 'chat' : 'card')), hidden: !!r.hidden, baseFor: String(r.baseFor || '').trim() })).filter(r => r.id);
+    if(Array.isArray(remote.rooms)) next.rooms = remote.rooms.map(r => ({ id:String(r.id||'').trim(), name:String(r.name||r.id||'').trim() || String(r.id||'').trim(), type:(String(r.type||'card').trim() === 'stop' ? 'stop' : (String(r.type||'card').trim() === 'chat' ? 'chat' : (String(r.type||'card').trim() === 'karaoke' ? 'karaoke' : 'card'))), hidden: !!r.hidden, baseFor: String(r.baseFor || '').trim() })).filter(r => r.id);
     if(remote.roomMeta && typeof remote.roomMeta === 'object') next.roomMeta = { ...next.roomMeta, ...remote.roomMeta };
     if(remote.delegations && typeof remote.delegations === 'object') next.delegations = remote.delegations;
     if(Array.isArray(remote.userRegistry)) next.userRegistry = remote.userRegistry;
     next.rooms.forEach(room => {
       if(!next.roomMeta[room.id]) next.roomMeta[room.id] = { name:room.name, password:'', autoplay:true, listenMode:false, playlist:DEFAULT_PLAYLIST.slice(), type:room.type || 'card', hidden: !!room.hidden, baseFor: room.baseFor || '' };
       next.roomMeta[room.id].name = next.roomMeta[room.id].name || room.name;
-      next.roomMeta[room.id].type = ['stop','chat','card'].includes(String(next.roomMeta[room.id].type || room.type || 'card').trim()) ? String(next.roomMeta[room.id].type || room.type || 'card').trim() : 'card';
+      next.roomMeta[room.id].type = ['stop','chat','karaoke','card'].includes(String(next.roomMeta[room.id].type || room.type || 'card').trim()) ? String(next.roomMeta[room.id].type || room.type || 'card').trim() : 'card';
       next.roomMeta[room.id].hidden = next.roomMeta[room.id].hidden === true || room.hidden === true;
       next.roomMeta[room.id].baseFor = String(next.roomMeta[room.id].baseFor || room.baseFor || '').trim();
       next.roomMeta[room.id].password = String(next.roomMeta[room.id].password || '');
@@ -2593,7 +2755,7 @@ const STOP_STALE_MS = 120000;
       const meta = adminState.settings.roomMeta?.[id] || {};
       if(meta.hidden === true || room.hidden === true) return null;
       const rawType = String(meta.type || room.type || 'card').trim();
-      const roomType = ['stop','chat','card'].includes(rawType) ? rawType : 'card';
+      const roomType = ['stop','chat','karaoke','card'].includes(rawType) ? rawType : 'card';
       if(type && roomType !== type) return null;
       const item = { id, name: String(meta.name || room.name || id).trim() || id, type: roomType };
       if(seen.has(item.id)) return null;
@@ -2605,7 +2767,7 @@ const STOP_STALE_MS = 120000;
   function getRoomMeta(roomId){
     const id = String(roomId || '').trim();
     const room = (adminState.settings.rooms || []).find(r => r.id === id);
-    const fallbackType = room ? (['stop','chat','card'].includes(String(room.type || 'card').trim()) ? String(room.type || 'card').trim() : 'card') : 'card';
+    const fallbackType = room ? (['stop','chat','karaoke','card'].includes(String(room.type || 'card').trim()) ? String(room.type || 'card').trim() : 'card') : 'card';
     const meta = adminState.settings.roomMeta?.[id] || {};
     return {
       name: id,
@@ -2625,7 +2787,7 @@ const STOP_STALE_MS = 120000;
     const id = String(roomId || '').trim();
     const meta = getRoomMeta(id);
     const rawType = String(meta.type || 'card').trim();
-    return ['stop','chat','card'].includes(rawType) ? rawType : 'card';
+    return ['stop','chat','karaoke','card'].includes(rawType) ? rawType : 'card';
   }
 
   function setRoomMeta(roomId, patch){
@@ -2741,7 +2903,7 @@ const STOP_STALE_MS = 120000;
     return getRoomMeta(roomId).playlist || DEFAULT_PLAYLIST.slice();
   }
   function roomAutoplay(roomId){
-    return getRoomType(roomId) !== 'stop' && getRoomMeta(roomId).autoplay !== false;
+    return !['stop','karaoke'].includes(getRoomType(roomId)) && getRoomMeta(roomId).autoplay !== false;
   }
 
   function refreshRoomListeners(){
@@ -2822,6 +2984,23 @@ const STOP_STALE_MS = 120000;
         container.appendChild(div);
         return;
       }
+      if(room.type === 'karaoke'){
+        const div = document.createElement('div');
+        div.className = 'room-card';
+        div.innerHTML = `
+          <div class="room-head">
+            <strong>${escapeHtml(room.name)}</strong>
+            <span class="room-tag">KARAOKÊ</span>
+          </div>
+          <small>Sala para cantar com letra sincronizada</small>
+          <div class="room-actions" style="align-items:center;">
+            <span class="pill">ID ${escapeHtml(room.id)}</span>
+            <button class="btn secondary" onclick="joinRoom('${room.id}')">${locked ? 'Entrar 🔒' : 'Entrar'}</button>
+          </div>
+        `;
+        container.appendChild(div);
+        return;
+      }
       if(room.type === 'chat'){
         const div = document.createElement('div');
         div.className = 'room-card';
@@ -2859,6 +3038,19 @@ const STOP_STALE_MS = 120000;
     });
   }
 
+  function createFreshKaraokeState(){
+    return {
+      videoUrl: '',
+      videoId: '',
+      title: '',
+      lyrics: '',
+      instrumentalUrl: '',
+      playing: false,
+      currentTime: 0,
+      updatedAt: Date.now()
+    };
+  }
+
   async function ensureRoomDoc(roomId){
     const ref = dbCartas.collection('rooms').doc(roomId);
     const snap = await ref.get();
@@ -2868,7 +3060,7 @@ const STOP_STALE_MS = 120000;
         roomId,
         roomName: currentRoomLabel(roomId),
         type,
-        state: type === 'chat' ? null : createFreshRoomState(),
+        state: type === 'karaoke' ? createFreshKaraokeState() : (type === 'chat' ? null : createFreshRoomState()),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       });
     }
@@ -2911,10 +3103,10 @@ const STOP_STALE_MS = 120000;
     let name = document.getElementById('newRoomNameInput')?.value.trim();
     let id = document.getElementById('newRoomIdInput')?.value.trim();
     const rawType = String(document.getElementById('newRoomTypeInput')?.value || 'card').trim();
-    const type = ['card','chat','stop'].includes(rawType) ? rawType : 'card';
-    if(!name) name = type === 'stop' ? 'Sala Stop' : (type === 'chat' ? 'Sala de bate-papo' : 'Nova sala');
+    const type = ['card','chat','karaoke','stop'].includes(rawType) ? rawType : 'card';
+    if(!name) name = type === 'stop' ? 'Sala Stop' : (type === 'chat' ? 'Sala de bate-papo' : (type === 'karaoke' ? 'Sala de karaoke' : 'Nova sala'));
     if(!id){
-      id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || (type === 'stop' ? 'stop' : (type === 'chat' ? 'chat' : 'sala'));
+      id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) || (type === 'stop' ? 'stop' : (type === 'chat' ? 'chat' : (type === 'karaoke' ? 'karaoke' : 'sala')));
       id = `${id}${Math.floor(Math.random()*90+10)}`;
     }
     if(adminState.settings.rooms.some(r => r.id === id)) return alert('Já existe uma sala com esse ID.');
@@ -2986,8 +3178,9 @@ const STOP_STALE_MS = 120000;
     const meta = getRoomMeta(current);
     const room = adminState.roomCache[current];
     const occupied = room?.state ? Object.values(room.state.slots || {}).filter(Boolean).length : 0;
+    const roomType = getRoomType(current);
     list.innerHTML = `
-      <div class="list-item"><div><strong>${escapeHtml(meta.name || current)}</strong><div><small>ID ${escapeHtml(current)} · ${occupied}/4 · tipo ${escapeHtml(getRoomType(current) === 'stop' ? 'stop' : (getRoomType(current) === 'chat' ? 'bate-papo' : 'cartas'))}</small></div></div><button class="btn secondary small" onclick="deleteAdminRoom('${escapeHtml(current)}')">Deletar</button></div>
+      <div class="list-item"><div><strong>${escapeHtml(meta.name || current)}</strong><div><small>ID ${escapeHtml(current)} · ${occupied}/4 · tipo ${escapeHtml(roomType === 'stop' ? 'stop' : (roomType === 'chat' ? 'bate-papo' : (roomType === 'karaoke' ? 'karaokê' : 'cartas')))}</small></div></div><button class="btn secondary small" onclick="deleteAdminRoom('${escapeHtml(current)}')">Deletar</button></div>
       <div class="list-item"><input id="roomPasswordInput" type="text" placeholder="Senha da sala" value="${escapeHtml(meta.password || '')}" /><button class="btn" type="button" onclick="saveRoomPassword()">Salvar senha</button></div>
       <div class="list-item"><input id="roomNameInput" type="text" placeholder="Nome da sala" value="${escapeHtml(meta.name || current)}" /><button class="btn secondary" type="button" onclick="saveRoomName()">Salvar nome</button></div>
       <div class="list-item">
@@ -2996,6 +3189,11 @@ const STOP_STALE_MS = 120000;
           <span class="switch"><input id="roomListenModeToggle" type="checkbox" onchange="toggleRoomListenMode()" /><span class="slider"></span></span>
         </label>
       </div>
+      ${roomType === 'karaoke' ? `
+      <div class="list-item"><input id="karaokeRoomUrlInput" type="text" placeholder="URL do YouTube ou busca" value="${escapeHtml(meta.karaokeUrl || '')}" /><button class="btn" type="button" onclick="saveKaraokeRoomUrl()">Salvar vídeo</button></div>
+      <div class="list-item"><textarea id="karaokeRoomLyricsInput" rows="5" placeholder="[00:12.00]Primeira linha\n[00:18.00]Segunda linha">${escapeHtml(meta.karaokeLyrics || '')}</textarea><button class="btn" type="button" onclick="saveKaraokeRoomLyrics()">Salvar letra</button></div>
+      <div class="list-item"><input id="karaokeRoomInstrumentalInput" type="text" placeholder="URL instrumental opcional" value="${escapeHtml(meta.karaokeInstrumentalUrl || '')}" /><button class="btn secondary" type="button" onclick="saveKaraokeInstrumentalUrl()">Salvar instrumental</button></div>
+      ` : ''}
     `;
     const music = document.getElementById('roomMusicList');
     if(music) music.value = (meta.playlist || DEFAULT_PLAYLIST).join('\n');
@@ -3003,6 +3201,12 @@ const STOP_STALE_MS = 120000;
     if(toggle) toggle.checked = meta.autoplay !== false;
     const listenToggle = document.getElementById('roomListenModeToggle');
     if(listenToggle) listenToggle.checked = meta.listenMode === true;
+    const kUrl = document.getElementById('karaokeRoomUrlInput');
+    if(kUrl) kUrl.value = meta.karaokeUrl || '';
+    const kLyrics = document.getElementById('karaokeRoomLyricsInput');
+    if(kLyrics) kLyrics.value = meta.karaokeLyrics || '';
+    const kIns = document.getElementById('karaokeRoomInstrumentalInput');
+    if(kIns) kIns.value = meta.karaokeInstrumentalUrl || '';
   }
 
   function saveRoomPassword(){
@@ -3050,6 +3254,25 @@ const STOP_STALE_MS = 120000;
     if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
     const toggle = document.getElementById('roomListenModeToggle');
     setRoomMeta(adminState.selectedRoomId, { listenMode: !!toggle?.checked });
+  }
+
+  function saveKaraokeRoomUrl(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const input = document.getElementById('karaokeRoomUrlInput');
+    setRoomMeta(adminState.selectedRoomId, { karaokeUrl: String(input?.value || '').trim() });
+    if(gameState.roomMode && gameState.roomId === adminState.selectedRoomId){ refreshCurrentRoomMusic(); }
+  }
+  function saveKaraokeRoomLyrics(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const input = document.getElementById('karaokeRoomLyricsInput');
+    setRoomMeta(adminState.selectedRoomId, { karaokeLyrics: String(input?.value || '') });
+    if(gameState.roomMode && gameState.roomId === adminState.selectedRoomId){ refreshCurrentRoomMusic(); }
+  }
+  function saveKaraokeInstrumentalUrl(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const input = document.getElementById('karaokeRoomInstrumentalInput');
+    setRoomMeta(adminState.selectedRoomId, { karaokeInstrumentalUrl: String(input?.value || '').trim() });
+    if(gameState.roomMode && gameState.roomId === adminState.selectedRoomId){ refreshCurrentRoomMusic(); }
   }
 
   function renderAdminDelegationSearch(){
@@ -4592,11 +4815,318 @@ window.addEventListener('beforeunload', () => {
   window.openPeopleModal = openPeopleModal;
   window.closePeopleModal = closePeopleModal;
   window.renderPeopleModal = renderPeopleModal;
+  window.setupMusic = setupMusic;
+  window.applyModeUI = applyModeUI;
+  window.showGame = showGame;
+  window.backToLobby = backToLobby;
+  window.joinRoom = joinRoom;
+  window.refreshThemeForMode = refreshThemeForMode;
+  window.ensureRoomDoc = ensureRoomDoc;
+  window.subscribeRoom = subscribeRoom;
+  window.startRoomHeartbeat = startRoomHeartbeat;
+  window.setRoomMeta = setRoomMeta;
+  window.getRoomMeta = getRoomMeta;
+  window.getRoomType = getRoomType;
+  window.currentRoomLabel = currentRoomLabel;
+  window.roomAutoplay = roomAutoplay;
+  window.dbCartas = dbCartas;
+  window.adminState = adminState;
+})();
+</script>
+
+
+<script>
+(function(){
+  function parseYouTubeId(input){
+    const value = String(input || '').trim();
+    if(!value) return '';
+    const m = value.match(/(?:youtu\.be\/|v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{6,})/);
+    if(m) return m[1];
+    if(/^[A-Za-z0-9_-]{11}$/.test(value)) return value;
+    return '';
+  }
+
+  function toYouTubeEmbedUrl(input){
+    const id = parseYouTubeId(input);
+    return id ? `https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0&playsinline=1` : '';
+  }
+
+  function parseLrcLyrics(raw){
+    const lines = String(raw || '').split(/\r?\n/);
+    const out = [];
+    for(const line of lines){
+      const m = line.match(/^\[(\d{1,2}):(\d{2})(?:\.(\d{1,2}))?\]\s*(.*)$/);
+      if(m){
+        const mm = Number(m[1]) || 0;
+        const ss = Number(m[2]) || 0;
+        const cc = Number(String(m[3] || '0').padEnd(2, '0')) || 0;
+        out.push({ time: mm * 60 + ss + cc / 100, text: m[4] || '' });
+      } else if(line.trim()) {
+        out.push({ time: null, text: line.trim() });
+      }
+    }
+    return out;
+  }
+
+  function escapeHtml(text){
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function gs(){ return window.gameState || {}; }
+  function meta(roomId){ try { return window.getRoomMeta ? window.getRoomMeta(roomId) : {}; } catch(e){ return {}; } }
+  function clearTimer(){
+    const s = gs();
+    if(s.karaokeSyncTimer){
+      clearInterval(s.karaokeSyncTimer);
+      s.karaokeSyncTimer = null;
+    }
+  }
+  function currentTime(){
+    const s = gs();
+    try{
+      if(s.karaokePlayer && typeof s.karaokePlayer.getCurrentTime === 'function'){
+        return Number(s.karaokePlayer.getCurrentTime() || 0);
+      }
+    }catch(e){}
+    return Number(s.karaokeState?.currentTime || 0);
+  }
+
+  function createFreshKaraokeState(){
+    return {
+      videoUrl: '',
+      videoId: '',
+      title: '',
+      lyrics: '',
+      instrumentalUrl: '',
+      playing: false,
+      currentTime: 0,
+      updatedAt: Date.now()
+    };
+  }
+
+  function renderLyrics(){
+    const s = gs();
+    const state = s.karaokeState || createFreshKaraokeState();
+    const lineBox = document.getElementById('karaokeLyricLine');
+    const nextBox = document.getElementById('karaokeLyricNext');
+    const status = document.getElementById('karaokeStatus');
+    if(!lineBox || !nextBox) return;
+    const lines = parseLrcLyrics(state.lyrics);
+    if(!lines.length){
+      lineBox.className = 'karaoke-line muted';
+      lineBox.textContent = 'Cole a letra para ver o karaokê sincronizado.';
+      nextBox.textContent = '';
+      if(status) status.textContent = state.videoId ? 'Vídeo carregado. Cole a letra com marcação de tempo no formato LRC para sincronizar.' : 'Adicione uma música para começar.';
+      return;
+    }
+    const t = currentTime();
+    let currentIndex = 0;
+    for(let i = 0; i < lines.length; i++){
+      if(lines[i].time !== null && lines[i].time <= t) currentIndex = i;
+    }
+    const current = lines[currentIndex] || lines[0];
+    const next = lines[currentIndex + 1] || null;
+    const duration = Math.max(2.5, (next && next.time !== null && current.time !== null) ? (next.time - current.time) : 3.5);
+    const progress = current.time === null ? 1 : Math.max(0, Math.min(1, (t - current.time) / duration));
+    const words = String(current.text || '').split(/\s+/).filter(Boolean);
+    const activeWord = words.length ? Math.min(words.length - 1, Math.max(0, Math.floor(progress * words.length))) : -1;
+    lineBox.className = 'karaoke-line';
+    lineBox.innerHTML = words.map((w, idx) => `<span class="word ${idx === activeWord ? 'active' : ''}">${escapeHtml(w)}</span>`).join(' ');
+    nextBox.className = 'karaoke-line muted';
+    nextBox.textContent = next ? (next.text || '') : '';
+    if(status) status.textContent = state.instrumentalUrl ? 'Áudio instrumental definido. A letra está sincronizada na sala.' : 'Use a letra em LRC para marcar palavra por palavra enquanto a música toca.';
+  }
+
+  function renderRoom(){
+    const s = gs();
+    if(!s.karaokeMode || !s.roomId) return;
+    const roomMeta = meta(s.roomId);
+    const roomDoc = (window.adminState && window.adminState.roomCache && window.adminState.roomCache[s.roomId]) || {};
+    const state = { ...createFreshKaraokeState(), ...(roomDoc.state || {}), ...(s.karaokeState || {}) };
+    state.videoUrl = roomMeta.karaokeUrl || state.videoUrl || '';
+    state.lyrics = roomMeta.karaokeLyrics || state.lyrics || '';
+    state.instrumentalUrl = roomMeta.karaokeInstrumentalUrl || state.instrumentalUrl || '';
+    s.karaokeState = state;
+
+    const title = document.getElementById('karaokePanelTitle');
+    if(title) title.textContent = `🎤 ${roomMeta.name || s.roomId}`;
+    const playerHost = document.getElementById('karaokePlayer');
+    if(playerHost){
+      const src = toYouTubeEmbedUrl(state.videoUrl);
+      playerHost.innerHTML = src ? `<iframe id="karaokeIframe" src="${escapeHtml(src)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : `<div style="padding:16px;color:var(--muted);display:flex;align-items:center;justify-content:center;height:100%;text-align:center;">Cole uma URL do YouTube para começar.</div>`;
+    }
+    const input = document.getElementById('karaokeQueryInput');
+    if(input && state.videoUrl) input.value = state.videoUrl;
+    const lyricsInput = document.getElementById('karaokeLyricsInput');
+    if(lyricsInput && state.lyrics) lyricsInput.value = state.lyrics;
+
+    clearTimer();
+    s.karaokeSyncTimer = setInterval(renderLyrics, 250);
+    renderLyrics();
+  }
+
+  async function joinKaraokeRoomImpl(roomId){
+    const s = gs();
+    const roomMeta = meta(roomId);
+    const inputName = String(document.getElementById('roomName')?.value || '').trim();
+    if(!inputName){
+      alert('Digite seu nome antes de entrar na sala.');
+      return;
+    }
+    if(roomMeta.password){
+      const typed = String(prompt(`Senha da sala ${roomId}:`) || '').trim();
+      if(typed !== String(roomMeta.password || '').trim()){
+        alert('Senha incorreta.');
+        return;
+      }
+    }
+
+    s.karaokeMode = true;
+    s.karaokeRoomId = roomId;
+    s.karaokeState = s.karaokeState || createFreshKaraokeState();
+    s.roomMode = true;
+    s.roomType = 'karaoke';
+    s.roomId = roomId;
+    s.mySlot = null;
+    s.myName = inputName.slice(0, 18);
+    s.stopMode = false;
+
+    if(window.showGame) window.showGame();
+    document.body.classList.add('karaoke-room-mode');
+    document.body.classList.remove('chat-room-mode');
+    if(window.applyModeUI) window.applyModeUI();
+    if(window.refreshThemeForMode) window.refreshThemeForMode();
+    renderRoom();
+
+    if(roomMeta.karaokeUrl){
+      const q = document.getElementById('karaokeQueryInput');
+      if(q) q.value = roomMeta.karaokeUrl;
+      loadKaraokeTrack();
+    }
+    if(roomMeta.karaokeLyrics){
+      const lyrics = document.getElementById('karaokeLyricsInput');
+      if(lyrics) lyrics.value = roomMeta.karaokeLyrics;
+      saveKaraokeLyrics();
+    }
+  }
+
+  function loadKaraokeTrack(){
+    const s = gs();
+    if(!s.karaokeMode || !s.roomId) return;
+    const input = document.getElementById('karaokeQueryInput');
+    const value = String(input?.value || '').trim();
+    if(!value) return alert('Cole uma URL do YouTube ou escreva o nome da música.');
+    if(window.setRoomMeta) window.setRoomMeta(s.roomId, { karaokeUrl: value });
+    const id = parseYouTubeId(value);
+    const iframe = document.getElementById('karaokeIframe');
+    if(id && iframe){
+      iframe.src = toYouTubeEmbedUrl(id);
+      s.karaokeState = { ...(s.karaokeState || createFreshKaraokeState()), videoUrl: value, videoId: id };
+      renderLyrics();
+      return;
+    }
+    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(value)}`, '_blank', 'noopener,noreferrer');
+  }
+
+  function searchKaraokeOnYouTube(){
+    const value = String(document.getElementById('karaokeQueryInput')?.value || '').trim();
+    if(!value) return alert('Digite o nome da música para pesquisar.');
+    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(value)}`, '_blank', 'noopener,noreferrer');
+  }
+
+  function saveKaraokeLyrics(){
+    const s = gs();
+    if(!s.karaokeMode || !s.roomId) return;
+    const input = document.getElementById('karaokeLyricsInput');
+    const lyrics = String(input?.value || '');
+    s.karaokeState = { ...(s.karaokeState || createFreshKaraokeState()), lyrics };
+    if(window.setRoomMeta) window.setRoomMeta(s.roomId, { karaokeLyrics: lyrics });
+    renderLyrics();
+  }
+
+  function syncKaraokeFromPlayer(){
+    renderLyrics();
+  }
+
+  function toggleKaraokePanel(){
+    const panel = document.getElementById('karaokePanel');
+    if(panel) panel.classList.toggle('collapsed');
+  }
+
+  const origSetupMusic = window.setupMusic;
+  window.setupMusic = function(){
+    if(gs().karaokeMode) return;
+    return origSetupMusic && origSetupMusic();
+  };
+
+  const origApplyModeUI = window.applyModeUI;
+  window.applyModeUI = function(){
+    if(origApplyModeUI) origApplyModeUI();
+    const music = document.getElementById('musicPlayer');
+    if(music) music.style.display = gs().karaokeMode ? 'none' : '';
+  };
+
+  const origShowGame = window.showGame;
+  window.showGame = function(){
+    if(origShowGame) origShowGame();
+    if(gs().karaokeMode){
+      document.body.classList.add('karaoke-room-mode');
+      document.body.classList.remove('chat-room-mode');
+      const chat = document.getElementById('chatPanel');
+      if(chat) chat.style.display = 'none';
+      const karaoke = document.getElementById('karaokePanel');
+      if(karaoke) karaoke.style.display = 'flex';
+      const board = document.getElementById('gameBoard');
+      if(board) board.style.display = 'none';
+      renderRoom();
+    } else {
+      document.body.classList.remove('karaoke-room-mode');
+    }
+  };
+
+  const origBackToLobby = window.backToLobby;
+  window.backToLobby = async function(){
+    clearTimer();
+    const s = gs();
+    if(s.karaokePlayer && typeof s.karaokePlayer.destroy === 'function'){
+      try{ s.karaokePlayer.destroy(); }catch(e){}
+      s.karaokePlayer = null;
+    }
+    s.karaokeMode = false;
+    s.karaokeRoomId = null;
+    document.body.classList.remove('karaoke-room-mode');
+    const karaoke = document.getElementById('karaokePanel');
+    if(karaoke) karaoke.style.display = 'none';
+    return origBackToLobby ? origBackToLobby() : undefined;
+  };
+
+  const origJoinRoom = window.joinRoom;
+  window.joinRoom = async function(roomId){
+    const roomType = window.getRoomType ? window.getRoomType(roomId) : 'card';
+    if(roomType === 'karaoke') return joinKaraokeRoomImpl(roomId);
+    return origJoinRoom ? origJoinRoom(roomId) : undefined;
+  };
+
+  window.joinKaraokeRoomImpl = joinKaraokeRoomImpl;
+  window.loadKaraokeTrack = loadKaraokeTrack;
+  window.searchKaraokeOnYouTube = searchKaraokeOnYouTube;
+  window.saveKaraokeLyrics = saveKaraokeLyrics;
+  window.syncKaraokeFromPlayer = syncKaraokeFromPlayer;
+  window.toggleKaraokePanel = toggleKaraokePanel;
+  window.renderKaraokeRoom = renderRoom;
+  window.renderKaraokeLyrics = renderLyrics;
+  window.onYouTubeIframeAPIReady = function(){};
 })();
 </script>
 
 <!-- ====== JITSI MEET INTEGRATION - VOZ EM TEMPO REAL ====== -->
 <script src="https://meet.jit.si/external_api.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 <style>
   #jitsiFloatBtn{
     position:fixed; left:14px; top:50%; transform:translateY(-50%);
