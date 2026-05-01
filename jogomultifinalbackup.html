@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>00Cartas - Jogo Multiplayer com Chat</title>
+  <title>vvCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -1305,6 +1305,7 @@
     <div class="karaoke-controls">
       <input type="text" id="karaokeQueryInput" placeholder="Cole a URL do YouTube ou escreva o nome da música" />
       <button class="btn secondary" type="button" onclick="loadKaraokeTrack()">Carregar</button>
+      <button id="karaokeStartBtn" class="btn" type="button" onclick="startKaraoke()">Começar</button>
       <button class="btn secondary" type="button" onclick="searchKaraokeOnYouTube()">Pesquisar no YouTube</button>
     </div>
     <div id="karaokeSearchPanel" class="karaoke-search-panel">
@@ -3096,7 +3097,10 @@ const STOP_STALE_MS = 120000;
       lyrics: '',
       instrumentalUrl: '',
       playing: false,
+      started: false,
+      ready: false,
       currentTime: 0,
+      startedAt: 0,
       updatedAt: Date.now()
     };
   }
@@ -4915,9 +4919,9 @@ window.addEventListener('beforeunload', () => {
     return loose ? loose[1] : '';
   }
 
-  function toYouTubeEmbedUrl(input){
+  function toYouTubeEmbedUrl(input, autoplay = false){
     const id = parseYouTubeId(input);
-    return id ? `https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0&playsinline=1` : '';
+    return id ? `https://www.youtube.com/embed/${id}?autoplay=${autoplay ? 1 : 0}&controls=1&rel=0&playsinline=1&enablejsapi=1&origin=${encodeURIComponent(window.location.origin || '')}` : '';
   }
 
   function setKaraokeStatus(message){
@@ -4967,7 +4971,11 @@ window.addEventListener('beforeunload', () => {
         return Number(s.karaokePlayer.getCurrentTime() || 0);
       }
     }catch(e){}
-    return Number(s.karaokeState?.currentTime || 0);
+    const state = s.karaokeState || {};
+    if(state.started && state.startedAt){
+      return Math.max(0, (Date.now() - Number(state.startedAt || Date.now())) / 1000);
+    }
+    return Number(state.currentTime || 0);
   }
 
   function createFreshKaraokeState(){
@@ -4978,7 +4986,10 @@ window.addEventListener('beforeunload', () => {
       lyrics: '',
       instrumentalUrl: '',
       playing: false,
+      started: false,
+      ready: false,
       currentTime: 0,
+      startedAt: 0,
       updatedAt: Date.now()
     };
   }
@@ -5094,6 +5105,112 @@ window.addEventListener('beforeunload', () => {
     return results;
   }
 
+  const karaokeYouTubeReadyQueue = [];
+  function isYouTubeApiReady(){
+    return !!(window.YT && window.YT.Player);
+  }
+  function waitForYouTubeApi(){
+    if(isYouTubeApiReady()) return Promise.resolve();
+    return new Promise(resolve => karaokeYouTubeReadyQueue.push(resolve));
+  }
+
+  function resolveYouTubeApiReady(){
+    while(karaokeYouTubeReadyQueue.length){
+      const fn = karaokeYouTubeReadyQueue.shift();
+      try{ fn(); }catch(e){}
+    }
+  }
+
+  async function ensureKaraokePlayer(){
+    const s = gs();
+    const host = document.getElementById('karaokePlayer');
+    if(!host) return null;
+    await waitForYouTubeApi();
+    if(s.karaokePlayer && typeof s.karaokePlayer.loadVideoById === 'function'){
+      return s.karaokePlayer;
+    }
+    if(!host.id) host.id = 'karaokePlayer';
+    s.karaokePlayer = new YT.Player('karaokePlayer', {
+      width: '1',
+      height: '1',
+      videoId: s.karaokeState?.videoId || '',
+      playerVars: {
+        autoplay: 0,
+        controls: 0,
+        rel: 0,
+        playsinline: 1,
+        modestbranding: 1,
+        fs: 0,
+        iv_load_policy: 3,
+        origin: window.location.origin || ''
+      },
+      events: {
+        onReady: function(event){
+          try{
+            const state = gs().karaokeState || createFreshKaraokeState();
+            if(state.videoId){
+              event.target.cueVideoById(state.videoId);
+            }
+            if(state.started){
+              event.target.playVideo();
+            }
+          }catch(e){}
+        },
+        onStateChange: function(event){
+          const state = gs().karaokeState || createFreshKaraokeState();
+          state.playing = event.data === YT.PlayerState.PLAYING;
+          state.currentTime = currentTime();
+          if(state.playing && !state.startedAt) state.startedAt = Date.now();
+          if(!gs().karaokeState) gs().karaokeState = state;
+        }
+      }
+    });
+    return s.karaokePlayer;
+  }
+
+  async function cueKaraokeVideo(videoId){
+    const s = gs();
+    if(!videoId) return null;
+    const player = await ensureKaraokePlayer();
+    if(player && typeof player.cueVideoById === 'function'){
+      try{ player.cueVideoById(videoId); }catch(e){}
+    }
+    s.karaokeState = { ...(s.karaokeState || createFreshKaraokeState()), videoId, ready: true, started: false, playing: false, currentTime: 0, startedAt: 0 };
+    return player;
+  }
+
+  async function startKaraokePlayback(){
+    const s = gs();
+    const state = s.karaokeState || createFreshKaraokeState();
+    if(!state.videoId){
+      alert('Carregue uma música primeiro.');
+      return;
+    }
+    const player = await ensureKaraokePlayer();
+    state.started = true;
+    state.playing = true;
+    state.startedAt = Date.now();
+    state.currentTime = 0;
+    s.karaokeState = state;
+    if(player){
+      try{
+        if(typeof player.cueVideoById === 'function' && state.videoId){
+          const currentVideo = typeof player.getVideoData === 'function' ? String(player.getVideoData()?.video_id || '') : '';
+          if(currentVideo !== state.videoId){
+            player.cueVideoById(state.videoId);
+          }
+        }
+        if(typeof player.playVideo === 'function'){
+          player.playVideo();
+        }
+      }catch(e){
+        console.warn('Não foi possível iniciar o vídeo agora:', e);
+      }
+    }
+    setKaraokeStatus('Karaokê iniciado. A legenda está em andamento.');
+    renderLyrics();
+  }
+
   async function openKaraokeSearchPanel(query){
     const panel = document.getElementById('karaokeSearchPanel');
     const status = document.getElementById('karaokeSearchStatus');
@@ -5197,11 +5314,23 @@ window.addEventListener('beforeunload', () => {
     const lines = parseLrcLyrics(state.lyrics);
     if(!lines.length){
       lineBox.className = 'karaoke-line muted';
-      lineBox.textContent = 'Cole a letra para ver o karaokê sincronizado.';
+      lineBox.textContent = 'Carregue uma música para preparar a letra.';
       nextBox.textContent = '';
-      if(status) status.textContent = state.videoId ? 'Vídeo carregado. Cole a letra com marcação de tempo no formato LRC para sincronizar.' : 'Adicione uma música para começar.';
+      if(status) status.textContent = state.videoId ? 'Música carregada. Agora clique em começar.' : 'Adicione uma música para começar.';
       return;
     }
+
+    if(!state.started){
+      const first = lines[0] || null;
+      const second = lines[1] || null;
+      lineBox.className = 'karaoke-line muted';
+      lineBox.textContent = first ? first.text : 'Clique em começar para iniciar o karaoke.';
+      nextBox.className = 'karaoke-line muted';
+      nextBox.textContent = second ? second.text : '';
+      if(status) status.textContent = 'Tudo pronto. Clique em começar para tocar a música e acompanhar a letra.';
+      return;
+    }
+
     const t = currentTime();
     let currentIndex = 0;
     for(let i = 0; i < lines.length; i++){
@@ -5233,18 +5362,25 @@ window.addEventListener('beforeunload', () => {
 
     const title = document.getElementById('karaokePanelTitle');
     if(title) title.textContent = `🎤 ${roomMeta.name || s.roomId}`;
-    const playerHost = document.getElementById('karaokePlayer');
-    if(playerHost){
-      const src = toYouTubeEmbedUrl(state.videoUrl);
-      playerHost.innerHTML = src ? `<iframe id="karaokeIframe" src="${escapeHtml(src)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>` : '';
-    }
+
     const input = document.getElementById('karaokeQueryInput');
     if(input && state.videoUrl) input.value = state.videoUrl;
     const lyricsInput = document.getElementById('karaokeLyricsInput');
     if(lyricsInput && state.lyrics) lyricsInput.value = state.lyrics;
 
+    const startBtn = document.getElementById('karaokeStartBtn');
+    if(startBtn){
+      startBtn.disabled = !state.videoId;
+      startBtn.textContent = state.started ? 'Reiniciar' : 'Começar';
+    }
+
     clearTimer();
     s.karaokeSyncTimer = setInterval(renderLyrics, 250);
+
+    if(state.videoId){
+      ensureKaraokePlayer().catch(() => {});
+    }
+
     renderLyrics();
     if(state.videoId && !state.lyrics && state.autoLyricsTriedFor !== state.videoId){
       tryLoadAutoKaraokeLyrics(state.videoId);
@@ -5304,15 +5440,30 @@ window.addEventListener('beforeunload', () => {
     if(!value) return alert('Cole uma URL do YouTube ou escreva o nome da música.');
     if(window.setRoomMeta) window.setRoomMeta(s.roomId, { karaokeUrl: value });
     const id = parseYouTubeId(value);
-    const iframe = document.getElementById('karaokeIframe');
-    if(id && iframe){
-      iframe.src = toYouTubeEmbedUrl(id);
-      s.karaokeState = { ...(s.karaokeState || createFreshKaraokeState()), videoUrl: value, videoId: id, autoLyricsTriedFor: id };
+    if(id){
+      s.karaokeState = {
+        ...(s.karaokeState || createFreshKaraokeState()),
+        videoUrl: value,
+        videoId: id,
+        title: s.karaokeState?.title || '',
+        ready: true,
+        started: false,
+        playing: false,
+        currentTime: 0,
+        startedAt: 0,
+        autoLyricsTriedFor: id
+      };
+      await cueKaraokeVideo(id);
       renderLyrics();
       tryLoadAutoKaraokeLyrics(id);
+      setKaraokeStatus('Música carregada. Agora clique em começar.');
       return;
     }
     await openKaraokeSearchPanel(value);
+  }
+
+  async function startKaraoke(){
+    await startKaraokePlayback();
   }
 
   async function searchKaraokeOnYouTube(){
@@ -5396,6 +5547,7 @@ window.addEventListener('beforeunload', () => {
 
   window.joinKaraokeRoomImpl = joinKaraokeRoomImpl;
   window.loadKaraokeTrack = loadKaraokeTrack;
+  window.startKaraoke = startKaraoke;
   window.searchKaraokeOnYouTube = searchKaraokeOnYouTube;
   window.saveKaraokeLyrics = saveKaraokeLyrics;
   window.closeKaraokeSearchPanel = closeKaraokeSearchPanel;
@@ -5404,7 +5556,9 @@ window.addEventListener('beforeunload', () => {
   window.toggleKaraokePanel = toggleKaraokePanel;
   window.renderKaraokeRoom = renderRoom;
   window.renderKaraokeLyrics = renderLyrics;
-  window.onYouTubeIframeAPIReady = function(){};
+  window.onYouTubeIframeAPIReady = function(){
+    resolveYouTubeApiReady();
+  };
 })();
 </script>
 
