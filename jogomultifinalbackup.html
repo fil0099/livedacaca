@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>vvCartas - Jogo Multiplayer com Chat</title>
+  <title>Cartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -5215,28 +5215,27 @@ window.addEventListener('beforeunload', () => {
     const panel = document.getElementById('karaokeSearchPanel');
     const status = document.getElementById('karaokeSearchStatus');
     const results = document.getElementById('karaokeSearchResults');
+    const q = String(query || '').trim();
     if(panel) panel.classList.add('active');
-    if(status) status.textContent = `Buscando “${String(query || '').trim()}”...`;
+    if(status) status.textContent = q ? `Buscando “${q}”...` : 'Digite o nome da música para buscar.';
     if(results) results.innerHTML = '<div class="karaoke-search-item"><strong>Carregando...</strong><small>Aguarde um instante.</small></div>';
 
-    const q = String(query || '').trim();
     if(!q){
-      if(status) status.textContent = 'Digite o nome da música para buscar.';
       if(results) results.innerHTML = '';
-      return;
+      return [];
     }
 
     try{
       const searchUrl = `https://r.jina.ai/http://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
       const resp = await fetch(searchUrl, { cache: 'no-store' });
       const raw = await resp.text();
-      const items = parseSearchResultsFromText(raw);
+      const items = parseSearchResultsFromText(raw).slice(0, 8);
       if(!items.length){
         if(status) status.textContent = 'Não achei resultados legíveis. Cole a URL do vídeo ou tente outro nome.';
         if(results) results.innerHTML = '';
-        return;
+        return [];
       }
-      if(status) status.textContent = 'Clique em um resultado para carregar e começar.';
+      if(status) status.textContent = 'Clique em um resultado ou use Carregar para preparar a primeira opção.';
       if(results){
         results.innerHTML = items.map(item => `
           <div class="karaoke-search-item" onclick='selectKaraokeSearchResult(${JSON.stringify(item.url)}, ${JSON.stringify(item.title)})'>
@@ -5245,10 +5244,12 @@ window.addEventListener('beforeunload', () => {
           </div>
         `).join('');
       }
+      return items;
     }catch(err){
       console.warn('Falha ao buscar vídeos:', err);
       if(status) status.textContent = 'A busca direta falhou. Use a URL do vídeo ou tente novamente.';
       if(results) results.innerHTML = '';
+      return [];
     }
   }
 
@@ -5438,9 +5439,12 @@ window.addEventListener('beforeunload', () => {
     const input = document.getElementById('karaokeQueryInput');
     const value = String(explicitValue ?? input?.value ?? '').trim();
     if(!value) return alert('Cole uma URL do YouTube ou escreva o nome da música.');
-    if(window.setRoomMeta) window.setRoomMeta(s.roomId, { karaokeUrl: value });
+
+    setKaraokeStatus('Carregando a música e buscando a letra...');
+
     const id = parseYouTubeId(value);
     if(id){
+      if(window.setRoomMeta) window.setRoomMeta(s.roomId, { karaokeUrl: value });
       s.karaokeState = {
         ...(s.karaokeState || createFreshKaraokeState()),
         videoUrl: value,
@@ -5455,11 +5459,39 @@ window.addEventListener('beforeunload', () => {
       };
       await cueKaraokeVideo(id);
       renderLyrics();
-      tryLoadAutoKaraokeLyrics(id);
-      setKaraokeStatus('Música carregada. Agora clique em começar.');
+      await tryLoadAutoKaraokeLyrics(id);
+      setKaraokeStatus('Música carregada. A letra foi preparada. Clique em começar.');
       return;
     }
-    await openKaraokeSearchPanel(value);
+
+    const items = await openKaraokeSearchPanel(value);
+    if(!items || !items.length){
+      setKaraokeStatus('Não encontrei o vídeo. Tente outra busca ou cole a URL do YouTube.');
+      return;
+    }
+
+    const best = items[0];
+    if(best && best.url){
+      const q = document.getElementById('karaokeQueryInput');
+      if(q) q.value = best.url;
+      if(window.setRoomMeta) window.setRoomMeta(s.roomId, { karaokeUrl: best.url });
+      s.karaokeState = {
+        ...(s.karaokeState || createFreshKaraokeState()),
+        title: best.title || value,
+        videoUrl: best.url,
+        videoId: best.id,
+        ready: true,
+        started: false,
+        playing: false,
+        currentTime: 0,
+        startedAt: 0,
+        autoLyricsTriedFor: best.id
+      };
+      await cueKaraokeVideo(best.id);
+      renderLyrics();
+      await tryLoadAutoKaraokeLyrics(best.id);
+      setKaraokeStatus('Primeiro resultado carregado. A letra foi preparada. Clique em começar.');
+    }
   }
 
   async function startKaraoke(){
