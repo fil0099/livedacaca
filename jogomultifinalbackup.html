@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Cartas - Jogo Multiplayer com Chat</title>
+  <title>xxCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -3247,6 +3247,7 @@ const STOP_STALE_MS = 120000;
       <div class="list-item"><input id="karaokeRoomUrlInput" type="text" placeholder="URL do YouTube ou busca" value="${escapeHtml(meta.karaokeUrl || '')}" /><button class="btn" type="button" onclick="saveKaraokeRoomUrl()">Salvar vídeo</button></div>
       <div class="list-item"><textarea id="karaokeRoomLyricsInput" rows="5" placeholder="[00:12.00]Primeira linha\n[00:18.00]Segunda linha">${escapeHtml(meta.karaokeLyrics || '')}</textarea><button class="btn" type="button" onclick="saveKaraokeRoomLyrics()">Salvar letra</button></div>
       <div class="list-item"><input id="karaokeRoomInstrumentalInput" type="text" placeholder="URL instrumental opcional" value="${escapeHtml(meta.karaokeInstrumentalUrl || '')}" /><button class="btn secondary" type="button" onclick="saveKaraokeInstrumentalUrl()">Salvar instrumental</button></div>
+      <div class="list-item"><input id="karaokeTubeScriptApiKeyInput" type="password" placeholder="TubeScript API key (opcional)" value="${escapeHtml(meta.karaokeTubeScriptApiKey || localStorage.getItem('karaoke_tubescript_api_key') || '')}" /><button class="btn secondary" type="button" onclick="saveKaraokeTubeScriptApiKey()">Salvar TubeScript</button></div>
       ` : ''}
     `;
     const music = document.getElementById('roomMusicList');
@@ -3261,6 +3262,8 @@ const STOP_STALE_MS = 120000;
     if(kLyrics) kLyrics.value = meta.karaokeLyrics || '';
     const kIns = document.getElementById('karaokeRoomInstrumentalInput');
     if(kIns) kIns.value = meta.karaokeInstrumentalUrl || '';
+    const kKey = document.getElementById('karaokeTubeScriptApiKeyInput');
+    if(kKey) kKey.value = meta.karaokeTubeScriptApiKey || localStorage.getItem('karaoke_tubescript_api_key') || '';
   }
 
   function saveRoomPassword(){
@@ -3327,6 +3330,15 @@ const STOP_STALE_MS = 120000;
     const input = document.getElementById('karaokeRoomInstrumentalInput');
     setRoomMeta(adminState.selectedRoomId, { karaokeInstrumentalUrl: String(input?.value || '').trim() });
     if(gameState.roomMode && gameState.roomId === adminState.selectedRoomId){ refreshCurrentRoomMusic(); }
+  }
+
+  function saveKaraokeTubeScriptApiKey(){
+    if(!hasPermission('rooms')) return alert('Sem permissão de salas.');
+    const input = document.getElementById('karaokeTubeScriptApiKeyInput');
+    const value = String(input?.value || '').trim();
+    if(value) localStorage.setItem('karaoke_tubescript_api_key', value);
+    else localStorage.removeItem('karaoke_tubescript_api_key');
+    setRoomMeta(adminState.selectedRoomId, { karaokeTubeScriptApiKey: value });
   }
 
   function renderAdminDelegationSearch(){
@@ -5267,9 +5279,75 @@ window.addEventListener('beforeunload', () => {
     loadKaraokeTrack(url);
   }
 
-  async function tryLoadAutoKaraokeLyrics(videoId){
+  async function tryLoadTubeScriptLyrics(videoUrl){
     const s = gs();
-    if(!videoId) return;
+    const roomMeta = meta(s.roomId);
+    const apiKey = String(roomMeta.karaokeTubeScriptApiKey || localStorage.getItem('karaoke_tubescript_api_key') || '').trim();
+    const status = document.getElementById('karaokeStatus');
+    const sourceUrl = String(videoUrl || '').trim();
+    if(!apiKey || !sourceUrl) return false;
+
+    try{
+      if(status) status.textContent = 'Carregando legenda pelo TubeScript...';
+      const resp = await fetch('https://api.tubescript.cc/v1/transcript', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          url: sourceUrl,
+          include_summary: false
+        })
+      });
+      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const transcript = data && data.transcript ? data.transcript : {};
+      const segments = Array.isArray(transcript.segments) ? transcript.segments : [];
+      let lrc = segments
+        .map(seg => {
+          const time = Number(seg && seg.start);
+          const text = String(seg && seg.text || '').replace(/\s+/g, ' ').trim();
+          return Number.isFinite(time) && text ? `${formatKaraokeTime(time)}${text}` : '';
+        })
+        .filter(Boolean)
+        .join('\n');
+
+      if(!lrc.trim() && transcript.text){
+        const lines = String(transcript.text || '').split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        lrc = lines.map((line, idx) => `${formatKaraokeTime(idx * 3)}${line}`).join('\n');
+      }
+
+      if(!lrc.trim()) throw new Error('Transcrição vazia');
+
+      s.karaokeState = {
+        ...(s.karaokeState || createFreshKaraokeState()),
+        videoUrl: sourceUrl,
+        lyrics: lrc,
+        autoLyricsTriedFor: parseYouTubeId(sourceUrl) || sourceUrl
+      };
+      const input = document.getElementById('karaokeLyricsInput');
+      if(input) input.value = lrc;
+      if(window.setRoomMeta && s.roomId){
+        window.setRoomMeta(s.roomId, { karaokeLyrics: lrc });
+      }
+      renderLyrics();
+      if(status) status.textContent = 'Legenda carregada pelo TubeScript.';
+      return true;
+    }catch(err){
+      console.warn('TubeScript falhou, tentando alternativa:', err);
+      return false;
+    }
+  }
+
+  async function tryLoadAutoKaraokeLyrics(videoId, videoUrl = ''){
+    const s = gs();
+    const sourceUrl = String(videoUrl || (videoId ? `https://www.youtube.com/watch?v=${videoId}` : '')).trim();
+    if(sourceUrl){
+      const usedTubeScript = await tryLoadTubeScriptLyrics(sourceUrl);
+      if(usedTubeScript) return;
+    }
+
     const status = document.getElementById('karaokeStatus');
     try{
       if(status) status.textContent = 'Carregando legenda automática...';
@@ -5384,7 +5462,7 @@ window.addEventListener('beforeunload', () => {
 
     renderLyrics();
     if(state.videoId && !state.lyrics && state.autoLyricsTriedFor !== state.videoId){
-      tryLoadAutoKaraokeLyrics(state.videoId);
+      tryLoadAutoKaraokeLyrics(state.videoId, state.videoUrl || '');
     }
   }
 
@@ -5459,7 +5537,7 @@ window.addEventListener('beforeunload', () => {
       };
       await cueKaraokeVideo(id);
       renderLyrics();
-      await tryLoadAutoKaraokeLyrics(id);
+      await tryLoadAutoKaraokeLyrics(id, value);
       setKaraokeStatus('Música carregada. A letra foi preparada. Clique em começar.');
       return;
     }
@@ -5489,7 +5567,7 @@ window.addEventListener('beforeunload', () => {
       };
       await cueKaraokeVideo(best.id);
       renderLyrics();
-      await tryLoadAutoKaraokeLyrics(best.id);
+      await tryLoadAutoKaraokeLyrics(best.id, best.url);
       setKaraokeStatus('Primeiro resultado carregado. A letra foi preparada. Clique em começar.');
     }
   }
