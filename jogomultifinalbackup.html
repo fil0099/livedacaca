@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>xCartas - Jogo Multiplayer com Chat</title>
+  <title>xxCartas - Jogo Multiplayer com Chat</title>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -4840,15 +4840,39 @@ window.addEventListener('beforeunload', () => {
   function parseYouTubeId(input){
     const value = String(input || '').trim();
     if(!value) return '';
-    const m = value.match(/(?:youtu\.be\/|v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{6,})/);
-    if(m) return m[1];
     if(/^[A-Za-z0-9_-]{11}$/.test(value)) return value;
-    return '';
+
+    const m = value.match(/(?:youtu\.be\/|v=|\/shorts\/|\/embed\/)([A-Za-z0-9_-]{11})/);
+    if(m) return m[1];
+
+    try{
+      const url = new URL(value);
+      const host = url.hostname.replace(/^www\./, '');
+      if(host.includes('youtube.com')){
+        const v = url.searchParams.get('v');
+        if(v && /^[A-Za-z0-9_-]{11}$/.test(v)) return v;
+        const parts = url.pathname.split('/').filter(Boolean);
+        const idx = parts.findIndex(p => p === 'shorts' || p === 'embed');
+        if(idx >= 0 && parts[idx + 1] && /^[A-Za-z0-9_-]{11}$/.test(parts[idx + 1])) return parts[idx + 1];
+      }
+      if(host === 'youtu.be'){
+        const id = url.pathname.split('/').filter(Boolean)[0];
+        if(id && /^[A-Za-z0-9_-]{11}$/.test(id)) return id;
+      }
+    }catch(e){}
+
+    const loose = value.match(/([A-Za-z0-9_-]{11})/);
+    return loose ? loose[1] : '';
   }
 
   function toYouTubeEmbedUrl(input){
     const id = parseYouTubeId(input);
     return id ? `https://www.youtube.com/embed/${id}?autoplay=1&controls=1&rel=0&playsinline=1` : '';
+  }
+
+  function setKaraokeStatus(message){
+    const el = document.getElementById('karaokeStatus');
+    if(el) el.textContent = message;
   }
 
   function parseLrcLyrics(raw){
@@ -5017,26 +5041,61 @@ window.addEventListener('beforeunload', () => {
 
   function loadKaraokeTrack(){
     const s = gs();
-    if(!s.karaokeMode || !s.roomId) return;
     const input = document.getElementById('karaokeQueryInput');
     const value = String(input?.value || '').trim();
-    if(!value) return alert('Cole uma URL do YouTube ou escreva o nome da música.');
-    if(window.setRoomMeta) window.setRoomMeta(s.roomId, { karaokeUrl: value });
+
+    if(!value){
+      setKaraokeStatus('Cole uma URL do YouTube ou escreva o nome da música.');
+      return alert('Cole uma URL do YouTube ou escreva o nome da música.');
+    }
+
     const id = parseYouTubeId(value);
     const iframe = document.getElementById('karaokeIframe');
-    if(id && iframe){
-      iframe.src = toYouTubeEmbedUrl(id);
+
+    if(window.setRoomMeta && s.roomId){
+      window.setRoomMeta(s.roomId, { karaokeUrl: value });
+    }
+
+    setKaraokeStatus(id ? 'Carregando a música na sala...' : 'Abrindo a pesquisa no YouTube...');
+
+    if(id){
+      const embedUrl = toYouTubeEmbedUrl(id);
+      if(iframe){
+        iframe.src = embedUrl;
+      } else {
+        const host = document.getElementById('karaokePlayer');
+        if(host){
+          host.innerHTML = `<iframe id="karaokeIframe" src="${escapeHtml(embedUrl)}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+        }
+      }
       s.karaokeState = { ...(s.karaokeState || createFreshKaraokeState()), videoUrl: value, videoId: id };
       renderLyrics();
+      setKaraokeStatus('Música carregada. Cole a letra em LRC para acompanhar.');
       return;
     }
-    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(value)}`, '_blank', 'noopener,noreferrer');
+
+    const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(value)}`;
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+    if(!opened){
+      setKaraokeStatus('O navegador bloqueou a pesquisa. Permita pop-ups ou cole uma URL do YouTube.');
+      return;
+    }
+    setKaraokeStatus('Pesquisa aberta no YouTube. Escolha a música e depois cole a URL aqui.');
   }
 
   function searchKaraokeOnYouTube(){
     const value = String(document.getElementById('karaokeQueryInput')?.value || '').trim();
-    if(!value) return alert('Digite o nome da música para pesquisar.');
-    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(value)}`, '_blank', 'noopener,noreferrer');
+    if(!value){
+      setKaraokeStatus('Digite o nome da música para pesquisar.');
+      return alert('Digite o nome da música para pesquisar.');
+    }
+    const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(value)}`;
+    const opened = window.open(url, '_blank', 'noopener,noreferrer');
+    if(!opened){
+      setKaraokeStatus('O navegador bloqueou a pesquisa. Permita pop-ups.');
+      return;
+    }
+    setKaraokeStatus('Pesquisa aberta no YouTube.');
   }
 
   function saveKaraokeLyrics(){
