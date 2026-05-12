@@ -1,0 +1,628 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<title>Bblia Online</title>
+<style type="text/css">
+<!--
+#Layer1 {
+	position:absolute;
+	left:15px;
+	top:22px;
+	width:184px;
+	height:132px;
+	z-index:1;
+}
+#Layer2 {
+	position:absolute;
+	left:32px;
+	top:22px;
+	width:380px;
+	height:228px;
+	z-index:1;
+}
+#Layer3 {
+	position:absolute;
+	left:22px;
+	top:16px;
+	width:227px;
+	height:167px;
+	z-index:1;
+}
+#Layer4 {
+	position:absolute;
+	left:24px;
+	top:166px;
+	width:180px;
+	height:25px;
+	z-index:1;
+}
+#Layer6 {
+	position:absolute;
+	left:21px;
+	top:240px;
+	width:181px;
+	height:90px;
+	z-index:2;
+}
+#Layer7 {
+	position:absolute;
+	left:302px;
+	top:177px;
+	width:519px;
+	height:210px;
+	z-index:3;
+}
+#Layer8 {
+	position:absolute;
+	left:456px;
+	top:143px;
+	width:384px;
+	height:287px;
+	z-index:3;
+}
+#Layer9 {
+	position:absolute;
+	left:422px;
+	top:269px;
+	width:359px;
+	height:214px;
+	z-index:3;
+}
+-->
+</style>
+
+</head>
+
+<body>
+<div id="Layer4">
+  <div id="Layer5"><a href="oracao.html" class="botao-voltar">Voltar</a>
+
+<style>
+.botao-voltar {
+    position:absolute;
+    top:20px;
+    left:20px;
+    background:#4db8ff;
+    color:white;
+    padding:10px 18px;
+    border-radius:8px;
+    text-decoration:none;
+    font-family:Arial;
+    font-weight:bold;
+    z-index:9999;
+}
+
+.botao-voltar:hover {
+    background:#2ea6ff;
+}
+</style></div></div>
+<style>
+#emConstrucao {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 10000;
+    pointer-events: none;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+#emConstrucao .titulo {
+    font-size: clamp(28px, 4vw, 54px);
+    font-weight: 800;
+    color: #2d2d2d;
+    margin-bottom: 22px;
+    text-shadow: 0 2px 8px rgba(255,255,255,.9);
+}
+#emConstrucao .worker {
+    position: relative;
+    width: 170px;
+    height: 170px;
+}
+#emConstrucao .head {
+    position: absolute;
+    left: 58px;
+    top: 12px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: #f1c27d;
+    box-shadow: inset 0 -4px 0 rgba(0,0,0,.08);
+}
+#emConstrucao .helmet {
+    position: absolute;
+    left: 52px;
+    top: 2px;
+    width: 66px;
+    height: 28px;
+    border-radius: 18px 18px 8px 8px;
+    background: #f4c430;
+}
+#emConstrucao .body {
+    position: absolute;
+    left: 61px;
+    top: 66px;
+    width: 48px;
+    height: 56px;
+    border-radius: 12px;
+    background: #f4b400;
+    transform-origin: center top;
+    animation: bob 1s ease-in-out infinite;
+}
+#emConstrucao .body::before,
+#emConstrucao .body::after {
+    content: "";
+    position: absolute;
+    top: 14px;
+    width: 18px;
+    height: 42px;
+    background: #5a5a5a;
+    border-radius: 10px;
+}
+#emConstrucao .body::before {
+    left: -14px;
+    transform: rotate(22deg);
+    transform-origin: top center;
+    animation: armLeft 1s ease-in-out infinite;
+}
+#emConstrucao .body::after {
+    right: -14px;
+    transform: rotate(-22deg);
+    transform-origin: top center;
+    animation: armRight 1s ease-in-out infinite;
+}
+#emConstrucao .leg {
+    position: absolute;
+    top: 116px;
+    width: 18px;
+    height: 48px;
+    background: #3f3f3f;
+    border-radius: 10px;
+    transform-origin: top center;
+    animation: leg 1s ease-in-out infinite;
+}
+#emConstrucao .leg.left { left: 66px; transform: rotate(10deg); }
+#emConstrucao .leg.right { left: 88px; transform: rotate(-10deg); animation-delay: .1s; }
+#emConstrucao .boot {
+    position: absolute;
+    bottom: -4px;
+    left: -4px;
+    width: 24px;
+    height: 12px;
+    border-radius: 6px;
+    background: #1f1f1f;
+}
+#emConstrucao .tool {
+    position: absolute;
+    left: 116px;
+    top: 50px;
+    width: 10px;
+    height: 70px;
+    background: #7b4b24;
+    border-radius: 6px;
+    transform-origin: top center;
+    animation: hammer 1s ease-in-out infinite;
+}
+#emConstrucao .tool::before {
+    content: "";
+    position: absolute;
+    left: -12px;
+    top: -6px;
+    width: 34px;
+    height: 18px;
+    border-radius: 6px;
+    background: #5b5b5b;
+}
+#emConstrucao .ground {
+    position: absolute;
+    bottom: 0;
+    width: 180px;
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.12);
+    filter: blur(1px);
+}
+@keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+}
+@keyframes armLeft {
+    0%, 100% { transform: rotate(22deg); }
+    50% { transform: rotate(36deg); }
+}
+@keyframes armRight {
+    0%, 100% { transform: rotate(-22deg); }
+    50% { transform: rotate(-36deg); }
+}
+@keyframes leg {
+    0%, 100% { transform: rotate(10deg); }
+    50% { transform: rotate(18deg); }
+}
+@keyframes hammer {
+    0%, 100% { transform: rotate(10deg) translateY(0); }
+    50% { transform: rotate(-18deg) translateY(-8px); }
+}
+</style>
+
+<div id="emConstrucao" aria-label="Em construção">
+    <div class="titulo">Em constru&ccedil;&atilde;o</div>
+    <div class="worker">
+        <div class="ground"></div>
+        <div class="helmet"></div>
+        <div class="head"></div>
+        <div class="body"></div>
+        <div class="leg left"><div class="boot"></div></div>
+        <div class="leg right"><div class="boot"></div></div>
+        <div class="tool"></div>
+    </div>
+</div>
+
+<script>
+
+/* livros com nome correto da API */
+const biblia = {
+"Gnesis":{api:"Genesis", caps:50},
+"xodo":{api:"Exodus", caps:40},
+"Levtico":{api:"Leviticus", caps:27},
+"Nmeros":{api:"Numbers", caps:36},
+"Deuteronmio":{api:"Deuteronomy", caps:34},
+"Salmos":{api:"Psalms", caps:150},
+"Provrbios":{api:"Proverbs", caps:31},
+"Mateus":{api:"Matthew", caps:28},
+"Marcos":{api:"Mark", caps:16},
+"Lucas":{api:"Luke", caps:24},
+"Joo":{api:"John", caps:21},
+"Atos":{api:"Acts", caps:28},
+"Romanos":{api:"Romans", caps:16},
+"Apocalipse":{api:"Revelation", caps:22}
+};
+
+/* preencher livros */
+const livroSelect = document.getElementById("livro");
+for(let l in biblia){
+    let op = document.createElement("option");
+    op.value = l;
+    op.text = l;
+    livroSelect.add(op);
+}
+
+/* atualizar captulos */
+livroSelect.addEventListener("change", ()=>{
+    const capSelect = document.getElementById("capitulo");
+    capSelect.innerHTML = "";
+
+    let total = biblia[livroSelect.value].caps;
+
+    for(let i=1;i<=total;i++){
+        let op = document.createElement("option");
+        op.value = i;
+        op.text = i;
+        capSelect.add(op);
+    }
+});
+
+/* iniciar */
+livroSelect.dispatchEvent(new Event("change"));
+
+/* carregar */
+function carregar(){
+    let livro = livroSelect.value;
+    let apiLivro = biblia[livro].api;
+    let cap = document.getElementById("capitulo").value;
+
+    resultado.innerHTML = "Carregando...";
+
+    fetch(`https://bible-api.com/${apiLivro}%20${cap}`)
+    .then(res => res.json())
+    .then(data => {
+
+        if(!data.verses){
+            throw "erro";
+        }
+
+        let html = `<h3>${livro} ${cap}</h3>`;
+
+        data.verses.forEach(v=>{
+            html += `<p><b>${v.verse}</b> ${v.text}</p>`;
+        });
+
+        resultado.innerHTML = html;
+
+    })
+    .catch(()=>{
+        resultado.innerHTML = "Erro ao carregar captulo.";
+    });
+}
+
+/* buscar */
+function buscar(){
+    let termo = document.getElementById("busca").value;
+
+    resultado.innerHTML = "Buscando...";
+
+    fetch(`https://bible-api.com/${encodeURIComponent(termo)}`)
+    .then(res => res.json())
+    .then(data => {
+
+        if(!data.text){
+            throw "erro";
+        }
+
+        resultado.innerHTML =
+        `<h3>${data.reference}</h3><p>${data.text}</p>`;
+
+    })
+    .catch(()=>{
+        resultado.innerHTML = "Nada encontrado.";
+    });
+}
+
+</script>
+</body>
+</html></div>
+<div id="Layer12"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<div class="container"></div>
+<script>
+
+/* DADOS LOCAIS (EXEMPLO FUNCIONAL) */
+const biblia = {
+genesis:{
+1:{
+1:"No princpio criou Deus os cus e a terra.",
+2:"A terra era sem forma e vazia.",
+3:"Disse Deus: haja luz."
+}
+},
+salmos:{
+23:{
+1:"O Senhor  o meu pastor, nada me faltar.",
+2:"Ele me faz repousar em pastos verdejantes."
+}
+},
+mateus:{
+5:{
+3:"Bem-aventurados os pobres de esprito.",
+4:"Bem-aventurados os que choram."
+}
+},
+joao:{
+3:{
+16:"Porque Deus amou o mundo..."
+}
+}
+};
+
+/* preencher captulos */
+function atualizar(){
+    let livro = livroSelect.value;
+    capitulo.innerHTML="";
+
+    Object.keys(biblia[livro]).forEach(c=>{
+        let op=document.createElement("option");
+        op.value=c;
+        op.text=c;
+        capitulo.add(op);
+    });
+}
+
+livroSelect.onchange = atualizar;
+atualizar();
+
+/* carregar */
+function carregar(){
+    let livro = livroSelect.value;
+    let cap = capitulo.value;
+
+    let dados = biblia[livro][cap];
+
+    let html="";
+
+    for(let v in dados){
+        html += `<div class="verso"><b>${v}</b> ${dados[v]}</div>`;
+    }
+
+    conteudo.innerHTML = html;
+}
+
+</script>
+</body>
+</html></div>
+</body>
+</html>></div>
+</body>
+</html>></div>
+<div id="Layer10"><!DOCTYPE html>
+</body>
+</html></div>
+<div id="Layer8"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+</body>
+</html></div>
+<div id="Layer8"><!DOCTYPE html>
+<html lang="pt-br">
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer7"><!DOCTYPE html>
+<html lang="pt-br">
+<script>
+
+/* livros */
+const livros = [
+"Gnesis","xodo","Levtico","Nmeros","Deuteronmio",
+"Josu","Juzes","Rute","1 Samuel","2 Samuel",
+"1 Reis","2 Reis","1 Crnicas","2 Crnicas","Esdras",
+"Neemias","Ester","J","Salmos","Provrbios",
+"Eclesiastes","Cnticos","Isaas","Jeremias","Lamentaes",
+"Ezequiel","Daniel","Osias","Joel","Ams",
+"Obadias","Jonas","Miquias","Naum","Habacuque",
+"Sofonias","Ageu","Zacarias","Malaquias",
+"Mateus","Marcos","Lucas","Joo","Atos",
+"Romanos","1 Corntios","2 Corntios","Glatas","Efsios",
+"Filipenses","Colossenses","1 Tessalonicenses","2 Tessalonicenses",
+"1 Timteo","2 Timteo","Tito","Filemom","Hebreus",
+"Tiago","1 Pedro","2 Pedro","1 Joo","2 Joo",
+"3 Joo","Judas","Apocalipse"
+];
+
+/* preencher livros */
+const livroSelect = document.getElementById("livro");
+livros.forEach(l => {
+    let op = document.createElement("option");
+    op.text = l;
+    livroSelect.add(op);
+});
+
+/* captulos simples */
+const capSelect = document.getElementById("capitulo");
+for(let i=1;i<=150;i++){
+    let op = document.createElement("option");
+    op.text = i;
+    capSelect.add(op);
+}
+
+/* carregar captulo */
+function carregar(){
+    let livro = livroSelect.value;
+    let cap = capSelect.value;
+
+    fetch(`https://bible-api.com/${livro}+${cap}?translation=almeida`)
+    .then(res => res.json())
+    .then(data => {
+        let html = "";
+        data.verses.forEach(v=>{
+            html += `<p><b>${v.verse}</b> ${v.text}</p>`;
+        });
+        document.getElementById("resultado").innerHTML = html;
+    });
+}
+
+/* buscar */
+function buscar(){
+    let termo = document.getElementById("busca").value;
+
+    fetch(`https://bible-api.com/${termo}?translation=almeida`)
+    .then(res => res.json())
+    .then(data => {
+        let html = `<h3>${data.reference}</h3><p>${data.text}</p>`;
+        document.getElementById("resultado").innerHTML = html;
+    });
+}
+
+</script>
+</body>
+</html></div>
+<div id="Layer3"><!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Fundo suave</title>
+
+<style>
+
+body {
+    margin: 0;
+    background: white;
+    height: 100vh;
+    overflow-x: hidden;
+}
+
+.background {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.icon {
+    position: absolute;
+    width: 60px;
+    opacity: 0.10;
+}
+
+/* rotaes */
+.r1 { transform: rotate(0deg); }
+.r2 { transform: rotate(30deg); }
+.r3 { transform: rotate(60deg); }
+.r4 { transform: rotate(90deg); }
+.r5 { transform: rotate(120deg); }
+.r6 { transform: rotate(150deg); }
+
+.container {
+    text-align: center;
+    padding: 50px;
+    font-family: Arial;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="background">
+
+<!-- linha 1 -->
+<img class="icon r1" style="top:5%; left:5%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r2" style="top:8%; left:25%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r3" style="top:10%; left:45%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r4" style="top:6%; left:65%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r5" style="top:9%; left:85%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+
+<!-- linha 2 -->
+<img class="icon r6" style="top:25%; left:10%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r2" style="top:28%; left:30%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r1" style="top:22%; left:50%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r3" style="top:27%; left:70%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r4" style="top:24%; left:90%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+
+<!-- linha 3 -->
+<img class="icon r5" style="top:45%; left:5%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r6" style="top:48%; left:25%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r3" style="top:43%; left:45%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r1" style="top:47%; left:65%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r2" style="top:44%; left:85%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+
+<!-- linha 4 -->
+<img class="icon r4" style="top:65%; left:10%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r5" style="top:68%; left:30%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r6" style="top:63%; left:50%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r2" style="top:67%; left:70%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r1" style="top:64%; left:90%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+
+<!-- linha 5 -->
+<img class="icon r3" style="top:85%; left:5%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r4" style="top:88%; left:25%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r5" style="top:83%; left:45%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r6" style="top:87%; left:65%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+<img class="icon r2" style="top:84%; left:85%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+
+</div>
+
+<div class="container">
+    <h1>&nbsp;</h1>
+</div>
+
+</body>
+</html></div>
+</body>
+</html></div>
+<div id="Layer1"><!DOCTYPE html>
+</body>
+</html></div>
+</body>
+</html>

@@ -1,67 +1,488 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html lang="pt-br">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>Untitled Document</title>
-<style type="text/css">
-<!--
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Terço Católico Interativo</title>
+<style>
+  *{box-sizing:border-box}
+  html, body {
+    margin:0;
+    min-height:100%;
+    font-family: Arial, sans-serif;
+    background:#fff;
+    overflow-x:hidden;
+  }
+
+  body {
+    position:relative;
+  }
+
+  .left-rail {
+    position:fixed;
+    inset:0 auto 0 0;
+    width:210px;
+    z-index:10000;
+    pointer-events:none;
+  }
+
+  .left-rail .btn-layer {
+    position:absolute;
+    left:0;
+    top:0;
+    width:100%;
+    pointer-events:auto;
+  }
+
+  #Layer4 {
+    position:absolute;
+    left:15px;
+    top:22px;
+    width:184px;
+    height:132px;
+    z-index:10001;
+  }
+
+  #Layer6 {
+    position:absolute;
+    left:43px;
+    top:203px;
+    width:181px;
+    height:90px;
+    z-index:10001;
+  }
+
+  .botao-voltar {
+    position:absolute;
+    top:20px;
+    left:20px;
+    background:#4db8ff;
+    color:white;
+    padding:10px 18px;
+    border-radius:8px;
+    text-decoration:none;
+    font-family:Arial;
+    font-weight:bold;
+    z-index:9999;
+  }
+
+  .botao-voltar:hover {
+    background:#2ea6ff;
+  }
+
+  #menu-catolico {
+	position:absolute;
+	top:-280px;
+	left:-67px;
+	display:flex;
+	flex-direction:column;
+	gap:10px;
+	z-index:9999;
+	width: 181px;
+	height: 214px;
+  }
+
+  .botao-menu {
+    background:#4db8ff;
+    color:white;
+    padding:10px 18px;
+    border-radius:8px;
+    text-decoration:none;
+    font-family:Arial;
+    font-weight:bold;
+    width:140px;
+    text-align:center;
+  }
+
+  .botao-menu:hover {
+    background:#2ea6ff;
+  }
+
+  .main-area {
+    margin-left:210px;
+    width:calc(100% - 210px);
+    min-height:100vh;
+    position:relative;
+    z-index:1;
+  }
+
+  .wrap {
+    width:100%;
+    min-height:100vh;
+    margin:0;
+    padding:0 16px 16px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .top {
+    background:rgba(255,250,244,.9);
+    border:1px solid rgba(184,137,74,.2);
+    border-radius:24px;
+    box-shadow:0 16px 42px rgba(67,44,16,.18);
+    padding:18px 16px 14px;
+    backdrop-filter: blur(6px);
+    margin-top:0;
+  }
+
+  h1 {
+    margin:0 0 10px;
+    text-align:center;
+    font-size:clamp(26px,4vw,40px);
+    line-height:1.1;
+  }
+
+  .controls {
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+
+  button {
+    border:none;
+    border-radius:999px;
+    padding:12px 18px;
+    font-weight:800;
+    cursor:pointer;
+    color:white;
+    background:linear-gradient(180deg,#8a642f,#65451f);
+    box-shadow:0 8px 18px rgba(101,69,31,.22);
+    letter-spacing:.2px;
+  }
+
+  button.secondary {
+    background:linear-gradient(180deg,#ad8b64,#816243);
+  }
+
+  button:active{transform:translateY(1px)}
+
+  .status{
+    max-width:900px;
+    margin:0 auto;
+    min-height:28px;
+    text-align:center;
+    font-size:16px;
+    font-weight:700;
+    color:#5c4a33;
+    padding:8px 12px;
+    border-radius:14px;
+    background:rgba(241,225,198,.55);
+    border:1px solid rgba(184,137,74,.15);
+  }
+  .status{display:none;}
+
+  .prayerBox{
+    max-width:900px;
+    margin:12px auto 0;
+    padding:14px 16px;
+    border-radius:18px;
+    background:rgba(255,250,244,.92);
+    border:1px solid rgba(184,137,74,.16);
+    box-shadow:0 10px 24px rgba(0,0,0,.06);
+    text-align:center;
+  }
+
+  .prayerTitle{
+    font-size:14px;
+    font-weight:900;
+    color:#7a5428;
+    letter-spacing:.3px;
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+
+  .prayerText{
+    font-size:16px;
+    line-height:1.55;
+    color:#3f3121;
+    max-height:7.9em;
+    overflow:auto;
+  }
+
+  .prayerWord{
+    display:inline;
+    border-radius:6px;
+    padding:0 1px;
+    transition:background-color .12s ease, color .12s ease;
+  }
+
+  .prayerWord.active{
+    background:#7dd8ff;
+    color:#0f3551;
+  }
+
+  .stage{
+    margin-top:18px;
+    position:relative;
+    background:
+      radial-gradient(circle at 50% 18%, rgba(255,255,255,.42) 0%, rgba(255,255,255,.14) 26%, rgba(255,255,255,.06) 42%, rgba(118,196,255,.12) 62%, rgba(74,152,224,.24) 100%),
+      linear-gradient(180deg, #9dd8ff 0%, #7fc8fb 28%, #65b8f2 58%, #4ea2e9 100%);
+    border-radius:26px;
+    box-shadow:0 16px 42px rgba(67,44,16,.18);
+    overflow:hidden;
+    min-height:calc(100vh - 190px);
+    border:1px solid rgba(184,137,74,.10);
+    flex:1;
+  }
+
+  .stage::before{
+    content:"";
+    position:absolute;
+    inset:-8%;
+    background:
+      radial-gradient(circle at 50% 20%, rgba(255,255,255,.18) 0 18%, transparent 34%),
+      radial-gradient(circle at 18% 18%, rgba(255,255,255,.10) 0 12%, transparent 22%),
+      radial-gradient(circle at 82% 28%, rgba(255,255,255,.12) 0 10%, transparent 20%),
+      radial-gradient(circle at 50% 100%, rgba(255,255,255,.22) 0 22%, transparent 58%);
+    opacity:.9;
+    pointer-events:none;
+    filter: blur(10px);
+  }
+
+  .cloudLayer{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    pointer-events:none;
+    z-index:1;
+  }
+
+  .cloud{
+    position:absolute;
+    left:-28%;
+    top:var(--top);
+    width:var(--w);
+    height:var(--h);
+    opacity:var(--o);
+    filter: blur(var(--b));
+    animation: drift var(--d) linear infinite;
+    will-change: transform;
+    transform: translate3d(0,0,0);
+  }
+
+  .cloud span{
+    position:absolute;
+    background:rgba(255,255,255,.84);
+    border-radius:999px;
+    box-shadow:
+      inset 0 -10px 18px rgba(190,225,255,.24),
+      0 0 18px rgba(255,255,255,.12);
+  }
+
+  .cloud span:nth-child(1){left:8%; top:36%; width:34%; height:42%;}
+  .cloud span:nth-child(2){left:24%; top:18%; width:42%; height:58%;}
+  .cloud span:nth-child(3){left:42%; top:30%; width:36%; height:48%;}
+  .cloud span:nth-child(4){left:56%; top:42%; width:28%; height:34%;}
+  .cloud span:nth-child(5){left:2%; top:48%; width:30%; height:30%;}
+  .cloud.small span:nth-child(1){left:14%; top:44%; width:28%; height:34%;}
+  .cloud.small span:nth-child(2){left:30%; top:24%; width:36%; height:48%;}
+  .cloud.small span:nth-child(3){left:48%; top:36%; width:30%; height:36%;}
+  .cloud.small span:nth-child(4){left:60%; top:50%; width:22%; height:24%;}
+  .cloud.small span:nth-child(5){left:4%; top:56%; width:24%; height:22%;}
+  .cloud.big span:nth-child(1){left:5%; top:32%; width:38%; height:46%;}
+  .cloud.big span:nth-child(2){left:22%; top:8%; width:48%; height:66%;}
+  .cloud.big span:nth-child(3){left:43%; top:26%; width:42%; height:54%;}
+  .cloud.big span:nth-child(4){left:60%; top:40%; width:32%; height:36%;}
+  .cloud.big span:nth-child(5){left:1%; top:44%; width:34%; height:30%;}
+  .cloudLayer .far{opacity:.34; filter: blur(10px);}
+  .cloudLayer .mid{opacity:.52; filter: blur(5px);}
+  .cloudLayer .near{opacity:.74; filter: blur(2px);}
+  .cloud1{--top:8%; --w:430px; --h:180px; --o:.38; --b:10px; --d:118s; animation-delay:-22s;}
+  .cloud2{--top:18%; --w:260px; --h:108px; --o:.48; --b:6px; --d:92s; animation-delay:-44s;}
+  .cloud3{--top:34%; --w:520px; --h:210px; --o:.30; --b:12px; --d:136s; animation-delay:-68s;}
+  .cloud4{--top:46%; --w:310px; --h:130px; --o:.58; --b:4px; --d:104s; animation-delay:-14s;}
+  .cloud5{--top:62%; --w:560px; --h:224px; --o:.26; --b:14px; --d:154s; animation-delay:-92s;}
+  .cloud6{--top:74%; --w:240px; --h:96px; --o:.52; --b:5px; --d:86s; animation-delay:-28s;}
+  .cloud7{--top:24%; --w:360px; --h:150px; --o:.42; --b:8px; --d:124s; animation-delay:-56s;}
+  .cloud8{--top:54%; --w:420px; --h:170px; --o:.34; --b:10px; --d:142s; animation-delay:-78s;}
+  .cloud9{--top:12%; --w:190px; --h:78px; --o:.62; --b:3px; --d:74s; animation-delay:-18s;}
+  .cloud10{--top:68%; --w:280px; --h:112px; --o:.46; --b:6px; --d:98s; animation-delay:-64s;}
+
+  .rosary{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:2;
+  }
+
+  svg{
+    position:relative;
+    z-index:2;
+    width:min(100%, 1120px);
+    height:min(100%, 980px);
+    overflow:visible;
+  }
+
+  @keyframes drift{
+    from{ transform: translateX(-22vw) translateZ(0); }
+    to{ transform: translateX(122vw) translateZ(0); }
+  }
+
+  @media (max-width: 700px){
+    .main-area{margin-left:0;width:100%; padding-top:180px;}
+    .left-rail{position:fixed; width:100%; height:170px; pointer-events:none;}
+    #Layer4{left:15px; top:10px;}
+    #Layer6{left:21px; top:120px;}
+    .stage{min-height:1120px}
+    .hint{font-size:12px}
+    .status{font-size:15px}
+  }
+
+  .rope{
+    fill:none;
+    stroke:#8a6a45;
+    stroke-width:9;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    opacity:.38;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.08));
+  }
+
+  .bead,
+  .crossPiece{
+    cursor:pointer;
+    transition:filter .12s ease;
+    transform-box:fill-box;
+    transform-origin:center;
+  }
+
+  .bead:hover,
+  .crossPiece:hover{
+    filter:drop-shadow(0 5px 10px rgba(0,0,0,.18));
+  }
+
+  .bead circle{
+    fill:url(#beadGrad);
+    stroke:#6f3a17;
+    stroke-width:2.5;
+  }
+
+  .bead.large circle{
+    fill:url(#beadLargeGrad);
+  }
+
+  .bead.done circle{
+    fill:url(#doneGrad);
+    stroke:#436d27;
+  }
+
+  .bead.active circle{
+    fill:url(#activeGrad);
+    stroke:#315a1f;
+    stroke-width:3.4;
+  }
+
+  .beadFill{
+    fill:url(#doneGrad);
+    pointer-events:none;
+  }
+
+  .crossBase{
+    fill:url(#crossGrad);
+    stroke:#4f3316;
+    stroke-width:3;
+  }
+
+  .crossDone{
+    fill:url(#doneGrad);
+    stroke:#436d27;
+  }
+
+  .crossActive{
+    fill:url(#activeGrad);
+    stroke:#315a1f;
+  }
+
+  .knot{
+    fill:#d7c19b;
+    stroke:#84643a;
+    stroke-width:2.5;
+  }
+
+  .tinyKnot{
+    fill:#edd9b5;
+    stroke:#84643a;
+    stroke-width:1.8;
+  }
+
+  .hint{
+    position:absolute;
+    left:50%;
+    bottom:16px;
+    transform:translateX(-50%);
+    font-size:13px;
+    color:#6f5a40;
+    background:rgba(255,250,244,.8);
+    border:1px solid rgba(184,137,74,.14);
+    border-radius:999px;
+    padding:8px 14px;
+    box-shadow:0 8px 20px rgba(0,0,0,.06);
+    text-align:center;
+    max-width:calc(100% - 18px);
+  }
 #Layer1 {
 	position:absolute;
 	left:15px;
 	top:22px;
-	width:184px;
-	height:132px;
-	z-index:1;
+	width:136px;
+	height:64px;
+	z-index:10002;
 }
 #Layer2 {
 	position:absolute;
-	left:32px;
-	top:22px;
-	width:380px;
-	height:228px;
-	z-index:1;
+	left:27px;
+	top:237px;
+	width:181px;
+	height:243px;
+	z-index:10003;
+}
+.botao-menu1 {    background:#4db8ff;
+    color:white;
+    padding:10px 18px;
+    border-radius:8px;
+    text-decoration:none;
+    font-family:Arial;
+    font-weight:bold;
+    width:140px;
+    text-align:center;
 }
 #Layer3 {
 	position:absolute;
-	left:22px;
-	top:16px;
-	width:227px;
-	height:167px;
-	z-index:1;
+	left:217px;
+	top:237px;
+	width:141px;
+	height:118px;
+	z-index:10004;
 }
-#Layer4 {
+.botao-menu11 {background:#4db8ff;
+    color:white;
+    padding:10px 18px;
+    border-radius:8px;
+    text-decoration:none;
+    font-family:Arial;
+    font-weight:bold;
+    width:140px;
+    text-align:center;
+}
+#Layer5 {
 	position:absolute;
 	left:24px;
-	top:166px;
-	width:180px;
-	height:25px;
-	z-index:1;
+	top:231px;
+	width:157px;
+	height:118px;
+	z-index:10003;
 }
-#Layer6 {
-	position:absolute;
-	left:21px;
-	top:240px;
-	width:181px;
-	height:90px;
-	z-index:2;
-}
-#Layer7 {
-	position:absolute;
-	left:274px;
-	top:168px;
-	width:596px;
-	height:355px;
-	z-index:3;
-}
--->
 </style>
 </head>
-
 <body>
-<div id="Layer4">
-  <div id="Layer5"><a href="index.html" class="botao-voltar">Voltar</a>
-
-<style>
+  <div id="Layer1">
+    <div id="layer">
+      <div id="div"><a href="oracao.html" class="botao-voltar">Voltar</a>
+          <style>
 .botao-voltar {
     position:absolute;
     top:20px;
@@ -79,153 +500,716 @@
 .botao-voltar:hover {
     background:#2ea6ff;
 }
-</style></div></div>
-<div id="Layer6">
-  <div id="menu-catolico">
+      </style>
+      </div>
+    </div>
+  </div>
+  <div class="left-rail" aria-hidden="false"></div>
 
-<a href="terco.html" class="botao-menu">Ter�o</a>
-<a href="biblia.html" class="botao-menu">B�blia</a>
-<a href="cancaonova.html" class="botao-menu">Can��o Nova</a>
-<a href="tvaparecida.html" class="botao-menu">TV Aparecida</a></div>
+  <main class="main-area">
+    <div class="wrap">
+      <div class="top">
+        <h1>Terço</h1>
+        <div class="controls">
+          <button id="startBtn">Começar terço</button>
+          <button class="secondary" id="pauseBtn">Pausar terço</button>
+          <button class="secondary" id="voiceBtn">Voz feminina</button>
+        </div>
+        <div class="status" id="status" aria-live="polite">Clique em “Começar terço”.</div>
+        <div class="prayerBox" aria-live="polite">
+          <div class="prayerTitle" id="prayerTitle">Pronto</div>
+          <div class="prayerText" id="prayerText">Clique em “Começar terço”.</div>
+        </div>
+      </div>
 
-<style>
+      <div class="stage">
+        <div class="cloudLayer" aria-hidden="true">
+          <span class="cloud big cloud1"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud small cloud2"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud big cloud3"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud small cloud4"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud big cloud5"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud small cloud6"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud big cloud7"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud small cloud8"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud small cloud9"><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="cloud big cloud10"><span></span><span></span><span></span><span></span><span></span></span>
+        </div>
+        <div class="rosary">
+          <svg id="rosarySvg" viewBox="0 0 1100 980" aria-label="Terço católico interativo">
+            <defs>
+              <linearGradient id="beadGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#a85c26"/>
+                <stop offset="45%" stop-color="#7a3518"/>
+                <stop offset="100%" stop-color="#4d1f12"/>
+              </linearGradient>
+              <linearGradient id="beadLargeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#c67a34"/>
+                <stop offset="45%" stop-color="#8a4620"/>
+                <stop offset="100%" stop-color="#5b2614"/>
+              </linearGradient>
+              <linearGradient id="doneGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#9dd56d"/>
+                <stop offset="100%" stop-color="#5f9337"/>
+              </linearGradient>
+              <linearGradient id="activeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#bce98d"/>
+                <stop offset="100%" stop-color="#76b24f"/>
+              </linearGradient>
+              <linearGradient id="crossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#a35e28"/>
+                <stop offset="100%" stop-color="#6b3517"/>
+              </linearGradient>
+            </defs>
 
-#menu-catolico {
-    position:absolute;
-    top:70px;
-    left:20px;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    z-index:9999;
-}
+            <path id="ropePath" class="rope" d="
+              M 550 790
+              C 550 740, 548 700, 548 650
+              C 548 612, 533 585, 510 560
+              C 430 475, 340 375, 294 260
+              C 264 186, 294 113, 368 90
+              C 460 62, 576 70, 655 119
+              C 725 163, 754 237, 734 299
+              C 721 340, 691 368, 663 389
+              C 623 419, 615 451, 651 489
+              C 704 545, 772 609, 784 688
+              C 796 762, 738 827, 659 840
+              C 612 847, 574 833, 550 790
+            "/>
 
-.botao-menu {
-    background:#4db8ff;
-    color:white;
-    padding:10px 18px;
-    border-radius:8px;
-    text-decoration:none;
-    font-family:Arial;
-    font-weight:bold;
-    width:140px;
-    text-align:center;
-}
+            <g id="beadsLayer"></g>
 
-.botao-menu:hover {
-    background:#2ea6ff;
-}
+            <circle cx="550" cy="790" r="13" class="knot"></circle>
+            <circle cx="550" cy="790" r="5.5" class="tinyKnot"></circle>
 
-</style></div>
-<div id="Layer7"><iframe
-width="560"
-height="315"
-src="https://www.youtube-nocookie.com/embed/dDSfUOtxkJA"
-frameborder="0"
-allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-allowfullscreen>
-</iframe></div>
-<div id="Layer3"><!DOCTYPE html>
-<html lang="pt-br">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <g id="crossGroup" class="crossPiece" transform="translate(512, 815)">
+              <rect x="28" y="0" width="20" height="86" rx="8" class="crossBase"></rect>
+              <rect x="0" y="28" width="76" height="20" rx="8" class="crossBase"></rect>
+              <rect x="16" y="18" width="44" height="8" rx="4" fill="rgba(255,255,255,.12)"></rect>
+            </g>
+          </svg>
+        </div>
 
-<title>Fundo suave</title>
+        <div class="hint"></div>
+      </div>
+    </div>
+  </main>
 
-<style>
+  <script>
 
-body {
-    margin: 0;
-    background: white;
-    height: 100vh;
-    overflow-x: hidden;
-}
+  const sequence = [
+    { type: 'cross', title: 'Sinal da Cruz', text: 'Em nome do Pai, e do Filho, e do Espírito Santo. Amém.' },
+    { type: 'intro', title: 'Credo', text: 'Creio em Deus Pai todo-poderoso, criador do céu e da terra; e em Jesus Cristo, seu único Filho, nosso Senhor, o qual foi concebido pelo poder do Espírito Santo; nasceu da Virgem Maria; padeceu sob Pôncio Pilatos; foi crucificado, morto e sepultado; desceu à mansão dos mortos; ressuscitou ao terceiro dia; subiu aos céus; está sentado à direita de Deus Pai todo-poderoso, donde há de vir a julgar os vivos e os mortos. Creio no Espírito Santo; na santa Igreja católica; na comunhão dos santos; na remissão dos pecados; na ressurreição da carne; na vida eterna. Amém.' },
+    { type: 'intro', large: true, title: 'Pai Nosso', text: 'Pai nosso, que estais no céu, santificado seja o vosso nome; venha a nós o vosso Reino; seja feita a vossa vontade, assim na terra como no céu. O pão nosso de cada dia nos dai hoje; perdoai-nos as nossas ofensas, assim como nós perdoamos a quem nos tem ofendido; e não nos deixeis cair em tentação, mas livrai-nos do mal. Amém.' },
+    { type: 'intro', title: 'Ave Maria', text: 'Ave Maria, cheia de graça, o Senhor é convosco; bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós, pecadores, agora e na hora da nossa morte. Amém.' },
+    { type: 'intro', title: 'Ave Maria', text: 'Ave Maria, cheia de graça, o Senhor é convosco; bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós, pecadores, agora e na hora da nossa morte. Amém.' },
+    { type: 'intro', title: 'Ave Maria', text: 'Ave Maria, cheia de graça, o Senhor é convosco; bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós, pecadores, agora e na hora da nossa morte. Amém.' },
+    { type: 'intro', large: true, title: 'Glória ao Pai', text: 'Glória ao Pai, e ao Filho, e ao Espírito Santo. Como era no princípio, agora e sempre. Amém.' },
+    ...Array.from({ length: 5 }, (_, decade) => ([
+      { type: 'decade', large: true, title: `Mistério ${decade + 1} — Pai Nosso`, text: 'Pai nosso, que estais no céu, santificado seja o vosso nome; venha a nós o vosso Reino; seja feita a vossa vontade, assim na terra como no céu. O pão nosso de cada dia nos dai hoje; perdoai-nos as nossas ofensas, assim como nós perdoamos a quem nos tem ofendido; e não nos deixeis cair em tentação, mas livrai-nos do mal. Amém.' },
+      ...Array.from({ length: 10 }, (_, i) => ({
+        type: 'decade',
+        title: `Mistério ${decade + 1} — Ave Maria ${i + 1}`,
+        text: 'Ave Maria, cheia de graça, o Senhor é convosco; bendita sois vós entre as mulheres e bendito é o fruto do vosso ventre, Jesus. Santa Maria, Mãe de Deus, rogai por nós, pecadores, agora e na hora da nossa morte. Amém.'
+      })),
+      { type: 'decade', large: true, title: `Mistério ${decade + 1} — Glória ao Pai`, text: 'Glória ao Pai, e ao Filho, e ao Espírito Santo. Como era no princípio, agora e sempre. Amém. Pai nosso, que estais no céu, santificado seja o vosso nome; venha a nós o vosso Reino; seja feita a vossa vontade, assim na terra como no céu. O pão nosso de cada dia nos dai hoje; perdoai-nos as nossas ofensas, assim como nós perdoamos a quem nos tem ofendido; e não nos deixeis cair em tentação, mas livrai-nos do mal. Amém.' }
+    ])).flat(),
+    { type: 'final', title: 'Salve Rainha', text: 'Salve Rainha, Mãe de misericórdia, vida, doçura e esperança nossa, salve! A vós bradamos, os degredados filhos de Eva. A vós suspiramos, gemendo e chorando neste vale de lágrimas. Eia, pois, advogada nossa, esses vossos olhos misericordiosos a nós volvei. E, depois deste desterro, mostrai-nos Jesus, bendito fruto do vosso ventre, ó clemente, ó piedosa, ó doce sempre Virgem Maria. Rogai por nós, Santa Mãe de Deus, para que sejamos dignos das promessas de Cristo. Amém.' },
+    { type: 'final', title: 'Oração Final', text: 'Ó Deus, cujo Filho unigênito, com sua vida, morte e ressurreição, nos adquiriu os prêmios da salvação eterna, concedei-nos, nós vos pedimos, que, meditando estes mistérios do santíssimo Rosário da Bem-aventurada Virgem Maria, imitemos o que contêm e alcancemos o que prometem. Por Cristo, nosso Senhor. Amém.' }
+  ];
 
-.background {
-    position: fixed;
-    width: 100%;
-    height: 100%;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: -1;
-}
+  const svg = document.getElementById('rosarySvg');
+  const ropePath = document.getElementById('ropePath');
+  const beadsLayer = document.getElementById('beadsLayer');
+  const crossGroup = document.getElementById('crossGroup');
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const voiceBtn = document.getElementById('voiceBtn');
+  const statusEl = document.getElementById('status');
+  const prayerTitleEl = document.getElementById('prayerTitle');
+  const prayerTextEl = document.getElementById('prayerText');
+  const defs = svg.querySelector('defs');
 
-.icon {
-    position: absolute;
-    width: 60px;
-    opacity: 0.10;
-}
+  const total = sequence.length;
+  let stepIndex = 0;
+  let playing = false;
+  let paused = false;
+  let runToken = 0;
+  let beadEls = [];
+  let beadSteps = [];
+  let crossEl = null;
+  let voiceMode = 'masculina';
+  let cachedVoices = [];
+  let prayerWordEls = [];
+  let currentActiveWordIndex = -1;
+  let beadProgressEls = [];
+  let beadRadii = [];
 
-/* rota��es */
-.r1 { transform: rotate(0deg); }
-.r2 { transform: rotate(30deg); }
-.r3 { transform: rotate(60deg); }
-.r4 { transform: rotate(90deg); }
-.r5 { transform: rotate(120deg); }
-.r6 { transform: rotate(150deg); }
+  const WORD_RE = /(\p{L}[\p{L}\p{M}'’\-]*)/gu;
 
-.container {
-    text-align: center;
-    padding: 50px;
-    font-family: Arial;
-}
+  function escapeHTML(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
-</style>
-</head>
+  function setStatus(text) {
+    if (statusEl) statusEl.textContent = text;
+  }
 
-<body>
+  function renderPrayerText(text) {
+    if (!prayerTextEl) return;
+    prayerWordEls = [];
+    currentActiveWordIndex = -1;
 
-<div class="background">
+    let html = '';
+    let lastIndex = 0;
+    let wordIndex = 0;
 
-<!-- linha 1 -->
-<img class="icon r1" style="top:5%; left:5%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r2" style="top:8%; left:25%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r3" style="top:10%; left:45%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r4" style="top:6%; left:65%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r5" style="top:9%; left:85%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+    for (const match of text.matchAll(WORD_RE)) {
+      const idx = match.index ?? 0;
+      if (idx > lastIndex) {
+        html += escapeHTML(text.slice(lastIndex, idx));
+      }
 
-<!-- linha 2 -->
-<img class="icon r6" style="top:25%; left:10%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r2" style="top:28%; left:30%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r1" style="top:22%; left:50%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r3" style="top:27%; left:70%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r4" style="top:24%; left:90%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+      const word = match[0];
+      html += `<span class="prayerWord" data-word-index="${wordIndex}">${escapeHTML(word)}</span>`;
+      wordIndex += 1;
+      lastIndex = idx + word.length;
+    }
 
-<!-- linha 3 -->
-<img class="icon r5" style="top:45%; left:5%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r6" style="top:48%; left:25%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r3" style="top:43%; left:45%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r1" style="top:47%; left:65%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r2" style="top:44%; left:85%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+    if (lastIndex < text.length) {
+      html += escapeHTML(text.slice(lastIndex));
+    }
 
-<!-- linha 4 -->
-<img class="icon r4" style="top:65%; left:10%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r5" style="top:68%; left:30%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r6" style="top:63%; left:50%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r2" style="top:67%; left:70%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r1" style="top:64%; left:90%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+    prayerTextEl.innerHTML = html || escapeHTML(text);
+    prayerWordEls = Array.from(prayerTextEl.querySelectorAll('.prayerWord'));
+  }
 
-<!-- linha 5 -->
-<img class="icon r3" style="top:85%; left:5%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r4" style="top:88%; left:25%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r5" style="top:83%; left:45%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r6" style="top:87%; left:65%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
-<img class="icon r2" style="top:84%; left:85%;" src="https://cdn.pixabay.com/photo/2018/01/12/07/04/man-3077706_1280.png">
+  function setActivePrayerWord(wordIndex) {
+    if (currentActiveWordIndex === wordIndex) return;
+    currentActiveWordIndex = wordIndex;
 
-</div>
+    for (let i = 0; i < prayerWordEls.length; i++) {
+      prayerWordEls[i].classList.toggle('active', i === wordIndex);
+    }
+  }
 
-<div class="container">
-    <h1>&nbsp;</h1>
-</div>
+  function setBeadProgress(stepNumber, progress) {
+    const idx = beadSteps.indexOf(stepNumber);
+    if (idx < 0) return;
+    const fillEl = beadProgressEls[idx];
+    if (!fillEl) return;
+    const radius = beadRadii[idx] || 0;
+    const clamped = Math.max(0, Math.min(1, progress));
+    fillEl.setAttribute('width', String(radius * 2 * clamped));
+  }
 
-</body>
-</html></div>
-</body>
-</html></div>
-<div id="Layer1"><!DOCTYPE html>
-</body>
-</html></div>
+  function resetBeadProgress(stepNumber) {
+    setBeadProgress(stepNumber, 0);
+  }
+
+  function setPrayerDisplay(title, text) {
+    if (prayerTitleEl) prayerTitleEl.textContent = title || 'Terço';
+    renderPrayerText(text || '');
+  }
+
+  function updatePauseButton() {
+    pauseBtn.textContent = paused ? 'Continuar' : 'Pausar terço';
+  }
+
+  function updateVoiceButton() {
+    voiceBtn.textContent = voiceMode === 'masculina' ? 'Voz feminina' : 'Voz masculina';
+  }
+
+  function loadVoices() {
+    if (!('speechSynthesis' in window)) return [];
+    cachedVoices = window.speechSynthesis.getVoices() || [];
+    return cachedVoices;
+  }
+
+  function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function tokenizeText(text) {
+    const tokens = [];
+    let lastIndex = 0;
+    let wordCount = 0;
+
+    for (const match of text.matchAll(WORD_RE)) {
+      const idx = match.index ?? 0;
+      if (idx > lastIndex) {
+        tokens.push({ type: 'text', text: text.slice(lastIndex, idx) });
+      }
+      tokens.push({ type: 'word', text: match[0], wordIndex: wordCount });
+      wordCount += 1;
+      lastIndex = idx + match[0].length;
+    }
+
+    if (lastIndex < text.length) {
+      tokens.push({ type: 'text', text: text.slice(lastIndex) });
+    }
+
+    return { tokens, wordCount };
+  }
+
+  function buildSpeechChunks(text, maxChars = 150) {
+    const { tokens } = tokenizeText(text);
+    const chunks = [];
+    let current = { text: '', wordIndices: [], wordStarts: [] };
+
+    const pushCurrent = () => {
+      if (current.text.trim()) {
+        chunks.push(current);
+      }
+      current = { text: '', wordIndices: [], wordStarts: [] };
+    };
+
+    for (const token of tokens) {
+      const wouldOverflow = current.text.length + token.text.length > maxChars;
+      if (wouldOverflow && current.wordIndices.length > 0 && token.type === 'word') {
+        pushCurrent();
+      }
+
+      if (token.type === 'word') {
+        current.wordStarts.push(current.text.length);
+        current.wordIndices.push(token.wordIndex);
+      }
+      current.text += token.text;
+    }
+
+    pushCurrent();
+    return chunks;
+  }
+
+  function pickVoice() {
+    const voices = loadVoices();
+    if (!voices.length) return null;
+
+    const ptVoices = voices.filter(v => (v.lang || '').toLowerCase().startsWith('pt'));
+    const pool = ptVoices.length ? ptVoices : voices;
+
+    const femaleHints = /fem|woman|mulher|maria|ana|helena|luciana|sara|clara|beatriz|juliana/i;
+    const maleHints = /masc|male|homem|jo[aã]o|carlos|bruno|paulo|pedro|marcos|ricardo/i;
+
+    if (voiceMode === 'feminina') {
+      return pool.find(v => femaleHints.test(v.name)) || pool[0] || null;
+    }
+
+    return pool.find(v => maleHints.test(v.name)) || pool.find(v => !femaleHints.test(v.name)) || pool[0] || null;
+  }
+
+  function clearActive() {
+    beadEls.forEach(el => el.classList.remove('active'));
+    crossEl?.classList.remove('crossActive');
+  }
+
+  function markDone(i) {
+    if (i === 0) {
+      crossEl?.classList.add('crossDone');
+      crossEl?.classList.remove('crossActive');
+      return;
+    }
+    const idx = beadSteps.indexOf(i);
+    const el = idx >= 0 ? beadEls[idx] : null;
+    if (!el) return;
+    el.classList.add('done');
+    el.classList.remove('active');
+    setBeadProgress(i, 1);
+  }
+
+  function activateStep(i) {
+    clearActive();
+    if (i === 0) {
+      crossEl?.classList.add('crossActive');
+    } else {
+      const idx = beadSteps.indexOf(i);
+      const el = idx >= 0 ? beadEls[idx] : null;
+      if (el) {
+        el.classList.add('active');
+        setBeadProgress(i, 0);
+      }
+    }
+  }
+
+  function placeBeads() {
+    const pathLength = ropePath.getTotalLength();
+    const hiddenSteps = new Set([7, 19, 31, 43, 55]);
+    const visibleSteps = [];
+    for (let i = 1; i < total; i++) {
+      if (!hiddenSteps.has(i)) visibleSteps.push(i);
+    }
+
+    const usableCount = visibleSteps.length;
+    const startDist = 4;
+    const endDist = pathLength - 8;
+    const step = (endDist - startDist) / (usableCount - 1);
+
+    crossEl = crossGroup;
+    crossEl.setAttribute('tabindex', '0');
+    crossEl.setAttribute('role', 'button');
+    crossEl.setAttribute('aria-label', 'Sinal da Cruz. Clique para iniciar este passo.');
+    crossEl.addEventListener('click', () => startRosaryFresh());
+    crossEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        startRosaryFresh();
+      }
+    });
+
+    visibleSteps.forEach((stepNumber, visibleIndex) => {
+      const p = ropePath.getPointAtLength(startDist + visibleIndex * step);
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const isLarge = Boolean(sequence[stepNumber]?.large);
+      const radius = isLarge ? 15 : 11.5;
+      const clipId = `beadClip-${stepNumber}-${visibleIndex}`;
+      g.setAttribute('class', 'bead' + (isLarge ? ' large' : ''));
+      g.setAttribute('transform', `translate(${p.x}, ${p.y})`);
+      g.setAttribute('tabindex', '0');
+      g.setAttribute('role', 'button');
+      g.setAttribute('aria-label', `${sequence[stepNumber].title}. Clique para rezar este passo.`);
+
+      const clipPath = document.createElementNS('http://www.w3.org/2000/svg', 'clipPath');
+      clipPath.setAttribute('id', clipId);
+      clipPath.setAttribute('clipPathUnits', 'userSpaceOnUse');
+      const clipCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      clipCircle.setAttribute('cx', p.x);
+      clipCircle.setAttribute('cy', p.y);
+      clipCircle.setAttribute('r', radius);
+      clipPath.appendChild(clipCircle);
+      defs.appendChild(clipPath);
+
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('r', String(radius));
+      g.appendChild(c);
+
+      const fill = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      fill.setAttribute('class', 'beadFill');
+      fill.setAttribute('x', String(-radius));
+      fill.setAttribute('y', String(-radius));
+      fill.setAttribute('width', '0');
+      fill.setAttribute('height', String(radius * 2));
+      fill.setAttribute('clip-path', `url(#${clipId})`);
+      g.appendChild(fill);
+
+      g.addEventListener('click', () => {
+        startRosaryFresh();
+      });
+      g.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          startRosaryFresh();
+        }
+      });
+
+      beadsLayer.appendChild(g);
+      beadEls.push(g);
+      beadSteps.push(stepNumber);
+      beadProgressEls.push(fill);
+      beadRadii.push(radius);
+    });
+  }
+
+  function renderState() {
+    beadEls.forEach((el, idx) => {
+      const stepNumber = beadSteps[idx];
+      el.classList.toggle('done', stepNumber < stepIndex);
+      el.classList.toggle('active', stepNumber === stepIndex && playing && !paused);
+    });
+
+    crossEl?.classList.toggle('crossDone', stepIndex > 0);
+    crossEl?.classList.toggle('crossActive', stepIndex === 0 && playing && !paused);
+
+    if (stepIndex >= total) {
+      setStatus('Terço concluído. Amém.');
+      setPrayerDisplay('Concluído', 'Terço concluído. Amém.');
+      pauseBtn.textContent = 'Pausar terço';
+      return;
+    }
+
+    if (stepIndex === 0) {
+      setStatus('Clique em “Começar terço”.');
+      setPrayerDisplay('Pronto', 'Clique em “Começar terço”.');
+    } else {
+      setStatus(sequence[stepIndex].title);
+      setPrayerDisplay(sequence[stepIndex].title, sequence[stepIndex].text);
+    }
+  }
+
+  function startRosaryFresh() {
+
+    stepIndex = 0;
+    paused = false;
+    playing = true;
+    runToken += 1;
+    beadSteps.forEach(stepNum => setBeadProgress(stepNum, 0));
+    setActivePrayerWord(-1);
+
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+      } catch (_) {}
+    }
+
+    updatePauseButton();
+    renderState();
+    runFromCurrent(runToken);
+  }
+
+  function togglePause() {
+    if (!playing && !paused) return;
+
+    if (paused) {
+      paused = false;
+      playing = true;
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.resume(); } catch (_) {}
+      }
+      updatePauseButton();
+      renderState();
+      runFromCurrent(runToken);
+      return;
+    }
+
+    paused = true;
+    playing = false;
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    updatePauseButton();
+    renderState();
+  }
+
+  function toggleVoice() {
+    voiceMode = voiceMode === 'masculina' ? 'feminina' : 'masculina';
+    updateVoiceButton();
+    if (playing && !paused && stepIndex < total) {
+      if ('speechSynthesis' in window) {
+        try { window.speechSynthesis.cancel(); window.speechSynthesis.resume(); } catch (_) {}
+      }
+      runToken += 1;
+      const currentToken = runToken;
+      runFromCurrent(currentToken);
+    }
+  }
+
+  function estimateChunkDuration(chunk) {
+    const wordCount = Math.max(1, chunk.wordIndices.length);
+    return Math.max(1800, Math.min(25000, chunk.text.length * 120 + wordCount * 120));
+  }
+
+  function speakChunk(chunk, token, baseWordIndex) {
+    return new Promise(async resolve => {
+      let timer = null;
+      let fallbackTimer = null;
+      let progressTimer = null;
+
+      const finish = () => {
+        if (timer) clearTimeout(timer);
+        if (fallbackTimer) clearInterval(fallbackTimer);
+        if (progressTimer) clearInterval(progressTimer);
+        setActivePrayerWord(-1);
+        resolve();
+      };
+
+      const stepNumber = stepIndex;
+      const totalMs = estimateChunkDuration(chunk);
+
+      const startProgressTimer = () => {
+        const startedAt = performance.now();
+        if (beadSteps.includes(stepNumber)) {
+          setBeadProgress(stepNumber, 0);
+        }
+        progressTimer = setInterval(() => {
+          if (token !== runToken || !playing || paused) {
+            return;
+          }
+          const elapsed = performance.now() - startedAt;
+          const pct = Math.max(0, Math.min(1, elapsed / totalMs));
+          setBeadProgress(stepNumber, pct);
+        }, 80);
+      };
+
+      if (!('speechSynthesis' in window)) {
+        const ms = totalMs;
+        let wordPos = 0;
+        setActivePrayerWord(baseWordIndex + wordPos);
+        startProgressTimer();
+        const stepMs = Math.max(180, ms / Math.max(1, chunk.wordIndices.length));
+        fallbackTimer = setInterval(() => {
+          if (token !== runToken || !playing || paused) {
+            clearInterval(fallbackTimer);
+            return finish();
+          }
+          wordPos += 1;
+          if (wordPos >= chunk.wordIndices.length) {
+            clearInterval(fallbackTimer);
+            return finish();
+          }
+          setActivePrayerWord(chunk.wordIndices[wordPos]);
+        }, stepMs);
+        timer = setTimeout(() => {
+          clearInterval(fallbackTimer);
+          finish();
+        }, ms);
+        return;
+      }
+
+      try {
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.resume();
+      } catch (_) {}
+
+      const u = new SpeechSynthesisUtterance(chunk.text);
+      u.lang = 'pt-BR';
+      u.rate = 0.92;
+      u.pitch = voiceMode === 'feminina' ? 1.18 : 0.96;
+
+      const chosenVoice = pickVoice();
+      if (chosenVoice) {
+        u.voice = chosenVoice;
+        if (chosenVoice.lang) u.lang = chosenVoice.lang;
+      }
+
+      let done = false;
+      let boundarySeen = false;
+      let wordPointer = 0;
+
+      const doneOnce = () => {
+        if (done) return;
+        done = true;
+        finish();
+      };
+
+      timer = setTimeout(() => {
+        try {
+          window.speechSynthesis.cancel();
+        } catch (_) {}
+        doneOnce();
+      }, totalMs + 5000);
+
+      const fallbackStepMs = Math.max(160, Math.min(650, totalMs / Math.max(1, chunk.wordIndices.length)));
+      const startFallback = () => {
+        if (boundarySeen || fallbackTimer || token !== runToken || !playing || paused) return;
+        if (chunk.wordIndices.length === 0) return;
+        fallbackTimer = setInterval(() => {
+          if (token !== runToken || !playing || paused) {
+            clearInterval(fallbackTimer);
+            return doneOnce();
+          }
+          setActivePrayerWord(chunk.wordIndices[wordPointer]);
+          wordPointer += 1;
+          if (wordPointer >= chunk.wordIndices.length) {
+            clearInterval(fallbackTimer);
+          }
+        }, fallbackStepMs);
+      };
+
+      u.onstart = () => {
+        if (chunk.wordIndices.length > 0) {
+          setActivePrayerWord(chunk.wordIndices[0]);
+        }
+        startProgressTimer();
+        setTimeout(startFallback, 650);
+      };
+
+      u.onboundary = event => {
+        if (token !== runToken || !playing || paused) return;
+        if (typeof event.charIndex !== 'number') return;
+        boundarySeen = true;
+
+        const indices = chunk.wordIndices;
+        const starts = chunk.wordStarts;
+        if (!indices.length) return;
+
+        let local = 0;
+        for (let i = 0; i < starts.length; i++) {
+          if (starts[i] <= event.charIndex) local = i;
+          else break;
+        }
+        setActivePrayerWord(indices[Math.max(0, local)]);
+      };
+
+      u.onend = () => {
+        doneOnce();
+      };
+
+      u.onerror = () => {
+        doneOnce();
+      };
+
+      await wait(30);
+
+      try {
+        window.speechSynthesis.speak(u);
+      } catch (_) {
+        clearTimeout(timer);
+        if (fallbackTimer) clearInterval(fallbackTimer);
+        if (progressTimer) clearInterval(progressTimer);
+        doneOnce();
+      }
+    });
+  }
+
+  async function speakText(text, token) {
+    const chunks = buildSpeechChunks(text);
+    let baseWordIndex = 0;
+
+    for (const chunk of chunks) {
+      if (token !== runToken || !playing || paused) return;
+      await speakChunk(chunk, token, baseWordIndex);
+      baseWordIndex += chunk.wordIndices.length;
+      if (token !== runToken || !playing || paused) return;
+    }
+  }
+
+  async function runFromCurrent(token) {
+    while (playing && !paused && stepIndex < total && token === runToken) {
+      activateStep(stepIndex);
+      renderState();
+
+      const item = sequence[stepIndex];
+      setStatus(item.title);
+      setPrayerDisplay(item.title, item.text);
+
+      await speakText(item.text, token);
+      if (!playing || paused || token !== runToken) return;
+
+      markDone(stepIndex);
+      stepIndex += 1;
+    }
+
+    if (token !== runToken) return;
+
+    if (stepIndex >= total) {
+      playing = false;
+      paused = false;
+      updatePauseButton();
+      renderState();
+      startBtn.textContent = 'Começar terço';
+    }
+  }
+
+  startBtn.addEventListener('click', startRosaryFresh);
+  pauseBtn.addEventListener('click', togglePause);
+  voiceBtn.addEventListener('click', toggleVoice);
+
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+    document.addEventListener('click', () => loadVoices(), { once: true });
+    document.addEventListener('touchstart', () => loadVoices(), { once: true });
+  }
+
+  placeBeads();
+  updatePauseButton();
+  updateVoiceButton();
+  setPrayerDisplay('Pronto', 'Clique em “Começar terço”.');
+  renderState();
+
+  </script>
 </body>
 </html>
