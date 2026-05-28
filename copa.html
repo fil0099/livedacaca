@@ -413,6 +413,39 @@
       line-height: 1.35;
     }
 
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin: 8px 0 18px;
+      padding: 12px 14px;
+      border: 1px solid rgba(17,24,39,.08);
+      border-radius: 16px;
+      background: rgba(255,255,255,.56);
+      backdrop-filter: blur(2px);
+    }
+
+    .filter-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .filter-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+    }
+
+    .filter-hint {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
     .toast {
       position: fixed;
       right: 18px;
@@ -440,25 +473,33 @@
     }
   #Layer1 {
 	position:absolute;
-	left:1122px;
-	top:208px;
-	width:103px;
-	height:17px;
+	left:539px;
+	top:223px;
+	width:5px;
+	height:1px;
 	z-index:2;
 }
   #Layer2 {
 	position:absolute;
-	left:321px;
-	top:214px;
-	width:365px;
-	height:93px;
+	left:1092px;
+	top:204px;
+	width:179px;
+	height:52px;
 	z-index:3;
+}
+  #Layer3 {
+	position:absolute;
+	left:350px;
+	top:206px;
+	width:300px;
+	height:77px;
+	z-index:4;
 }
   </style>
 </head>
 <body>
   <main>
-    <h1>CACÁ na Copa do Mundo</h1>
+    <h1>Palpites da Copa do Mundo</h1>
     <p class="muted">
       Coloque seu nome, aposte o placar de cada jogo e acompanhe os palpites de todo mundo em tempo real.
     </p>
@@ -478,6 +519,14 @@
           <div class="photo-slot-text">Aqui você pode colocar uma imagem no formato vertical, como uma foto de destaque ou personalização do site.</div>
         </div>
       </div>
+    </div>
+
+    <div class="filter-row">
+      <label for="onlyBrazil">
+        <input id="onlyBrazil" type="checkbox" checked />
+        Mostrar somente jogos do Brasil
+      </label>
+      <div class="filter-hint"></div>
     </div>
 
     <div class="statusline" id="connectionStatus" style="display:none;"></div>
@@ -520,8 +569,9 @@
     <div class="footer-note" id="lastUpdated">—</div>
   </main>
 
-  <div id="Layer1"><img src="cacacopa.png" width="277" height="345"></div>
-  <div id="Layer2"><img src="brasilcopa.gif" width="500" height="345"></div>
+  <div id="Layer1"></div>
+  <div id="Layer2"><img src="cacacopa.png" width="295" height="369"></div>
+  <div id="Layer3"><img src="brasilcopa.gif" width="500" height="345"></div>
   <div class="toast" id="toast"></div>
 
   <script type="module">
@@ -999,13 +1049,15 @@
 
     const LOCAL_NAME_KEY = 'palpites_copa_nome_v2';
     const LOCAL_CACHE_KEY = 'palpites_copa_cache_v2';
+    const LOCAL_BRAZIL_FILTER_KEY = 'palpites_copa_brazil_only_v1';
 
     const state = {
       matches: [],
       predictions: [],
       lastTournamentUpdate: null,
       dbMode: 'loading',
-      firestore: null
+      firestore: null,
+      showOnlyBrazil: true
     };
 
     const els = {
@@ -1016,7 +1068,8 @@
       scheduleInfo: document.getElementById('scheduleInfo'),
       connectionStatus: document.getElementById('connectionStatus'),
       toast: document.getElementById('toast'),
-      lastUpdated: document.getElementById('lastUpdated')
+      lastUpdated: document.getElementById('lastUpdated'),
+      onlyBrazil: document.getElementById('onlyBrazil')
     };
 
     function normalizeText(value) {
@@ -1177,7 +1230,8 @@
 
     function renderMatches() {
       const currentName = getCurrentName();
-      const rows = state.matches.map(match => {
+      const visibleMatches = state.showOnlyBrazil ? state.matches.filter(isBrazilMatch) : state.matches;
+      const rows = visibleMatches.map(match => {
         const started = isStarted(match);
         const finished = isFinished(match);
         const pred = currentName ? getPredictionFor(currentName, match.id) : null;
@@ -1185,9 +1239,10 @@
         const statusLabel = finished ? 'Encerrado' : started ? 'Travado' : 'Aberto';
         const resultText = finished ? `${match.actualHome} x ${match.actualAway}` : '—';
         const kickoffText = match.kickoff ? formatDateTime(match.kickoff) : '—';
-        const saveDisabled = started || !currentName;
+        const saveDisabled = started || !currentName || !!pred;
         const brazilMatch = isBrazilMatch(match);
         const betAreaClass = brazilMatch ? 'brazil-bet-area' : '';
+        const buttonLabel = pred ? 'Salvo' : 'Palpite';
 
         return `
           <tr>
@@ -1209,7 +1264,7 @@
             </td>
             <td>
               <span class="badge ${statusClass}">${statusLabel}</span>
-              <div class="mini">${started ? 'Não permite novo palpite após o início.' : 'Palpite liberado até o começo.'}</div>
+              <div class="mini">${pred ? 'Palpite já salvo e travado.' : started ? 'Não permite novo palpite após o início.' : 'Palpite liberado até o começo.'}</div>
             </td>
             <td class="${betAreaClass}">
               <div class="score-box">
@@ -1219,7 +1274,7 @@
               </div>
             </td>
             <td class="${betAreaClass}">
-              <button class="primary" data-save="${escapeHtml(match.id)}" ${saveDisabled ? 'disabled' : ''}>Palpite</button>
+              <button class="primary" data-save="${escapeHtml(match.id)}" ${saveDisabled ? 'disabled' : ''}>${buttonLabel}</button>
             </td>
             <td><strong>${escapeHtml(resultText)}</strong></td>
           </tr>
@@ -1243,6 +1298,11 @@
           }
           if (isStarted(match)) {
             toast('Esse jogo já começou. O palpite foi bloqueado.');
+            renderMatches();
+            return;
+          }
+          if (getPredictionFor(name, matchId)) {
+            toast('Esse palpite já foi salvo e não pode ser alterado.');
             renderMatches();
             return;
           }
@@ -1332,9 +1392,11 @@
     function renderMeta() {
       const lockedCount = state.matches.filter(isStarted).length;
       const finishedCount = state.matches.filter(isFinished).length;
+      const brazilCount = state.matches.filter(isBrazilMatch).length;
+      const visibleCount = state.showOnlyBrazil ? brazilCount : state.matches.length;
       els.scheduleInfo.textContent =
         state.matches.length
-          ? `${state.matches.length} jogos carregados • ${finishedCount} com resultado oficial • ${lockedCount} travados no momento`
+          ? `${state.matches.length} jogos carregados • ${finishedCount} com resultado oficial • ${lockedCount} travados no momento • ${visibleCount} visíveis`
           : 'Nenhum jogo carregado ainda.';
       els.lastUpdated.textContent = state.lastTournamentUpdate
         ? `Tabela atualizada em ${formatDateTime(state.lastTournamentUpdate)}`
@@ -1375,6 +1437,22 @@
     function saveName() {
       try {
         localStorage.setItem(LOCAL_NAME_KEY, els.nome.value.trim());
+      } catch {}
+    }
+
+    function loadBrazilFilter() {
+      try {
+        const value = localStorage.getItem(LOCAL_BRAZIL_FILTER_KEY);
+        if (value !== null) {
+          state.showOnlyBrazil = value === '1';
+          if (els.onlyBrazil) els.onlyBrazil.checked = state.showOnlyBrazil;
+        }
+      } catch {}
+    }
+
+    function saveBrazilFilter() {
+      try {
+        localStorage.setItem(LOCAL_BRAZIL_FILTER_KEY, state.showOnlyBrazil ? '1' : '0');
       } catch {}
     }
 
@@ -1478,6 +1556,10 @@
 
     async function savePrediction(name, matchId, home, away) {
       const cleanName = String(name || '').trim();
+      const existing = getPredictionFor(cleanName, matchId);
+      if (existing) {
+        throw new Error('Prediction already saved');
+      }
       const docId = `${slugify(cleanName)}__${slugify(matchId)}`;
 
       if (state.dbMode === 'firestore' && state.firestore) {
@@ -1489,12 +1571,11 @@
           away: Number(away),
           updatedAt: serverTimestamp(),
           createdAt: serverTimestamp()
-        }, { merge: true });
+        }, { merge: false });
         return;
       }
 
       const current = [...state.predictions];
-      const idx = current.findIndex(p => normalizeText(p.name) === normalizeText(cleanName) && p.matchId === matchId);
       const payload = {
         id: docId,
         name: cleanName,
@@ -1504,8 +1585,7 @@
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
-      if (idx >= 0) current[idx] = payload;
-      else current.push(payload);
+      current.push(payload);
       state.predictions = current;
       writeLocalCache(current);
       renderAll();
@@ -1517,9 +1597,21 @@
         renderMatches();
       });
 
+      if (els.onlyBrazil) {
+        els.onlyBrazil.addEventListener('change', () => {
+          state.showOnlyBrazil = els.onlyBrazil.checked;
+          saveBrazilFilter();
+          renderAll();
+        });
+      }
+
       window.addEventListener('storage', (ev) => {
         if (ev.key === LOCAL_CACHE_KEY) {
           state.predictions = readLocalCache();
+          renderAll();
+        }
+        if (ev.key === LOCAL_BRAZIL_FILTER_KEY && els.onlyBrazil) {
+          loadBrazilFilter();
           renderAll();
         }
       });
@@ -1530,6 +1622,7 @@
 
     async function init() {
       loadSavedName();
+      loadBrazilFilter();
       bindEvents();
       state.predictions = readLocalCache();
       renderAll();
