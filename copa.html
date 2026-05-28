@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Palpites da Copa do Mundo</title>
+  <style>
+    :root {
+      --text: #111827;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --line-strong: #d1d5db;
+      --accent: #2563eb;
+      --accent-2: #0f172a;
+      --ok: #166534;
+      --warn: #92400e;
+      --danger: #b91c1c;
+      --soft: #f9fafb;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    body {
+      line-height: 1.45;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.55) 0 12%, transparent 13% 100%),
+        radial-gradient(circle at 80% 18%, rgba(255,255,255,.28) 0 8%, transparent 9% 100%),
+        radial-gradient(circle at 30% 78%, rgba(255,255,255,.22) 0 10%, transparent 11% 100%),
+        linear-gradient(135deg, rgba(0,156,59,.16) 0%, rgba(0,156,59,.09) 36%, rgba(255,223,0,.12) 36%, rgba(255,223,0,.08) 68%, rgba(0,39,118,.14) 68%, rgba(0,39,118,.08) 100%);
+      opacity: .28;
+      filter: saturate(1.05);
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    p {
+      margin: 0 0 10px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .topline {
+      display: grid;
+      grid-template-columns: 1.4fr .8fr;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .name-box {
+      display: grid;
+      gap: 8px;
+      max-width: 520px;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-size: 16px;
+      outline: none;
+      background: #fff;
+      color: var(--text);
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+
+    .info-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      background: var(--soft);
+      border-radius: 999px;
+      padding: 7px 11px;
+    }
+
+    .statusline {
+      margin: 8px 0 18px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      font-size: 14px;
+    }
+
+    .statusline strong {
+      color: var(--accent-2);
+    }
+
+    h2 {
+      margin: 26px 0 10px;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      background: #fcfcfd;
+    }
+
+    tbody tr:hover {
+      background: #fcfcff;
+    }
+
+    .teams {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .teams-main {
+      font-weight: 700;
+    }
+
+    .teams-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .team-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .flag {
+      width: 1.2em;
+      display: inline-flex;
+      justify-content: center;
+    }
+
+    .score-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .score-box input {
+      width: 74px;
+      text-align: center;
+      padding: 10px 8px;
+    }
+
+    .score-sep {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    button {
+      border: 1px solid var(--line-strong);
+      background: #fff;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      background: #fafafa;
+      white-space: nowrap;
+    }
+
+    .badge.upcoming {
+      color: var(--ok);
+      border-color: rgba(22,101,52,.2);
+      background: rgba(22,101,52,.06);
+    }
+
+    .badge.locked {
+      color: var(--warn);
+      border-color: rgba(146,64,14,.2);
+      background: rgba(146,64,14,.06);
+    }
+
+    .badge.finished {
+      color: #065f46;
+      border-color: rgba(6,95,70,.2);
+      background: rgba(6,95,70,.06);
+    }
+
+    .mini {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .pred-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .pred-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .pred-item > summary {
+      list-style: none;
+    }
+
+    .pred-item > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .pred-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      cursor: pointer;
+    }
+
+    .pred-summary:hover {
+      background: #fcfcff;
+    }
+
+    .pred-name {
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .pred-body {
+      border-top: 1px solid var(--line);
+      padding: 12px 14px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .pred-line {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: #fff;
+    }
+
+    .pred-line-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .pred-match {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    .pred-meta {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .pred-score {
+      font-weight: 800;
+      font-size: 18px;
+      white-space: nowrap;
+    }
+
+    .brazil-bet-area {
+      background: #eaffea;
+    }
+
+    .ranking-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+    }
+
+    .ranking-wrap table {
+      min-width: 560px;
+    }
+
+    .notice {
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .photo-slot-wrap {
+      display: flex;
+      justify-content: flex-end;
+      margin: 10px 0 8px;
+    }
+
+    .photo-slot {
+      width: min(100%, 260px);
+      aspect-ratio: 3 / 4;
+      border: 1px dashed rgba(17,24,39,.25);
+      border-radius: 20px;
+      background: rgba(255,255,255,.52);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 16px;
+      color: rgba(17,24,39,.68);
+      box-shadow: 0 8px 24px rgba(0,0,0,.05);
+    }
+
+    .photo-slot-inner {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+    }
+
+    .photo-slot-title {
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -.02em;
+    }
+
+    .photo-slot-text {
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      background: #111827;
+      color: #fff;
+      padding: 12px 14px;
+      border-radius: 14px;
+      box-shadow: 0 12px 36px rgba(0,0,0,.16);
+      display: none;
+      max-width: 360px;
+      z-index: 99;
+    }
+
+    .footer-note {
+      margin-top: 16px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 900px) {
+      .topline {
+        grid-template-columns: 1fr;
+      }
+    }
+  #Layer1 {
+	position:absolute;
+	left:1122px;
+	top:208px;
+	width:103px;
+	height:17px;
+	z-index:2;
+}
+  #Layer2 {
+	position:absolute;
+	left:321px;
+	top:214px;
+	width:365px;
+	height:93px;
+	z-index:3;
+}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>CACÁ na Copa do Mundo</h1>
+    <p class="muted">
+      Coloque seu nome, aposte o placar de cada jogo e acompanhe os palpites de todo mundo em tempo real.
+    </p>
+
+    <div class="topline">
+      <div class="name-box">
+        <label for="nome">Seu nome</label>
+        <input id="nome" type="text" placeholder="Digite seu nome" autocomplete="name" />
+      </div>
+      <div class="notice" id="scheduleInfo">Carregando tabela dos jogos...</div>
+    </div>
+
+    <div class="photo-slot-wrap" aria-label="Espaço para foto vertical">
+      <div class="photo-slot">
+        <div class="photo-slot-inner">
+          <div class="photo-slot-title">Espaço para foto vertical</div>
+          <div class="photo-slot-text">Aqui você pode colocar uma imagem no formato vertical, como uma foto de destaque ou personalização do site.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="statusline" id="connectionStatus" style="display:none;"></div>
+
+    <h2>Jogos da Copa</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Jogo</th>
+            <th>Data e hora</th>
+            <th>Status</th>
+            <th>Seu palpite</th>
+            <th>Ação</th>
+            <th>Resultado</th>
+          </tr>
+        </thead>
+        <tbody id="matchesBody"></tbody>
+      </table>
+    </div>
+
+    <h2>Palpites de todos</h2>
+    <div class="pred-list" id="predictionsList"></div>
+
+    <h2>Tabela de acertos</h2>
+    <div class="ranking-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Quantidade de acertos</th>
+            <th>Total de palpites</th>
+            <th>Atualizado em</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+
+    <div class="footer-note" id="lastUpdated">—</div>
+  </main>
+
+  <div id="Layer1"><img src="cacacopa.png" width="277" height="345"></div>
+  <div id="Layer2"><img src="brasilcopa.gif" width="500" height="345"></div>
+  <div class="toast" id="toast"></div>
+
+  <script type="module">
+    const DATA_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
+    const REFRESH_MINUTES = 15;
+    const REFRESH_MS = REFRESH_MINUTES * 60 * 1000;
+    const TIME_ZONE = 'America/Sao_Paulo';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhq3yPc927yrj5T1UBaJSxJ4S9H7tEgI",
+      authDomain: "sitecaca2.firebaseapp.com",
+      projectId: "sitecaca2",
+      storageBucket: "sitecaca2.firebasestorage.app",
+      messagingSenderId: "391187353901",
+      appId: "1:391187353901:web:050289706c2fbb0d0343a4"
+    };
+
+    const COUNTRY_MAP = {
+  "aruba": "AW",
+  "afghanistan": "AF",
+  "islamic republic of afghanistan": "AF",
+  "angola": "AO",
+  "republic of angola": "AO",
+  "anguilla": "AI",
+  "aland islands": "AX",
+  "albania": "AL",
+  "republic of albania": "AL",
+  "andorra": "AD",
+  "principality of andorra": "AD",
+  "united arab emirates": "AE",
+  "argentina": "AR",
+  "argentine republic": "AR",
+  "armenia": "AM",
+  "republic of armenia": "AM",
+  "american samoa": "AS",
+  "antarctica": "AQ",
+  "french southern territories": "TF",
+  "antigua and barbuda": "AG",
+  "australia": "AU",
+  "austria": "AT",
+  "republic of austria": "AT",
+  "azerbaijan": "AZ",
+  "republic of azerbaijan": "AZ",
+  "burundi": "BI",
+  "republic of burundi": "BI",
+  "belgium": "BE",
+  "kingdom of belgium": "BE",
+  "benin": "BJ",
+  "republic of benin": "BJ",
+  "bonaire sint eustatius and saba": "BQ",
+  "burkina faso": "BF",
+  "bangladesh": "BD",
+  "people s republic of bangladesh": "BD",
+  "bulgaria": "BG",
+  "republic of bulgaria": "BG",
+  "bahrain": "BH",
+  "kingdom of bahrain": "BH",
+  "bahamas": "BS",
+  "commonwealth of the bahamas": "BS",
+  "bosnia and herzegovina": "BA",
+  "republic of bosnia and herzegovina": "BA",
+  "saint barthelemy": "BL",
+  "belarus": "BY",
+  "republic of belarus": "BY",
+  "belize": "BZ",
+  "bermuda": "BM",
+  "bolivia plurinational state of": "BO",
+  "bolivia": "BO",
+  "plurinational state of bolivia": "BO",
+  "brazil": "BR",
+  "federative republic of brazil": "BR",
+  "barbados": "BB",
+  "brunei darussalam": "BN",
+  "bhutan": "BT",
+  "kingdom of bhutan": "BT",
+  "bouvet island": "BV",
+  "botswana": "BW",
+  "republic of botswana": "BW",
+  "central african republic": "CF",
+  "canada": "CA",
+  "cocos keeling islands": "CC",
+  "switzerland": "CH",
+  "swiss confederation": "CH",
+  "chile": "CL",
+  "republic of chile": "CL",
+  "china": "CN",
+  "people s republic of china": "CN",
+  "cote d ivoire": "CI",
+  "republic of cote d ivoire": "CI",
+  "cameroon": "CM",
+  "republic of cameroon": "CM",
+  "congo the democratic republic of the": "CD",
+  "congo": "CG",
+  "republic of the congo": "CG",
+  "cook islands": "CK",
+  "colombia": "CO",
+  "republic of colombia": "CO",
+  "comoros": "KM",
+  "union of the comoros": "KM",
+  "cabo verde": "CV",
+  "republic of cabo verde": "CV",
+  "costa rica": "CR",
+  "republic of costa rica": "CR",
+  "cuba": "CU",
+  "republic of cuba": "CU",
+  "curacao": "CW",
+  "christmas island": "CX",
+  "cayman islands": "KY",
+  "cyprus": "CY",
+  "republic of cyprus": "CY",
+  "czechia": "CZ",
+  "czech republic": "CZ",
+  "germany": "DE",
+  "federal republic of germany": "DE",
+  "djibouti": "DJ",
+  "republic of djibouti": "DJ",
+  "dominica": "DM",
+  "commonwealth of dominica": "DM",
+  "denmark": "DK",
+  "kingdom of denmark": "DK",
+  "dominican republic": "DO",
+  "algeria": "DZ",
+  "people s democratic republic of algeria": "DZ",
+  "ecuador": "EC",
+  "republic of ecuador": "EC",
+  "egypt": "EG",
+  "arab republic of egypt": "EG",
+  "eritrea": "ER",
+  "the state of eritrea": "ER",
+  "western sahara": "EH",
+  "spain": "ES",
+  "kingdom of spain": "ES",
+  "estonia": "EE",
+  "republic of estonia": "EE",
+  "ethiopia": "ET",
+  "federal democratic republic of ethiopia": "ET",
+  "finland": "FI",
+  "republic of finland": "FI",
+  "fiji": "FJ",
+  "republic of fiji": "FJ",
+  "falkland islands malvinas": "FK",
+  "france": "FR",
+  "french republic": "FR",
+  "faroe islands": "FO",
+  "micronesia federated states of": "FM",
+  "federated states of micronesia": "FM",
+  "gabon": "GA",
+  "gabonese republic": "GA",
+  "united kingdom": "GB",
+  "united kingdom of great britain and northern ireland": "GB",
+  "georgia": "GE",
+  "guernsey": "GG",
+  "ghana": "GH",
+  "republic of ghana": "GH",
+  "gibraltar": "GI",
+  "guinea": "GN",
+  "republic of guinea": "GN",
+  "guadeloupe": "GP",
+  "gambia": "GM",
+  "republic of the gambia": "GM",
+  "guinea bissau": "GW",
+  "republic of guinea bissau": "GW",
+  "equatorial guinea": "GQ",
+  "republic of equatorial guinea": "GQ",
+  "greece": "GR",
+  "hellenic republic": "GR",
+  "grenada": "GD",
+  "greenland": "GL",
+  "guatemala": "GT",
+  "republic of guatemala": "GT",
+  "french guiana": "GF",
+  "guam": "GU",
+  "guyana": "GY",
+  "republic of guyana": "GY",
+  "hong kong": "HK",
+  "hong kong special administrative region of china": "HK",
+  "heard island and mcdonald islands": "HM",
+  "honduras": "HN",
+  "republic of honduras": "HN",
+  "croatia": "HR",
+  "republic of croatia": "HR",
+  "haiti": "HT",
+  "republic of haiti": "HT",
+  "hungary": "HU",
+  "indonesia": "ID",
+  "republic of indonesia": "ID",
+  "isle of man": "IM",
+  "india": "IN",
+  "republic of india": "IN",
+  "british indian ocean territory": "IO",
+  "ireland": "IE",
+  "iran islamic republic of": "IR",
+  "iran": "IR",
+  "islamic republic of iran": "IR",
+  "iraq": "IQ",
+  "republic of iraq": "IQ",
+  "iceland": "IS",
+  "republic of iceland": "IS",
+  "israel": "IL",
+  "state of israel": "IL",
+  "italy": "IT",
+  "italian republic": "IT",
+  "jamaica": "JM",
+  "jersey": "JE",
+  "jordan": "JO",
+  "hashemite kingdom of jordan": "JO",
+  "japan": "JP",
+  "kazakhstan": "KZ",
+  "republic of kazakhstan": "KZ",
+  "kenya": "KE",
+  "republic of kenya": "KE",
+  "kyrgyzstan": "KG",
+  "kyrgyz republic": "KG",
+  "cambodia": "KH",
+  "kingdom of cambodia": "KH",
+  "kiribati": "KI",
+  "republic of kiribati": "KI",
+  "saint kitts and nevis": "KN",
+  "korea republic of": "KR",
+  "south korea": "KR",
+  "kuwait": "KW",
+  "state of kuwait": "KW",
+  "lao people s democratic republic": "LA",
+  "laos": "LA",
+  "lebanon": "LB",
+  "lebanese republic": "LB",
+  "liberia": "LR",
+  "republic of liberia": "LR",
+  "libya": "LY",
+  "saint lucia": "LC",
+  "liechtenstein": "LI",
+  "principality of liechtenstein": "LI",
+  "sri lanka": "LK",
+  "democratic socialist republic of sri lanka": "LK",
+  "lesotho": "LS",
+  "kingdom of lesotho": "LS",
+  "lithuania": "LT",
+  "republic of lithuania": "LT",
+  "luxembourg": "LU",
+  "grand duchy of luxembourg": "LU",
+  "latvia": "LV",
+  "republic of latvia": "LV",
+  "macao": "MO",
+  "macao special administrative region of china": "MO",
+  "saint martin french part": "MF",
+  "morocco": "MA",
+  "kingdom of morocco": "MA",
+  "monaco": "MC",
+  "principality of monaco": "MC",
+  "moldova republic of": "MD",
+  "moldova": "MD",
+  "republic of moldova": "MD",
+  "madagascar": "MG",
+  "republic of madagascar": "MG",
+  "maldives": "MV",
+  "republic of maldives": "MV",
+  "mexico": "MX",
+  "united mexican states": "MX",
+  "marshall islands": "MH",
+  "republic of the marshall islands": "MH",
+  "north macedonia": "MK",
+  "republic of north macedonia": "MK",
+  "mali": "ML",
+  "republic of mali": "ML",
+  "malta": "MT",
+  "republic of malta": "MT",
+  "myanmar": "MM",
+  "republic of myanmar": "MM",
+  "montenegro": "ME",
+  "mongolia": "MN",
+  "northern mariana islands": "MP",
+  "commonwealth of the northern mariana islands": "MP",
+  "mozambique": "MZ",
+  "republic of mozambique": "MZ",
+  "mauritania": "MR",
+  "islamic republic of mauritania": "MR",
+  "montserrat": "MS",
+  "martinique": "MQ",
+  "mauritius": "MU",
+  "republic of mauritius": "MU",
+  "malawi": "MW",
+  "republic of malawi": "MW",
+  "malaysia": "MY",
+  "mayotte": "YT",
+  "namibia": "NA",
+  "republic of namibia": "NA",
+  "new caledonia": "NC",
+  "niger": "NE",
+  "republic of the niger": "NE",
+  "norfolk island": "NF",
+  "nigeria": "NG",
+  "federal republic of nigeria": "NG",
+  "nicaragua": "NI",
+  "republic of nicaragua": "NI",
+  "niue": "NU",
+  "netherlands": "NL",
+  "kingdom of the netherlands": "NL",
+  "norway": "NO",
+  "kingdom of norway": "NO",
+  "nepal": "NP",
+  "federal democratic republic of nepal": "NP",
+  "nauru": "NR",
+  "republic of nauru": "NR",
+  "new zealand": "NZ",
+  "oman": "OM",
+  "sultanate of oman": "OM",
+  "pakistan": "PK",
+  "islamic republic of pakistan": "PK",
+  "panama": "PA",
+  "republic of panama": "PA",
+  "pitcairn": "PN",
+  "peru": "PE",
+  "republic of peru": "PE",
+  "philippines": "PH",
+  "republic of the philippines": "PH",
+  "palau": "PW",
+  "republic of palau": "PW",
+  "papua new guinea": "PG",
+  "independent state of papua new guinea": "PG",
+  "poland": "PL",
+  "republic of poland": "PL",
+  "puerto rico": "PR",
+  "korea democratic people s republic of": "KP",
+  "north korea": "KP",
+  "democratic people s republic of korea": "KP",
+  "portugal": "PT",
+  "portuguese republic": "PT",
+  "paraguay": "PY",
+  "republic of paraguay": "PY",
+  "palestine state of": "PS",
+  "the state of palestine": "PS",
+  "french polynesia": "PF",
+  "qatar": "QA",
+  "state of qatar": "QA",
+  "reunion": "RE",
+  "romania": "RO",
+  "russian federation": "RU",
+  "rwanda": "RW",
+  "rwandese republic": "RW",
+  "saudi arabia": "SA",
+  "kingdom of saudi arabia": "SA",
+  "sudan": "SD",
+  "republic of the sudan": "SD",
+  "senegal": "SN",
+  "republic of senegal": "SN",
+  "singapore": "SG",
+  "republic of singapore": "SG",
+  "south georgia and the south sandwich islands": "GS",
+  "saint helena ascension and tristan da cunha": "SH",
+  "svalbard and jan mayen": "SJ",
+  "solomon islands": "SB",
+  "sierra leone": "SL",
+  "republic of sierra leone": "SL",
+  "el salvador": "SV",
+  "republic of el salvador": "SV",
+  "san marino": "SM",
+  "republic of san marino": "SM",
+  "somalia": "SO",
+  "federal republic of somalia": "SO",
+  "saint pierre and miquelon": "PM",
+  "serbia": "RS",
+  "republic of serbia": "RS",
+  "south sudan": "SS",
+  "republic of south sudan": "SS",
+  "sao tome and principe": "ST",
+  "democratic republic of sao tome and principe": "ST",
+  "suriname": "SR",
+  "republic of suriname": "SR",
+  "slovakia": "SK",
+  "slovak republic": "SK",
+  "slovenia": "SI",
+  "republic of slovenia": "SI",
+  "sweden": "SE",
+  "kingdom of sweden": "SE",
+  "eswatini": "SZ",
+  "kingdom of eswatini": "SZ",
+  "sint maarten dutch part": "SX",
+  "seychelles": "SC",
+  "republic of seychelles": "SC",
+  "syrian arab republic": "SY",
+  "syria": "SY",
+  "turks and caicos islands": "TC",
+  "chad": "TD",
+  "republic of chad": "TD",
+  "togo": "TG",
+  "togolese republic": "TG",
+  "thailand": "TH",
+  "kingdom of thailand": "TH",
+  "tajikistan": "TJ",
+  "republic of tajikistan": "TJ",
+  "tokelau": "TK",
+  "turkmenistan": "TM",
+  "timor leste": "TL",
+  "democratic republic of timor leste": "TL",
+  "tonga": "TO",
+  "kingdom of tonga": "TO",
+  "trinidad and tobago": "TT",
+  "republic of trinidad and tobago": "TT",
+  "tunisia": "TN",
+  "republic of tunisia": "TN",
+  "turkiye": "TR",
+  "republic of turkiye": "TR",
+  "tuvalu": "TV",
+  "taiwan province of china": "TW",
+  "taiwan": "TW",
+  "tanzania united republic of": "TZ",
+  "tanzania": "TZ",
+  "united republic of tanzania": "TZ",
+  "uganda": "UG",
+  "republic of uganda": "UG",
+  "ukraine": "UA",
+  "united states minor outlying islands": "UM",
+  "uruguay": "UY",
+  "eastern republic of uruguay": "UY",
+  "united states": "US",
+  "united states of america": "US",
+  "uzbekistan": "UZ",
+  "republic of uzbekistan": "UZ",
+  "holy see vatican city state": "VA",
+  "saint vincent and the grenadines": "VC",
+  "venezuela bolivarian republic of": "VE",
+  "venezuela": "VE",
+  "bolivarian republic of venezuela": "VE",
+  "virgin islands british": "VG",
+  "british virgin islands": "VG",
+  "virgin islands u s": "VI",
+  "virgin islands of the united states": "VI",
+  "viet nam": "VN",
+  "vietnam": "VN",
+  "socialist republic of viet nam": "VN",
+  "vanuatu": "VU",
+  "republic of vanuatu": "VU",
+  "wallis and futuna": "WF",
+  "samoa": "WS",
+  "independent state of samoa": "WS",
+  "yemen": "YE",
+  "republic of yemen": "YE",
+  "south africa": "ZA",
+  "republic of south africa": "ZA",
+  "zambia": "ZM",
+  "republic of zambia": "ZM",
+  "zimbabwe": "ZW",
+  "republic of zimbabwe": "ZW",
+  "usa": "US",
+  "u s a": "US",
+  "korea republic": "KR",
+  "republic of korea": "KR",
+  "korea dpr": "KP",
+  "dpr korea": "KP",
+  "ivory coast": "CI",
+  "cote divoire": "CI",
+  "dr congo": "CD",
+  "d r congo": "CD",
+  "democratic republic of the congo": "CD",
+  "congo dr": "CD",
+  "congo democratic republic": "CD",
+  "republic of congo": "CG",
+  "congo brazzaville": "CG",
+  "palestine": "PS",
+  "macedonia": "MK",
+  "cape verde": "CV",
+  "east timor": "TL",
+  "brunei": "BN",
+  "st kitts and nevis": "KN",
+  "st vincent and the grenadines": "VC",
+  "burma": "MM",
+  "kosovo": "XK",
+  "macau": "MO",
+  "england": "GB",
+  "scotland": "GB",
+  "wales": "GB",
+  "northern ireland": "GB",
+  "russia": "RU"
+};
+
+    const LOCAL_NAME_KEY = 'palpites_copa_nome_v2';
+    const LOCAL_CACHE_KEY = 'palpites_copa_cache_v2';
+
+    const state = {
+      matches: [],
+      predictions: [],
+      lastTournamentUpdate: null,
+      dbMode: 'loading',
+      firestore: null
+    };
+
+    const els = {
+      nome: document.getElementById('nome'),
+      matchesBody: document.getElementById('matchesBody'),
+      predictionsList: document.getElementById('predictionsList'),
+      leaderboardBody: document.getElementById('leaderboardBody'),
+      scheduleInfo: document.getElementById('scheduleInfo'),
+      connectionStatus: document.getElementById('connectionStatus'),
+      toast: document.getElementById('toast'),
+      lastUpdated: document.getElementById('lastUpdated')
+    };
+
+    function normalizeText(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[\._,'’`´"“”()\-\/\[\]{}:;!?+*=<>|]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function flagEmoji(countryName) {
+      const code = COUNTRY_MAP[normalizeText(countryName)];
+      if (!code) return '🏳️';
+      return String.fromCodePoint(...[...code.toUpperCase()].map(c => 127397 + c.charCodeAt(0)));
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function slugify(value) {
+      return normalizeText(value)
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 120) || 'anon';
+    }
+
+    function toast(message) {
+      els.toast.textContent = message;
+      els.toast.style.display = 'block';
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        els.toast.style.display = 'none';
+      }, 2400);
+    }
+
+    function formatDateTime(dateObj) {
+      if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '—';
+      return new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: TIME_ZONE
+      }).format(dateObj);
+    }
+
+    function parseKickoff(match) {
+      const date = String(match.date || '').trim();
+      const time = String(match.time || '').trim();
+      if (!date) return null;
+
+      const m = time.match(/^(\d{1,2}):(\d{2})(?:\s*UTC([+-]?\d{1,2})(?::?(\d{2}))?)?$/i);
+      if (!m) {
+        return new Date(`${date}T00:00:00Z`);
+      }
+
+      const hh = m[1].padStart(2, '0');
+      const mm = m[2];
+      const offsetHours = m[3] !== undefined ? Number(m[3]) : null;
+      const offsetMinutes = m[4] !== undefined ? Number(m[4]) : 0;
+
+      if (offsetHours === null || Number.isNaN(offsetHours)) {
+        return new Date(`${date}T${hh}:${mm}:00Z`);
+      }
+
+      const sign = offsetHours >= 0 ? '+' : '-';
+      const absH = String(Math.abs(offsetHours)).padStart(2, '0');
+      const absM = String(Math.abs(offsetMinutes)).padStart(2, '0');
+      return new Date(`${date}T${hh}:${mm}:00${sign}${absH}:${absM}`);
+    }
+
+    function matchIdFromRaw(m, idx) {
+      return `${idx}:${m.date || ''}|${m.time || ''}|${m.team1 || ''}|${m.team2 || ''}|${m.round || ''}`;
+    }
+
+    function isStarted(match) {
+      return !!(match.kickoff && Date.now() >= match.kickoff.getTime());
+    }
+
+    function isFinished(match) {
+      return match.actualHome !== null && match.actualAway !== null;
+    }
+
+    function isBrazilMatch(match) {
+      const t1 = normalizeText(match?.team1 || '');
+      const t2 = normalizeText(match?.team2 || '');
+      return t1 === 'brazil' || t2 === 'brazil';
+    }
+
+    function getCurrentName() {
+      return (els.nome.value || '').trim();
+    }
+
+    function getPredictionFor(name, matchId) {
+      const normalized = normalizeText(name);
+      return state.predictions.find(p => normalizeText(p.name) === normalized && p.matchId === matchId) || null;
+    }
+
+    function getAllPredictionsSorted() {
+      return [...state.predictions].sort((a, b) => {
+        const at = new Date(a.updatedAt || a.createdAt || 0).getTime();
+        const bt = new Date(b.updatedAt || b.createdAt || 0).getTime();
+        return bt - at;
+      });
+    }
+
+    function computeLeaderboard() {
+      const scores = new Map();
+      for (const p of state.predictions) {
+        const match = state.matches.find(m => m.id === p.matchId);
+        if (!match) continue;
+
+        const key = p.name;
+        if (!scores.has(key)) {
+          scores.set(key, {
+            name: key,
+            exact: 0,
+            total: 0,
+            updatedAt: p.updatedAt || p.createdAt || null
+          });
+        }
+        const row = scores.get(key);
+        row.total += 1;
+        const pt = new Date(p.updatedAt || p.createdAt || 0).getTime();
+        const rt = new Date(row.updatedAt || 0).getTime();
+        if (pt > rt) row.updatedAt = p.updatedAt || p.createdAt || row.updatedAt;
+        if (isFinished(match) && Number(p.home) === Number(match.actualHome) && Number(p.away) === Number(match.actualAway)) {
+          row.exact += 1;
+        }
+      }
+
+      return [...scores.values()].sort((a, b) =>
+        b.exact - a.exact ||
+        b.total - a.total ||
+        a.name.localeCompare(b.name, 'pt-BR')
+      );
+    }
+
+    function setConnectionStatus(text, kind = 'neutral') {
+      els.connectionStatus.textContent = text;
+      els.connectionStatus.style.borderColor =
+        kind === 'error' ? 'rgba(185,28,28,.25)' :
+        kind === 'ok' ? 'rgba(22,101,52,.25)' :
+        'var(--line)';
+      els.connectionStatus.style.background =
+        kind === 'error' ? 'rgba(185,28,28,.04)' :
+        kind === 'ok' ? 'rgba(22,101,52,.04)' : '#fff';
+      els.connectionStatus.style.color =
+        kind === 'error' ? 'var(--danger)' :
+        kind === 'ok' ? 'var(--ok)' : 'var(--text)';
+    }
+
+    function renderMatches() {
+      const currentName = getCurrentName();
+      const rows = state.matches.map(match => {
+        const started = isStarted(match);
+        const finished = isFinished(match);
+        const pred = currentName ? getPredictionFor(currentName, match.id) : null;
+        const statusClass = finished ? 'finished' : started ? 'locked' : 'upcoming';
+        const statusLabel = finished ? 'Encerrado' : started ? 'Travado' : 'Aberto';
+        const resultText = finished ? `${match.actualHome} x ${match.actualAway}` : '—';
+        const kickoffText = match.kickoff ? formatDateTime(match.kickoff) : '—';
+        const saveDisabled = started || !currentName;
+        const brazilMatch = isBrazilMatch(match);
+        const betAreaClass = brazilMatch ? 'brazil-bet-area' : '';
+
+        return `
+          <tr>
+            <td>
+              <div class="teams">
+                <div class="teams-main team-line">
+                  <span class="flag">${flagEmoji(match.team1)}</span>
+                  <span>${escapeHtml(match.team1)}</span>
+                  <span class="muted">x</span>
+                  <span class="flag">${flagEmoji(match.team2)}</span>
+                  <span>${escapeHtml(match.team2)}</span>
+                </div>
+                <div class="teams-sub">${escapeHtml(match.round || 'Jogo')}${match.group ? ' • ' + escapeHtml(match.group) : ''}${match.ground ? ' • ' + escapeHtml(match.ground) : ''}</div>
+              </div>
+            </td>
+            <td>
+              <div>${escapeHtml(kickoffText)}</div>
+              <div class="mini">Fuso de Brasília</div>
+            </td>
+            <td>
+              <span class="badge ${statusClass}">${statusLabel}</span>
+              <div class="mini">${started ? 'Não permite novo palpite após o início.' : 'Palpite liberado até o começo.'}</div>
+            </td>
+            <td class="${betAreaClass}">
+              <div class="score-box">
+                <input type="number" min="0" inputmode="numeric" value="${pred ? escapeHtml(pred.home) : ''}" data-home="${escapeHtml(match.id)}" ${saveDisabled ? 'disabled' : ''} />
+                <span class="score-sep">x</span>
+                <input type="number" min="0" inputmode="numeric" value="${pred ? escapeHtml(pred.away) : ''}" data-away="${escapeHtml(match.id)}" ${saveDisabled ? 'disabled' : ''} />
+              </div>
+            </td>
+            <td class="${betAreaClass}">
+              <button class="primary" data-save="${escapeHtml(match.id)}" ${saveDisabled ? 'disabled' : ''}>Palpite</button>
+            </td>
+            <td><strong>${escapeHtml(resultText)}</strong></td>
+          </tr>
+        `;
+      }).join('');
+
+      els.matchesBody.innerHTML = rows || '<tr><td colspan="6">Nenhum jogo encontrado.</td></tr>';
+
+      els.matchesBody.querySelectorAll('button[data-save]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const matchId = btn.getAttribute('data-save');
+          const match = state.matches.find(m => m.id === matchId);
+          const name = getCurrentName();
+          if (!name) {
+            toast('Digite seu nome antes de apostar.');
+            return;
+          }
+          if (!match) {
+            toast('Jogo não encontrado.');
+            return;
+          }
+          if (isStarted(match)) {
+            toast('Esse jogo já começou. O palpite foi bloqueado.');
+            renderMatches();
+            return;
+          }
+
+          const homeEl = els.matchesBody.querySelector(`input[data-home="${CSS.escape(matchId)}"]`);
+          const awayEl = els.matchesBody.querySelector(`input[data-away="${CSS.escape(matchId)}"]`);
+          const home = homeEl?.value?.trim();
+          const away = awayEl?.value?.trim();
+
+          if (home === '' || away === '') {
+            toast('Preencha os dois placares.');
+            return;
+          }
+
+          try {
+            await savePrediction(name, matchId, home, away);
+            toast('Palpite salvo.');
+          } catch (err) {
+            console.error(err);
+            toast('Não foi possível salvar o palpite.');
+          }
+        });
+      });
+    }
+
+    function renderPredictions() {
+      const grouped = new Map();
+      for (const p of getAllPredictionsSorted()) {
+        const key = normalizeText(p.name);
+        if (!grouped.has(key)) grouped.set(key, { name: p.name, items: [] });
+        grouped.get(key).items.push(p);
+      }
+
+      const people = [...grouped.values()].sort((a, b) =>
+        a.name.localeCompare(b.name, 'pt-BR')
+      );
+
+      const items = people.map(person => {
+        const personPreds = person.items.map(p => {
+          const match = state.matches.find(m => m.id === p.matchId);
+          const started = match ? isStarted(match) : false;
+          const finished = match ? isFinished(match) : false;
+          const kickoffText = match && match.kickoff ? formatDateTime(match.kickoff) : '—';
+          const teamsText = match
+            ? `${flagEmoji(match.team1)} ${escapeHtml(match.team1)} x ${flagEmoji(match.team2)} ${escapeHtml(match.team2)}`
+            : 'Jogo indisponível';
+          const official = finished && match ? `${match.actualHome} x ${match.actualAway}` : '—';
+          return `
+            <div class="pred-line">
+              <div class="pred-line-top">
+                <div class="pred-match">${teamsText}</div>
+                <div class="pred-score">${Number(p.home)} x ${Number(p.away)}</div>
+              </div>
+              <div class="pred-meta">${escapeHtml(match ? (match.round || 'Jogo') : 'Jogo indisponível')} • ${escapeHtml(kickoffText)} • ${started ? 'travado' : 'aberto'}</div>
+              <div class="pred-meta">Resultado oficial: ${escapeHtml(official)}</div>
+            </div>
+          `;
+        }).join('');
+
+        return `
+          <details class="pred-item">
+            <summary class="pred-summary">
+              <span class="pred-name">${escapeHtml(person.name)}</span>
+                          </summary>
+            <div class="pred-body">
+              ${personPreds}
+            </div>
+          </details>
+        `;
+      }).join('');
+
+      els.predictionsList.innerHTML = items || '<div class="pred-item">Ainda não há palpites salvos.</div>';
+    }
+
+    function renderLeaderboard() {
+      const board = computeLeaderboard();
+      els.leaderboardBody.innerHTML = board.map(row => `
+        <tr>
+          <td>${escapeHtml(row.name)}</td>
+          <td><strong>${row.exact}</strong></td>
+          <td>${row.total}</td>
+          <td>${escapeHtml(row.updatedAt ? formatDateTime(new Date(row.updatedAt)) : '—')}</td>
+        </tr>
+      `).join('') || '<tr><td colspan="4">Sem dados suficientes ainda.</td></tr>';
+    }
+
+    function renderMeta() {
+      const lockedCount = state.matches.filter(isStarted).length;
+      const finishedCount = state.matches.filter(isFinished).length;
+      els.scheduleInfo.textContent =
+        state.matches.length
+          ? `${state.matches.length} jogos carregados • ${finishedCount} com resultado oficial • ${lockedCount} travados no momento`
+          : 'Nenhum jogo carregado ainda.';
+      els.lastUpdated.textContent = state.lastTournamentUpdate
+        ? `Tabela atualizada em ${formatDateTime(state.lastTournamentUpdate)}`
+        : 'Tabela ainda não atualizada.';
+    }
+
+    function renderAll() {
+      renderMeta();
+      renderMatches();
+      renderPredictions();
+      renderLeaderboard();
+    }
+
+    function readLocalCache() {
+      try {
+        const raw = localStorage.getItem(LOCAL_CACHE_KEY);
+        if (!raw) return [];
+        const data = JSON.parse(raw);
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function writeLocalCache(predictions) {
+      try {
+        localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(predictions));
+      } catch {}
+    }
+
+    function loadSavedName() {
+      try {
+        const value = localStorage.getItem(LOCAL_NAME_KEY);
+        if (value) els.nome.value = value;
+      } catch {}
+    }
+
+    function saveName() {
+      try {
+        localStorage.setItem(LOCAL_NAME_KEY, els.nome.value.trim());
+      } catch {}
+    }
+
+    function parseTournament(data) {
+      const matches = (data?.matches || []).map((m, idx) => {
+        const kickoff = parseKickoff(m);
+        const score = Array.isArray(m?.score?.ft) ? m.score.ft : null;
+        return {
+          id: matchIdFromRaw(m, idx),
+          round: m.round || '',
+          group: m.group || '',
+          ground: m.ground || '',
+          date: m.date || '',
+          time: m.time || '',
+          team1: m.team1 || '',
+          team2: m.team2 || '',
+          kickoff,
+          actualHome: score ? Number(score[0]) : null,
+          actualAway: score ? Number(score[1]) : null
+        };
+      });
+      matches.sort((a, b) => {
+        const at = a.kickoff ? a.kickoff.getTime() : 0;
+        const bt = b.kickoff ? b.kickoff.getTime() : 0;
+        return at - bt;
+      });
+      return matches;
+    }
+
+    async function loadTournament() {
+      try {
+        const res = await fetch(DATA_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        state.matches = parseTournament(data);
+        state.lastTournamentUpdate = new Date();
+        renderAll();
+        setConnectionStatus(state.dbMode === 'firestore' ? 'Firestore conectado. Palpites sendo atualizados em tempo real.' : 'Tabela carregada. Aguardando conexão com o banco.', 'ok');
+      } catch (err) {
+        console.error(err);
+        state.matches = [];
+        state.lastTournamentUpdate = new Date();
+        renderAll();
+        setConnectionStatus('Não foi possível carregar a tabela automaticamente agora.', 'error');
+      }
+    }
+
+    async function connectFirestore() {
+      try {
+        const firebaseApp = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js');
+        const firebaseFs = await import('https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js');
+
+        const app = firebaseApp.initializeApp(firebaseConfig);
+        const db = firebaseFs.getFirestore(app);
+        const predictionsRef = firebaseFs.collection(db, 'palpites');
+
+        state.firestore = {
+          db,
+          predictionsRef,
+          setDoc: firebaseFs.setDoc,
+          doc: firebaseFs.doc,
+          onSnapshot: firebaseFs.onSnapshot,
+          serverTimestamp: firebaseFs.serverTimestamp
+        };
+
+        state.dbMode = 'firestore';
+        setConnectionStatus('Conectado ao Firestore. Os palpites estão sendo gravados e exibidos em tempo real.', 'ok');
+
+        firebaseFs.onSnapshot(predictionsRef, (snapshot) => {
+          const list = snapshot.docs.map(docSnap => {
+            const d = docSnap.data() || {};
+            return {
+              id: docSnap.id,
+              name: d.name || '',
+              matchId: d.matchId || '',
+              home: Number(d.home ?? 0),
+              away: Number(d.away ?? 0),
+              createdAt: d.createdAt?.toDate ? d.createdAt.toDate().toISOString() : (d.createdAt || null),
+              updatedAt: d.updatedAt?.toDate ? d.updatedAt.toDate().toISOString() : (d.updatedAt || d.createdAt || null)
+            };
+          }).filter(p => p.name && p.matchId);
+
+          state.predictions = list;
+          writeLocalCache(list);
+          renderAll();
+        }, (error) => {
+          console.error(error);
+          state.predictions = readLocalCache();
+          state.dbMode = 'local';
+          setConnectionStatus('Firestore não respondeu agora. Usando cache local até reconectar.', 'error');
+          renderAll();
+        });
+      } catch (err) {
+        console.error(err);
+        state.dbMode = 'local';
+        state.predictions = readLocalCache();
+        setConnectionStatus('Não foi possível conectar ao Firestore. Os palpites vão ficar no cache local.', 'error');
+        renderAll();
+      }
+    }
+
+    async function savePrediction(name, matchId, home, away) {
+      const cleanName = String(name || '').trim();
+      const docId = `${slugify(cleanName)}__${slugify(matchId)}`;
+
+      if (state.dbMode === 'firestore' && state.firestore) {
+        const { doc, setDoc, serverTimestamp } = state.firestore;
+        await setDoc(doc(state.firestore.db, 'palpites', docId), {
+          name: cleanName,
+          matchId,
+          home: Number(home),
+          away: Number(away),
+          updatedAt: serverTimestamp(),
+          createdAt: serverTimestamp()
+        }, { merge: true });
+        return;
+      }
+
+      const current = [...state.predictions];
+      const idx = current.findIndex(p => normalizeText(p.name) === normalizeText(cleanName) && p.matchId === matchId);
+      const payload = {
+        id: docId,
+        name: cleanName,
+        matchId,
+        home: Number(home),
+        away: Number(away),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      if (idx >= 0) current[idx] = payload;
+      else current.push(payload);
+      state.predictions = current;
+      writeLocalCache(current);
+      renderAll();
+    }
+
+    function bindEvents() {
+      els.nome.addEventListener('input', () => {
+        saveName();
+        renderMatches();
+      });
+
+      window.addEventListener('storage', (ev) => {
+        if (ev.key === LOCAL_CACHE_KEY) {
+          state.predictions = readLocalCache();
+          renderAll();
+        }
+      });
+    }
+
+    let minuteTimer = null;
+    let refreshTimer = null;
+
+    async function init() {
+      loadSavedName();
+      bindEvents();
+      state.predictions = readLocalCache();
+      renderAll();
+      await Promise.all([loadTournament(), connectFirestore()]);
+      if (minuteTimer) clearInterval(minuteTimer);
+      minuteTimer = setInterval(() => {
+        renderAll();
+      }, 60 * 1000);
+
+      if (refreshTimer) clearInterval(refreshTimer);
+      refreshTimer = setInterval(loadTournament, REFRESH_MS);
+    }
+
+    init();
+  </script>
+</body>
+</html>
