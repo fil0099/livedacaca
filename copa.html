@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CACÁ na Copa do Mundo</title>
+  <title>Palpites da Copa do Mundo</title>
   <style>
     :root {
       --text: #111827;
@@ -73,10 +73,54 @@
 
     .topline {
       display: grid;
-      grid-template-columns: 1.4fr .8fr;
+      grid-template-columns: 1.2fr .8fr;
       gap: 16px;
-      align-items: end;
+      align-items: start;
       margin-bottom: 18px;
+    }
+
+    .auth-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .auth-box {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .auth-helper {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    .auth-status {
+      font-size: 13px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.9);
+      color: var(--muted);
+    }
+
+    .auth-status[data-kind="ok"] {
+      color: var(--ok);
+      border-color: rgba(22,101,52,.18);
+      background: rgba(22,101,52,.06);
+    }
+
+    .auth-status[data-kind="warn"] {
+      color: var(--warn);
+      border-color: rgba(146,64,14,.18);
+      background: rgba(146,64,14,.06);
     }
 
     .name-box {
@@ -90,7 +134,7 @@
       font-weight: 600;
     }
 
-    input[type="text"], input[type="number"] {
+    input[type="text"], input[type="password"], input[type="number"] {
       width: 100%;
       border: 1px solid var(--line-strong);
       border-radius: 14px;
@@ -101,9 +145,15 @@
       color: var(--text);
     }
 
-    input[type="text"]:focus, input[type="number"]:focus {
+    input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus {
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+
+    @media (max-width: 700px) {
+      .auth-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .info-row {
@@ -473,27 +523,19 @@
     }
   #Layer1 {
 	position:absolute;
-	left:539px;
-	top:223px;
-	width:5px;
-	height:1px;
+	left:1100px;
+	top:215px;
+	width:274px;
+	height:60px;
 	z-index:2;
 }
   #Layer2 {
 	position:absolute;
-	left:1092px;
-	top:204px;
-	width:179px;
-	height:52px;
+	left:345px;
+	top:274px;
+	width:519px;
+	height:143px;
 	z-index:3;
-}
-  #Layer3 {
-	position:absolute;
-	left:350px;
-	top:206px;
-	width:300px;
-	height:77px;
-	z-index:4;
 }
   </style>
 </head>
@@ -501,18 +543,28 @@
   <main>
     <h1>CACÁ na Copa do Mundo</h1>
     <p class="muted">
-      Coloque seu nome, o placar de cada jogo e acompanhe os palpites de todo mundo em tempo real.
+      Coloque seu nome, aposte o placar de cada jogo e acompanhe os palpites de todo mundo em tempo real.
     </p>
 
     <div class="topline">
-      <div class="name-box">
-        <label for="nome">Seu nome</label>
-        <input id="nome" type="text" placeholder="Digite seu nome" autocomplete="name" />
+      <div class="auth-panel">
+        <div class="auth-grid">
+          <div class="auth-box">
+            <label for="nome">Seu nome</label>
+            <input id="nome" type="text" placeholder="Digite seu nome" autocomplete="name" />
+          </div>
+          <div class="auth-box">
+            <label for="senha">Sua senha</label>
+            <input id="senha" type="password" placeholder="Digite sua senha" autocomplete="current-password" />
+          </div>
+        </div>
+        <div class="auth-helper">Guarde essa senha, vai precisar dela para continuar dando palpites.</div>
+        <div class="auth-status" id="authStatus">Digite seu nome e sua senha para liberar os palpites.</div>
       </div>
       <div class="notice" id="scheduleInfo">Carregando tabela dos jogos...</div>
     </div>
 
-    <div class="photo-slot-wrap" aria-label="">
+    <div class="photo-slot-wrap" aria-label="Espaço para foto vertical">
       <div class="photo-slot">
         <div class="photo-slot-inner">
           <div class="photo-slot-title"></div>
@@ -569,9 +621,8 @@
     <div class="footer-note" id="lastUpdated">—</div>
   </main>
 
-  <div id="Layer1"></div>
-  <div id="Layer2"><img src="cacacopa.png" width="295" height="369"></div>
-  <div id="Layer3"><img src="brasilcopa.gif" width="500" height="345"></div>
+  <div id="Layer1"><img src="cacacopa.png" width="328" height="408"></div>
+  <div id="Layer2"><img src="brasilcopa.gif" width="500" height="345"></div>
   <div class="toast" id="toast"></div>
 
   <script type="module">
@@ -1062,6 +1113,8 @@
 
     const els = {
       nome: document.getElementById('nome'),
+      senha: document.getElementById('senha'),
+      authStatus: document.getElementById('authStatus'),
       matchesBody: document.getElementById('matchesBody'),
       predictionsList: document.getElementById('predictionsList'),
       leaderboardBody: document.getElementById('leaderboardBody'),
@@ -1169,6 +1222,48 @@
       return (els.nome.value || '').trim();
     }
 
+    function getCurrentPassword() {
+      return (els.senha?.value || '').trim();
+    }
+
+    function getPasswordForName(name) {
+      const normalized = normalizeText(name);
+      const match = state.predictions.find(p =>
+        normalizeText(p.name) === normalized && String(p.password || '').trim()
+      );
+      return match ? String(match.password || '').trim() : null;
+    }
+
+    function getAuthState(name = getCurrentName(), password = getCurrentPassword()) {
+      const cleanName = String(name || '').trim();
+      const cleanPassword = String(password || '').trim();
+
+      if (!cleanName || !cleanPassword) {
+        return {
+          ready: false,
+          status: 'Digite seu nome e sua senha para liberar os palpites.',
+          kind: 'warn'
+        };
+      }
+
+      const existingPassword = getPasswordForName(cleanName);
+      if (existingPassword && existingPassword !== cleanPassword) {
+        return {
+          ready: false,
+          status: 'Senha incorreta para este nome.',
+          kind: 'warn'
+        };
+      }
+
+      return {
+        ready: true,
+        status: existingPassword
+          ? 'Nome e senha liberados para continuar dando palpites.'
+          : 'Primeiro acesso: esta senha será criada quando você salvar o primeiro palpite.',
+        kind: 'ok'
+      };
+    }
+
     function getPredictionFor(name, matchId) {
       const normalized = normalizeText(name);
       return state.predictions.find(p => normalizeText(p.name) === normalized && p.matchId === matchId) || null;
@@ -1228,18 +1323,32 @@
         kind === 'ok' ? 'var(--ok)' : 'var(--text)';
     }
 
+    function renderAuthStatus() {
+      if (!els.authStatus) return;
+      const auth = getAuthState();
+      els.authStatus.textContent = auth.status;
+      els.authStatus.dataset.kind = auth.kind;
+    }
+
     function renderMatches() {
       const currentName = getCurrentName();
+      const currentPassword = getCurrentPassword();
+      const authState = getAuthState(currentName, currentPassword);
+      if (els.authStatus) {
+        els.authStatus.textContent = authState.status;
+        els.authStatus.dataset.kind = authState.kind;
+      }
       const visibleMatches = state.showOnlyBrazil ? state.matches.filter(isBrazilMatch) : state.matches;
       const rows = visibleMatches.map(match => {
         const started = isStarted(match);
         const finished = isFinished(match);
         const pred = currentName ? getPredictionFor(currentName, match.id) : null;
+        const authState = getAuthState(currentName, getCurrentPassword());
         const statusClass = finished ? 'finished' : started ? 'locked' : 'upcoming';
         const statusLabel = finished ? 'Encerrado' : started ? 'Travado' : 'Aberto';
         const resultText = finished ? `${match.actualHome} x ${match.actualAway}` : '—';
         const kickoffText = match.kickoff ? formatDateTime(match.kickoff) : '—';
-        const saveDisabled = started || !currentName || !!pred;
+        const saveDisabled = started || !authState.ready || !!pred;
         const brazilMatch = isBrazilMatch(match);
         const betAreaClass = brazilMatch ? 'brazil-bet-area' : '';
         const buttonLabel = pred ? 'Salvo' : 'Palpite';
@@ -1288,8 +1397,10 @@
           const matchId = btn.getAttribute('data-save');
           const match = state.matches.find(m => m.id === matchId);
           const name = getCurrentName();
-          if (!name) {
-            toast('Digite seu nome antes de apostar.');
+          const password = getCurrentPassword();
+          const authState = getAuthState(name, password);
+          if (!authState.ready) {
+            toast(authState.status);
             return;
           }
           if (!match) {
@@ -1318,11 +1429,11 @@
           }
 
           try {
-            await savePrediction(name, matchId, home, away);
+            await savePrediction(name, password, matchId, home, away);
             toast('Palpite salvo.');
           } catch (err) {
             console.error(err);
-            toast('Não foi possível salvar o palpite.');
+            toast(err.message === 'Password mismatch' ? 'Senha incorreta para este nome.' : 'Não foi possível salvar o palpite.');
           }
         });
       });
@@ -1405,6 +1516,7 @@
 
     function renderAll() {
       renderMeta();
+      renderAuthStatus();
       renderMatches();
       renderPredictions();
       renderLeaderboard();
@@ -1527,6 +1639,7 @@
             return {
               id: docSnap.id,
               name: d.name || '',
+              password: d.password || '',
               matchId: d.matchId || '',
               home: Number(d.home ?? 0),
               away: Number(d.away ?? 0),
@@ -1554,8 +1667,13 @@
       }
     }
 
-    async function savePrediction(name, matchId, home, away) {
+    async function savePrediction(name, password, matchId, home, away) {
       const cleanName = String(name || '').trim();
+      const cleanPassword = String(password || '').trim();
+      const existingPassword = getPasswordForName(cleanName);
+      if (existingPassword && existingPassword !== cleanPassword) {
+        throw new Error('Password mismatch');
+      }
       const existing = getPredictionFor(cleanName, matchId);
       if (existing) {
         throw new Error('Prediction already saved');
@@ -1566,6 +1684,7 @@
         const { doc, setDoc, serverTimestamp } = state.firestore;
         await setDoc(doc(state.firestore.db, 'palpites', docId), {
           name: cleanName,
+          password: cleanPassword,
           matchId,
           home: Number(home),
           away: Number(away),
@@ -1579,6 +1698,7 @@
       const payload = {
         id: docId,
         name: cleanName,
+        password: cleanPassword,
         matchId,
         home: Number(home),
         away: Number(away),
@@ -1594,8 +1714,14 @@
     function bindEvents() {
       els.nome.addEventListener('input', () => {
         saveName();
-        renderMatches();
+        renderAll();
       });
+
+      if (els.senha) {
+        els.senha.addEventListener('input', () => {
+          renderAll();
+        });
+      }
 
       if (els.onlyBrazil) {
         els.onlyBrazil.addEventListener('change', () => {
