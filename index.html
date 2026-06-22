@@ -766,6 +766,29 @@ setInterval(chuvaGirassol, 150);
 }
 .ap-close-btn:hover{background:rgba(255,80,80,0.2);color:#ff8080;}
 .ap-textarea{min-height:70px;resize:vertical;font-family:inherit;}
+
+/* ===== BOTAO DELETE X ===== */
+.admin-delete-btn {
+  position:absolute;
+  top:-10px;right:-10px;
+  width:22px;height:22px;
+  background:#ff4444;
+  color:#fff;
+  border:2px solid #fff;
+  border-radius:50%;
+  font-size:13px;
+  font-weight:bold;
+  line-height:18px;
+  text-align:center;
+  cursor:pointer;
+  z-index:9999999;
+  box-shadow:0 2px 6px rgba(0,0,0,0.4);
+  display:none;
+  user-select:none;
+}
+.admin-modo-ativo .admin-delete-btn {
+  display:block;
+}
 </style>
 
 <script>
@@ -795,6 +818,17 @@ window.addEventListener('load', function(){
       '</div>' +
     '</div>' +
     '<div id="adminPanelBody">' +
+
+      // 0b. Adicionar imagem ao site
+      '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#128444;&#65039;</span> Adicionar imagem ao site</p>' +
+        '<label class="ap-label">Escolha uma imagem para colocar no site (pode arrastar depois):</label>' +
+        '<input type="file" id="novaImagemInput" class="ap-input" accept="image/*" style="margin-bottom:8px">' +
+        '<div class="ap-row">' +
+          '<input type="number" id="novaImagemLargura" class="ap-input" placeholder="Largura (px)" style="width:110px" value="200">' +
+          '<button class="ap-btn" onclick="adicionarNovaImagem()">&#43; Adicionar</button>' +
+        '</div>' +
+      '</div>' +
 
       // 0. Imagem de fundo
       '<div class="ap-section">' +
@@ -898,12 +932,29 @@ function ativarModoArrasto(){
   if(modoArrasto) return;
   modoArrasto = true;
   _arrastaveis = [];
+  document.body.classList.add('admin-modo-ativo');
   document.querySelectorAll('[id^="Layer"]').forEach(function(el){
     if(el.id === 'adminPanel') return;
     el.style.cursor = 'move';
     el.setAttribute('data-drag', '1');
+    // Adiciona botao X de exclusao
+    if(!el.querySelector('.admin-delete-btn')){
+      var xBtn = document.createElement('span');
+      xBtn.className = 'admin-delete-btn';
+      xBtn.innerHTML = '&#10005;';
+      xBtn.title = 'Excluir elemento';
+      xBtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        if(confirm('Excluir este elemento?')){ el.remove(); }
+      });
+      // Garante position relative/absolute no pai para posicionar X
+      var pos = window.getComputedStyle(el).position;
+      if(pos === 'static') el.style.position = 'relative';
+      el.appendChild(xBtn);
+    }
     // Bloqueia apenas cliques (nao mousedown) em filhos para evitar navegacao acidental
     el.querySelectorAll('a,button,img,input,select,textarea').forEach(function(ch){
+      if(ch.classList.contains('admin-delete-btn')) return;
       ch.setAttribute('data-blocked', '1');
       ch.style.cursor = 'move';
       ch.addEventListener('click', bloquearClique, true);
@@ -912,6 +963,21 @@ function ativarModoArrasto(){
     el.addEventListener('mousedown', iniciarArrastoCapture, true);
     _arrastaveis.push(el);
   });
+  // Tambem aplica arrasto e X nos elementos de imagem criados e textos criados
+  document.querySelectorAll('.texto-criado, .imagem-criada').forEach(function(el){
+    if(!el.querySelector('.admin-delete-btn')){
+      var xBtn = document.createElement('span');
+      xBtn.className = 'admin-delete-btn';
+      xBtn.innerHTML = '&#10005;';
+      xBtn.title = 'Excluir elemento';
+      xBtn.addEventListener('click', function(e){
+        e.preventDefault(); e.stopPropagation();
+        if(confirm('Excluir este elemento?')){ el.remove(); }
+      });
+      el.style.position = el.style.position || 'absolute';
+      el.appendChild(xBtn);
+    }
+  });
   document.addEventListener('mousemove', moverArrasto);
   document.addEventListener('mouseup', soltarArrasto);
 }
@@ -919,6 +985,9 @@ function ativarModoArrasto(){
 function desativarModoArrasto(){
   if(!modoArrasto) return;
   modoArrasto = false;
+  document.body.classList.remove('admin-modo-ativo');
+  // Remove todos os botoes X
+  document.querySelectorAll('.admin-delete-btn').forEach(function(btn){ btn.remove(); });
   _arrastaveis.forEach(function(el){
     el.style.cursor = '';
     el.removeEventListener('mousedown', iniciarArrastoCapture, true);
@@ -996,6 +1065,51 @@ function soltarArrasto(){
   _zIndexOriginalArrasto = null;
 }
 
+// ===== NOVA IMAGEM NO SITE =====
+function adicionarNovaImagem(){
+  var input = document.getElementById('novaImagemInput');
+  if(!input || !input.files[0]) { alert('Selecione uma imagem primeiro.'); return; }
+  var largura = parseInt(document.getElementById('novaImagemLargura').value) || 200;
+  var r = new FileReader();
+  r.onload = function(e){
+    var div = document.createElement('div');
+    div.className = 'imagem-criada';
+    div.style.cssText = 'position:absolute;left:200px;top:200px;z-index:50001;cursor:move;display:inline-block;';
+    div.setAttribute('data-drag', '1');
+    var img = document.createElement('img');
+    img.src = e.target.result;
+    img.style.width = largura + 'px';
+    img.style.height = 'auto';
+    img.style.display = 'block';
+    div.appendChild(img);
+    // Arrasto
+    div.addEventListener('mousedown', function(ev){
+      if(!modoArrasto) return;
+      elArrastando = div;
+      var rect = div.getBoundingClientRect();
+      offX = ev.clientX - rect.left;
+      offY = ev.clientY - rect.top;
+      div.style.zIndex = 99990;
+      ev.preventDefault(); ev.stopPropagation();
+    });
+    // Botao X se admin estiver ativo
+    if(modoArrasto){
+      var xBtn = document.createElement('span');
+      xBtn.className = 'admin-delete-btn';
+      xBtn.innerHTML = '&#10005;';
+      xBtn.title = 'Excluir imagem';
+      xBtn.addEventListener('click', function(ev){
+        ev.preventDefault(); ev.stopPropagation();
+        if(confirm('Excluir esta imagem?')){ div.remove(); }
+      });
+      div.appendChild(xBtn);
+    }
+    document.body.appendChild(div);
+    input.value = '';
+  };
+  r.readAsDataURL(input.files[0]);
+}
+
 // ===== FOTOS =====
 function adicionarCampoFoto(){
   var cont = document.getElementById('fotoInputs');
@@ -1051,6 +1165,19 @@ function adicionarNovoTexto(){
     (bold ? 'font-weight:bold;' : '');
   div.innerText = conteudo;
   div.setAttribute('data-drag', '1');
+
+  // Botao X se admin ativo
+  if(modoArrasto){
+    var xBtnTxt = document.createElement('span');
+    xBtnTxt.className = 'admin-delete-btn';
+    xBtnTxt.innerHTML = '&#10005;';
+    xBtnTxt.title = 'Excluir texto';
+    xBtnTxt.addEventListener('click', function(e){
+      e.preventDefault(); e.stopPropagation();
+      if(confirm('Excluir este texto?')){ div.remove(); }
+    });
+    div.appendChild(xBtnTxt);
+  }
 
   // Arrasto direto neste elemento
   div.addEventListener('mousedown', function(e){
