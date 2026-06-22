@@ -851,6 +851,7 @@ window.addEventListener('load', function(){
 
       // Salvar / Fechar
       '<button class="ap-save-btn" onclick="salvarTudo()">&#128190; Salvar tudo</button>' +
+      '<button class="ap-save-btn" onclick="resetarSite()" style="margin-top:8px;background:linear-gradient(135deg,#e74c3c,#c0392b);box-shadow:0 4px 18px rgba(231,76,60,0.35)">&#10006; Resetar site (apagar tudo)</button>' +
     '</div>';
   document.body.appendChild(p);
 
@@ -1090,13 +1091,19 @@ function salvarTudo(){
     if(_textosCriados[idx]){ _textosCriados[idx].left = el.style.left; _textosCriados[idx].top = el.style.top; }
   });
 
+  // Salva src atual da imagem de fundo (somente se for base64 trocada pelo admin)
+  var bgSrc = '';
+  var bgEl = document.querySelector('#Layer5 img');
+  if(bgEl && bgEl.src && bgEl.src.indexOf('data:') === 0) bgSrc = bgEl.src;
+
   var dados = {
     btnCor:   document.getElementById('btnCor').value,
     txtCor:   document.getElementById('txtCor').value,
     texto:    document.getElementById('novoTexto').value,
     tempo:    document.getElementById('tempo').value,
     posicoes: JSON.stringify(posicoes),
-    textosCriados: JSON.stringify(_textosCriados)
+    textosCriados: JSON.stringify(_textosCriados),
+    imagemFundo: bgSrc
   };
   localStorage.setItem('adminConfig', JSON.stringify(dados));
 
@@ -1173,14 +1180,36 @@ function aplicarConfig(cfg){
       });
     }catch(e){}
   }
+  // Restaurar imagem de fundo salva
+  if(cfg.imagemFundo && cfg.imagemFundo.length > 10){
+    var bgEl2 = document.querySelector('#Layer5 img');
+    if(bgEl2){
+      bgEl2.src = cfg.imagemFundo;
+      var layer5 = document.getElementById('Layer5');
+      if(layer5) layer5.style.zIndex = 1;
+    }
+  }
+}
+
+// ===== RESETAR SITE =====
+function resetarSite(){
+  if(!confirm('Tem certeza? Isso apagará TODAS as modificações salvas e voltará o site ao estado original.')) return;
+  localStorage.removeItem('adminConfig');
+  if(typeof window.resetarFirestore === 'function'){
+    window.resetarFirestore()
+      .then(function(){ alert('Site resetado! A página será recarregada.'); location.reload(); })
+      .catch(function(){ alert('Site resetado localmente. A página será recarregada.'); location.reload(); });
+  } else {
+    alert('Site resetado! A página será recarregada.');
+    location.reload();
+  }
 }
 </script>
-
 
 <!-- Firebase Firestore -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBhq3yPc927yrj5xT1UBaJSxJ4S9H7tEgI",
@@ -1195,12 +1224,16 @@ const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 window.salvarFirestore = async function(dados){
-  await setDoc(doc(db, "config", "site"), dados, { merge: true });
+  await setDoc(doc(db, "config", "site"), dados);
 };
 
 window.carregarFirestore = async function(){
   const snap = await getDoc(doc(db, "config", "site"));
   return snap.exists() ? snap.data() : {};
+};
+
+window.resetarFirestore = async function(){
+  await deleteDoc(doc(db, "config", "site"));
 };
 
 // Carrega automaticamente ao iniciar a pagina (para todos os visitantes)
