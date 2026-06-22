@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
-<title>-Live da Caca</title>
+<title>Live da Caca</title>
 <style type="text/css">
 <!--
 #Layer1 {
@@ -372,7 +372,7 @@ id: 10684157</div>
 
     <a href="index.html" class="botao-azul">Chuva de girassol </a>
     <a href="chataovivo.html" class="botao-azul">chat ao vivo </a>
-    <a href="mural.html" class="botao-azul">mural </a> <a href="jogo.html" class="botao-azul">jogos </a> <a href="blog.html" class="botao-azul">Blog </a><a href="oracao.html" class="botao-azul">oraÃ§Ã£o </a></div>
+    <a href="mural.html" class="botao-azul">mural </a> <a href="jogo.html" class="botao-azul">jogos </a> <a href="blog.html" class="botao-azul">Blog </a><a href="oracao.html" class="botao-azul">oração </a></div>
 
   <style>
 
@@ -475,7 +475,7 @@ function atualizarContador() {
 
     const agora = new Date();
 
-    const dia = 20;
+    const dia = 21;
     const mes = 6; // abril
 
     let aniversario = new Date(
@@ -515,7 +515,7 @@ atualizarContador();
 
 
 
-<div id="Layer41"><a href="copa_responsivo.html"><img src="bolacopa.gif" width="158" height="164" border="0" /></a></div>
+<div id="Layer41"><a href="copa.html"><img src="bolacopa.gif" width="158" height="164" border="0" /></a></div>
 
 <div class="style5" id="Layer42">Cac&aacute; na copa. </div>
 <div id="Layer40"></div>
@@ -607,7 +607,7 @@ let intervalo = setInterval(() => {
 </span>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chuva de GirassÃ³is</title>
+<title>Chuva de Girassóis</title>
 
 <span class="style5">
 <style>
@@ -626,7 +626,7 @@ body {
     animation: cair linear forwards;
 }
 
-/* animaÃ§Ã£o */
+/* animação */
 @keyframes cair {
     0% {
         transform: translateY(-50px) rotate(0deg);
@@ -660,11 +660,561 @@ function chuvaGirassol() {
     }, 6000);
 }
 
-/* cria vÃ¡rios girassÃ³is */
+/* cria vários girassóis */
 setInterval(chuvaGirassol, 150);
 
 </script>
 </span>
+
+<style>
+#adminBtn{position:fixed;z-index:9999999;cursor:pointer}
+
+/* ===== PAINEL ADMIN ===== */
+#adminPanel{
+  display:none;
+  position:fixed;
+  top:16px;right:16px;
+  width:400px;
+  max-height:92vh;
+  overflow-y:auto;
+  background:linear-gradient(160deg,#1a1a2e 0%,#16213e 60%,#0f3460 100%);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:16px;
+  padding:0;
+  z-index:99999999;
+  box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(77,184,255,0.15);
+  font-family:'Segoe UI',Arial,sans-serif;
+  color:#e8eaf6;
+}
+#adminPanelHeader{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px 14px;
+  border-bottom:1px solid rgba(255,255,255,0.08);
+  background:rgba(77,184,255,0.07);
+  border-radius:16px 16px 0 0;
+}
+#adminPanelHeader h3{
+  margin:0;font-size:17px;font-weight:700;letter-spacing:0.5px;
+  color:#7ecfff;text-shadow:0 0 20px rgba(126,207,255,0.4);
+}
+#adminPanelBody{padding:16px 18px 18px;}
+.ap-section{
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:12px;
+  padding:14px 14px 12px;
+  margin-bottom:12px;
+}
+.ap-section-title{
+  font-size:12px;font-weight:700;letter-spacing:1.2px;
+  text-transform:uppercase;color:#7ecfff;margin:0 0 10px;
+  display:flex;align-items:center;gap:6px;
+}
+.ap-section-title span{font-size:15px;}
+.ap-label{display:block;font-size:12px;color:#aab4c8;margin:8px 0 3px;}
+.ap-input{
+  width:100%;box-sizing:border-box;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.12);
+  border-radius:8px;padding:8px 10px;
+  color:#e8eaf6;font-size:13px;outline:none;
+  transition:border 0.2s;
+}
+.ap-input:focus{border-color:#4db8ff;}
+.ap-input[type=number]{width:90px;}
+.ap-input[type=color]{
+  width:44px;height:36px;padding:2px;cursor:pointer;
+  border-radius:8px;background:rgba(255,255,255,0.07);
+}
+.ap-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.ap-btn{
+  background:linear-gradient(135deg,#4db8ff,#2196f3);
+  color:#fff;border:none;border-radius:8px;
+  padding:8px 16px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:0.2s;white-space:nowrap;
+}
+.ap-btn:hover{background:linear-gradient(135deg,#7ecfff,#4db8ff);transform:translateY(-1px);}
+.ap-btn-sm{
+  padding:5px 10px;font-size:13px;
+  background:rgba(77,184,255,0.18);
+  border:1px solid rgba(77,184,255,0.35);
+  color:#7ecfff;border-radius:7px;cursor:pointer;
+  transition:0.2s;
+}
+.ap-btn-sm:hover{background:rgba(77,184,255,0.32);}
+.ap-btn-danger{
+  background:rgba(255,80,80,0.15);
+  border:1px solid rgba(255,80,80,0.35);
+  color:#ff8080;border-radius:7px;padding:4px 8px;
+  font-size:13px;cursor:pointer;
+}
+.ap-foto-row{display:flex;align-items:center;gap:6px;margin-bottom:6px;}
+.ap-foto-row input{flex:1;}
+.ap-save-btn{
+  width:100%;padding:11px;
+  background:linear-gradient(135deg,#27ae60,#2ecc71);
+  color:#fff;border:none;border-radius:10px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  letter-spacing:0.3px;transition:0.2s;
+  box-shadow:0 4px 18px rgba(46,204,113,0.3);
+}
+.ap-save-btn:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(46,204,113,0.45);}
+.ap-close-btn{
+  background:rgba(255,255,255,0.08);border:none;
+  color:#aab4c8;border-radius:7px;padding:5px 10px;
+  cursor:pointer;font-size:18px;line-height:1;transition:0.2s;
+}
+.ap-close-btn:hover{background:rgba(255,80,80,0.2);color:#ff8080;}
+.ap-textarea{min-height:70px;resize:vertical;font-family:inherit;}
+</style>
+
+<script>
+window.addEventListener('load', function(){
+  // --- Botao de acesso (gif) ---
+  var gif = document.querySelector('img[src="live.gif"]');
+  if(gif){
+    gif.id = 'adminBtn';
+    gif.addEventListener('click', function(){
+      var s = prompt('Senha:');
+      if(s === 'caca709080'){
+        document.getElementById('adminPanel').style.display = 'block';
+        ativarModoArrasto();
+      } else if(s !== null){ alert('Senha incorreta'); }
+    });
+  }
+
+  // --- Criar painel ---
+  var p = document.createElement('div');
+  p.id = 'adminPanel';
+  p.innerHTML =
+    '<div id="adminPanelHeader">' +
+      '<h3>&#9881;&#65039; Painel Administrativo</h3>' +
+      '<div style="display:flex;gap:6px">' +
+        '<button class="ap-close-btn" onclick="minimizarAdmin()" title="Minimizar">&#8722;</button>' +
+        '<button class="ap-close-btn" onclick="fecharAdmin()">&#10005;</button>' +
+      '</div>' +
+    '</div>' +
+    '<div id="adminPanelBody">' +
+
+      // 0. Imagem de fundo
+      '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#127760;</span> Imagem de fundo (logolive.png)</p>' +
+        '<input type="file" id="bgInput" class="ap-input" accept="image/*" style="margin-bottom:8px">' +
+        '<button class="ap-btn" onclick="aplicarImagemFundo()">Aplicar</button>' +
+      '</div>' +
+
+      // 1. Fotos
+      '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#128247;</span> Trocar foto(s)</p>' +
+        '<div id="fotoInputs">' +
+          '<div class="ap-foto-row"><input type="file" class="fotoInput ap-input" accept="image/*"><button class="ap-btn-sm" onclick="adicionarCampoFoto()">+</button></div>' +
+        '</div>' +
+        '<div class="ap-row" style="margin-top:8px">' +
+          '<div><label class="ap-label">Tempo altern&#226;ncia (s)</label><input id="tempo" class="ap-input" value="3" type="number" min="1"></div>' +
+          '<button class="ap-btn" onclick="aplicarFotos()" style="margin-top:18px">Aplicar</button>' +
+        '</div>' +
+      '</div>' +
+
+      // 2. Botoes
+      '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#127775;</span> Cor dos bot&#245;es</p>' +
+        '<div class="ap-row">' +
+          '<div><label class="ap-label">Fundo</label><input type="color" id="btnCor" class="ap-input" value="#4db8ff"></div>' +
+          '<div><label class="ap-label">Texto</label><input type="color" id="txtCor" class="ap-input" value="#ffffff"></div>' +
+          '<button class="ap-btn" onclick="aplicarBotoes()" style="margin-top:18px">Aplicar</button>' +
+        '</div>' +
+      '</div>' +
+
+      // 3. Novo texto
+      '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#9997;&#65039;</span> Criar novo texto</p>' +
+        '<textarea id="novoTextoConteudo" class="ap-input ap-textarea" placeholder="Digite o texto aqui..."></textarea>' +
+        '<div class="ap-row" style="margin-top:8px">' +
+          '<div><label class="ap-label">Cor</label><input type="color" id="novoTextoCor" class="ap-input" value="#000000"></div>' +
+          '<div><label class="ap-label">Tamanho (px)</label><input type="number" id="novoTextoTam" class="ap-input" value="18" min="8" max="120"></div>' +
+          '<div><label class="ap-label">Negrito</label><br><input type="checkbox" id="novoTextoNegrito" style="width:auto;margin:4px 0"></div>' +
+        '</div>' +
+        '<div class="ap-row" style="margin-top:8px">' +
+          '<select id="novoTextoFonte" class="ap-input" style="width:auto;flex:1">' +
+            '<option>Arial</option><option>Georgia</option><option>Verdana</option><option>Courier New</option><option>Impact</option><option>Trebuchet MS</option>' +
+          '</select>' +
+          '<button class="ap-btn" onclick="adicionarNovoTexto()">Adicionar</button>' +
+        '</div>' +
+      '</div>' +
+
+      // 4. Editar texto principal
+      '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#128196;</span> Editar texto principal</p>' +
+        '<textarea id="novoTexto" class="ap-input ap-textarea" placeholder="Substitui o texto principal do site..."></textarea>' +
+        '<button class="ap-btn" onclick="editarTexto()" style="margin-top:8px">Aplicar</button>' +
+      '</div>' +
+
+      // Salvar / Fechar
+      '<button class="ap-save-btn" onclick="salvarTudo()">&#128190; Salvar tudo</button>' +
+    '</div>';
+  document.body.appendChild(p);
+
+  // --- Carregar config salva ---
+  carregarConfigSalva();
+});
+
+function fecharAdmin(){
+  document.getElementById('adminPanel').style.display = 'none';
+  desativarModoArrasto();
+}
+
+var _painelMinimizado = false;
+function minimizarAdmin(){
+  var body = document.getElementById('adminPanelBody');
+  if(!body) return;
+  _painelMinimizado = !_painelMinimizado;
+  body.style.display = _painelMinimizado ? 'none' : '';
+  // Atualiza icone do botao
+  var btns = document.querySelectorAll('#adminPanelHeader .ap-close-btn');
+  if(btns[0]) btns[0].innerHTML = _painelMinimizado ? '&#43;' : '&#8722;';
+}
+
+function aplicarImagemFundo(){
+  var input = document.getElementById('bgInput');
+  if(!input || !input.files[0]) return;
+  var r = new FileReader();
+  r.onload = function(e){
+    var bgImg = document.querySelector('#Layer5 img');
+    if(bgImg) bgImg.src = e.target.result;
+    // Garante que o fundo sempre fique atras dos outros elementos
+    var layer5 = document.getElementById('Layer5');
+    if(layer5) layer5.style.zIndex = 1;
+  };
+  r.readAsDataURL(input.files[0]);
+}
+
+// ===== ARRASTO =====
+var modoArrasto = false;
+var elArrastando = null, offX = 0, offY = 0;
+var _arrastaveis = [];
+
+function ativarModoArrasto(){
+  if(modoArrasto) return;
+  modoArrasto = true;
+  _arrastaveis = [];
+  document.querySelectorAll('[id^="Layer"]').forEach(function(el){
+    if(el.id === 'adminPanel') return;
+    el.style.cursor = 'move';
+    el.setAttribute('data-drag', '1');
+    // Bloqueia apenas cliques (nao mousedown) em filhos para evitar navegacao acidental
+    el.querySelectorAll('a,button,img,input,select,textarea').forEach(function(ch){
+      ch.setAttribute('data-blocked', '1');
+      ch.style.cursor = 'move';
+      ch.addEventListener('click', bloquearClique, true);
+    });
+    // Usa capture para capturar mousedown de qualquer filho tambem
+    el.addEventListener('mousedown', iniciarArrastoCapture, true);
+    _arrastaveis.push(el);
+  });
+  document.addEventListener('mousemove', moverArrasto);
+  document.addEventListener('mouseup', soltarArrasto);
+}
+
+function desativarModoArrasto(){
+  if(!modoArrasto) return;
+  modoArrasto = false;
+  _arrastaveis.forEach(function(el){
+    el.style.cursor = '';
+    el.removeEventListener('mousedown', iniciarArrastoCapture, true);
+    el.querySelectorAll('[data-blocked="1"]').forEach(function(ch){
+      ch.removeEventListener('click', bloquearClique, true);
+      ch.style.cursor = '';
+      ch.removeAttribute('data-blocked');
+    });
+  });
+  document.removeEventListener('mousemove', moverArrasto);
+  document.removeEventListener('mouseup', soltarArrasto);
+  _arrastaveis = [];
+}
+
+function bloquearClique(e){ e.preventDefault(); e.stopPropagation(); }
+
+var _zIndexOriginalArrasto = null;
+var BG_LAYER_ID = 'Layer5'; // imagem de fundo - nunca sobe z-index
+
+function iniciarArrastoCapture(e){
+  if(e.button !== 0) return;
+  var target = e.target;
+  var layer = null;
+  while(target){
+    if(target.getAttribute && target.getAttribute('data-drag') === '1' && /^Layer/i.test(target.id || '')){
+      layer = target; break;
+    }
+    target = target.parentElement;
+  }
+  if(!layer) layer = this;
+  elArrastando = layer;
+  var rect = elArrastando.getBoundingClientRect();
+  offX = e.clientX - rect.left;
+  offY = e.clientY - rect.top;
+  if(elArrastando.id !== BG_LAYER_ID){
+    _zIndexOriginalArrasto = elArrastando.style.zIndex;
+    elArrastando.style.zIndex = 99990;
+  } else {
+    _zIndexOriginalArrasto = null;
+    elArrastando.style.zIndex = 1;
+  }
+  e.preventDefault();
+  e.stopPropagation();
+}
+function iniciarArrasto(e){
+  if(e.button !== 0) return;
+  elArrastando = this;
+  var rect = elArrastando.getBoundingClientRect();
+  offX = e.clientX - rect.left;
+  offY = e.clientY - rect.top;
+  if(elArrastando.id !== BG_LAYER_ID){
+    _zIndexOriginalArrasto = elArrastando.style.zIndex;
+    elArrastando.style.zIndex = 99990;
+  } else {
+    _zIndexOriginalArrasto = null;
+    elArrastando.style.zIndex = 1;
+  }
+  e.preventDefault();
+  e.stopPropagation();
+}
+function moverArrasto(e){
+  if(!elArrastando) return;
+  elArrastando.style.left = (e.clientX - offX + window.scrollX) + 'px';
+  elArrastando.style.top  = (e.clientY - offY + window.scrollY) + 'px';
+}
+function soltarArrasto(){
+  if(elArrastando){
+    if(elArrastando.id === BG_LAYER_ID){
+      elArrastando.style.zIndex = 1;
+    } else if(_zIndexOriginalArrasto !== null){
+      elArrastando.style.zIndex = _zIndexOriginalArrasto;
+    }
+  }
+  elArrastando = null;
+  _zIndexOriginalArrasto = null;
+}
+
+// ===== FOTOS =====
+function adicionarCampoFoto(){
+  var cont = document.getElementById('fotoInputs');
+  var div = document.createElement('div');
+  div.className = 'ap-foto-row';
+  div.innerHTML = '<input type="file" class="fotoInput ap-input" accept="image/*"><button class="ap-btn-danger" onclick="this.parentElement.remove()">&#10005;</button>';
+  cont.appendChild(div);
+}
+
+var fotos = [], intervaloFotos = null;
+function aplicarFotos(){
+  var arqs = [...document.querySelectorAll('.fotoInput')].map(function(i){ return i.files[0]; }).filter(Boolean);
+  fotos = [];
+  if(!arqs.length) return;
+  var lidos = 0;
+  arqs.forEach(function(f){
+    var r = new FileReader();
+    r.onload = function(e){ fotos.push(e.target.result); lidos++; if(lidos === arqs.length) iniciarAlternancia(); };
+    r.readAsDataURL(f);
+  });
+}
+function iniciarAlternancia(){
+  var img = document.querySelector('img[src="cacafotohome.png"]') || document.querySelector('#Layer6 img');
+  if(!img || !fotos.length) return;
+  if(intervaloFotos) clearInterval(intervaloFotos);
+  var i = 0; img.src = fotos[0];
+  var t = (parseFloat(document.getElementById('tempo').value) || 3) * 1000;
+  if(fotos.length > 1) intervaloFotos = setInterval(function(){ i=(i+1)%fotos.length; img.src=fotos[i]; }, t);
+}
+
+// ===== BOTOES =====
+function aplicarBotoes(){
+  document.querySelectorAll('.botao-azul').forEach(function(b){
+    b.style.background = document.getElementById('btnCor').value;
+    b.style.color = document.getElementById('txtCor').value;
+  });
+}
+
+// ===== NOVO TEXTO =====
+var _textosCriados = [];
+function adicionarNovoTexto(){
+  var conteudo = document.getElementById('novoTextoConteudo').value.trim();
+  if(!conteudo) return;
+  var cor   = document.getElementById('novoTextoCor').value;
+  var tam   = document.getElementById('novoTextoTam').value || '18';
+  var bold  = document.getElementById('novoTextoNegrito').checked;
+  var fonte = document.getElementById('novoTextoFonte').value;
+
+  var div = document.createElement('div');
+  div.className = 'texto-criado';
+  div.style.cssText = 'position:absolute;left:200px;top:200px;z-index:50000;cursor:move;padding:4px 6px;' +
+    'color:'+cor+';font-size:'+tam+'px;font-family:'+fonte+',sans-serif;'+
+    (bold ? 'font-weight:bold;' : '');
+  div.innerText = conteudo;
+  div.setAttribute('data-drag', '1');
+
+  // Arrasto direto neste elemento
+  div.addEventListener('mousedown', function(e){
+    if(!modoArrasto) return;
+    elArrastando = div;
+    var rect = div.getBoundingClientRect();
+    offX = e.clientX - rect.left;
+    offY = e.clientY - rect.top;
+    div.style.zIndex = 99990;
+    e.preventDefault(); e.stopPropagation();
+  });
+
+  document.body.appendChild(div);
+  _textosCriados.push({
+    id: 'texto_' + Date.now(),
+    conteudo: conteudo, cor: cor, tam: tam, bold: bold, fonte: fonte,
+    left: '200px', top: '200px'
+  });
+  document.getElementById('novoTextoConteudo').value = '';
+}
+
+// ===== EDITAR TEXTO PRINCIPAL =====
+function editarTexto(){
+  var t = document.getElementById('novoTexto').value;
+  var alvo = document.getElementById('Layer10');
+  if(t.trim()) alvo.innerHTML = t;
+}
+
+// ===== SALVAR =====
+function salvarTudo(){
+  var posicoes = {};
+  document.querySelectorAll('[id^="Layer"]').forEach(function(el){
+    if(el.id === 'adminPanel') return;
+    posicoes[el.id] = { left: el.style.left || '', top: el.style.top || '' };
+  });
+  // Atualiza posicoes dos textos criados
+  document.querySelectorAll('.texto-criado').forEach(function(el, idx){
+    if(_textosCriados[idx]){ _textosCriados[idx].left = el.style.left; _textosCriados[idx].top = el.style.top; }
+  });
+
+  var dados = {
+    btnCor:   document.getElementById('btnCor').value,
+    txtCor:   document.getElementById('txtCor').value,
+    texto:    document.getElementById('novoTexto').value,
+    tempo:    document.getElementById('tempo').value,
+    posicoes: JSON.stringify(posicoes),
+    textosCriados: JSON.stringify(_textosCriados)
+  };
+  localStorage.setItem('adminConfig', JSON.stringify(dados));
+
+  if(typeof window.salvarFirestore === 'function'){
+    window.salvarFirestore(dados)
+      .then(function(){ alert('&#10003; Salvo com sucesso! Todas as visitas ver\xe3o as altera\xe7\xf5es.'); })
+      .catch(function(err){ console.error(err); alert('Salvo localmente (Firestore indispon\xedvel).'); });
+  } else {
+    alert('Configura\xe7\xf5es salvas localmente!');
+  }
+}
+
+// ===== CARREGAR CONFIG =====
+function carregarConfigSalva(){
+  // Tenta Firestore primeiro, depois localStorage
+  if(typeof window.carregarFirestore === 'function'){
+    window.carregarFirestore().then(function(cfg){
+      if(cfg && Object.keys(cfg).length) aplicarConfig(cfg);
+      else {
+        var local = localStorage.getItem('adminConfig');
+        if(local) try{ aplicarConfig(JSON.parse(local)); }catch(e){}
+      }
+    }).catch(function(){
+      var local = localStorage.getItem('adminConfig');
+      if(local) try{ aplicarConfig(JSON.parse(local)); }catch(e){}
+    });
+  } else {
+    var local = localStorage.getItem('adminConfig');
+    if(local) try{ aplicarConfig(JSON.parse(local)); }catch(e){}
+  }
+}
+
+function aplicarConfig(cfg){
+  if(!cfg) return;
+  if(cfg.btnCor) document.querySelectorAll('.botao-azul').forEach(function(b){
+    b.style.background = cfg.btnCor;
+    b.style.color = cfg.txtCor || '#fff';
+  });
+  if(cfg.texto && document.getElementById('novoTexto')){
+    document.getElementById('novoTexto').value = cfg.texto;
+    if(cfg.texto.trim()) document.getElementById('Layer10').innerHTML = cfg.texto;
+  }
+  if(cfg.tempo && document.getElementById('tempo')) document.getElementById('tempo').value = cfg.tempo;
+  if(cfg.posicoes){
+    try{
+      var pos = typeof cfg.posicoes === 'string' ? JSON.parse(cfg.posicoes) : cfg.posicoes;
+      Object.keys(pos).forEach(function(id){
+        var el = document.getElementById(id);
+        if(el){ if(pos[id].left) el.style.left = pos[id].left; if(pos[id].top) el.style.top = pos[id].top; }
+      });
+    }catch(e){}
+  }
+  if(cfg.textosCriados){
+    try{
+      var tc = typeof cfg.textosCriados === 'string' ? JSON.parse(cfg.textosCriados) : cfg.textosCriados;
+      tc.forEach(function(t){
+        var div = document.createElement('div');
+        div.className = 'texto-criado';
+        div.style.cssText = 'position:absolute;left:'+(t.left||'200px')+';top:'+(t.top||'200px')+';z-index:50000;cursor:move;padding:4px 6px;' +
+          'color:'+(t.cor||'#000')+';font-size:'+(t.tam||'18')+'px;font-family:'+(t.fonte||'Arial')+',sans-serif;'+
+          (t.bold ? 'font-weight:bold;' : '');
+        div.innerText = t.conteudo || '';
+        div.setAttribute('data-drag', '1');
+        div.addEventListener('mousedown', function(e){
+          if(!modoArrasto) return;
+          elArrastando = div;
+          var rect = div.getBoundingClientRect();
+          offX = e.clientX - rect.left; offY = e.clientY - rect.top;
+          div.style.zIndex = 99990;
+          e.preventDefault(); e.stopPropagation();
+        });
+        document.body.appendChild(div);
+        _textosCriados.push(t);
+      });
+    }catch(e){}
+  }
+}
+</script>
+
+
+<!-- Firebase Firestore -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBhq3yPc927yrj5xT1UBaJSxJ4S9H7tEgI",
+  authDomain: "sitecaca2.firebaseapp.com",
+  projectId: "sitecaca2",
+  storageBucket: "sitecaca2.firebasestorage.app",
+  messagingSenderId: "391187353901",
+  appId: "1:391187353901:web:050289706c2fbb0d0343a4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+window.salvarFirestore = async function(dados){
+  await setDoc(doc(db, "config", "site"), dados, { merge: true });
+};
+
+window.carregarFirestore = async function(){
+  const snap = await getDoc(doc(db, "config", "site"));
+  return snap.exists() ? snap.data() : {};
+};
+
+// Carrega automaticamente ao iniciar a pagina (para todos os visitantes)
+(async function(){
+  try{
+    const cfg = await window.carregarFirestore();
+    if(cfg && Object.keys(cfg).length){
+      if(typeof window.aplicarConfig === 'function') window.aplicarConfig(cfg);
+      else window._configPendente = cfg;
+    }
+  }catch(e){ console.warn('Firestore indisponivel:', e); }
+})();
+</script>
+
 </body>
 </html>
 </div>
@@ -674,7 +1224,7 @@ setInterval(chuvaGirassol, 150);
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Chuva de GirassÃ³is</title>
+<title>Chuva de Girassóis</title>
 
 <style>
 
@@ -694,7 +1244,7 @@ body {
     animation: fall linear infinite;
 }
 
-/* animaÃ§Ã£o */
+/* animação */
 @keyframes fall {
 
     0% {
@@ -734,14 +1284,29 @@ function createSunflower() {
     }, 7000);
 }
 
-/* criar vÃ¡rios girassÃ³is */
+/* criar vários girassóis */
 
 setInterval(createSunflower, 200);
 
 </script>
 
+
+
+
 </body>
 </html></div>
 <img src="imagemcinzagrande.png" width="265" height="409" />
+
+
+
+<script>
+// Bridge: aplica config do Firestore se carregou antes do DOM estar pronto
+window.addEventListener('load', function(){
+  if(window._configPendente && typeof window.aplicarConfig === 'function'){
+    window.aplicarConfig(window._configPendente);
+    window._configPendente = null;
+  }
+});
+</script>
 </body>
 </html>
