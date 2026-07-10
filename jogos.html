@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Jogos - Live da Cacá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #f4f8fc;
+    --bg-card: #ffffff;
+    --text-dark: #1c2733;
+    --text-muted: #64748b;
+    --primary: #2f7de1;
+    --primary-light: #e6f0fd;
+    --border: #e7ecf3;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --shadow-sm: 0 4px 16px rgba(20, 40, 70, 0.06);
+    --shadow-md: 0 14px 34px rgba(20, 40, 70, 0.10);
+    --shadow-hover: 0 20px 44px rgba(20, 40, 70, 0.16);
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    margin:0;
+    background: var(--bg);
+    color: var(--text-dark);
+    font-family: 'Inter', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,h2,h3{ font-family:'Poppins', Arial, sans-serif; margin:0; }
+  a{ text-decoration:none; color:inherit; }
+
+  .container{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ===== HEADER ===== */
+  .site-header{
+    position: sticky;
+    top:0;
+    z-index: 500;
+    background: rgba(244, 248, 252, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .site-header .container{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding-top:14px;
+    padding-bottom:14px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Poppins', Arial, sans-serif;
+    font-weight:700;
+    font-size:20px;
+    color:var(--text-dark);
+  }
+  .brand .dot{
+    width:10px;height:10px;border-radius:50%;
+    background: var(--primary);
+  }
+  .btn-voltar{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background: var(--bg-card);
+    color: var(--text-dark);
+    font-weight:600;
+    font-size:14.5px;
+    padding:10px 18px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: border-color .2s, transform .2s, color .2s;
+  }
+  .btn-voltar:hover{ border-color:var(--primary); transform: translateY(-2px); color:var(--primary); }
+  .btn-voltar svg{ width:18px; height:18px; }
+
+  /* ===== HERO / TITULO ===== */
+  .jogos-hero{
+    padding: 44px 0 8px;
+    text-align:center;
+  }
+  .eyebrow{
+    display:inline-block;
+    color: var(--primary);
+    background: var(--primary-light);
+    font-weight:600;
+    font-size:13px;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    padding:6px 14px;
+    border-radius: 999px;
+    margin-bottom:16px;
+  }
+  .jogos-hero h1{
+    font-size: 36px;
+    line-height:1.15;
+    font-weight:800;
+    color:var(--text-dark);
+    margin-bottom:12px;
+  }
+  .jogos-hero h1 span{ color: var(--primary); }
+  .jogos-hero p{
+    font-size:16px;
+    color: var(--text-muted);
+    line-height:1.6;
+    max-width: 520px;
+    margin: 0 auto;
+  }
+
+  /* ===== GRID DE JOGOS ===== */
+  section{ padding: 30px 0 60px; }
+
+  .botoes{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:18px;
+  }
+  .botao-azul{
+    --accent: #2f7de1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    text-align:center;
+    background: var(--bg-card);
+    border:1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 30px 16px;
+    color: var(--text-dark);
+    font-family:'Poppins', Arial, sans-serif;
+    font-weight:600;
+    font-size:15.5px;
+    box-shadow: var(--shadow-sm);
+    cursor:pointer;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .botao-azul:hover{
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--accent);
+  }
+  .btn-icon-wrap{
+    width:60px;height:60px;
+    display:flex;align-items:center;justify-content:center;
+    border-radius: 16px;
+    background: #f1f4f9;
+    color:#8b95a5;
+    transition: background .25s ease, color .25s ease, transform .25s ease;
+  }
+  .botao-azul:hover .btn-icon-wrap{
+    background: color-mix(in srgb, var(--accent) 14%, white);
+    color: var(--accent);
+    transform: scale(1.06);
+  }
+  .btn-icon-wrap svg{ width:30px; height:30px; }
+
+  .botao-azul.destaque{
+    background: linear-gradient(135deg, #2f7de1 0%, #6aa8f2 100%);
+    color:#fff;
+    border-color: transparent;
+  }
+  .botao-azul.destaque .btn-icon-wrap{
+    background: rgba(255,255,255,0.22);
+    color:#fff;
+  }
+  .botao-azul.destaque:hover .btn-icon-wrap{
+    background: rgba(255,255,255,0.32);
+    color:#fff;
+    transform: scale(1.06);
+  }
+
+  /* ===== MODAL WORDWALL ===== */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(15, 23, 42, 0.85);
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    padding: 20px;
+  }
+  .modal-conteudo {
+    width: 95%;
+    max-width: 1300px;
+    position: relative;
+  }
+  .fechar {
+    position: absolute;
+    top: -44px;
+    right: 0;
+    width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    color: var(--text-dark);
+    background: #fff;
+    border-radius: 50%;
+    font-size: 20px;
+    font-weight:700;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+  }
+  .wordwall-frame {
+    width: 100%;
+    height: 85vh;
+    border: none;
+    border-radius: var(--radius-lg);
+    background: white;
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* ===== RESPONSIVO ===== */
+  @media (max-width: 1000px){
+    .container{ padding: 0 18px; }
+    .botoes{ grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 700px){
+    .botoes{ grid-template-columns: repeat(2, 1fr); }
+    .jogos-hero h1{ font-size:28px; }
+  }
+  @media (max-width: 420px){
+    .botoes{ grid-template-columns: 1fr; }
+    .botao-azul{ flex-direction:row; justify-content:flex-start; text-align:left; padding:16px; }
+    .btn-icon-wrap{ width:48px; height:48px; flex-shrink:0; }
+    .btn-icon-wrap svg{ width:24px; height:24px; }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="site-header">
+  <div class="container">
+    <div class="brand"><span class="dot"></span> Live da Cacá</div>
+    <a href="index.html" class="btn-voltar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Voltar
+    </a>
+  </div>
+</header>
+
+<!-- ===== TITULO ===== -->
+<section class="jogos-hero">
+  <div class="container">
+    <span class="eyebrow">Diversão garantida</span>
+    <h1>Escolha seu <span>jogo</span></h1>
+    <p>&nbsp;</p>
+  </div>
+</section>
+
+<!-- ===== GRID DE JOGOS ===== -->
+<section>
+  <div class="container">
+    <div class="botoes">
+
+      <a href="jogoacerteoalvo.html" class="botao-azul" style="--accent:#e0342c">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.4" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        Acerte o alvo
+      </a>
+
+      <a href="jogocartas.html" class="botao-azul" style="--accent:#8b5cf6">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="10" width="20" height="28" rx="3" transform="rotate(-8 19 24)"/>
+            <rect x="19" y="10" width="20" height="28" rx="3" transform="rotate(8 29 24)"/>
+          </svg>
+        </span>
+        Cartas
+      </a>
+
+      <a href="jogomultifinal.html" class="botao-azul" style="--accent:#8b5cf6">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="12" width="17" height="24" rx="3"/>
+            <rect x="25" y="12" width="17" height="24" rx="3"/>
+            <path d="M14.5 20v8 M10.5 24h8 M33.5 20v8 M29.5 24h8"/>
+          </svg>
+        </span>
+        Cartas multiplayer
+      </a>
+
+      <a href="jogodacobrinha.html" class="botao-azul" style="--accent:#10b981">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 14h14a6 6 0 0 1 0 12H16a6 6 0 0 0 0 12h16"/>
+            <circle cx="8" cy="14" r="1.6" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        Snake
+      </a>
+
+      <a href="jogodamemoria.html" class="botao-azul" style="--accent:#2f7de1">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M24 12c-7 0-13 5-15 11 2 6 8 11 15 11s13-5 15-11c-2-6-8-11-15-11z"/>
+            <circle cx="24" cy="23" r="5"/>
+          </svg>
+        </span>
+        Memória visual
+      </a>
+
+      <a href="jogodamemoriaa.html" class="botao-azul" style="--accent:#2f7de1">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="9" width="14" height="14" rx="3"/>
+            <rect x="27" y="9" width="14" height="14" rx="3"/>
+            <rect x="7" y="25" width="14" height="14" rx="3"/>
+            <rect x="27" y="25" width="14" height="14" rx="3"/>
+            <path d="M31 13l6 6M13 29l6 6" stroke-width="2.6"/>
+          </svg>
+        </span>
+        Jogo da memória
+      </a>
+
+      <a href="jogodesviedosobstaculos.html" class="botao-azul" style="--accent:#f59e0b">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M24 8l14 26H10z"/>
+            <path d="M24 20v7"/>
+            <circle cx="24" cy="30.5" r="0.9" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        Desvie
+      </a>
+
+      <a href="jogohistoriamaluca.html" class="botao-azul" style="--accent:#ec4899">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 12a3 3 0 0 1 3-3h26a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H18l-7 7v-7h-0a3 3 0 0 1-3-3z"/>
+            <path d="M16 19l3-3 3 3M26 16l3 6 3-6" />
+          </svg>
+        </span>
+        História Maluca
+      </a>
+
+      <a href="jogomatematica.html" class="botao-azul" style="--accent:#2f7de1">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="7" width="30" height="34" rx="4"/>
+            <path d="M15 17h18M24 13v8"/>
+            <path d="M15 27h6M15 33h6"/>
+            <path d="M27 27h6M27 33h6"/>
+          </svg>
+        </span>
+        Matemática
+      </a>
+
+      <a href="jogostop.html" class="botao-azul" style="--accent:#e0342c">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 6h16l10 10v16l-10 10H16L6 32V16z"/>
+            <path d="M24 16v11"/>
+            <circle cx="24" cy="32" r="0.9" fill="currentColor" stroke="none"/>
+          </svg>
+        </span>
+        Stop
+      </a>
+
+      <a href="jogopegueoquadrado.html" class="botao-azul" style="--accent:#f59e0b">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M26 4L10 28h11l-3 16 19-26H26z"/>
+          </svg>
+        </span>
+        Rapidex
+      </a>
+
+      <a href="jogoreacaoorapida.html" class="botao-azul" style="--accent:#10b981">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="24" cy="26" r="15"/>
+            <path d="M24 26l7-9M24 26V17"/>
+            <path d="M17 5h14M24 5v6" stroke-linecap="round"/>
+          </svg>
+        </span>
+        Velocidade
+      </a>
+
+      <a href="jogoreflexo.html" class="botao-azul" style="--accent:#ec4899">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 24c0-8 4-16 10-16s10 8 10 16-4 16-10 16-10-8-10-16z"/>
+            <path d="M24 12v24M16 24h16"/>
+          </svg>
+        </span>
+        Reflexo extremo
+      </a>
+
+      <a href="jogorunner.html" class="botao-azul" style="--accent:#8b5cf6">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="28" cy="9" r="4"/>
+            <path d="M28 13l-4 8-8 3M24 21l3 8 8 4M20 21l-6 6v9M24 21l6 3"/>
+          </svg>
+        </span>
+        Atravesse
+      </a>
+
+      <button type="button" class="botao-azul destaque" onClick="abrirWordwall()">
+        <span class="btn-icon-wrap">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M24 6c3 5 12 8 12 17a12 12 0 0 1-24 0c0-9 9-12 12-17z"/>
+            <path d="M24 20c-2 3-4 4-4 7a4 4 0 0 0 8 0c0-3-2-4-4-7z" fill="currentColor" stroke="none" opacity="0.9"/>
+          </svg>
+        </span>
+        Veja sua sorte
+      </button>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== MODAL WORDWALL (Veja sua sorte) ===== -->
+<div id="modalWordwall" class="modal">
+  <div class="modal-conteudo" onClick="event.stopPropagation()">
+    <div class="fechar" onClick="fecharWordwall()">&times;</div>
+    <div id="areaJogo"></div>
+  </div>
+</div>
+
+<script>
+function abrirWordwall() {
+  document.getElementById("modalWordwall").style.display = "flex";
+  document.getElementById("areaJogo").innerHTML = `
+    <iframe
+      class="wordwall-frame"
+      src="https://wordwall.net/embed/f1fc27884b8348bfb1fee73e4faa5b83?themeId=1&templateId=8&fontStackId=0"
+      allowfullscreen>
+    </iframe>
+  `;
+}
+
+function fecharWordwall() {
+  document.getElementById("modalWordwall").style.display = "none";
+  document.getElementById("areaJogo").innerHTML = "";
+}
+
+/* clicar fora do conteúdo fecha o modal */
+document.getElementById("modalWordwall").addEventListener("click", function(){
+  fecharWordwall();
+});
+</script>
+
+</body>
+</html>
