@@ -5033,6 +5033,15 @@
       const snap = await getDoc(doc(dbViagem, "viagemSocial", chave));
       return snap.exists() ? snap.data().dados : null;
     };
+    /* Escuta em tempo real os perfis/postagens do Álbum de Viagem. Assim, quando o
+       administrador exclui um perfil, post ou comentário pelo Painel Administrativo
+       Remoto, a alteração chega instantaneamente a esta página, sem precisar reabrir
+       o Álbum de Viagem nem recarregar o site. */
+    window.escutarViagemSocialDados = function(chave, callback) {
+      return onSnapshot(doc(dbViagem, "viagemSocial", chave), function(snap) {
+        callback(snap.exists() ? snap.data().dados : null);
+      }, function(err) { console.warn('Escuta em tempo real (Álbum de Viagem) indisponível:', err); });
+    };
 
     /* ===== Banco de Imagens da Live da Cacá (imagens adicionadas/editadas/removidas pelo Painel Administrativo) ===== */
     window.viagemBancoSalvarExtra = async function(item) {
@@ -5089,6 +5098,28 @@
       // Liga a sincronização ao vivo com o Painel Administrativo Remoto.
       if (typeof window.escutarFirestoreConfig === 'function' && typeof window.aplicarConfigAoVivo === 'function') {
         window.escutarFirestoreConfig(function(cfg) { window.aplicarConfigAoVivo(cfg); });
+      }
+
+      // Liga a sincronização ao vivo do Álbum de Viagem (perfis, posts e comentários) com
+      // o Painel Administrativo Remoto: exclusões feitas por lá aparecem aqui na hora.
+      if (typeof window.escutarViagemSocialDados === 'function') {
+        window.escutarViagemSocialDados('perfis', function(perfis) {
+          if (!perfis || typeof perfis !== 'object') return;
+          localStorage.setItem('viagem_social_perfis_v2', JSON.stringify(perfis));
+          // Se o perfil que está logado neste navegador foi excluído pelo administrador,
+          // desloga automaticamente em vez de deixar a pessoa continuar usando um perfil apagado.
+          if (typeof viagemPerfilAtual !== 'undefined' && viagemPerfilAtual && !perfis[viagemPerfilAtual]) {
+            if (typeof viagemSocialLogado !== 'undefined') { try { viagemSocialLogado = false; } catch (e) {} }
+            try { viagemPerfilAtual = ''; } catch (e) {}
+            localStorage.removeItem('viagem_perfil_atual');
+          }
+          if (typeof viagemAtualizarPostagensRede === 'function') viagemAtualizarPostagensRede();
+        });
+        window.escutarViagemSocialDados('posts', function(posts) {
+          if (!Array.isArray(posts)) return;
+          localStorage.setItem('viagem_social_posts_v2', JSON.stringify(posts));
+          if (typeof viagemAtualizarPostagensRede === 'function') viagemAtualizarPostagensRede();
+        });
       }
     });
   </script>
