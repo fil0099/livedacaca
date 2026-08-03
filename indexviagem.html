@@ -1519,6 +1519,32 @@
     .viagem-senha-toggle:hover {
       color: var(--primary);
     }
+    .viagem-link-secundario {
+      display: block;
+      width: 100%;
+      text-align: center;
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      padding: 6px;
+      text-decoration: underline;
+    }
+    .viagem-link-secundario:hover {
+      color: #1c5cb8;
+    }
+    .viagem-pergunta-secreta-wrap {
+      margin-bottom: 4px;
+    }
+    .viagem-pergunta-secreta-wrap small {
+      display: block;
+      color: var(--text-muted);
+      font-size: 12px;
+      margin: -8px 0 14px;
+    }
     .gm-close {
       position: absolute;
       top: 14px;
@@ -3509,7 +3535,7 @@
     var viagemSenhaJogoAtual = '';
 
     function obterSenhaAdminAtual() {
-      return localStorage.getItem('adminSenhaAtual') || 'caca709080';
+      return window._adminSenhaAtualCache || localStorage.getItem('adminSenhaAtual') || 'caca709080';
     }
 
     function alterarSenhaAdmin() {
@@ -3523,10 +3549,17 @@
       if (!nova || nova.length < 4) { alert('A nova senha precisa ter pelo menos 4 caracteres.'); return; }
       if (nova !== confirma) { alert('A confirmação não confere com a nova senha.'); return; }
       localStorage.setItem('adminSenhaAtual', nova);
+      window._adminSenhaAtualCache = nova;
       if (atualEl) atualEl.value = '';
       if (novaEl) novaEl.value = '';
       if (confirmaEl) confirmaEl.value = '';
-      alert('Senha alterada com sucesso!');
+      if (typeof window.salvarFirestoreParcial === 'function') {
+        window.salvarFirestoreParcial({ adminSenhaAtual: nova })
+          .then(function() { alert('Senha alterada com sucesso! (sincronizada com o Painel Administrativo remoto)'); })
+          .catch(function() { alert('Senha alterada localmente (Firestore indisponível — não sincronizou com o painel remoto).'); });
+      } else {
+        alert('Senha alterada com sucesso!');
+      }
     }
 
     /* ===== Senha de acesso ao jogo "Viajando com a Cacá" ===== */
@@ -4186,7 +4219,8 @@
         imagemFundo: bgSrc,
         contatosViagem: (typeof VIAGEM_CONTATOS !== 'undefined') ? JSON.stringify(VIAGEM_CONTATOS) : '',
         viagemSenhaJogo: viagemSenhaJogoAtual || '',
-        temposDesafios: JSON.stringify(coletarTemposDesafiosDoPainel())
+        temposDesafios: JSON.stringify(coletarTemposDesafiosDoPainel()),
+        adminSenhaAtual: obterSenhaAdminAtual()
       };
       localStorage.setItem('adminConfig', JSON.stringify(dados));
 
@@ -4219,8 +4253,71 @@
       }
     }
 
+    /* ===== Sincronização ao vivo com o Painel Administrativo Remoto =====
+       Diferente de aplicarConfig() (chamada só uma vez, no carregamento da página,
+       e que também recria elementos de texto/posições), esta função só reaplica os
+       campos que são seguros de reaplicar várias vezes seguidas (sem duplicar nada
+       na tela). É chamada toda vez que o painel remoto salva uma alteração. */
+    function aplicarConfigAoVivo(cfg) {
+      if (!cfg) return;
+      if (typeof cfg.adminSenhaAtual !== 'undefined' && cfg.adminSenhaAtual) {
+        window._adminSenhaAtualCache = cfg.adminSenhaAtual;
+        localStorage.setItem('adminSenhaAtual', cfg.adminSenhaAtual);
+      }
+      if (cfg.btnCor) {
+        document.querySelectorAll('.botao-azul').forEach(function(b) {
+          b.style.background = cfg.btnCor;
+          b.style.color = cfg.txtCor || '#fff';
+        });
+        var elBtnCor = document.getElementById('btnCor'); if (elBtnCor) elBtnCor.value = cfg.btnCor;
+        var elTxtCor = document.getElementById('txtCor'); if (elTxtCor && cfg.txtCor) elTxtCor.value = cfg.txtCor;
+      }
+      if (cfg.texto && document.getElementById('novoTexto')) {
+        document.getElementById('novoTexto').value = cfg.texto;
+        if (cfg.texto.trim() && document.getElementById('Layer10')) document.getElementById('Layer10').innerHTML = cfg.texto;
+      }
+      if (cfg.tempo && document.getElementById('tempo')) document.getElementById('tempo').value = cfg.tempo;
+      if (cfg.imagemFundo && cfg.imagemFundo.length > 10) {
+        var bgElAoVivo = document.querySelector('#Layer5 img');
+        if (bgElAoVivo) bgElAoVivo.src = cfg.imagemFundo;
+      }
+      if (cfg.contatosViagem && typeof VIAGEM_CONTATOS !== 'undefined') {
+        try {
+          var vcAoVivo = JSON.parse(cfg.contatosViagem);
+          if (Array.isArray(vcAoVivo)) {
+            VIAGEM_CONTATOS.length = 0;
+            for (var vai = 0; vai < vcAoVivo.length; vai++) VIAGEM_CONTATOS.push(vcAoVivo[vai]);
+            if (typeof viagemAtualizarOrdemContatos === 'function') viagemAtualizarOrdemContatos();
+            if (typeof viagemPreencherSelectContatos === 'function') viagemPreencherSelectContatos();
+            if (typeof viagemFoneAberto !== 'undefined' && viagemFoneAberto && typeof viagemMontarListaContatos === 'function') viagemMontarListaContatos();
+          }
+        } catch (e) {}
+      }
+      if (typeof cfg.viagemSenhaJogo !== 'undefined') {
+        viagemSenhaJogoAtual = cfg.viagemSenhaJogo || '';
+        if (typeof viagemAtualizarStatusSenhaPanel === 'function') viagemAtualizarStatusSenhaPanel();
+      }
+      if (cfg.temposDesafios) {
+        try {
+          var tdsAoVivo = typeof cfg.temposDesafios === 'string' ? JSON.parse(cfg.temposDesafios) : cfg.temposDesafios;
+          if (tdsAoVivo && typeof tdsAoVivo === 'object' && window.temposDesafios) {
+            var padroesAoVivo = window.TEMPOS_PADRAO_DESAFIOS || {};
+            Object.keys(padroesAoVivo).forEach(function(k) {
+              window.temposDesafios[k] = (typeof tdsAoVivo[k] !== 'undefined' && tdsAoVivo[k] !== null && tdsAoVivo[k] !== '') ? tdsAoVivo[k] : padroesAoVivo[k];
+            });
+          }
+        } catch (e) {}
+        if (typeof preencherPainelTemposDesafios === 'function') preencherPainelTemposDesafios();
+      }
+    }
+    window.aplicarConfigAoVivo = aplicarConfigAoVivo;
+
     function aplicarConfig(cfg) {
       if (!cfg) return;
+      if (typeof cfg.adminSenhaAtual !== 'undefined' && cfg.adminSenhaAtual) {
+        window._adminSenhaAtualCache = cfg.adminSenhaAtual;
+        localStorage.setItem('adminSenhaAtual', cfg.adminSenhaAtual);
+      }
       if (cfg.btnCor) document.querySelectorAll('.botao-azul').forEach(function(b) {
         b.style.background = cfg.btnCor;
         b.style.color = cfg.txtCor || '#fff';
@@ -4575,7 +4672,55 @@
         <input id="viagemInputSenhaConfirmar" class="gm-input" type="password" maxlength="40" placeholder="Digite a senha novamente para confirmar" autocomplete="new-password" />
         <button type="button" class="viagem-senha-toggle" onclick="viagemAlternarSenhaVisivel('viagemInputSenhaConfirmar', this)" aria-label="Mostrar senha">👁️</button>
       </div>
+      <div class="viagem-pergunta-secreta-wrap">
+        <select id="viagemSelectPerguntaSecreta" class="gm-input">
+          <option value="">Só se for criar um perfil novo: escolha uma pergunta secreta</option>
+          <option value="pet">Qual foi o nome do seu primeiro animal de estimação?</option>
+          <option value="cidade">Em que cidade você nasceu?</option>
+          <option value="comida">Qual é a sua comida favorita?</option>
+          <option value="professor">Qual o nome do seu professor(a) preferido(a)?</option>
+          <option value="filme">Qual é o seu filme favorito?</option>
+          <option value="amigo">Qual o nome do seu melhor amigo(a) de infância?</option>
+        </select>
+        <input id="viagemInputRespostaSecreta" class="gm-input" type="text" maxlength="60" placeholder="Resposta secreta (guarde bem, você vai precisar dela)" autocomplete="off" />
+        <small>Isso é usado só para recuperar sua senha caso você esqueça. Não conte a resposta pra ninguém.</small>
+      </div>
       <button class="gm-btn" onclick="entrarViagem()">Entrar</button>
+      <button type="button" class="viagem-link-secundario" onclick="viagemAbrirRecuperarSenha()">Esqueci minha senha</button>
+    </div>
+  </div>
+
+  <!-- Viajando com a Cacá: recuperar senha -->
+  <div id="viagemModalRecuperarSenha" class="gm-overlay">
+    <div class="gm-box gm-anim-in">
+      <span class="gm-close" onclick="viagemFecharRecuperarSenha()">&times;</span>
+      <div class="gm-vitoria-cena">🔑</div>
+      <h3>Recuperar senha</h3>
+
+      <div id="viagemRecuperarPasso1">
+        <p>Digite o seu @ para começar a recuperação.</p>
+        <input id="viagemRecuperarArroba" class="gm-input" type="text" maxlength="20" placeholder="Seu @" autocomplete="username" onkeydown="if(event.key==='Enter'){event.preventDefault();viagemRecuperarBuscarPerfil();}" />
+        <button class="gm-btn" onclick="viagemRecuperarBuscarPerfil()">Continuar</button>
+      </div>
+
+      <div id="viagemRecuperarPasso2" style="display:none">
+        <p id="viagemRecuperarPerguntaTexto">Pergunta secreta</p>
+        <input id="viagemRecuperarResposta" class="gm-input" type="text" maxlength="60" placeholder="Sua resposta secreta" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();viagemRecuperarVerificarResposta();}" />
+        <button class="gm-btn" onclick="viagemRecuperarVerificarResposta()">Verificar</button>
+      </div>
+
+      <div id="viagemRecuperarPasso3" style="display:none">
+        <p>Identidade confirmada! Crie uma nova senha.</p>
+        <div class="viagem-senha-wrap">
+          <input id="viagemRecuperarNovaSenha" class="gm-input" type="password" maxlength="40" placeholder="Nova senha" autocomplete="new-password" />
+          <button type="button" class="viagem-senha-toggle" onclick="viagemAlternarSenhaVisivel('viagemRecuperarNovaSenha', this)" aria-label="Mostrar senha">👁️</button>
+        </div>
+        <div class="viagem-senha-wrap">
+          <input id="viagemRecuperarNovaSenhaConfirmar" class="gm-input" type="password" maxlength="40" placeholder="Confirme a nova senha" autocomplete="new-password" />
+          <button type="button" class="viagem-senha-toggle" onclick="viagemAlternarSenhaVisivel('viagemRecuperarNovaSenhaConfirmar', this)" aria-label="Mostrar senha">👁️</button>
+        </div>
+        <button class="gm-btn" onclick="viagemRecuperarSalvarNovaSenha()">Salvar nova senha</button>
+      </div>
     </div>
   </div>
 
@@ -4740,7 +4885,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     /* Projeto original: usado para a configuração geral do site e o Modo Guerreiro (Batalha do Biel) */
     const firebaseConfig = {
@@ -4786,6 +4931,16 @@
 
     window.resetarFirestore = async function() {
       await deleteDoc(doc(db, "config", "site"));
+    };
+
+    /* Escuta em tempo real o documento de configuração do site. Usado tanto por esta
+       página quanto pelo Painel Administrativo Remoto (painel-administrativo-remoto.html)
+       para que uma alteração feita em um dos dois painéis (ex.: trocar a senha) apareça
+       automaticamente no outro, sem precisar recarregar a página. */
+    window.escutarFirestoreConfig = function(callback) {
+      return onSnapshot(doc(db, "config", "site"), function(snap) {
+        if (snap.exists()) callback(snap.data());
+      }, function(err) { console.warn('Escuta em tempo real indisponível:', err); });
     };
 
     /* ===== MODO GUERREIRO ===== */
@@ -4930,6 +5085,10 @@
       if (window._configPendente && typeof window.aplicarConfig === 'function') {
         window.aplicarConfig(window._configPendente);
         window._configPendente = null;
+      }
+      // Liga a sincronização ao vivo com o Painel Administrativo Remoto.
+      if (typeof window.escutarFirestoreConfig === 'function' && typeof window.aplicarConfigAoVivo === 'function') {
+        window.escutarFirestoreConfig(function(cfg) { window.aplicarConfigAoVivo(cfg); });
       }
     });
   </script>
@@ -8481,12 +8640,116 @@
       }
     }
 
+    /* ===== Recuperação de senha do Álbum de Viagem =====
+       Como o jogo não tem servidor de e-mail/SMS, a identidade de quem está
+       recuperando a senha é confirmada por uma pergunta secreta escolhida
+       na criação do perfil. Só quem sabe a resposta consegue trocar a senha. */
+    var VIAGEM_PERGUNTAS_SECRETAS = {
+      pet: 'Qual foi o nome do seu primeiro animal de estimação?',
+      cidade: 'Em que cidade você nasceu?',
+      comida: 'Qual é a sua comida favorita?',
+      professor: 'Qual o nome do seu professor(a) preferido(a)?',
+      filme: 'Qual é o seu filme favorito?',
+      amigo: 'Qual o nome do seu melhor amigo(a) de infância?'
+    };
+    var viagemRecuperarArrobaAtual = '';
+    var viagemRecuperarTentativas = {};
+    var VIAGEM_RECUPERAR_MAX_TENTATIVAS = 5;
+
+    function viagemRecuperarMostrarPasso(passo) {
+      [1, 2, 3].forEach(function(n) {
+        var el = document.getElementById('viagemRecuperarPasso' + n);
+        if (el) el.style.display = (n === passo) ? '' : 'none';
+      });
+    }
+
+    function viagemAbrirRecuperarSenha() {
+      viagemRecuperarArrobaAtual = '';
+      var campoArroba = document.getElementById('viagemRecuperarArroba'); if (campoArroba) campoArroba.value = '';
+      var campoResposta = document.getElementById('viagemRecuperarResposta'); if (campoResposta) campoResposta.value = '';
+      var campoNova = document.getElementById('viagemRecuperarNovaSenha'); if (campoNova) campoNova.value = '';
+      var campoNovaConf = document.getElementById('viagemRecuperarNovaSenhaConfirmar'); if (campoNovaConf) campoNovaConf.value = '';
+      viagemRecuperarMostrarPasso(1);
+      fecharViagemModal('viagemModalNome');
+      abrirViagemModal('viagemModalRecuperarSenha');
+    }
+
+    function viagemFecharRecuperarSenha() {
+      fecharViagemModal('viagemModalRecuperarSenha');
+      viagemRecuperarArrobaAtual = '';
+    }
+
+    function viagemRecuperarBuscarPerfil() {
+      var arroba = ((document.getElementById('viagemRecuperarArroba')||{}).value || '').trim().toLowerCase().replace(/^@+/, '');
+      if (!arroba) { alert('Digite o seu @.'); return; }
+      if ((viagemRecuperarTentativas[arroba] || 0) >= VIAGEM_RECUPERAR_MAX_TENTATIVAS) {
+        alert('Muitas tentativas com esse @. Feche essa janela e tente novamente mais tarde.');
+        return;
+      }
+      var perfis = viagemSocialCarregarPerfis();
+      var perfil = perfis[arroba];
+      /* Mensagem genérica de propósito: não revela se o @ existe ou não,
+         nem se ele tem pergunta secreta cadastrada, para dificultar tentativas
+         de descobrir @s de outras pessoas. */
+      if (!perfil || !perfil.perguntaSecreta || !perfil.respostaSecreta) {
+        alert('Não foi possível iniciar a recuperação para esse @. Verifique se digitou certo. Se o perfil foi criado antes desse recurso existir, não é possível recuperar a senha antiga — crie um novo perfil.');
+        return;
+      }
+      viagemRecuperarArrobaAtual = arroba;
+      var textoPergunta = document.getElementById('viagemRecuperarPerguntaTexto');
+      if (textoPergunta) textoPergunta.textContent = VIAGEM_PERGUNTAS_SECRETAS[perfil.perguntaSecreta] || 'Qual é a resposta da sua pergunta secreta?';
+      viagemRecuperarMostrarPasso(2);
+    }
+
+    function viagemRecuperarVerificarResposta() {
+      var arroba = viagemRecuperarArrobaAtual;
+      if (!arroba) { viagemRecuperarMostrarPasso(1); return; }
+      var perfis = viagemSocialCarregarPerfis();
+      var perfil = perfis[arroba];
+      if (!perfil) { alert('Perfil não encontrado.'); viagemFecharRecuperarSenha(); return; }
+      var resposta = ((document.getElementById('viagemRecuperarResposta')||{}).value || '').trim();
+      if (!resposta) { alert('Digite sua resposta secreta.'); return; }
+      if (viagemNormalizarTexto(resposta) !== viagemNormalizarTexto(perfil.respostaSecreta || '')) {
+        viagemRecuperarTentativas[arroba] = (viagemRecuperarTentativas[arroba] || 0) + 1;
+        if (viagemRecuperarTentativas[arroba] >= VIAGEM_RECUPERAR_MAX_TENTATIVAS) {
+          alert('Resposta incorreta. Você atingiu o limite de tentativas para esse @. Tente novamente mais tarde.');
+          viagemFecharRecuperarSenha();
+        } else {
+          alert('Resposta incorreta. Tente novamente.');
+        }
+        return;
+      }
+      delete viagemRecuperarTentativas[arroba];
+      viagemRecuperarMostrarPasso(3);
+    }
+
+    function viagemRecuperarSalvarNovaSenha() {
+      var arroba = viagemRecuperarArrobaAtual;
+      if (!arroba) { viagemRecuperarMostrarPasso(1); return; }
+      var nova = ((document.getElementById('viagemRecuperarNovaSenha')||{}).value || '');
+      var confirmar = ((document.getElementById('viagemRecuperarNovaSenhaConfirmar')||{}).value || '');
+      if (!nova || nova.length < 4) { alert('A nova senha deve ter pelo menos 4 caracteres.'); return; }
+      if (nova !== confirmar) { alert('As senhas não são iguais.'); return; }
+      var perfis = viagemSocialCarregarPerfis();
+      var perfil = perfis[arroba];
+      if (!perfil) { alert('Perfil não encontrado.'); viagemFecharRecuperarSenha(); return; }
+      perfil.senha = nova;
+      viagemSocialSalvarPerfis(perfis);
+      alert('Senha alterada com sucesso! Agora você já pode entrar com a nova senha.');
+      var arrobaParaPreencher = arroba;
+      viagemFecharRecuperarSenha();
+      abrirViagemModal('viagemModalNome');
+      var campoArrobaLogin = document.getElementById('viagemInputArroba'); if (campoArrobaLogin) campoArrobaLogin.value = arrobaParaPreencher;
+    }
+
     async function entrarViagem() {
       var nome = ((document.getElementById('viagemInputNome')||{}).value || '').trim();
       var arroba = ((document.getElementById('viagemInputArroba')||{}).value || '').trim().toLowerCase().replace(/^@+/, '');
       var senha = ((document.getElementById('viagemInputSenhaPerfil')||{}).value || '');
       var confirmarSenha = ((document.getElementById('viagemInputSenhaConfirmar')||{}).value || '');
       var emoji = ((document.getElementById('viagemInputEmojiPerfil')||{}).value || '').trim();
+      var perguntaSecreta = ((document.getElementById('viagemSelectPerguntaSecreta')||{}).value || '');
+      var respostaSecreta = ((document.getElementById('viagemInputRespostaSecreta')||{}).value || '').trim();
       if (!nome || !arroba || !senha) { alert('Preencha nome, @ e senha.'); return; }
       if (!/^[a-z0-9._-]{3,20}$/.test(arroba)) { alert('O @ deve ter de 3 a 20 caracteres e usar apenas letras, números, ponto, traço ou underline.'); return; }
       var perfis = viagemSocialCarregarPerfis();
@@ -8496,9 +8759,10 @@
       } else {
         if (!confirmarSenha) { alert('Digite a senha novamente no campo de confirmação.'); return; }
         if (senha !== confirmarSenha) { alert('As senhas não são iguais. Digite a mesma senha nos dois campos para criar o perfil.'); return; }
+        if (!perguntaSecreta || !respostaSecreta) { alert('Escolha uma pergunta secreta e digite a resposta. Isso é o que vai permitir você recuperar a senha se esquecer.'); return; }
       }
       var avatar = viagemAvatarBancoSelecionado || emoji || (perfilExistente && perfilExistente.avatar) || '🧳';
-      if (!perfis[arroba]) perfis[arroba] = { nome:nome, arroba:arroba, senha:senha, descricao:'', avatar:avatar, criadoEm:Date.now() };
+      if (!perfis[arroba]) perfis[arroba] = { nome:nome, arroba:arroba, senha:senha, descricao:'', avatar:avatar, criadoEm:Date.now(), perguntaSecreta:perguntaSecreta, respostaSecreta:respostaSecreta };
       else { perfis[arroba].nome = nome; perfis[arroba].avatar = avatar; }
       viagemSocialSalvarPerfis(perfis);
       viagemPerfilAtual = arroba; viagemSocialLogado = true; viagemNomeJogador = nome;
@@ -8507,6 +8771,8 @@
       document.getElementById('viagemCartaTexto').textContent = texto;
       fecharViagemModal('viagemModalNome'); abrirViagemModal('viagemModalCarta'); viagemObterIp();
       viagemAvatarBancoSelecionado=''; viagemAtualizarPreviewAvatar();
+      var campoResposta = document.getElementById('viagemInputRespostaSecreta'); if (campoResposta) campoResposta.value = '';
+      var campoPergunta = document.getElementById('viagemSelectPerguntaSecreta'); if (campoPergunta) campoPergunta.value = '';
       try { if (typeof window.obterViagemJogador === 'function') { var existente = await window.obterViagemJogador(nome); if (!existente) await window.salvarViagemJogador(nome, { nome:nome, acertos:0 }); } } catch(e){ console.warn('Não foi possível salvar o jogador da viagem:',e); }
     }
 

@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Painel Administrativo Remoto — Viajando com a Cacá</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    color: #e8eaf6;
+    min-height: 100vh;
+  }
+
+  /* ===== TELA DE SENHA ===== */
+  #telaSenha {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  #telaSenha .caixa {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+  }
+  #telaSenha .icone { font-size: 40px; margin-bottom: 8px; }
+  #telaSenha h1 { font-size: 18px; color: #7ecfff; margin: 0 0 6px; text-shadow: 0 0 20px rgba(126,207,255,0.4); }
+  #telaSenha p { font-size: 13px; color: #aab4c8; margin: 0 0 20px; }
+  #telaSenhaErro { color: #ff8080; font-size: 12.5px; margin-top: 10px; min-height: 16px; }
+
+  /* ===== LAYOUT GERAL DO PAINEL ===== */
+  #painelWrap { display: none; max-width: 720px; margin: 0 auto; padding: 20px 16px 60px; }
+  #painelTopo {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 16px 4px 20px; flex-wrap: wrap;
+  }
+  #painelTopo h1 { font-size: 18px; margin: 0; color: #7ecfff; text-shadow: 0 0 20px rgba(126,207,255,0.4); }
+  #painelTopo .sub { font-size: 12px; color: #aab4c8; margin-top: 2px; }
+  #statusConexao {
+    font-size: 11.5px; padding: 5px 10px; border-radius: 20px;
+    background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.4); color: #6fe39a;
+    white-space: nowrap;
+  }
+  #statusConexao.offline { background: rgba(255,80,80,0.15); border-color: rgba(255,80,80,0.4); color: #ff8080; }
+
+  .ap-section {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 16px 16px 14px;
+    margin-bottom: 14px;
+  }
+  .ap-section-title {
+    font-size: 12.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase;
+    color: #7ecfff; margin: 0 0 12px; display: flex; align-items: center; gap: 7px;
+  }
+  .ap-section-title span { font-size: 16px; }
+  .ap-label { display: block; font-size: 12.5px; color: #aab4c8; margin: 8px 0 3px; }
+  .ap-input {
+    width: 100%; box-sizing: border-box; background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; padding: 9px 11px;
+    color: #e8eaf6; font-size: 13.5px; outline: none; transition: border .2s;
+  }
+  .ap-input:focus { border-color: #4db8ff; }
+  .ap-input[type="number"] { width: 90px; }
+  .ap-input[type="color"] { width: 46px; height: 38px; padding: 2px; cursor: pointer; }
+  .ap-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ap-btn {
+    background: linear-gradient(135deg, #4db8ff, #2196f3); color: #fff; border: none;
+    border-radius: 8px; padding: 9px 18px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+    transition: .2s; white-space: nowrap;
+  }
+  .ap-btn:hover { background: linear-gradient(135deg, #7ecfff, #4db8ff); transform: translateY(-1px); }
+  .ap-btn-sm {
+    padding: 6px 12px; font-size: 13px; background: rgba(77,184,255,0.18);
+    border: 1px solid rgba(77,184,255,0.35); color: #7ecfff; border-radius: 7px; cursor: pointer; transition: .2s;
+  }
+  .ap-btn-sm:hover { background: rgba(77,184,255,0.32); }
+  .ap-btn-danger {
+    background: rgba(255,80,80,0.15); border: 1px solid rgba(255,80,80,0.35); color: #ff8080;
+    border-radius: 7px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+  }
+  .ap-btn-danger:hover { background: rgba(255,80,80,0.28); }
+  .ap-save-btn {
+    width: 100%; padding: 12px; background: linear-gradient(135deg, #27ae60, #2ecc71); color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer;
+    letter-spacing: .3px; transition: .2s; box-shadow: 0 4px 18px rgba(46,204,113,0.3); margin-top: 6px;
+  }
+  .ap-save-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(46,204,113,0.45); }
+  .ap-item {
+    display: flex; gap: 10px; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.07);
+    padding: 8px 0;
+  }
+  .ap-item img, .ap-item .emoji { width: 42px; height: 42px; border-radius: 8px; object-fit: cover; flex-shrink: 0; font-size: 26px; display:flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.06); }
+  .ap-item .info { flex: 1; min-width: 0; }
+  .ap-item .info strong { display: block; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ap-item .info small { display: block; color: #8b98b3; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ap-lista { max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 8px 10px; font-size: 12.5px; }
+  .ap-msg { font-size: 12px; margin-top: 6px; min-height: 14px; }
+  .ap-msg.ok { color: #6fe39a; }
+  .ap-msg.erro { color: #ff8080; }
+  .ap-aviso {
+    background: rgba(255,193,7,0.1); border: 1px solid rgba(255,193,7,0.3); color: #ffd873;
+    border-radius: 10px; padding: 10px 12px; font-size: 12px; margin-bottom: 16px; line-height: 1.5;
+  }
+  #botaoSair { background: rgba(255,255,255,0.08); border: none; color: #aab4c8; border-radius: 8px; padding: 8px 14px; font-size: 12.5px; cursor: pointer; }
+  #botaoSair:hover { background: rgba(255,80,80,0.2); color: #ff8080; }
+</style>
+</head>
+<body>
+
+  <!-- ===== TELA DE SENHA ===== -->
+  <div id="telaSenha">
+    <div class="caixa">
+      <div class="icone">🔒</div>
+      <h1>Painel Administrativo Remoto</h1>
+      <p>Digite a senha do Painel Administrativo para entrar.</p>
+      <input type="password" id="inputSenhaEntrada" class="ap-input" placeholder="Senha" autocomplete="current-password" style="text-align:center;margin-bottom:12px" disabled>
+      <button class="ap-btn" style="width:100%" onclick="verificarSenhaEntrada()">Entrar</button>
+      <div id="telaSenhaErro"></div>
+    </div>
+  </div>
+
+  <!-- ===== PAINEL ===== -->
+  <div id="painelWrap">
+    <div id="painelTopo">
+      <div>
+        <h1>⚙️ Painel Administrativo Remoto</h1>
+        <div class="sub">Conectado ao mesmo site — as alterações valem para todo mundo</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="statusConexao">🔄 Conectando…</span>
+        <button id="botaoSair" onclick="sairDoPainel()">Sair</button>
+      </div>
+    </div>
+
+    <div class="ap-aviso">
+      Este painel controla os mesmos dados do Painel Administrativo que fica dentro do site (o mesmo banco de dados). O que for alterado aqui aparece no site, e alterações feitas por lá aparecem aqui automaticamente. Algumas ações puramente visuais do painel original (testar desafios do Modo Guerreiro, arrastar imagens/textos com o mouse sobre a página) só existem dentro do próprio site, por dependerem da tela do jogo — aqui elas não aparecem.
+    </div>
+
+    <div id="painelConteudo"><!-- seções inseridas via JS --></div>
+  </div>
+
+  <!-- ===== LÓGICA DO PAINEL ===== -->
+  <script>
+    var SENHA_PADRAO = 'caca709080';
+    var senhaConfirmada = false;
+    var pararEscuta = null;
+    var cfgAtual = {};
+    var contatosAtuais = [];
+    var TIPOS_DESAFIO_PAINEL = ['quiz', 'vf', 'scramble', 'termo', 'memoria', 'genius', 'pecas', 'mahjong', 'dino', 'completar'];
+    var NOMES_DESAFIO = { quiz:'Quiz', vf:'Verdadeiro/Falso', scramble:'Palavra Embaralhada', termo:'Termo', memoria:'Memória', genius:'Sequência', pecas:'Peças', mahjong:'Mahjong', dino:'Dino', completar:'Completar' };
+    var TEMPOS_PADRAO_DESAFIOS = { quiz:60, vf:60, scramble:90, termo:0, memoria:0, genius:0, pecas:30, mahjong:0, dino:0, completar:0 };
+
+    function esc(s) { return (s || '').toString().replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    function mostrarMsg(id, texto, ok) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = texto;
+      el.className = 'ap-msg ' + (ok ? 'ok' : 'erro');
+      setTimeout(function() { if (el.textContent === texto) el.textContent = ''; }, 5000);
+    }
+
+    /* ===== ENTRADA COM SENHA ===== */
+    window._onFirebasePronto = function() {
+      document.getElementById('inputSenhaEntrada').addEventListener('keydown', function(e) { if (e.key === 'Enter') verificarSenhaEntrada(); });
+      document.getElementById('inputSenhaEntrada').disabled = false;
+    };
+
+    async function verificarSenhaEntrada() {
+      var input = document.getElementById('inputSenhaEntrada');
+      var erro = document.getElementById('telaSenhaErro');
+      var senha = (input.value || '').trim();
+      if (!senha) { erro.textContent = 'Digite a senha.'; return; }
+      if (typeof window.carregarFirestore !== 'function') { erro.textContent = 'Ainda conectando, aguarde um instante e tente de novo.'; return; }
+      erro.textContent = 'Verificando…';
+      try {
+        var cfg = await window.carregarFirestore();
+        var senhaCorreta = (cfg && cfg.adminSenhaAtual) ? cfg.adminSenhaAtual : SENHA_PADRAO;
+        if (senha === senhaCorreta) {
+          senhaConfirmada = true;
+          document.getElementById('telaSenha').style.display = 'none';
+          document.getElementById('painelWrap').style.display = 'block';
+          input.value = '';
+          erro.textContent = '';
+          iniciarPainel(cfg);
+        } else {
+          erro.textContent = 'Senha incorreta.';
+        }
+      } catch (e) {
+        erro.textContent = 'Não foi possível verificar a senha agora. Tente novamente.';
+      }
+    }
+
+    function sairDoPainel() {
+      if (!confirm('Sair do painel?')) return;
+      senhaConfirmada = false;
+      if (typeof pararEscuta === 'function') { try { pararEscuta(); } catch (e) {} }
+      document.getElementById('painelWrap').style.display = 'none';
+      document.getElementById('telaSenha').style.display = 'flex';
+    }
+
+    /* ===== INICIALIZA O PAINEL DEPOIS DA SENHA CORRETA ===== */
+    function iniciarPainel(cfgInicial) {
+      montarSecoes();
+      aplicarCfgNosCampos(cfgInicial || {});
+      carregarContatos(cfgInicial || {});
+      preencherTemposDesafios(cfgInicial || {});
+      atualizarStatusSenhaJogo(cfgInicial || {});
+      carregarRobos();
+      buscarBanco();
+      var statusEl = document.getElementById('statusConexao');
+      statusEl.textContent = '🟢 Ao vivo — sincronizado';
+      statusEl.classList.remove('offline');
+
+      // Escuta em tempo real: qualquer alteração feita no painel do próprio site (ou por
+      // outra pessoa usando este painel remoto) aparece aqui automaticamente.
+      if (typeof window.escutarFirestoreConfig === 'function') {
+        pararEscuta = window.escutarFirestoreConfig(function(cfg) {
+          cfgAtual = cfg || {};
+          aplicarCfgNosCampos(cfgAtual, true);
+          carregarContatos(cfgAtual, true);
+          preencherTemposDesafios(cfgAtual);
+          atualizarStatusSenhaJogo(cfgAtual);
+        });
+      }
+    }
+
+    function aplicarCfgNosCampos(cfg, aoVivo) {
+      cfgAtual = cfg || {};
+      var elTexto = document.getElementById('rpTextoPrincipal'); if (elTexto && !aoVivo) elTexto.value = cfg.texto || '';
+      var elBtnCor = document.getElementById('rpBtnCor'); if (elBtnCor) elBtnCor.value = cfg.btnCor || '#4db8ff';
+      var elTxtCor = document.getElementById('rpTxtCor'); if (elTxtCor) elTxtCor.value = cfg.txtCor || '#ffffff';
+      var elTempo = document.getElementById('rpTempoFotos'); if (elTempo && !aoVivo) elTempo.value = cfg.tempo || 3;
+    }
+
+    /* ===== MONTA AS SEÇÕES DO PAINEL ===== */
+    function montarSecoes() {
+      var h = '';
+
+      h += secaoHtml('🔒', 'Alterar senha do Painel Administrativo', [
+        '<input type="password" id="rpSenhaAtual" class="ap-input" placeholder="Senha atual" style="margin-bottom:8px">',
+        '<input type="password" id="rpSenhaNova" class="ap-input" placeholder="Nova senha" style="margin-bottom:8px">',
+        '<input type="password" id="rpSenhaConfirma" class="ap-input" placeholder="Confirmar nova senha" style="margin-bottom:8px">',
+        '<button class="ap-btn" style="width:100%" onclick="alterarSenhaAdminRemoto()">🔑 Salvar nova senha</button>',
+        '<div id="msgSenhaAdmin" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('🎮', 'Senha do jogo "Viajando com a Cacá"', [
+        '<label class="ap-label">Se definida, só quem souber a senha consegue entrar no jogo. Deixe sem senha pra liberar pra todo mundo.</label>',
+        '<input type="text" id="rpSenhaJogoNova" class="ap-input" placeholder="Nova senha do jogo" style="margin-bottom:8px">',
+        '<div class="ap-row">',
+        '<button class="ap-btn-sm" onclick="definirSenhaJogoRemoto()">🔒 Criar/Trocar senha</button>',
+        '<button class="ap-btn-sm" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;border-color:transparent" onclick="excluirSenhaJogoRemoto()">🔓 Excluir senha</button>',
+        '</div>',
+        '<p id="rpStatusSenhaJogo" style="font-size:11.5px;color:#aab4c8;margin-top:8px"></p>',
+        '<div id="msgSenhaJogo" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('🌟', 'Banner: texto, cores dos botões e tempo das fotos', [
+        '<label class="ap-label">Texto principal do site</label>',
+        '<textarea id="rpTextoPrincipal" class="ap-input" rows="3" style="resize:vertical"></textarea>',
+        '<div class="ap-row" style="margin-top:10px">',
+        '<div><label class="ap-label">Cor do fundo</label><input type="color" id="rpBtnCor" class="ap-input"></div>',
+        '<div><label class="ap-label">Cor do texto</label><input type="color" id="rpTxtCor" class="ap-input"></div>',
+        '<div><label class="ap-label">Tempo alternância (s)</label><input type="number" id="rpTempoFotos" class="ap-input" min="1"></div>',
+        '</div>',
+        '<button class="ap-btn" style="margin-top:10px;width:100%" onclick="salvarBannerRemoto()">Salvar</button>',
+        '<div id="msgBanner" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('🌐', 'Imagem de fundo (logolive.png)', [
+        '<input type="file" id="rpImagemFundo" class="ap-input" accept="image/*" style="margin-bottom:8px">',
+        '<button class="ap-btn" style="width:100%" onclick="aplicarImagemFundoRemoto()">Aplicar</button>',
+        '<div id="msgImagemFundo" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('⚔️', 'Tempo dos desafios do Modo Guerreiro', [
+        '<label class="ap-label">Segundos por desafio. 0 = sem limite de tempo.</label>',
+        '<div id="rpTemposDesafios" class="ap-row" style="flex-direction:column;align-items:stretch;gap:6px"></div>',
+        '<button class="ap-btn" style="margin-top:10px;width:100%" onclick="salvarTemposDesafiosRemoto()">Salvar tempos</button>',
+        '<div id="msgTempos" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('📱', 'Contatos do Celular (Viajando com a Cacá)', [
+        '<label class="ap-label">Criar novo contato:</label>',
+        '<div class="ap-row">',
+        '<input type="text" id="rpContatoNome" class="ap-input" placeholder="Nome do contato" style="flex:2">',
+        '<input type="text" id="rpContatoEmoji" class="ap-input" placeholder="Emoji" style="width:70px" maxlength="4">',
+        '</div>',
+        '<select id="rpContatoGenero" class="ap-input" style="margin-top:8px">',
+        '<option value="F">Mulher (voz feminina)</option><option value="M">Homem (voz masculina)</option>',
+        '</select>',
+        '<label class="ap-label">Foto do contato (opcional, substitui o emoji):</label>',
+        '<input type="file" id="rpContatoFoto" class="ap-input" accept="image/*" style="margin-bottom:8px">',
+        '<button class="ap-btn" style="width:100%" onclick="adicionarContatoRemoto()">+ Criar contato</button>',
+        '<div id="msgContatoNovo" class="ap-msg"></div>',
+        '<label class="ap-label" style="margin-top:14px">Contatos existentes:</label>',
+        '<div id="rpListaContatos" class="ap-lista">Carregando…</div>'
+      ].join(''));
+
+      h += secaoHtml('🏞️', 'Banco de Imagens (Viajando com a Cacá)', [
+        '<label class="ap-label">Adicionar imagem ao banco:</label>',
+        '<input type="text" id="rpBancoTitulo" class="ap-input" placeholder="Título da imagem" style="margin-bottom:8px">',
+        '<input type="text" id="rpBancoCategoria" class="ap-input" placeholder="Categoria (ex.: natureza, cidade, praia)" style="margin-bottom:8px">',
+        '<input type="text" id="rpBancoKeywords" class="ap-input" placeholder="Palavras-chave separadas por vírgula" style="margin-bottom:8px">',
+        '<input type="text" id="rpBancoUrl" class="ap-input" placeholder="URL da imagem (ou escolha um arquivo abaixo)" style="margin-bottom:8px">',
+        '<input type="file" id="rpBancoArquivo" class="ap-input" accept="image/*" style="margin-bottom:8px">',
+        '<button class="ap-btn" style="width:100%" onclick="adicionarImagemBancoRemoto()">+ Adicionar imagem ao banco</button>',
+        '<div id="msgBancoNovo" class="ap-msg"></div>',
+        '<label class="ap-label" style="margin-top:14px">Pesquisar / editar / excluir imagens existentes:</label>',
+        '<div class="ap-row" style="margin-bottom:8px">',
+        '<input type="text" id="rpBancoBusca" class="ap-input" placeholder="Pesquisar por título, categoria ou palavra-chave" style="flex:1">',
+        '<button class="ap-btn-sm" onclick="buscarBanco()">Buscar</button>',
+        '</div>',
+        '<div id="rpBancoResultados" class="ap-lista">Clique em "Buscar" ou digite uma palavra-chave.</div>'
+      ].join(''));
+
+      h += secaoHtml('🤖', 'Robôs do Instagram', [
+        '<input type="text" id="rpRoboNome" class="ap-input" placeholder="Nome do robô" style="margin-bottom:8px">',
+        '<input type="text" id="rpRoboArroba" class="ap-input" placeholder="@ do robô (opcional)" style="margin-bottom:8px">',
+        '<div class="ap-row" style="margin-bottom:8px">',
+        '<input type="text" id="rpRoboEmoji" class="ap-input" placeholder="🤖 Emoji" style="width:90px" maxlength="4">',
+        '<input type="text" id="rpRoboAvatarUrl" class="ap-input" placeholder="ou URL de uma foto (opcional)" style="flex:1">',
+        '</div>',
+        '<input type="text" id="rpRoboDescricao" class="ap-input" placeholder="Descrição do robô" style="margin-bottom:8px" maxlength="240">',
+        '<div class="ap-row" style="margin-bottom:8px">',
+        '<div><label class="ap-label">Frequência (min)</label><input type="number" id="rpRoboFrequencia" class="ap-input" min="1" value="60"></div>',
+        '<div><label class="ap-label">Qtd. em lote</label><input type="number" id="rpRoboLoteQtd" class="ap-input" min="1" value="3"></div>',
+        '</div>',
+        '<div class="ap-row">',
+        '<button class="ap-btn" style="flex:1" onclick="salvarRoboRemoto()">Salvar robô</button>',
+        '<button class="ap-btn" style="flex:1" onclick="criarRobosLoteRemoto()">Criar em lote</button>',
+        '</div>',
+        '<div class="ap-row" style="margin-top:8px">',
+        '<button class="ap-btn-sm" style="flex:1" onclick="desligarTodosRobosRemoto()">Desligar todos</button>',
+        '<button class="ap-btn-danger" style="flex:1" onclick="excluirTodosRobosRemoto()">Excluir todos</button>',
+        '</div>',
+        '<div id="msgRobo" class="ap-msg"></div>',
+        '<label class="ap-label" style="margin-top:14px">Robôs criados:</label>',
+        '<div id="rpListaRobos" class="ap-lista">Carregando…</div>'
+      ].join(''));
+
+      h += secaoHtml('👥', 'Rede Social — Perfis, Posts e Comentários', [
+        '<label class="ap-label">Gerencie os perfis criados pelos jogadores, as fotos publicadas na rede social e os comentários. Excluir um perfil também apaga as fotos dele e remove curtidas/comentários dele em outras fotos.</label>',
+        '<div class="ap-row" style="margin-bottom:8px">',
+        '<input type="text" id="rpSocialBusca" class="ap-input" placeholder="Pesquisar por nome ou @" style="flex:1">',
+        '<button class="ap-btn-sm" onclick="carregarRedeSocialRemoto()">🔍 Carregar</button>',
+        '</div>',
+        '<div id="rpSocialLista" class="ap-lista">Clique em "Carregar" para ver os perfis.</div>',
+        '<div id="msgSocial" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('🏆', 'Ranking — Modo Guerreiro', [
+        '<div class="ap-row">',
+        '<input type="text" id="rpRankingNome" class="ap-input" placeholder="Nome exato do jogador" style="flex:1">',
+        '<button class="ap-btn-sm" onclick="apagarJogadorGuerreiroRemoto()">Apagar</button>',
+        '</div>',
+        '<button class="ap-btn" style="margin-top:10px;width:100%;background:linear-gradient(135deg,#e74c3c,#c0392b)" onclick="limparRankingGuerreiroRemoto()">🗑️ Apagar todo o ranking</button>',
+        '<div id="msgRankingGuerreiro" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('🧳', 'Ranking — Viajando com a Cacá', [
+        '<button class="ap-btn-sm" style="width:100%;margin-bottom:8px" onclick="verRankingViagemRemoto()">Ver ranking atual</button>',
+        '<div id="rpRankingViagemLista" class="ap-lista" style="display:none;margin-bottom:8px"></div>',
+        '<button class="ap-btn" style="width:100%;background:linear-gradient(135deg,#e74c3c,#c0392b)" onclick="limparRankingViagemRemoto()">🗑️ Zerar ranking</button>',
+        '<div id="msgRankingViagem" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('💬', 'Histórico de conversas (Viajando com a Cacá)', [
+        '<label class="ap-label">Mostra quem falou (usuário) e com quem falou (contato do jogo). Guarda até 1 ano de histórico.</label>',
+        '<button class="ap-btn" style="width:100%;margin-bottom:8px" onclick="carregarHistoricoRemoto()">🔍 Carregar histórico</button>',
+        '<div id="rpHistoricoLista" class="ap-lista">Clique em "Carregar histórico" para ver as conversas.</div>',
+        '<div class="ap-row" style="margin-top:8px">',
+        '<button class="ap-btn-sm" onclick="salvarHistoricoArquivoRemoto()">💾 Salvar conversas</button>',
+        '<button class="ap-btn-danger" onclick="excluirHistoricoRemoto()">🗑️ Excluir conversas</button>',
+        '</div>'
+      ].join(''));
+
+      h += secaoHtml('✖️', 'Resetar site', [
+        '<label class="ap-label">Apaga as personalizações salvas (textos, cores, senha, contatos etc.) e volta o site ao estado original. Não apaga o banco de imagens, robôs, ranking ou histórico.</label>',
+        '<button class="ap-save-btn" style="background:linear-gradient(135deg,#e74c3c,#c0392b);box-shadow:0 4px 18px rgba(231,76,60,.35)" onclick="resetarSiteRemoto()">✖ Resetar personalizações do site</button>'
+      ].join(''));
+
+      document.getElementById('painelConteudo').innerHTML = h;
+    }
+
+    function secaoHtml(icone, titulo, conteudoHtml) {
+      return '<div class="ap-section"><p class="ap-section-title"><span>' + icone + '</span> ' + titulo + '</p>' + conteudoHtml + '</div>';
+    }
+
+    /* ===== SENHA DO PAINEL ADMINISTRATIVO ===== */
+    async function alterarSenhaAdminRemoto() {
+      var atual = (document.getElementById('rpSenhaAtual').value || '');
+      var nova = (document.getElementById('rpSenhaNova').value || '');
+      var confirma = (document.getElementById('rpSenhaConfirma').value || '');
+      try {
+        var cfg = await window.carregarFirestore();
+        var senhaCorreta = (cfg && cfg.adminSenhaAtual) ? cfg.adminSenhaAtual : SENHA_PADRAO;
+        if (atual !== senhaCorreta) { mostrarMsg('msgSenhaAdmin', 'Senha atual incorreta.', false); return; }
+        if (!nova || nova.length < 4) { mostrarMsg('msgSenhaAdmin', 'A nova senha precisa ter pelo menos 4 caracteres.', false); return; }
+        if (nova !== confirma) { mostrarMsg('msgSenhaAdmin', 'A confirmação não confere com a nova senha.', false); return; }
+        await window.salvarFirestoreParcial({ adminSenhaAtual: nova });
+        document.getElementById('rpSenhaAtual').value = '';
+        document.getElementById('rpSenhaNova').value = '';
+        document.getElementById('rpSenhaConfirma').value = '';
+        mostrarMsg('msgSenhaAdmin', 'Senha alterada com sucesso! Já vale nos dois painéis.', true);
+      } catch (e) { mostrarMsg('msgSenhaAdmin', 'Não foi possível alterar a senha agora.', false); }
+    }
+
+    /* ===== SENHA DO JOGO ===== */
+    function atualizarStatusSenhaJogo(cfg) {
+      var el = document.getElementById('rpStatusSenhaJogo');
+      if (!el) return;
+      el.textContent = (cfg && cfg.viagemSenhaJogo) ? '🔒 Senha ativa: só entra no jogo quem souber a senha.' : '🔓 Sem senha: qualquer pessoa pode entrar no jogo.';
+    }
+    async function definirSenhaJogoRemoto() {
+      var nova = (document.getElementById('rpSenhaJogoNova').value || '').trim();
+      if (!nova) { mostrarMsg('msgSenhaJogo', 'Digite uma senha para o jogo.', false); return; }
+      try {
+        await window.salvarFirestoreParcial({ viagemSenhaJogo: nova });
+        document.getElementById('rpSenhaJogoNova').value = '';
+        alert('Senha do jogo criada/alterada com sucesso!');
+      } catch (e) { alert('Não foi possível salvar a senha agora.'); }
+    }
+    async function excluirSenhaJogoRemoto() {
+      if (!confirm('Remover a senha do jogo? Qualquer pessoa poderá entrar sem senha.')) return;
+      try { await window.salvarFirestoreParcial({ viagemSenhaJogo: '' }); alert('Senha do jogo removida com sucesso!'); }
+      catch (e) { alert('Não foi possível remover a senha agora.'); }
+    }
+
+    /* ===== BANNER (texto / cores / tempo) ===== */
+    async function salvarBannerRemoto() {
+      var dados = {
+        texto: document.getElementById('rpTextoPrincipal').value,
+        btnCor: document.getElementById('rpBtnCor').value,
+        txtCor: document.getElementById('rpTxtCor').value,
+        tempo: document.getElementById('rpTempoFotos').value
+      };
+      try { await window.salvarFirestoreParcial(dados); mostrarMsg('msgBanner', '✓ Salvo! Todas as visitas verão a alteração.', true); }
+      catch (e) { mostrarMsg('msgBanner', 'Não foi possível salvar agora.', false); }
+    }
+
+    /* ===== IMAGEM DE FUNDO ===== */
+    function aplicarImagemFundoRemoto() {
+      var input = document.getElementById('rpImagemFundo');
+      if (!input.files[0]) { mostrarMsg('msgImagemFundo', 'Selecione uma imagem primeiro.', false); return; }
+      var r = new FileReader();
+      r.onload = async function(e) {
+        try { await window.salvarFirestoreParcial({ imagemFundo: e.target.result }); mostrarMsg('msgImagemFundo', '✓ Imagem de fundo aplicada!', true); input.value = ''; }
+        catch (err) { mostrarMsg('msgImagemFundo', 'Não foi possível salvar agora.', false); }
+      };
+      r.readAsDataURL(input.files[0]);
+    }
+
+    /* ===== TEMPOS DOS DESAFIOS ===== */
+    function preencherTemposDesafios(cfg) {
+      var atuais = TEMPOS_PADRAO_DESAFIOS;
+      try { if (cfg.temposDesafios) { var t = typeof cfg.temposDesafios === 'string' ? JSON.parse(cfg.temposDesafios) : cfg.temposDesafios; atuais = Object.assign({}, TEMPOS_PADRAO_DESAFIOS, t); } } catch (e) {}
+      var box = document.getElementById('rpTemposDesafios');
+      if (!box) return;
+      var h = '';
+      TIPOS_DESAFIO_PAINEL.forEach(function(tipo) {
+        h += '<div class="ap-row" style="justify-content:space-between"><span style="font-size:12.5px">' + NOMES_DESAFIO[tipo] + '</span><input type="number" min="0" class="ap-input" id="rpTempo_' + tipo + '" value="' + (atuais[tipo] || 0) + '" style="width:80px"></div>';
+      });
+      box.innerHTML = h;
+    }
+    async function salvarTemposDesafiosRemoto() {
+      var resultado = {};
+      TIPOS_DESAFIO_PAINEL.forEach(function(tipo) {
+        var el = document.getElementById('rpTempo_' + tipo);
+        var v = el ? parseInt(el.value, 10) : NaN;
+        resultado[tipo] = isNaN(v) || v < 0 ? 0 : v;
+      });
+      try { await window.salvarFirestoreParcial({ temposDesafios: JSON.stringify(resultado) }); mostrarMsg('msgTempos', '✓ Tempos salvos!', true); }
+      catch (e) { mostrarMsg('msgTempos', 'Não foi possível salvar agora.', false); }
+    }
+
+    /* ===== CONTATOS ===== */
+    function carregarContatos(cfg, aoVivo) {
+      try { contatosAtuais = cfg.contatosViagem ? JSON.parse(cfg.contatosViagem) : contatosAtuais; } catch (e) {}
+      if (!Array.isArray(contatosAtuais)) contatosAtuais = [];
+      renderContatos();
+    }
+    function renderContatos() {
+      var box = document.getElementById('rpListaContatos');
+      if (!box) return;
+      var h = '';
+      contatosAtuais.forEach(function(c, idx) {
+        if (!c || c.removido) return;
+        h += '<div class="ap-item">' +
+          (c.foto ? '<img src="' + c.foto + '">' : '<div class="emoji">' + esc(c.emoji || '🙂') + '</div>') +
+          '<div class="info"><strong>' + esc(c.nome) + '</strong><small>' + (c.genero === 'M' ? 'Voz masculina' : 'Voz feminina') + '</small></div>' +
+          '<button class="ap-btn-sm" onclick="editarContatoRemoto(' + idx + ')">Editar</button>' +
+          '<button class="ap-btn-danger" onclick="excluirContatoRemoto(' + idx + ')">Excluir</button>' +
+          '</div>';
+      });
+      box.innerHTML = h || 'Nenhum contato ainda.';
+    }
+    async function salvarContatosRemoto() {
+      await window.salvarFirestoreParcial({ contatosViagem: JSON.stringify(contatosAtuais) });
+    }
+    function adicionarContatoRemoto() {
+      var nome = (document.getElementById('rpContatoNome').value || '').trim();
+      var emoji = (document.getElementById('rpContatoEmoji').value || '').trim();
+      var genero = document.getElementById('rpContatoGenero').value;
+      var fotoInput = document.getElementById('rpContatoFoto');
+      if (!nome) { mostrarMsg('msgContatoNovo', 'Digite um nome para o contato.', false); return; }
+      function finalizar(foto) {
+        contatosAtuais.push({ nome: nome, emoji: emoji || '🙂', genero: genero, foto: foto || null, removido: false });
+        renderContatos();
+        salvarContatosRemoto().then(function() {
+          mostrarMsg('msgContatoNovo', 'Contato criado com sucesso!', true);
+        }).catch(function() { mostrarMsg('msgContatoNovo', 'Contato criado, mas não sincronizou. Tente salvar de novo.', false); });
+        document.getElementById('rpContatoNome').value = '';
+        document.getElementById('rpContatoEmoji').value = '';
+        fotoInput.value = '';
+      }
+      if (fotoInput.files && fotoInput.files[0]) { var r = new FileReader(); r.onload = function(e) { finalizar(e.target.result); }; r.readAsDataURL(fotoInput.files[0]); }
+      else finalizar(null);
+    }
+    function editarContatoRemoto(idx) {
+      var c = contatosAtuais[idx];
+      if (!c) return;
+      var novoNome = prompt('Nome do contato:', c.nome || '');
+      if (novoNome === null) return;
+      var novoEmoji = prompt('Emoji (deixe vazio para manter, só usado se não houver foto):', c.emoji || '');
+      if (novoEmoji === null) return;
+      var novoGenero = prompt('Voz — digite F (feminina) ou M (masculina):', c.genero || 'F');
+      if (novoGenero === null) return;
+      c.nome = novoNome.trim() || c.nome;
+      if (novoEmoji.trim()) c.emoji = novoEmoji.trim();
+      c.genero = (novoGenero.trim().toUpperCase() === 'M') ? 'M' : 'F';
+      renderContatos();
+      salvarContatosRemoto().then(function() { mostrarMsg('msgContatoNovo', 'Contato atualizado!', true); });
+    }
+    function excluirContatoRemoto(idx) {
+      var c = contatosAtuais[idx];
+      if (!c) return;
+      if (!confirm('Excluir o contato "' + c.nome + '"?')) return;
+      c.removido = true;
+      renderContatos();
+      salvarContatosRemoto().then(function() { mostrarMsg('msgContatoNovo', 'Contato excluído.', true); });
+    }
+
+    /* ===== BANCO DE IMAGENS ===== */
+    var bancoImagensCache = null;
+    async function carregarBancoMerged(forcar) {
+      if (bancoImagensCache && !forcar) return bancoImagensCache;
+      var base = [];
+      try { var resp = await fetch('banco_imagens_live_caca.json', { cache: 'no-store' }); if (resp.ok) { var data = await resp.json(); if (Array.isArray(data)) base = data; else if (data && Array.isArray(data.itens)) base = data.itens; } } catch (e) {}
+      var extra = [], removidos = [], overrides = {};
+      try { extra = await window.viagemBancoListarExtra(); } catch (e) {}
+      try { removidos = await window.viagemBancoListarRemovidos(); } catch (e) {}
+      try { overrides = await window.viagemBancoListarOverrides(); } catch (e) {}
+      var removidosSet = {}; (removidos || []).forEach(function(id) { removidosSet[id] = true; });
+      var combinada = base.filter(function(i) { return i && !removidosSet[i.id]; }).map(function(i) { return overrides[i.id] ? Object.assign({}, i, overrides[i.id]) : i; });
+      (extra || []).forEach(function(i) { if (i && !removidosSet[i.id]) combinada.push(i); });
+      bancoImagensCache = combinada;
+      return combinada;
+    }
+    function normalizarBusca(s) { return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+    function combinaBusca(item, termo) {
+      if (!termo) return true;
+      var base = ((item.titulo || '') + ' ' + (item.categoria || '') + ' ' + (item.keywords || []).join(' '));
+      return normalizarBusca(base).indexOf(normalizarBusca(termo)) !== -1;
+    }
+    async function buscarBanco() {
+      var lista = document.getElementById('rpBancoResultados');
+      if (!lista) return;
+      var termo = (document.getElementById('rpBancoBusca') || {}).value || '';
+      lista.innerHTML = 'Carregando…';
+      var banco = await carregarBancoMerged(true);
+      var filtrados = termo ? banco.filter(function(i) { return combinaBusca(i, termo); }) : banco.slice(0, 30);
+      if (!filtrados.length) { lista.innerHTML = 'Nenhuma imagem encontrada.'; return; }
+      var h = '';
+      filtrados.slice(0, 60).forEach(function(i) {
+        h += '<div class="ap-item"><img src="' + i.url + '"><div class="info"><strong>' + esc(i.titulo || '') + '</strong><small>' + esc(i.categoria || '') + ' — ' + ((i.keywords || []).join(', ')) + '</small></div>' +
+          '<button class="ap-btn-sm" onclick="editarImagemBancoRemoto(\'' + i.id + '\')">Editar</button>' +
+          '<button class="ap-btn-danger" onclick="excluirImagemBancoRemoto(\'' + i.id + '\')">Excluir</button></div>';
+      });
+      lista.innerHTML = h;
+    }
+    function gerarIdImagemBanco(titulo) {
+      var base = normalizarBusca(titulo || 'imagem').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'imagem';
+      return 'adm_' + base + '_' + Date.now();
+    }
+    function adicionarImagemBancoRemoto() {
+      var titulo = (document.getElementById('rpBancoTitulo').value || '').trim();
+      var categoria = (document.getElementById('rpBancoCategoria').value || '').trim() || 'geral';
+      var keywords = (document.getElementById('rpBancoKeywords').value || '').split(',').map(function(k) { return k.trim(); }).filter(Boolean);
+      var url = (document.getElementById('rpBancoUrl').value || '').trim();
+      var arquivo = document.getElementById('rpBancoArquivo');
+      if (!titulo) { mostrarMsg('msgBancoNovo', 'Digite um título para a imagem.', false); return; }
+      function salvarComUrl(urlFinal) {
+        if (!urlFinal) { mostrarMsg('msgBancoNovo', 'Escolha um arquivo ou informe uma URL de imagem.', false); return; }
+        var item = { id: gerarIdImagemBanco(titulo), titulo: titulo, categoria: categoria, keywords: keywords.length ? keywords : [titulo.toLowerCase()], url: urlFinal, credito: 'Adicionada pelo Painel Administrativo Remoto' };
+        window.viagemBancoSalvarExtra(item).then(function() {
+          bancoImagensCache = null;
+          mostrarMsg('msgBancoNovo', 'Imagem adicionada ao banco!', true);
+          document.getElementById('rpBancoTitulo').value = ''; document.getElementById('rpBancoKeywords').value = ''; document.getElementById('rpBancoUrl').value = ''; arquivo.value = '';
+          buscarBanco();
+        }).catch(function() { mostrarMsg('msgBancoNovo', 'Não foi possível salvar a imagem agora.', false); });
+      }
+      if (arquivo.files && arquivo.files[0]) { var r = new FileReader(); r.onload = function(e) { salvarComUrl(e.target.result); }; r.readAsDataURL(arquivo.files[0]); }
+      else salvarComUrl(url);
+    }
+    async function editarImagemBancoRemoto(id) {
+      var banco = await carregarBancoMerged();
+      var item = null;
+      for (var i = 0; i < banco.length; i++) if (banco[i] && banco[i].id === id) { item = banco[i]; break; }
+      if (!item) return;
+      var novoTitulo = prompt('Título da imagem:', item.titulo || ''); if (novoTitulo === null) return;
+      var novaCategoria = prompt('Categoria:', item.categoria || 'geral'); if (novaCategoria === null) return;
+      var novasKw = prompt('Palavras-chave (separadas por vírgula):', (item.keywords || []).join(', ')); if (novasKw === null) return;
+      var dados = { titulo: novoTitulo.trim(), categoria: (novaCategoria.trim() || 'geral'), keywords: novasKw.split(',').map(function(k) { return k.trim(); }).filter(Boolean) };
+      try { await window.viagemBancoSalvarOverride(id, dados); bancoImagensCache = null; alert('Imagem atualizada!'); buscarBanco(); }
+      catch (e) { alert('Não foi possível salvar a alteração.'); }
+    }
+    async function excluirImagemBancoRemoto(id) {
+      if (!confirm('Remover esta imagem do banco de imagens?')) return;
+      try { await window.viagemBancoMarcarRemovido(id); } catch (e) {}
+      try { await window.viagemBancoExcluirExtra(id); } catch (e) {}
+      bancoImagensCache = null;
+      alert('Imagem removida do banco.');
+      buscarBanco();
+    }
+
+    /* ===== ROBÔS DO INSTAGRAM ===== */
+    function ehImagemPerfil(v) { return !!v && (/^data:|^https?:/.test(v)); }
+    function avatarHtmlRobo(r) {
+      var av = r.avatar || r.emoji || '🤖';
+      return ehImagemPerfil(av) ? '<img src="' + av + '">' : '<div class="emoji">' + esc(av) + '</div>';
+    }
+    function idBaseTexto(t) { return normalizarBusca(t).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'robo'; }
+    function idUnicoRobo(base, lista) {
+      base = idBaseTexto(base);
+      var usados = {}; lista.forEach(function(r) { if (r && r.id) usados[r.id] = true; });
+      var id = base, n = 2;
+      while (usados[id]) id = base + '_' + (n++);
+      return id;
+    }
+    async function carregarRobos() {
+      var box = document.getElementById('rpListaRobos');
+      try {
+        var lista = (await window.carregarViagemSocialDados('robos')) || [];
+        window._robosCache = lista;
+        renderRobos(lista);
+      } catch (e) { if (box) box.innerHTML = 'Não foi possível carregar os robôs agora.'; }
+    }
+    function renderRobos(lista) {
+      var box = document.getElementById('rpListaRobos');
+      if (!box) return;
+      if (!lista.length) { box.innerHTML = 'Nenhum robô criado.'; return; }
+      var h = '';
+      lista.forEach(function(r) {
+        h += '<div class="ap-item">' + avatarHtmlRobo(r) +
+          '<div class="info"><strong>' + esc(r.nome) + '</strong><small>@' + esc(r.arroba) + ' • ' + (r.ativo ? 'ativo' : 'parado') + ' • ' + (r.frequencia || 60) + ' min</small></div>' +
+          '<button class="ap-btn-sm" onclick="alternarRoboRemoto(\'' + r.id + '\')">' + (r.ativo ? 'Desligar' : 'Ligar') + '</button>' +
+          '<button class="ap-btn-danger" onclick="excluirRoboRemoto(\'' + r.id + '\')">Excluir</button></div>';
+      });
+      box.innerHTML = h;
+    }
+    function coletarDadosRobo() {
+      var nome = (document.getElementById('rpRoboNome').value || '').trim() || 'Robô';
+      var arroba = (document.getElementById('rpRoboArroba').value || '').trim();
+      var emoji = (document.getElementById('rpRoboEmoji').value || '').trim() || '🤖';
+      var avatarUrl = (document.getElementById('rpRoboAvatarUrl').value || '').trim();
+      var desc = (document.getElementById('rpRoboDescricao').value || '').trim();
+      var freq = parseInt(document.getElementById('rpRoboFrequencia').value || '60', 10);
+      return { nome: nome, arroba: idBaseTexto(arroba || nome), emoji: emoji, avatar: avatarUrl || emoji, descricao: desc, frequencia: Math.max(1, isNaN(freq) ? 60 : freq) };
+    }
+    async function salvarRoboRemoto() {
+      var dados = coletarDadosRobo();
+      var robos = window._robosCache || [];
+      var id = idUnicoRobo(dados.arroba || dados.nome, robos);
+      robos.push({ id: id, nome: dados.nome, arroba: dados.arroba, avatar: dados.avatar, emoji: dados.emoji, descricao: dados.descricao, frequencia: dados.frequencia, ativo: true, criadoEm: Date.now(), ultimaPostagem: 0, proximaPostagem: Date.now() + dados.frequencia * 60000 });
+      try { await window.salvarViagemSocialDados('robos', robos); window._robosCache = robos; renderRobos(robos); mostrarMsg('msgRobo', 'Robô salvo com sucesso!', true); }
+      catch (e) { mostrarMsg('msgRobo', 'Não foi possível salvar o robô agora.', false); }
+    }
+    async function criarRobosLoteRemoto() {
+      var q = parseInt(document.getElementById('rpRoboLoteQtd').value || '1', 10);
+      if (isNaN(q) || q < 1) q = 1; q = Math.min(q, 50);
+      var base = coletarDadosRobo();
+      var robos = window._robosCache || [];
+      for (var i = 1; i <= q; i++) {
+        var nome = base.nome + ' ' + i;
+        var id = idUnicoRobo(base.arroba || nome, robos);
+        robos.push({ id: id, nome: nome, arroba: idBaseTexto((base.arroba || nome) + '_' + i), avatar: base.avatar, emoji: base.emoji, descricao: base.descricao, frequencia: base.frequencia, ativo: true, criadoEm: Date.now(), ultimaPostagem: 0, proximaPostagem: Date.now() + base.frequencia * 60000 });
+      }
+      try { await window.salvarViagemSocialDados('robos', robos); window._robosCache = robos; renderRobos(robos); mostrarMsg('msgRobo', 'Robôs em lote criados com sucesso!', true); }
+      catch (e) { mostrarMsg('msgRobo', 'Não foi possível criar os robôs agora.', false); }
+    }
+    async function alternarRoboRemoto(id) {
+      var robos = window._robosCache || [];
+      for (var i = 0; i < robos.length; i++) if (robos[i] && robos[i].id === id) { robos[i].ativo = !robos[i].ativo; break; }
+      try { await window.salvarViagemSocialDados('robos', robos); renderRobos(robos); } catch (e) {}
+    }
+    async function excluirRoboRemoto(id) {
+      if (!confirm('Excluir este robô?')) return;
+      var robos = (window._robosCache || []).filter(function(r) { return r && r.id !== id; });
+      try { await window.salvarViagemSocialDados('robos', robos); window._robosCache = robos; renderRobos(robos); } catch (e) {}
+    }
+    async function desligarTodosRobosRemoto() {
+      var robos = window._robosCache || [];
+      robos.forEach(function(r) { if (r) r.ativo = false; });
+      try { await window.salvarViagemSocialDados('robos', robos); renderRobos(robos); mostrarMsg('msgRobo', 'Todos os robôs foram desligados.', true); } catch (e) {}
+    }
+    async function excluirTodosRobosRemoto() {
+      if (!confirm('Excluir todos os robôs?')) return;
+      try { await window.salvarViagemSocialDados('robos', []); window._robosCache = []; renderRobos([]); mostrarMsg('msgRobo', 'Todos os robôs foram excluídos.', true); } catch (e) {}
+    }
+
+    /* ===== REDE SOCIAL: PERFIS, POSTS E COMENTÁRIOS ===== */
+    var socialPerfisCache = {};
+    var socialPostsCache = [];
+    var socialTelaAtual = 'perfis';
+
+    function avatarHtmlSocial(p) {
+      var av = (p && (p.avatar || p.emoji)) || '👤';
+      return ehImagemPerfil(av) ? '<img src="' + av + '">' : '<div class="emoji">' + esc(av) + '</div>';
+    }
+    function contarPostsPerfilRemoto(id) {
+      var n = 0;
+      socialPostsCache.forEach(function(p) { if (p && p.dono === id) n++; });
+      return n;
+    }
+    async function carregarRedeSocialRemoto() {
+      var box = document.getElementById('rpSocialLista');
+      box.innerHTML = 'Carregando…';
+      try {
+        socialPerfisCache = (await window.carregarViagemSocialDados('perfis')) || {};
+        socialPostsCache = (await window.carregarViagemSocialDados('posts')) || [];
+        renderPerfisSociaisRemoto();
+      } catch (e) { box.innerHTML = 'Não foi possível carregar os dados agora.'; }
+    }
+    function renderPerfisSociaisRemoto() {
+      var box = document.getElementById('rpSocialLista');
+      if (!box) return;
+      socialTelaAtual = 'perfis';
+      var termo = normalizarBusca((document.getElementById('rpSocialBusca') || {}).value || '');
+      var ids = Object.keys(socialPerfisCache || {});
+      if (termo) {
+        ids = ids.filter(function(id) {
+          var p = socialPerfisCache[id] || {};
+          return normalizarBusca((p.nome || '') + ' ' + (p.arroba || '')).indexOf(termo) !== -1;
+        });
+      }
+      if (!ids.length) { box.innerHTML = 'Nenhum perfil encontrado.'; return; }
+      var h = '';
+      ids.forEach(function(id) {
+        var p = socialPerfisCache[id] || {};
+        var qtd = contarPostsPerfilRemoto(id);
+        h += '<div class="ap-item">' + avatarHtmlSocial(p) +
+          '<div class="info"><strong>' + esc(p.nome || id) + '</strong><small>@' + esc(p.arroba || id) + ' • ' + qtd + ' foto' + (qtd === 1 ? '' : 's') + '</small></div>' +
+          '<button class="ap-btn-sm" onclick="abrirPostsPerfilRemoto(\'' + id + '\')">Ver posts</button>' +
+          '<button class="ap-btn-danger" onclick="excluirPerfilRemoto(\'' + id + '\')">Excluir perfil</button></div>';
+      });
+      box.innerHTML = h;
+    }
+    function abrirPostsPerfilRemoto(id) {
+      var box = document.getElementById('rpSocialLista');
+      if (!box) return;
+      socialTelaAtual = id;
+      var p = socialPerfisCache[id] || { nome: 'Perfil removido', arroba: id };
+      var posts = socialPostsCache.filter(function(x) { return x && x.dono === id; });
+      var h = '<button class="ap-btn-sm" style="margin-bottom:10px" onclick="renderPerfisSociaisRemoto()">← Voltar aos perfis</button>';
+      h += '<div style="font-weight:700;margin-bottom:8px">' + esc(p.nome || id) + ' <span style="color:#8b98b3;font-weight:400">@' + esc(p.arroba || id) + '</span></div>';
+      if (!posts.length) { h += '<div style="color:#8b98b3">Nenhuma foto publicada por este perfil.</div>'; box.innerHTML = h; return; }
+      posts.forEach(function(post) {
+        var coms = post.comentarios || [];
+        h += '<div style="border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:10px;margin-bottom:10px">';
+        h += '<div class="ap-item" style="border:none;padding:0 0 8px">' +
+          (post.url ? '<img src="' + post.url + '">' : '<div class="emoji">🖼️</div>') +
+          '<div class="info"><strong>' + esc(post.legenda || '(sem legenda)') + '</strong><small>♥ ' + ((post.curtidas || []).length) + ' • ' + coms.length + ' comentário' + (coms.length === 1 ? '' : 's') + '</small></div>' +
+          '<button class="ap-btn-danger" onclick="excluirPostRemoto(\'' + post.id + '\')">Excluir post</button></div>';
+        if (coms.length) {
+          h += '<div style="margin-top:6px">';
+          coms.forEach(function(c) {
+            h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid rgba(255,255,255,0.07);padding:5px 0;font-size:12.5px">' +
+              '<span><strong>@' + esc(c.autor || '') + '</strong> ' + esc(c.texto || '') + '</span>' +
+              '<button class="ap-btn-danger" style="flex-shrink:0" onclick="excluirComentarioRemoto(\'' + post.id + '\',\'' + c.id + '\')">Excluir</button></div>';
+          });
+          h += '</div>';
+        }
+        h += '</div>';
+      });
+      box.innerHTML = h;
+    }
+    async function excluirPerfilRemoto(id) {
+      var p = socialPerfisCache[id] || {};
+      if (!confirm('Excluir o perfil "' + (p.nome || id) + '" e todas as fotos dele? Essa ação também remove curtidas e comentários dele em outras fotos. Não pode ser desfeita.')) return;
+      try {
+        delete socialPerfisCache[id];
+        var posts = socialPostsCache.filter(function(x) { return x && x.dono !== id; });
+        posts.forEach(function(x) {
+          x.curtidas = (x.curtidas || []).filter(function(u) { return u !== id; });
+          x.comentarios = (x.comentarios || []).filter(function(c) { return c.autor !== id; });
+        });
+        await window.salvarViagemSocialDados('perfis', socialPerfisCache);
+        await window.salvarViagemSocialDados('posts', posts);
+        socialPostsCache = posts;
+        mostrarMsg('msgSocial', 'Perfil excluído com sucesso!', true);
+        renderPerfisSociaisRemoto();
+      } catch (e) { mostrarMsg('msgSocial', 'Não foi possível excluir o perfil agora.', false); }
+    }
+    async function excluirPostRemoto(id) {
+      if (!confirm('Excluir esta foto e todos os comentários dela?')) return;
+      try {
+        var posts = socialPostsCache.filter(function(x) { return x && x.id !== id; });
+        await window.salvarViagemSocialDados('posts', posts);
+        socialPostsCache = posts;
+        mostrarMsg('msgSocial', 'Foto excluída com sucesso!', true);
+        if (socialTelaAtual !== 'perfis') abrirPostsPerfilRemoto(socialTelaAtual);
+      } catch (e) { mostrarMsg('msgSocial', 'Não foi possível excluir a foto agora.', false); }
+    }
+    async function excluirComentarioRemoto(postId, comentId) {
+      if (!confirm('Excluir este comentário?')) return;
+      try {
+        var post = socialPostsCache.find(function(x) { return x && x.id === postId; });
+        if (!post) return;
+        post.comentarios = (post.comentarios || []).filter(function(c) { return c.id !== comentId; });
+        await window.salvarViagemSocialDados('posts', socialPostsCache);
+        mostrarMsg('msgSocial', 'Comentário excluído com sucesso!', true);
+        if (socialTelaAtual !== 'perfis') abrirPostsPerfilRemoto(socialTelaAtual);
+      } catch (e) { mostrarMsg('msgSocial', 'Não foi possível excluir o comentário agora.', false); }
+    }
+
+    /* ===== RANKING ===== */
+    async function apagarJogadorGuerreiroRemoto() {
+      var nome = (document.getElementById('rpRankingNome').value || '').trim();
+      if (!nome) { mostrarMsg('msgRankingGuerreiro', 'Digite o nome do jogador.', false); return; }
+      try {
+        var lista = await window.buscarRankingGuerreiros();
+        var alvo = lista.find(function(item) { return item && item.nome && item.nome.toLowerCase() === nome.toLowerCase(); });
+        if (!alvo) { mostrarMsg('msgRankingGuerreiro', 'Nenhum jogador encontrado com esse nome.', false); return; }
+        if (!confirm('Apagar o registro de "' + alvo.nome + '" do ranking?')) return;
+        await window.apagarGuerreiro(alvo.id);
+        document.getElementById('rpRankingNome').value = '';
+        mostrarMsg('msgRankingGuerreiro', 'Registro apagado!', true);
+      } catch (e) { mostrarMsg('msgRankingGuerreiro', 'Não foi possível apagar agora.', false); }
+    }
+    async function limparRankingGuerreiroRemoto() {
+      if (!confirm('Tem certeza que deseja apagar TODO o ranking do Modo Guerreiro? Essa ação não pode ser desfeita.')) return;
+      try { await window.apagarTodosGuerreiros(); mostrarMsg('msgRankingGuerreiro', 'Ranking apagado com sucesso!', true); }
+      catch (e) { mostrarMsg('msgRankingGuerreiro', 'Não foi possível apagar o ranking agora.', false); }
+    }
+    async function verRankingViagemRemoto() {
+      var box = document.getElementById('rpRankingViagemLista');
+      box.style.display = 'block'; box.innerHTML = 'Carregando…';
+      try {
+        var lista = await window.buscarRankingViagem();
+        lista.sort(function(a, b) { return (b.pontos || 0) - (a.pontos || 0); });
+        if (!lista.length) { box.innerHTML = 'Nenhum jogador no ranking ainda.'; return; }
+        var h = '';
+        lista.forEach(function(j) { h += '<div class="ap-item"><div class="info"><strong>' + esc(j.id) + '</strong><small>' + (j.pontos || 0) + ' pontos</small></div></div>'; });
+        box.innerHTML = h;
+      } catch (e) { box.innerHTML = 'Não foi possível carregar o ranking agora.'; }
+    }
+    async function limparRankingViagemRemoto() {
+      if (!confirm('Tem certeza que deseja zerar TODO o ranking do Viajando com a Cacá? Essa ação não pode ser desfeita.')) return;
+      try { await window.apagarTodosViagemJogadores(); mostrarMsg('msgRankingViagem', 'Ranking zerado com sucesso!', true); document.getElementById('rpRankingViagemLista').style.display = 'none'; }
+      catch (e) { mostrarMsg('msgRankingViagem', 'Não foi possível zerar o ranking agora.', false); }
+    }
+
+    /* ===== HISTÓRICO DE CONVERSAS ===== */
+    var historicoCache = [];
+    function formatarDataHistorico(ts) { try { return new Date(ts).toLocaleString('pt-BR'); } catch (e) { return ''; } }
+    function agruparHistorico(lista) {
+      var porJogador = {}, porJogadorIp = {}, ordem = [];
+      lista.forEach(function(r) {
+        var j = r.jogador || 'Usuário';
+        if (!porJogador[j]) { porJogador[j] = {}; ordem.push(j); porJogadorIp[j] = r.ip || 'IP desconhecido'; }
+        var c = r.contato || 'Robô';
+        if (!porJogador[j][c]) porJogador[j][c] = [];
+        porJogador[j][c].push(r);
+      });
+      return { porJogador: porJogador, porJogadorIp: porJogadorIp, ordem: ordem };
+    }
+    async function carregarHistoricoRemoto() {
+      var box = document.getElementById('rpHistoricoLista');
+      box.innerHTML = 'Carregando…';
+      try {
+        var umAnoAtras = Date.now() - (365 * 24 * 60 * 60 * 1000);
+        var lista = await window.buscarHistoricoChat();
+        var antigos = lista.filter(function(r) { return r.ts && r.ts < umAnoAtras; });
+        if (antigos.length) window.apagarHistoricoChatAntigo(umAnoAtras).catch(function() {});
+        lista = lista.filter(function(r) { return !r.ts || r.ts >= umAnoAtras; });
+        lista.sort(function(a, b) { return (a.ts || 0) - (b.ts || 0); });
+        historicoCache = lista;
+        if (!lista.length) { box.innerHTML = 'Nenhuma conversa registrada ainda.'; return; }
+        var g = agruparHistorico(lista);
+        var h = '';
+        g.ordem.forEach(function(j, idx) {
+          if (idx > 0) h += '<div style="border-top:2px dashed #4a5a78;margin:14px 0"></div>';
+          h += '<div style="font-weight:700;margin-bottom:6px">' + esc(j) + ' (humano) — IP: ' + esc(g.porJogadorIp[j] || 'desconhecido') + '</div>';
+          Object.keys(g.porJogador[j]).forEach(function(c, k) {
+            if (k > 0) h += '<div style="border-top:1px dashed #33415e;margin:8px 0"></div>';
+            h += '<div style="font-weight:600;color:#7ecfff;margin-bottom:4px">Conversa com ' + esc(c) + ' (robô)</div>';
+            g.porJogador[j][c].forEach(function(r2) {
+              var ehUsuario = r2.remetente === 'usuario';
+              var quem = ehUsuario ? j : c;
+              h += '<div style="margin-bottom:5px;padding:5px 8px;border-left:3px solid ' + (ehUsuario ? '#4db8ff' : '#a476e0') + ';background:rgba(255,255,255,0.03);border-radius:6px">' +
+                '<div style="font-size:10.5px;color:#8b98b3">' + formatarDataHistorico(r2.ts) + ' • <strong>' + esc(quem) + (ehUsuario ? ' (humano)' : ' (robô)') + '</strong></div>' +
+                '<div>' + esc(r2.tipo === 'texto' ? (r2.texto || '') : ('[' + (r2.tipo || 'mensagem') + '] ' + (r2.texto || r2.legenda || ''))) + '</div></div>';
+            });
+          });
+        });
+        box.innerHTML = h;
+      } catch (e) { box.innerHTML = 'Não foi possível carregar o histórico agora.'; }
+    }
+    function salvarHistoricoArquivoRemoto() {
+      if (!historicoCache.length) { alert('Carregue o histórico antes de salvar.'); return; }
+      var g = agruparHistorico(historicoCache);
+      var linhas = [];
+      g.ordem.forEach(function(j, idx) {
+        if (idx > 0) { linhas.push('', '', '00000000000000000000', '', ''); }
+        Object.keys(g.porJogador[j]).forEach(function(c, k) {
+          if (k > 0) linhas.push('', '', '');
+          linhas.push(j + ' (humano) — IP: ' + (g.porJogadorIp[j] || 'IP desconhecido') + ' — conversando com ' + c + ' (robô):');
+          g.porJogador[j][c].forEach(function(r2) {
+            var ehUsuario = r2.remetente === 'usuario';
+            var quem = ehUsuario ? j : c;
+            linhas.push('[' + formatarDataHistorico(r2.ts) + '] ' + quem + (ehUsuario ? ' (humano): ' : ' (robô): ') + (r2.tipo === 'texto' ? (r2.texto || '') : ('[' + (r2.tipo || 'mensagem') + '] ' + (r2.texto || r2.legenda || ''))));
+          });
+        });
+      });
+      var blob = new Blob([linhas.join('\n')], { type: 'text/plain;charset=utf-8' });
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'historico-viajando-com-a-caca.txt';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+    async function excluirHistoricoRemoto() {
+      if (!confirm('Tem certeza que deseja excluir TODO o histórico de conversas?')) return;
+      try { await window.apagarHistoricoChat(); historicoCache = []; document.getElementById('rpHistoricoLista').innerHTML = 'Histórico excluído.'; }
+      catch (e) { alert('Não foi possível excluir o histórico agora.'); }
+    }
+
+    /* ===== RESETAR SITE ===== */
+    async function resetarSiteRemoto() {
+      if (!confirm('Tem certeza? Isso apagará TODAS as personalizações salvas (texto, cores, senha, contatos, imagem de fundo etc.) e voltará o site ao estado original.')) return;
+      try { await window.resetarFirestore(); alert('Site resetado! As duas telas (esta e a do site) já refletem o estado original.'); }
+      catch (e) { alert('Não foi possível resetar agora.'); }
+    }
+  </script>
+
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhq3yPc927yrj5xT1UBaJSxJ4S9H7tEgI",
+      authDomain: "sitecaca2.firebaseapp.com",
+      projectId: "sitecaca2",
+      storageBucket: "sitecaca2.firebasestorage.app",
+      messagingSenderId: "391187353901",
+      appId: "1:391187353901:web:050289706c2fbb0d0343a4"
+    };
+    const firebaseConfigViagem = {
+      apiKey: "AIzaSyBrWGg6g82fP40a2QSmee5sBAm2gnhqwlQ",
+      authDomain: "caca-viagem.firebaseapp.com",
+      projectId: "caca-viagem",
+      storageBucket: "caca-viagem.firebasestorage.app",
+      messagingSenderId: "927277678863",
+      appId: "1:927277678863:web:88242bc34bcaae6abfbe7a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const appViagem = initializeApp(firebaseConfigViagem, "viagem");
+    const dbViagem = getFirestore(appViagem);
+
+    window.salvarFirestore = async function(dados) { await setDoc(doc(db, "config", "site"), dados); };
+    window.salvarFirestoreParcial = async function(dados) { await setDoc(doc(db, "config", "site"), dados, { merge: true }); };
+    window.carregarFirestore = async function() { const s = await getDoc(doc(db, "config", "site")); return s.exists() ? s.data() : {}; };
+    window.resetarFirestore = async function() { await deleteDoc(doc(db, "config", "site")); };
+    window.escutarFirestoreConfig = function(callback) {
+      return onSnapshot(doc(db, "config", "site"), function(snap) { if (snap.exists()) callback(snap.data()); },
+        function(err) { console.warn('Escuta em tempo real indisponível:', err); });
+    };
+
+    /* Modo Guerreiro (ranking) */
+    window.apagarGuerreiro = async function(idIp) { await deleteDoc(doc(db, "guerreiros", idIp)); };
+    window.buscarRankingGuerreiros = async function() {
+      const snap = await getDocs(collection(db, "guerreiros"));
+      const lista = []; snap.forEach(function(d) { lista.push(Object.assign({ id: d.id }, d.data())); }); return lista;
+    };
+    window.apagarTodosGuerreiros = async function() {
+      const snap = await getDocs(collection(db, "guerreiros"));
+      const p = []; snap.forEach(function(d) { p.push(deleteDoc(doc(db, "guerreiros", d.id))); }); await Promise.all(p);
+    };
+
+    /* Viajando com a Cacá — ranking */
+    window.buscarRankingViagem = async function() {
+      const snap = await getDocs(collection(dbViagem, "viagemJogadores"));
+      const lista = []; snap.forEach(function(d) { lista.push(Object.assign({ id: d.id }, d.data())); }); return lista;
+    };
+    window.apagarTodosViagemJogadores = async function() {
+      const snap = await getDocs(collection(dbViagem, "viagemJogadores"));
+      const p = []; snap.forEach(function(d) { p.push(deleteDoc(doc(dbViagem, "viagemJogadores", d.id))); }); await Promise.all(p);
+    };
+
+    /* Histórico de conversas */
+    window.buscarHistoricoChat = async function() {
+      const snap = await getDocs(collection(dbViagem, "viagemHistoricoChat"));
+      const lista = []; snap.forEach(function(d) { lista.push(Object.assign({ id: d.id }, d.data())); }); return lista;
+    };
+    window.apagarHistoricoChat = async function() {
+      const snap = await getDocs(collection(dbViagem, "viagemHistoricoChat"));
+      const p = []; snap.forEach(function(d) { p.push(deleteDoc(doc(dbViagem, "viagemHistoricoChat", d.id))); }); await Promise.all(p);
+    };
+    window.apagarHistoricoChatAntigo = async function(limiteTimestamp) {
+      const snap = await getDocs(collection(dbViagem, "viagemHistoricoChat"));
+      const p = [];
+      snap.forEach(function(d) { var dd = d.data(); if (dd && dd.ts && dd.ts < limiteTimestamp) p.push(deleteDoc(doc(dbViagem, "viagemHistoricoChat", d.id))); });
+      await Promise.all(p);
+    };
+
+    /* Álbum social (usado aqui só para os Robôs do Instagram) */
+    window.salvarViagemSocialDados = async function(chave, dados) { await setDoc(doc(dbViagem, "viagemSocial", chave), { dados: dados, atualizadoEm: Date.now() }); };
+    window.carregarViagemSocialDados = async function(chave) { const s = await getDoc(doc(dbViagem, "viagemSocial", chave)); return s.exists() ? s.data().dados : null; };
+
+    /* Banco de Imagens da Live da Cacá */
+    window.viagemBancoSalvarExtra = async function(item) { await setDoc(doc(dbViagem, "viagemBancoExtra", item.id), item); };
+    window.viagemBancoExcluirExtra = async function(id) { await deleteDoc(doc(dbViagem, "viagemBancoExtra", id)); };
+    window.viagemBancoListarExtra = async function() {
+      const snap = await getDocs(collection(dbViagem, "viagemBancoExtra"));
+      const lista = []; snap.forEach(function(d) { lista.push(d.data()); }); return lista;
+    };
+    window.viagemBancoMarcarRemovido = async function(id) { await setDoc(doc(dbViagem, "viagemBancoRemovidos", id), { removido: true }); };
+    window.viagemBancoDesmarcarRemovido = async function(id) { await deleteDoc(doc(dbViagem, "viagemBancoRemovidos", id)); };
+    window.viagemBancoListarRemovidos = async function() {
+      const snap = await getDocs(collection(dbViagem, "viagemBancoRemovidos"));
+      const ids = []; snap.forEach(function(d) { ids.push(d.id); }); return ids;
+    };
+    window.viagemBancoSalvarOverride = async function(id, dados) { await setDoc(doc(dbViagem, "viagemBancoOverrides", id), dados); };
+    window.viagemBancoListarOverrides = async function() {
+      const snap = await getDocs(collection(dbViagem, "viagemBancoOverrides"));
+      const mapa = {}; snap.forEach(function(d) { mapa[d.id] = d.data(); }); return mapa;
+    };
+
+    window._firebasePronto = true;
+    if (typeof window._onFirebasePronto === 'function') window._onFirebasePronto();
+  </script>
+
+</body>
+</html>
