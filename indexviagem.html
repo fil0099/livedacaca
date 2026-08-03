@@ -1422,6 +1422,10 @@
     .gm-overlay.ativo {
       display: flex;
     }
+    #viagemModalAvatarBanco.gm-overlay,
+    #viagemModalEmojiPicker.gm-overlay {
+      z-index: 100050;
+    }
     .gm-box {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -1489,6 +1493,30 @@
     }
     .gm-btn-secundario:hover {
       border-color: var(--primary);
+      color: var(--primary);
+    }
+    .viagem-senha-wrap {
+      position: relative;
+      margin-bottom: 16px;
+    }
+    .viagem-senha-wrap .gm-input {
+      margin-bottom: 0;
+      padding-right: 44px;
+    }
+    .viagem-senha-toggle {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 6px;
+      color: var(--text-muted);
+    }
+    .viagem-senha-toggle:hover {
       color: var(--primary);
     }
     .gm-close {
@@ -2581,6 +2609,14 @@
     .viagem-banco-toolbar{display:grid;grid-template-columns:1.4fr .8fr auto;gap:8px;align-items:center;margin:12px 0 14px}
     .viagem-banco-toolbar input,.viagem-banco-toolbar select{width:100%;border:1px solid #ccd5e3;border-radius:10px;padding:10px;font:inherit;background:#fff;color:#26344f}
     .viagem-banco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+    .viagem-emoji-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(46px,1fr));gap:6px;padding:4px 2px}
+    .viagem-emoji-grid button{border:1px solid #dfe5ef;background:#fff;border-radius:10px;font-size:26px;line-height:1;padding:8px 0;cursor:pointer;transition:transform .1s,background .1s}
+    .viagem-emoji-grid button:hover{background:#edf1f8;transform:scale(1.1)}
+    .viagem-emoji-grid button.selecionado{background:#dbe6ff;border-color:#40557d;box-shadow:0 0 0 2px #40557d inset}
+    .viagem-emoji-confirmar{display:flex;justify-content:flex-end;gap:8px;padding:10px 2px 2px;position:sticky;bottom:0;background:#fff}
+    .viagem-emoji-confirmar button{border:0;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer}
+    .viagem-emoji-confirmar button.viagem-emoji-usar{background:#40557d;color:#fff}
+    .viagem-emoji-confirmar button.viagem-emoji-usar:disabled{background:#b7c0d6;cursor:not-allowed}
     .viagem-banco-card{background:#fff;border:1px solid #dfe5ef;border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(30,50,80,.06);display:flex;flex-direction:column}
     .viagem-banco-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#dce5f2}
     .viagem-banco-card-info{padding:10px;display:grid;gap:8px}
@@ -2852,9 +2888,7 @@
     var prev = document.getElementById('viagemAvatarMeuPerfilPreview');
     if (!prev) return;
     var p = viagemPerfilPorId(viagemPerfilAtual);
-    var em = (document.getElementById('viagemEmojiMeuPerfil') || {}).value || '';
-    var atual = viagemAvatarBancoSelecionado || (p && p.avatar) || '🧳';
-    var valor = em.trim() ? em.trim().slice(0, 2) : atual;
+    var valor = viagemAvatarBancoSelecionado || (p && p.avatar) || '🧳';
     if (viagemEhImagemPerfil(valor)) prev.innerHTML = '<img src="' + valor + '" alt="foto do perfil">';
     else prev.textContent = valor || '🧳';
   }
@@ -2871,18 +2905,53 @@
     viagemMostrarBancoImagens('viagemAvatarBancoCorpo', true);
   }
 
-  function viagemSalvarAvatarPerfil() {
+  function viagemSalvarAvatarPerfil(valorForcado) {
     if (!viagemSocialLogado || !viagemPerfilAtual) return;
     var pfs = viagemSocialCarregarPerfis();
     var p = pfs[viagemPerfilAtual];
     if (!p) return;
-    var em = (document.getElementById('viagemEmojiMeuPerfil') || {}).value || '';
-    var avatar = viagemAvatarBancoSelecionado || em.trim() || p.avatar || '🧳';
+    var avatar = valorForcado || viagemAvatarBancoSelecionado || p.avatar || '🧳';
     p.avatar = avatar.trim ? avatar.trim() : avatar;
     if (viagemEhImagemPerfil(p.avatar)) viagemAvatarBancoSelecionado = p.avatar;
+    else viagemAvatarBancoSelecionado = '';
     pfs[viagemPerfilAtual] = p;
     viagemSocialSalvarPerfis(pfs);
     viagemAbrirPerfilRede(viagemPerfilAtual);
+  }
+
+  var VIAGEM_EMOJIS_PICKER = ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','🥲','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🫢','🤫','🤔','🫡','🤐','🤨','😐','😑','😶','🫥','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','🫤','😟','🙁','☹️','😮','😯','😲','😳','🥺','🥹','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🙈','🙉','🙊','💋','💌','💘','💝','💖','💗','💓','💞','💕','💟','❣️','💔','❤️','🧡','💛','💚','💙','💜','🤎','🖤','🤍','✨','⭐','🌟','💫','🔥','🌈','☀️','🌙','⚡','❄️','🎉','🎊','🎁','🏆','🥇','⚽','🏀','🎮','🎧','📸','✈️','🚗','🏝️','🌴','🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦋','🌸','🌺','🌻','🌷','🍀','🍕','🍔','🍟','🌮','🍦','🍩','🍪','🍫','🍎','🍇','🍓','☕','🍺'];
+
+  var viagemEmojiPerfilSelecionado = '';
+
+  function viagemAbrirSeletorEmoji() {
+    var b = document.getElementById('viagemEmojiPickerCorpo');
+    if (!b) return;
+    viagemEmojiPerfilSelecionado = '';
+    var h = '<div class="viagem-emoji-grid">';
+    VIAGEM_EMOJIS_PICKER.forEach(function(e) {
+      h += '<button type="button" onclick="viagemSelecionarEmojiPerfilTemp(this)">' + e + '</button>';
+    });
+    h += '</div>';
+    h += '<div class="viagem-emoji-confirmar"><button type="button" class="viagem-emoji-usar" id="viagemEmojiBotaoUsar" disabled onclick="viagemConfirmarEmojiPerfil()">Usar</button></div>';
+    b.innerHTML = h;
+    abrirViagemModal('viagemModalEmojiPicker');
+  }
+
+  function viagemSelecionarEmojiPerfilTemp(botao) {
+    if (!botao) return;
+    var atual = document.querySelector('#viagemEmojiPickerCorpo .viagem-emoji-grid button.selecionado');
+    if (atual) atual.classList.remove('selecionado');
+    botao.classList.add('selecionado');
+    viagemEmojiPerfilSelecionado = botao.textContent;
+    var usar = document.getElementById('viagemEmojiBotaoUsar');
+    if (usar) usar.disabled = false;
+  }
+
+  function viagemConfirmarEmojiPerfil() {
+    if (!viagemEmojiPerfilSelecionado) return;
+    viagemAvatarBancoSelecionado = '';
+    viagemSalvarAvatarPerfil(viagemEmojiPerfilSelecionado.trim());
+    fecharViagemModal('viagemModalEmojiPicker');
   }
 
   function viagemAtualizarPreviewRoboAvatar() {
@@ -2919,6 +2988,7 @@
     } else {
       viagemAvatarBancoSelecionado = item.url || '';
       viagemAtualizarPreviewAvatar();
+      viagemSalvarAvatarPerfil(item.url || '');
     }
     viagemBancoModoAvatar = false;
     fecharViagemModal('viagemModalAvatarBanco');
@@ -3010,7 +3080,7 @@
     var p = viagemPerfilPorId(post.dono) || { nome:'Perfil removido', arroba:'removido', avatar:'👤' };
     var likes = post.curtidas || [], eu = likes.indexOf(viagemPerfilAtual) >= 0, coms = post.comentarios || [];
     var h = '<article class="viagem-social-card"><div class="viagem-social-card-top"><span class="viagem-social-avatar">' + viagemAvatarHtml(p) + '</span><div class="viagem-social-identidade"><strong>' + viagemEsc(p.nome) + '</strong><small>@' + viagemEsc(p.arroba) + '</small></div>' + (viagemPodeModerar() || viagemMeuPost(post) ? '<button class="viagem-admin-mini" data-id="' + post.id + '" onclick="viagemExcluirPost(this.dataset.id)">Excluir</button>' : '') + '</div><img class="viagem-social-card-img" src="' + post.url + '"><div class="viagem-social-acoes"><button class="' + (eu ? 'curtido' : '') + '" data-id="' + post.id + '" onclick="viagemCurtirPost(this.dataset.id)">♥ ' + likes.length + '</button><button data-id="' + post.id + '" onclick="viagemFocarComentario(this)">Comentar</button>' + (viagemMeuPost(post) ? '<button class="viagem-admin-mini" data-id="' + post.id + '" onclick="viagemEditarDescricaoPost(this.dataset.id)">Editar descrição</button>' : '') + '</div><div class="viagem-social-legenda">' + viagemEsc(post.legenda || '') + '</div><div class="viagem-social-comentarios">';
-    coms.forEach(function(c){ h += '<div class="viagem-social-comentario"><b>@' + viagemEsc(c.autor) + '</b> ' + viagemEsc(c.texto) + (viagemPodeModerar() ? '<button class="viagem-admin-mini" data-post="' + post.id + '" data-cid="' + c.id + '" onclick="viagemExcluirComentario(this.dataset.post,this.dataset.cid)">Excluir</button>' : '') + '</div>'; });
+    coms.forEach(function(c){ h += '<div class="viagem-social-comentario"><b>@' + viagemEsc(c.autor) + '</b> ' + viagemEsc(c.texto) + ((viagemPodeModerar() || c.autor === viagemPerfilAtual) ? '<button class="viagem-admin-mini" data-post="' + post.id + '" data-cid="' + c.id + '" onclick="viagemExcluirComentario(this.dataset.post,this.dataset.cid)">Excluir</button>' : '') + '</div>'; });
     h += '</div><div class="viagem-social-comentar"><input id="vc_' + post.id + '" type="text" placeholder="Escreva um comentário"><button data-id="' + post.id + '" onclick="viagemComentarPost(this.dataset.id)">Enviar</button></div></article>';
     return h;
   }
@@ -3022,8 +3092,7 @@
     var posts = viagemSocialCarregarPosts().filter(function(x){ return x.dono === id; }), meu = id === viagemPerfilAtual;
     var h = viagemSocialNav(meu ? 'meu' : 'perfis') + '<div class="viagem-social-cabecalho-perfil"><span class="viagem-social-avatar" id="viagemAvatarCabecalho">' + viagemAvatarHtml(p) + '</span><h3>' + viagemEsc(p.nome) + '</h3><div class="viagem-social-handle">@' + viagemEsc(p.arroba) + '</div><div class="viagem-social-bio">' + viagemEsc(p.descricao || 'Sem descrição.') + '</div>';
     if (meu && viagemSocialLogado) {
-      var emo = viagemEhImagemPerfil(p.avatar) ? '' : (p.avatar || '🧳');
-      h += '<div class="viagem-avatar-box"><div class="viagem-avatar-preview" id="viagemAvatarMeuPerfilPreview">' + viagemAvatarHtml(p) + '</div><div class="viagem-avatar-row" style="margin-bottom:8px;"><input id="viagemEmojiMeuPerfil" class="gm-input" type="text" maxlength="4" placeholder="Emoji da foto" value="' + viagemEsc(emo) + '" autocomplete="off" oninput="viagemAtualizarPreviewAvatar()" /></div><div class="viagem-avatar-row" style="margin-bottom:8px;"><button type="button" class="secundario" onclick="viagemAtualizarPreviewAvatar()">Atualizar emoji</button><button type="button" onclick="viagemAbrirBancoAvatar()">Escolher imagem do banco</button><button type="button" class="secundario" onclick="viagemLimparAvatarBanco()">Usar emoji</button><button type="button" onclick="viagemSalvarAvatarPerfil()">Salvar foto do perfil</button></div></div>';
+      h += '<div class="viagem-avatar-box"><div class="viagem-avatar-preview" id="viagemAvatarMeuPerfilPreview">' + viagemAvatarHtml(p) + '</div><div class="viagem-avatar-row"><button type="button" onclick="viagemAbrirBancoAvatar()">Escolher imagem</button><button type="button" class="secundario" onclick="viagemAbrirSeletorEmoji()">Usar emoji</button></div></div>';
       h += '<div class="viagem-social-editar"><textarea id="viagemBioEditar" maxlength="240" placeholder="Descrição do perfil">' + viagemEsc(p.descricao || '') + '</textarea><button onclick="viagemSalvarDescricao()">Salvar descrição</button><button class="perigo" onclick="viagemExcluirMeuPerfil()">Excluir meu perfil</button></div>';
     }
     if (viagemPodeModerar() && !meu) h += '<div class="viagem-social-editar"><button data-id="' + id + '" onclick="viagemAdminLimparDescricao(this.dataset.id)">Excluir descrição</button><button class="perigo" data-id="' + id + '" onclick="viagemAdminExcluirPerfil(this.dataset.id)">Excluir perfil/usuário</button></div>';
@@ -3034,11 +3103,6 @@
     if (meu && viagemSocialLogado) {
       viagemAvatarBancoSelecionado = viagemEhImagemPerfil(p.avatar) ? p.avatar : '';
       viagemAtualizarPreviewAvatar();
-      setTimeout(function(){
-        var em = document.getElementById('viagemEmojiMeuPerfil');
-        if (em) em.value = viagemEhImagemPerfil(p.avatar) ? '' : (p.avatar || '🧳');
-        viagemAtualizarPreviewAvatar();
-      }, 0);
     }
   }
 
@@ -4503,7 +4567,14 @@
       <p>Entre no jogo e crie sua identidade no Álbum de Viagem.</p>
       <input id="viagemInputNome" class="gm-input" type="text" maxlength="24" placeholder="Seu nome" autocomplete="name" />
       <input id="viagemInputArroba" class="gm-input" type="text" maxlength="20" placeholder="Crie seu @ (sem espaços)" autocomplete="username" />
-      <input id="viagemInputSenhaPerfil" class="gm-input" type="password" maxlength="40" placeholder="Crie ou digite sua senha" autocomplete="current-password" />
+      <div class="viagem-senha-wrap">
+        <input id="viagemInputSenhaPerfil" class="gm-input" type="password" maxlength="40" placeholder="Crie ou digite sua senha" autocomplete="new-password" />
+        <button type="button" class="viagem-senha-toggle" onclick="viagemAlternarSenhaVisivel('viagemInputSenhaPerfil', this)" aria-label="Mostrar senha">👁️</button>
+      </div>
+      <div class="viagem-senha-wrap">
+        <input id="viagemInputSenhaConfirmar" class="gm-input" type="password" maxlength="40" placeholder="Digite a senha novamente para confirmar" autocomplete="new-password" />
+        <button type="button" class="viagem-senha-toggle" onclick="viagemAlternarSenhaVisivel('viagemInputSenhaConfirmar', this)" aria-label="Mostrar senha">👁️</button>
+      </div>
       <button class="gm-btn" onclick="entrarViagem()">Entrar</button>
     </div>
   </div>
@@ -4513,6 +4584,14 @@
       <span class="gm-close" onclick="fecharViagemModal('viagemModalAvatarBanco')">&times;</span>
       <div class="viagem-social-header"><span>🖼️</span><span>Escolher imagem para perfil</span></div>
       <div class="viagem-social-corpo" id="viagemAvatarBancoCorpo"></div>
+    </div>
+  </div>
+
+  <div id="viagemModalEmojiPicker" class="gm-overlay">
+    <div class="gm-box viagem-social-box gm-anim-in">
+      <span class="gm-close" onclick="fecharViagemModal('viagemModalEmojiPicker')">&times;</span>
+      <div class="viagem-social-header"><span>😀</span><span>Escolher emoji para o perfil</span></div>
+      <div class="viagem-social-corpo" id="viagemEmojiPickerCorpo"></div>
     </div>
   </div>
 
@@ -4663,6 +4742,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getFirestore, doc, setDoc, getDoc, deleteDoc, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
+    /* Projeto original: usado para a configuração geral do site e o Modo Guerreiro (Batalha do Biel) */
     const firebaseConfig = {
       apiKey: "AIzaSyBhq3yPc927yrj5xT1UBaJSxJ4S9H7tEgI",
       authDomain: "sitecaca2.firebaseapp.com",
@@ -4672,8 +4752,22 @@
       appId: "1:391187353901:web:050289706c2fbb0d0343a4"
     };
 
+    /* Projeto novo: usado exclusivamente pelo "Viajando com a Cacá" (ranking, chat, memória,
+       álbum social e banco de imagens), para dividir o consumo de créditos entre os dois projetos */
+    const firebaseConfigViagem = {
+      apiKey: "AIzaSyBrWGg6g82fP40a2QSmee5sBAm2gnhqwlQ",
+      authDomain: "caca-viagem.firebaseapp.com",
+      projectId: "caca-viagem",
+      storageBucket: "caca-viagem.firebasestorage.app",
+      messagingSenderId: "927277678863",
+      appId: "1:927277678863:web:88242bc34bcaae6abfbe7a"
+    };
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    const appViagem = initializeApp(firebaseConfigViagem, "viagem");
+    const dbViagem = getFirestore(appViagem);
 
     window.salvarFirestore = async function(dados) {
       await setDoc(doc(db, "config", "site"), dados);
@@ -4720,48 +4814,48 @@
 
     /* ===== MODO VIAJANDO COM A CACÁ (RANKING) ===== */
     window.obterViagemJogador = async function(nome) {
-      const snap = await getDoc(doc(db, "viagemJogadores", nome));
+      const snap = await getDoc(doc(dbViagem, "viagemJogadores", nome));
       return snap.exists() ? snap.data() : null;
     };
     window.salvarViagemJogador = async function(nome, dados) {
-      await setDoc(doc(db, "viagemJogadores", nome), dados);
+      await setDoc(doc(dbViagem, "viagemJogadores", nome), dados);
     };
     window.buscarRankingViagem = async function() {
-      const snap = await getDocs(collection(db, "viagemJogadores"));
+      const snap = await getDocs(collection(dbViagem, "viagemJogadores"));
       const lista = [];
       snap.forEach(function(d) { lista.push(Object.assign({ id: d.id }, d.data())); });
       return lista;
     };
     window.apagarTodosViagemJogadores = async function() {
-      const snap = await getDocs(collection(db, "viagemJogadores"));
+      const snap = await getDocs(collection(dbViagem, "viagemJogadores"));
       const promessas = [];
-      snap.forEach(function(d) { promessas.push(deleteDoc(doc(db, "viagemJogadores", d.id))); });
+      snap.forEach(function(d) { promessas.push(deleteDoc(doc(dbViagem, "viagemJogadores", d.id))); });
       await Promise.all(promessas);
     };
 
     /* ===== MODO VIAJANDO COM A CACÁ (histórico de conversas do chat) ===== */
     window.salvarHistoricoChat = async function(registro) {
-      await addDoc(collection(db, "viagemHistoricoChat"), registro);
+      await addDoc(collection(dbViagem, "viagemHistoricoChat"), registro);
     };
     window.buscarHistoricoChat = async function() {
-      const snap = await getDocs(collection(db, "viagemHistoricoChat"));
+      const snap = await getDocs(collection(dbViagem, "viagemHistoricoChat"));
       const lista = [];
       snap.forEach(function(d) { lista.push(Object.assign({ id: d.id }, d.data())); });
       return lista;
     };
     window.apagarHistoricoChat = async function() {
-      const snap = await getDocs(collection(db, "viagemHistoricoChat"));
+      const snap = await getDocs(collection(dbViagem, "viagemHistoricoChat"));
       const promessas = [];
-      snap.forEach(function(d) { promessas.push(deleteDoc(doc(db, "viagemHistoricoChat", d.id))); });
+      snap.forEach(function(d) { promessas.push(deleteDoc(doc(dbViagem, "viagemHistoricoChat", d.id))); });
       await Promise.all(promessas);
     };
     window.apagarHistoricoChatAntigo = async function(limiteTimestamp) {
-      const snap = await getDocs(collection(db, "viagemHistoricoChat"));
+      const snap = await getDocs(collection(dbViagem, "viagemHistoricoChat"));
       const promessas = [];
       snap.forEach(function(d) {
         var dados = d.data();
         if (dados && dados.ts && dados.ts < limiteTimestamp) {
-          promessas.push(deleteDoc(doc(db, "viagemHistoricoChat", d.id)));
+          promessas.push(deleteDoc(doc(dbViagem, "viagemHistoricoChat", d.id)));
         }
       });
       await Promise.all(promessas);
@@ -4769,52 +4863,52 @@
 
     /* ===== MODO VIAJANDO COM A CACÁ (memória de usuários p/ conversa livre) ===== */
     window.obterMemoriaUsuarioViagem = async function(nome) {
-      const snap = await getDoc(doc(db, "viagemMemoriaUsuarios", nome));
+      const snap = await getDoc(doc(dbViagem, "viagemMemoriaUsuarios", nome));
       return snap.exists() ? snap.data() : null;
     };
     window.salvarMemoriaUsuarioViagem = async function(nome, dados) {
-      await setDoc(doc(db, "viagemMemoriaUsuarios", nome), dados);
+      await setDoc(doc(dbViagem, "viagemMemoriaUsuarios", nome), dados);
     };
 
     /* ===== MODO VIAJANDO COM A CACÁ (Álbum de Viagem: perfis, postagens e robôs compartilhados entre usuários) ===== */
     window.salvarViagemSocialDados = async function(chave, dados) {
-      await setDoc(doc(db, "viagemSocial", chave), { dados: dados, atualizadoEm: Date.now() });
+      await setDoc(doc(dbViagem, "viagemSocial", chave), { dados: dados, atualizadoEm: Date.now() });
     };
     window.carregarViagemSocialDados = async function(chave) {
-      const snap = await getDoc(doc(db, "viagemSocial", chave));
+      const snap = await getDoc(doc(dbViagem, "viagemSocial", chave));
       return snap.exists() ? snap.data().dados : null;
     };
 
     /* ===== Banco de Imagens da Live da Cacá (imagens adicionadas/editadas/removidas pelo Painel Administrativo) ===== */
     window.viagemBancoSalvarExtra = async function(item) {
-      await setDoc(doc(db, "viagemBancoExtra", item.id), item);
+      await setDoc(doc(dbViagem, "viagemBancoExtra", item.id), item);
     };
     window.viagemBancoExcluirExtra = async function(id) {
-      await deleteDoc(doc(db, "viagemBancoExtra", id));
+      await deleteDoc(doc(dbViagem, "viagemBancoExtra", id));
     };
     window.viagemBancoListarExtra = async function() {
-      const snap = await getDocs(collection(db, "viagemBancoExtra"));
+      const snap = await getDocs(collection(dbViagem, "viagemBancoExtra"));
       const lista = [];
       snap.forEach(function(d) { lista.push(d.data()); });
       return lista;
     };
     window.viagemBancoMarcarRemovido = async function(id) {
-      await setDoc(doc(db, "viagemBancoRemovidos", id), { removido: true });
+      await setDoc(doc(dbViagem, "viagemBancoRemovidos", id), { removido: true });
     };
     window.viagemBancoDesmarcarRemovido = async function(id) {
-      await deleteDoc(doc(db, "viagemBancoRemovidos", id));
+      await deleteDoc(doc(dbViagem, "viagemBancoRemovidos", id));
     };
     window.viagemBancoListarRemovidos = async function() {
-      const snap = await getDocs(collection(db, "viagemBancoRemovidos"));
+      const snap = await getDocs(collection(dbViagem, "viagemBancoRemovidos"));
       const ids = [];
       snap.forEach(function(d) { ids.push(d.id); });
       return ids;
     };
     window.viagemBancoSalvarOverride = async function(id, dados) {
-      await setDoc(doc(db, "viagemBancoOverrides", id), dados);
+      await setDoc(doc(dbViagem, "viagemBancoOverrides", id), dados);
     };
     window.viagemBancoListarOverrides = async function() {
-      const snap = await getDocs(collection(db, "viagemBancoOverrides"));
+      const snap = await getDocs(collection(dbViagem, "viagemBancoOverrides"));
       const mapa = {};
       snap.forEach(function(d) { mapa[d.id] = d.data(); });
       return mapa;
@@ -8375,15 +8469,34 @@
       return viagemMeuIp;
     }
 
+    function viagemAlternarSenhaVisivel(id, btn) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (el.type === 'password') {
+        el.type = 'text';
+        if (btn) { btn.textContent = '🙈'; btn.setAttribute('aria-label', 'Ocultar senha'); }
+      } else {
+        el.type = 'password';
+        if (btn) { btn.textContent = '👁️'; btn.setAttribute('aria-label', 'Mostrar senha'); }
+      }
+    }
+
     async function entrarViagem() {
       var nome = ((document.getElementById('viagemInputNome')||{}).value || '').trim();
       var arroba = ((document.getElementById('viagemInputArroba')||{}).value || '').trim().toLowerCase().replace(/^@+/, '');
       var senha = ((document.getElementById('viagemInputSenhaPerfil')||{}).value || '');
+      var confirmarSenha = ((document.getElementById('viagemInputSenhaConfirmar')||{}).value || '');
       var emoji = ((document.getElementById('viagemInputEmojiPerfil')||{}).value || '').trim();
       if (!nome || !arroba || !senha) { alert('Preencha nome, @ e senha.'); return; }
       if (!/^[a-z0-9._-]{3,20}$/.test(arroba)) { alert('O @ deve ter de 3 a 20 caracteres e usar apenas letras, números, ponto, traço ou underline.'); return; }
       var perfis = viagemSocialCarregarPerfis();
-      if (perfis[arroba] && perfis[arroba].senha !== senha) { alert('Esse @ já existe e a senha está incorreta.'); return; }
+      var perfilExistente = perfis[arroba];
+      if (perfilExistente) {
+        if (perfilExistente.senha !== senha) { alert('Esse @ já existe e a senha está incorreta.'); return; }
+      } else {
+        if (!confirmarSenha) { alert('Digite a senha novamente no campo de confirmação.'); return; }
+        if (senha !== confirmarSenha) { alert('As senhas não são iguais. Digite a mesma senha nos dois campos para criar o perfil.'); return; }
+      }
       var avatar = viagemAvatarBancoSelecionado || (emoji || '🧳');
       if (!perfis[arroba]) perfis[arroba] = { nome:nome, arroba:arroba, senha:senha, descricao:'', avatar:avatar, criadoEm:Date.now() };
       else { perfis[arroba].nome = nome; perfis[arroba].avatar = avatar; }
@@ -10214,7 +10327,7 @@
   function viagemPodeModerar(){return viagemEhAdminAberto()}
   function viagemMeuPost(post){return !!(viagemSocialLogado&&post.dono===viagemPerfilAtual)}
   function viagemFotoPublicada(id){return viagemSocialCarregarPosts().some(function(x){return x.id===id&&x.dono===viagemPerfilAtual})}
-  function viagemAtualizarPostagensRede(){var modal=document.getElementById('viagemModalRede');if(modal&&modal.classList.contains('ativo')){var ativo=(document.querySelector('.viagem-social-nav .ativo')||{textContent:''}).textContent; if(ativo==='Perfis') viagemMostrarPerfis(); else if(ativo==='Meu perfil') viagemAbrirPerfilRede(viagemPerfilAtual); else if(ativo==='Imagens para postar') viagemMostrarBancoImagens(); else viagemMostrarTimeline();}}
+  function viagemAtualizarPostagensRede(){var modal=document.getElementById('viagemModalRede');if(modal&&modal.classList.contains('ativo')){var ativo=(document.querySelector('.viagem-social-nav .ativo')||{textContent:''}).textContent; if(ativo==='Perfis') viagemMostrarPerfis(); else if(ativo==='Meu perfil') viagemAbrirPerfilRede(viagemPerfilAtual); else if(ativo==='Imagens para postar') viagemMostrarBancoImagens('viagemSocialCorpo',false); else viagemMostrarTimeline();}}
   function viagemAlternarEstrela(idxContato,msgIndex){
     if(!viagemPerfilAtual){alert('Entre com seu nome, @ e senha para publicar no seu perfil.');return;}
     var conv=viagemConversas[idxContato]||[],m=conv[msgIndex];if(!m||m.tipo!=='imagem')return;
@@ -10225,7 +10338,7 @@
     viagemAtualizarPostagensRede();
   }
   async function viagemAbrirRede(){abrirViagemModal('viagemModalRede');viagemMostrarTimeline();await viagemSincronizarSocialFirebase();viagemAtualizarPostagensRede();}
-  function viagemSocialNav(ativo){return '<div class="viagem-social-nav"><button class="'+(ativo==='timeline'?'ativo':'')+'" onclick="viagemMostrarTimeline()">Linha do tempo</button><button class="'+(ativo==='perfis'?'ativo':'')+'" onclick="viagemMostrarPerfis()">Perfis</button><button class="'+(ativo==='banco'?'ativo':'')+'" onclick="viagemMostrarBancoImagens()">Imagens para postar</button>'+(viagemPerfilAtual?'<button class="'+(ativo==='meu'?'ativo':'')+'" data-id="'+viagemPerfilAtual+'" onclick="viagemAbrirPerfilRede(this.dataset.id)">Meu perfil</button>':'')+'</div>'}
+  function viagemSocialNav(ativo){return '<div class="viagem-social-nav"><button class="'+(ativo==='timeline'?'ativo':'')+'" onclick="viagemMostrarTimeline()">Linha do tempo</button><button class="'+(ativo==='perfis'?'ativo':'')+'" onclick="viagemMostrarPerfis()">Perfis</button><button class="'+(ativo==='banco'?'ativo':'')+'" onclick="viagemMostrarBancoImagens(&#39;viagemSocialCorpo&#39;,false)">Imagens para postar</button>'+(viagemPerfilAtual?'<button class="'+(ativo==='meu'?'ativo':'')+'" data-id="'+viagemPerfilAtual+'" onclick="viagemAbrirPerfilRede(this.dataset.id)">Meu perfil</button>':'')+'</div>'}
   /* viagemTodosPerfis, viagemMostrarPerfis e viagemRenderPost usam as versões completas definidas mais acima
      (sem listar perfis @contato_ dos NPCs do jogo, e com o botão "Editar descrição" em cada foto). */
   function viagemMostrarTimeline(){var b=document.getElementById('viagemSocialCorpo');if(!b)return;var posts=viagemSocialCarregarPosts().sort(function(a,c){return(c.criadoEm||0)-(a.criadoEm||0)});var h=viagemSocialNav('timeline')+'<div class="viagem-social-timeline">';if(!posts.length)h+='<p style="text-align:center;color:#78869d;padding:30px">Ainda não há publicações. Clique na estrela de uma foto do jogo.</p>';posts.forEach(function(p){h+=viagemRenderPost(p)});b.innerHTML=h+'</div>'}
@@ -10261,11 +10374,20 @@
 function viagemComentarPost(id){if(!viagemSocialLogado){alert('Entre no jogo com seu @ e senha para comentar.');return}var inp=document.getElementById('vc_'+id),txt=(inp&&inp.value||'').trim();if(!txt)return;var ps=viagemSocialCarregarPosts(),p=ps.find(function(x){return x.id===id});if(!p)return;p.comentarios=p.comentarios||[];p.comentarios.push({id:'c'+Date.now()+Math.random().toString(16).slice(2),autor:viagemPerfilAtual,texto:txt});viagemSocialSalvarPosts(ps);viagemMostrarTimeline()}
   function viagemExcluirComentario(pid,cid){var ps=viagemSocialCarregarPosts(),p=ps.find(function(x){return x.id===pid});if(!p)return;var c=(p.comentarios||[]).find(function(x){return x.id===cid});if(!(viagemPodeModerar()||(c&&c.autor===viagemPerfilAtual)))return;p.comentarios=(p.comentarios||[]).filter(function(x){return x.id!==cid});viagemSocialSalvarPosts(ps);viagemMostrarTimeline()}
   function viagemExcluirPost(id){var ps=viagemSocialCarregarPosts(),p=ps.find(function(x){return x.id===id});if(!p||!(viagemPodeModerar()||viagemMeuPost(p)))return;if(!confirm('Excluir esta imagem?'))return;viagemSocialSalvarPosts(ps.filter(function(x){return x.id!==id}));viagemMostrarTimeline();if(viagemContatoAtual!==null)viagemRenderizarMensagens()}
-  function viagemExcluirMeuPerfil(){if(!confirm('Excluir definitivamente seu perfil, publicações, curtidas e comentários?'))return;viagemRemoverPerfilCompleto(viagemPerfilAtual);viagemPerfilAtual='';viagemSocialLogado=false;localStorage.removeItem('viagem_perfil_atual');fecharViagemModal('viagemModalRede');alert('Perfil excluído.')}
+  function viagemExcluirMeuPerfil(){
+    if(!viagemSocialLogado||!viagemPerfilAtual)return;
+    var pfs=viagemSocialCarregarPerfis(),p=pfs[viagemPerfilAtual];
+    if(!p){alert('Perfil não encontrado.');return;}
+    var senha=prompt('Digite sua senha para confirmar a exclusão do perfil:');
+    if(senha===null)return;
+    if(senha!==p.senha){alert('Senha incorreta. O perfil não foi excluído.');return;}
+    if(!confirm('Excluir definitivamente seu perfil, publicações, curtidas e comentários?'))return;
+    viagemRemoverPerfilCompleto(viagemPerfilAtual);viagemPerfilAtual='';viagemSocialLogado=false;localStorage.removeItem('viagem_perfil_atual');fecharViagemModal('viagemModalRede');alert('Perfil excluído.')
+  }
   function viagemAdminLimparDescricao(id){if(!viagemPodeModerar())return;var pfs=viagemSocialCarregarPerfis();if(pfs[id]){pfs[id].descricao='';viagemSocialSalvarPerfis(pfs)}viagemAbrirPerfilRede(id)}
   function viagemAdminExcluirPerfil(id){if(!viagemPodeModerar()||!confirm('Excluir este perfil/usuário e todo o conteúdo dele?'))return;if(id.indexOf('contato_')===0){var p=viagemPerfilPorId(id);if(p){if(typeof viagemAdminExcluirContato==='function')viagemAdminExcluirContato(p.contato);else if(VIAGEM_CONTATOS[p.contato])VIAGEM_CONTATOS[p.contato].removido=true}viagemRemoverPerfilCompleto(id)}else viagemRemoverPerfilCompleto(id);viagemMostrarPerfis()}
   function viagemRemoverPerfilCompleto(id){var pfs=viagemSocialCarregarPerfis();delete pfs[id];viagemSocialSalvarPerfis(pfs);var ps=viagemSocialCarregarPosts().filter(function(p){return p.dono!==id});ps.forEach(function(p){p.curtidas=(p.curtidas||[]).filter(function(x){return x!==id});p.comentarios=(p.comentarios||[]).filter(function(x){return x.autor!==id})});viagemSocialSalvarPosts(ps)}
   function viagemExcluirPublicacao(idx,id){viagemExcluirPost(id)}
-  document.addEventListener('DOMContentLoaded',function(){['viagemInputArroba','viagemInputSenhaPerfil','viagemInputNome'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('keydown',function(ev){if(ev.key==='Enter')entrarViagem()})});var svg=document.getElementById('viagemMapaSvg');if(svg)svg.setAttribute('preserveAspectRatio','xMidYMid meet')});
+  document.addEventListener('DOMContentLoaded',function(){['viagemInputArroba','viagemInputSenhaPerfil','viagemInputSenhaConfirmar','viagemInputNome'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('keydown',function(ev){if(ev.key==='Enter')entrarViagem()})});var svg=document.getElementById('viagemMapaSvg');if(svg)svg.setAttribute('preserveAspectRatio','xMidYMid meet')});
 </script>
 </body>
