@@ -219,6 +219,7 @@
       atualizarStatusSenhaJogo(cfgInicial || {});
       carregarRobos();
       buscarBanco();
+      carregarConfigUploadRemoto();
       var statusEl = document.getElementById('statusConexao');
       statusEl.textContent = '🟢 Ao vivo — sincronizado';
       statusEl.classList.remove('offline');
@@ -359,6 +360,22 @@
         '</div>',
         '<div id="rpSocialLista" class="ap-lista">Clique em "Carregar" para ver os perfis.</div>',
         '<div id="msgSocial" class="ap-msg"></div>'
+      ].join(''));
+
+      h += secaoHtml('📤', 'Envio de imagens pelos usuários (Viajando com a Cacá)', [
+        '<label class="ap-label">Permite que os jogadores enviem fotos do próprio celular/computador para postar no perfil deles, em "Imagens para postar". A imagem enviada NÃO entra no banco de imagens compartilhado — só aparece no perfil e na linha do tempo de quem enviou.</label>',
+        '<label style="display:flex;align-items:center;gap:8px;margin:10px 0;cursor:pointer">',
+        '<input type="checkbox" id="rpUploadGlobalToggle" style="width:auto" onchange="salvarUploadGlobalRemoto()"> Permitir para todos os usuários',
+        '</label>',
+        '<div id="rpUploadStatus" class="ap-label" style="margin-bottom:10px">Carregando…</div>',
+        '<label class="ap-label">Liberar ou bloquear para um @ específico (vale mesmo com a opção acima):</label>',
+        '<div class="ap-row" style="margin-bottom:8px">',
+        '<input type="text" id="rpUploadArroba" class="ap-input" placeholder="@ do usuário" style="flex:1">',
+        '<button class="ap-btn-sm" onclick="liberarUploadUsuarioRemoto()">Liberar</button>',
+        '<button class="ap-btn-danger" onclick="bloquearUploadUsuarioRemoto()">Bloquear</button>',
+        '</div>',
+        '<div id="rpUploadExcecoes" class="ap-lista">Carregando…</div>',
+        '<div id="msgUpload" class="ap-msg"></div>'
       ].join(''));
 
       h += secaoHtml('🏆', 'Ranking — Modo Guerreiro', [
@@ -834,6 +851,74 @@
         mostrarMsg('msgSocial', 'Comentário excluído com sucesso!', true);
         if (socialTelaAtual !== 'perfis') abrirPostsPerfilRemoto(socialTelaAtual);
       } catch (e) { mostrarMsg('msgSocial', 'Não foi possível excluir o comentário agora.', false); }
+    }
+
+    /* ===== ENVIO DE IMAGENS PELOS USUÁRIOS (liga/desliga geral e por @) ===== */
+    var uploadConfigCache = { global: true, usuarios: {} };
+    async function carregarConfigUploadRemoto() {
+      try {
+        var cfg = await window.carregarViagemSocialDados('uploadConfig');
+        uploadConfigCache = {
+          global: (cfg && typeof cfg.global !== 'undefined') ? !!cfg.global : true,
+          usuarios: (cfg && cfg.usuarios && typeof cfg.usuarios === 'object') ? cfg.usuarios : {}
+        };
+      } catch (e) {}
+      renderUploadConfigRemoto();
+    }
+    function renderUploadConfigRemoto() {
+      var chk = document.getElementById('rpUploadGlobalToggle');
+      var status = document.getElementById('rpUploadStatus');
+      var lista = document.getElementById('rpUploadExcecoes');
+      if (chk) chk.checked = uploadConfigCache.global !== false;
+      if (status) status.textContent = (uploadConfigCache.global !== false)
+        ? '✓ Liberado para todos (exceto quem estiver bloqueado na lista abaixo).'
+        : '✗ Desligado para todos (exceto quem estiver liberado na lista abaixo).';
+      if (lista) {
+        var ids = Object.keys(uploadConfigCache.usuarios || {});
+        if (!ids.length) { lista.innerHTML = 'Nenhuma exceção cadastrada.'; }
+        else {
+          var h = '';
+          ids.forEach(function(id) {
+            h += '<div class="ap-item"><div class="info"><strong>@' + esc(id) + '</strong><small>' + (uploadConfigCache.usuarios[id] ? 'liberado' : 'bloqueado') + '</small></div>' +
+              '<button class="ap-btn-danger" onclick="removerExcecaoUploadRemoto(\'' + id + '\')">Remover</button></div>';
+          });
+          lista.innerHTML = h;
+        }
+      }
+    }
+    async function salvarConfigUploadRemoto() {
+      try { await window.salvarViagemSocialDados('uploadConfig', uploadConfigCache); mostrarMsg('msgUpload', 'Configuração salva com sucesso!', true); }
+      catch (e) { mostrarMsg('msgUpload', 'Não foi possível salvar agora.', false); }
+      renderUploadConfigRemoto();
+    }
+    function salvarUploadGlobalRemoto() {
+      var chk = document.getElementById('rpUploadGlobalToggle');
+      uploadConfigCache.global = !!(chk && chk.checked);
+      salvarConfigUploadRemoto();
+    }
+    function normalizarArrobaUploadRemoto() {
+      var el = document.getElementById('rpUploadArroba');
+      return ((el && el.value) || '').trim().toLowerCase().replace(/^@+/, '');
+    }
+    function liberarUploadUsuarioRemoto() {
+      var arroba = normalizarArrobaUploadRemoto();
+      if (!arroba) { mostrarMsg('msgUpload', 'Digite o @ do usuário.', false); return; }
+      uploadConfigCache.usuarios = uploadConfigCache.usuarios || {};
+      uploadConfigCache.usuarios[arroba] = true;
+      document.getElementById('rpUploadArroba').value = '';
+      salvarConfigUploadRemoto();
+    }
+    function bloquearUploadUsuarioRemoto() {
+      var arroba = normalizarArrobaUploadRemoto();
+      if (!arroba) { mostrarMsg('msgUpload', 'Digite o @ do usuário.', false); return; }
+      uploadConfigCache.usuarios = uploadConfigCache.usuarios || {};
+      uploadConfigCache.usuarios[arroba] = false;
+      document.getElementById('rpUploadArroba').value = '';
+      salvarConfigUploadRemoto();
+    }
+    function removerExcecaoUploadRemoto(id) {
+      if (uploadConfigCache.usuarios) delete uploadConfigCache.usuarios[id];
+      salvarConfigUploadRemoto();
     }
 
     /* ===== RANKING ===== */

@@ -2652,6 +2652,12 @@
     .viagem-banco-card-info button{border:0;border-radius:9px;background:#40557d;color:#fff;padding:9px 11px;font-weight:800;cursor:pointer}
     .viagem-banco-card-info button::before{content:'★ ';color:#ffd83d}
     .viagem-banco-vazio{padding:24px 12px;text-align:center;color:#78869d}
+    .viagem-banco-upload{background:#eef4ff;border:1px dashed #9fb6e0;border-radius:14px;padding:12px 14px;margin:12px 0 0;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+    .viagem-banco-upload-btn{border:0;border-radius:10px;padding:10px 16px;background:#40557d;color:#fff;font-weight:800;cursor:pointer;flex-shrink:0}
+    .viagem-banco-upload-btn:hover{background:#324467}
+    .viagem-banco-upload small{color:#4a5870;flex:1;min-width:200px}
+    .viagem-banco-upload-bloqueado{background:#fff1f1;border:1px dashed #efb8b8}
+    .viagem-banco-upload-bloqueado small{color:#b52e2e;font-weight:700}
 
 
   </style>
@@ -3265,6 +3271,66 @@
     viagemAdminBuscarBanco();
   }
 
+  /* ===== Painel Administrativo (embutido no site): liga/desliga o envio de imagens dos usuários ===== */
+  async function viagemAdminAtualizarPainelUpload() {
+    var chk = document.getElementById('apUploadGlobalToggle');
+    if (!chk) return;
+    await viagemUploadSincronizar();
+    chk.checked = viagemUploadConfig.global !== false;
+    var status = document.getElementById('apUploadStatus');
+    if (status) status.textContent = (viagemUploadConfig.global !== false)
+      ? '✓ Envio liberado para todos (exceto quem estiver bloqueado na lista abaixo).'
+      : '✗ Envio desligado para todos (exceto quem estiver liberado na lista abaixo).';
+    var listaEl = document.getElementById('apUploadExcecoes');
+    if (listaEl) {
+      var usuarios = viagemUploadConfig.usuarios || {};
+      var ids = Object.keys(usuarios);
+      if (!ids.length) { listaEl.innerHTML = 'Nenhuma exceção cadastrada.'; }
+      else {
+        var h = '';
+        ids.forEach(function(id) {
+          h += '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #e7ecf3">' +
+            '<span>@' + viagemEsc(id) + ' — ' + (usuarios[id] ? 'liberado' : 'bloqueado') + '</span>' +
+            '<button class="ap-btn-sm" data-id="' + viagemEsc(id) + '" onclick="viagemAdminRemoverExcecaoUpload(this.dataset.id)">Remover</button></div>';
+        });
+        listaEl.innerHTML = h;
+      }
+    }
+  }
+  async function viagemAdminSalvarUploadGlobal() {
+    var chk = document.getElementById('apUploadGlobalToggle');
+    viagemUploadConfig.global = !!(chk && chk.checked);
+    await viagemUploadSalvarConfig();
+    viagemAdminAtualizarPainelUpload();
+  }
+  function viagemAdminNormalizarArrobaUpload() {
+    var el = document.getElementById('apUploadArroba');
+    return ((el && el.value) || '').trim().toLowerCase().replace(/^@+/, '');
+  }
+  async function viagemAdminLiberarUploadUsuario() {
+    var arroba = viagemAdminNormalizarArrobaUpload();
+    if (!arroba) { alert('Digite o @ do usuário.'); return; }
+    viagemUploadConfig.usuarios = viagemUploadConfig.usuarios || {};
+    viagemUploadConfig.usuarios[arroba] = true;
+    await viagemUploadSalvarConfig();
+    var el = document.getElementById('apUploadArroba'); if (el) el.value = '';
+    viagemAdminAtualizarPainelUpload();
+  }
+  async function viagemAdminBloquearUploadUsuario() {
+    var arroba = viagemAdminNormalizarArrobaUpload();
+    if (!arroba) { alert('Digite o @ do usuário.'); return; }
+    viagemUploadConfig.usuarios = viagemUploadConfig.usuarios || {};
+    viagemUploadConfig.usuarios[arroba] = false;
+    await viagemUploadSalvarConfig();
+    var el = document.getElementById('apUploadArroba'); if (el) el.value = '';
+    viagemAdminAtualizarPainelUpload();
+  }
+  async function viagemAdminRemoverExcecaoUpload(id) {
+    if (viagemUploadConfig.usuarios) delete viagemUploadConfig.usuarios[id];
+    await viagemUploadSalvarConfig();
+    viagemAdminAtualizarPainelUpload();
+  }
+
   function viagemAtualizarListaRobosPainel() {
     var box = document.getElementById('apRobosLista');
     if (!box) return;
@@ -3620,6 +3686,7 @@
           if (s === obterSenhaAdminAtual()) {
             document.getElementById('adminPanel').style.display = 'block';
             ativarModoArrasto();
+            if (typeof viagemAdminAtualizarPainelUpload === 'function') viagemAdminAtualizarPainelUpload();
           } else if (s !== null) { alert('Senha incorreta'); }
         });
       }
@@ -3661,6 +3728,22 @@
         '<button class="ap-btn-sm" onclick="viagemAdminBuscarBanco()">Buscar</button>' +
         '</div>' +
         '<div id="apBancoResultados" style="max-height:260px;overflow-y:auto;background:#f4f8fc;border:1px solid #e7ecf3;border-radius:10px;padding:8px;font-size:12.5px;">Clique em "Buscar" ou digite uma palavra-chave.</div>' +
+        '</div>' +
+
+        '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#128228;</span> Envio de imagens pelos usu&#225;rios (Viajando com a Cac&#225;)</p>' +
+        '<label class="ap-label">Permite que os jogadores enviem fotos do pr&#243;prio celular/computador para postar no perfil deles, em "Imagens para postar". A imagem enviada N&#195;O entra no banco de imagens compartilhado &#8212; s&#243; aparece no perfil e na linha do tempo de quem enviou.</label>' +
+        '<label style="display:flex;align-items:center;gap:8px;margin:10px 0;cursor:pointer">' +
+        '<input type="checkbox" id="apUploadGlobalToggle" style="width:auto" onchange="viagemAdminSalvarUploadGlobal()"> Permitir para todos os usu&#225;rios' +
+        '</label>' +
+        '<div id="apUploadStatus" class="ap-label" style="margin-bottom:10px">Carregando&#8230;</div>' +
+        '<label class="ap-label">Liberar ou bloquear para um @ espec&#237;fico (vale mesmo com a op&#231;&#227;o acima):</label>' +
+        '<div class="ap-row" style="margin-bottom:8px">' +
+        '<input type="text" id="apUploadArroba" class="ap-input" placeholder="@ do usu&#225;rio" style="flex:1">' +
+        '<button class="ap-btn-sm" onclick="viagemAdminLiberarUploadUsuario()">Liberar</button>' +
+        '<button class="ap-btn-sm" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff" onclick="viagemAdminBloquearUploadUsuario()">Bloquear</button>' +
+        '</div>' +
+        '<div id="apUploadExcecoes" style="max-height:180px;overflow-y:auto;background:#f4f8fc;border:1px solid #e7ecf3;border-radius:10px;padding:8px;font-size:12.5px;">Carregando&#8230;</div>' +
         '</div>' +
 
         '<div class="ap-section">' +
@@ -10604,6 +10687,89 @@
   var viagemBancoAlvoAtual = 'viagemSocialCorpo';
   var viagemBancoModoAvatar = false;
   var viagemAvatarBancoSelecionado = '';
+  /* Controle de envio de imagens do próprio aparelho (ligado/desligado pelo Painel Administrativo,
+     de forma geral e também por @ específico). Padrão: liberado para todos até o admin desligar. */
+  var viagemUploadConfig = { global: true, usuarios: {} };
+  function viagemUploadCarregarConfigLocal() { try { return JSON.parse(localStorage.getItem('viagem_upload_config_v1') || '{}'); } catch (e) { return {}; } }
+  function viagemUploadAplicarConfig(cfg) {
+    viagemUploadConfig = {
+      global: (cfg && typeof cfg.global !== 'undefined') ? !!cfg.global : true,
+      usuarios: (cfg && cfg.usuarios && typeof cfg.usuarios === 'object') ? cfg.usuarios : {}
+    };
+    localStorage.setItem('viagem_upload_config_v1', JSON.stringify(viagemUploadConfig));
+  }
+  viagemUploadAplicarConfig(viagemUploadCarregarConfigLocal());
+  async function viagemUploadSincronizar() {
+    try {
+      if (typeof window.carregarViagemSocialDados === 'function') {
+        var cfg = await window.carregarViagemSocialDados('uploadConfig');
+        if (cfg) viagemUploadAplicarConfig(cfg);
+      }
+    } catch (e) {}
+  }
+  async function viagemUploadSalvarConfig() {
+    localStorage.setItem('viagem_upload_config_v1', JSON.stringify(viagemUploadConfig));
+    if (typeof window.salvarViagemSocialDados === 'function') {
+      try { await window.salvarViagemSocialDados('uploadConfig', viagemUploadConfig); }
+      catch (e) { alert('Alteração salva localmente (Firestore indisponível).'); }
+    }
+  }
+  function viagemUploadPermitidoPara(perfilId) {
+    if (!perfilId) return false;
+    var usuarios = viagemUploadConfig.usuarios || {};
+    if (Object.prototype.hasOwnProperty.call(usuarios, perfilId)) return !!usuarios[perfilId];
+    return viagemUploadConfig.global !== false;
+  }
+  /* Redimensiona/comprime a imagem escolhida no aparelho do usuário antes de publicar,
+     para não deixar as postagens pesadas demais (mantém como fallback o arquivo original). */
+  function viagemComprimirImagemArquivo(arquivo, callback) {
+    var leitor = new FileReader();
+    leitor.onload = function(e) {
+      var resultadoOriginal = e.target.result;
+      try {
+        var img = new Image();
+        img.onload = function() {
+          try {
+            var maxLado = 1280, w = img.width, h = img.height;
+            if (w > maxLado || h > maxLado) {
+              if (w >= h) { h = Math.round(h * (maxLado / w)); w = maxLado; }
+              else { w = Math.round(w * (maxLado / h)); h = maxLado; }
+            }
+            var canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            callback(canvas.toDataURL('image/jpeg', 0.78));
+          } catch (err) { callback(resultadoOriginal); }
+        };
+        img.onerror = function() { callback(resultadoOriginal); };
+        img.src = resultadoOriginal;
+      } catch (err) { callback(resultadoOriginal); }
+    };
+    leitor.onerror = function() { callback(null); };
+    leitor.readAsDataURL(arquivo);
+  }
+  /* Publica no perfil do usuário uma imagem escolhida no próprio celular/computador dele.
+     Fica na linha do tempo e no perfil dele, mas NUNCA entra no banco de imagens compartilhado
+     (não é salva via viagemBancoSalvarExtra, então ninguém mais consegue pesquisar por ela). */
+  function viagemUploadImagemPerfil(inputEl) {
+    if (!inputEl || !inputEl.files || !inputEl.files[0]) return;
+    var arquivo = inputEl.files[0];
+    if (!viagemPerfilAtual) { alert('Entre com seu perfil para enviar uma imagem.'); inputEl.value = ''; return; }
+    if (!viagemUploadPermitidoPara(viagemPerfilAtual)) { alert('O envio de imagens do seu aparelho está desativado no momento.'); inputEl.value = ''; return; }
+    if (!/^image\//.test(arquivo.type || '')) { alert('Escolha um arquivo de imagem.'); inputEl.value = ''; return; }
+    if (arquivo.size > 8 * 1024 * 1024) { alert('Essa imagem é muito grande. Escolha uma de até 8MB.'); inputEl.value = ''; return; }
+    viagemComprimirImagemArquivo(arquivo, function(dataUrl) {
+      inputEl.value = '';
+      if (!dataUrl) { alert('Não foi possível carregar essa imagem. Tente outra.'); return; }
+      var legenda = (prompt('Legenda para a foto (opcional):', '') || '').trim();
+      var posts = viagemSocialCarregarPosts();
+      posts.unshift({ id: 'u' + Date.now() + Math.random().toString(16).slice(2), dono: viagemPerfilAtual, url: dataUrl, legenda: legenda, criadoEm: Date.now(), curtidas: [], comentarios: [], origem: 'upload' });
+      viagemSocialSalvarPosts(posts);
+      alert('Imagem publicada no seu perfil!');
+      viagemMostrarTimeline();
+    });
+  }
   window.VIAGEM_BANCO_IMAGENS_FALLBACK = [{"id": "img_0001", "titulo": "Floresta", "categoria": "natureza", "keywords": ["flor", "floresta", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/floresta?lock=1", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0002", "titulo": "Árvore", "categoria": "natureza", "keywords": ["arvore", "flor", "natureza", "paisagem", "verde", "árvore"], "url": "https://loremflickr.com/900/700/arvore?lock=2", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0003", "titulo": "Folhas", "categoria": "natureza", "keywords": ["flor", "folhas", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/folhas?lock=3", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0004", "titulo": "Rio", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "rio", "verde"], "url": "https://loremflickr.com/900/700/rio?lock=4", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0005", "titulo": "Lago", "categoria": "natureza", "keywords": ["flor", "lago", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/lago?lock=5", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0006", "titulo": "Montanha", "categoria": "natureza", "keywords": ["flor", "montanha", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/montanha?lock=6", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0007", "titulo": "Campo", "categoria": "natureza", "keywords": ["campo", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/campo?lock=7", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0008", "titulo": "Jardim", "categoria": "natureza", "keywords": ["flor", "jardim", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/jardim?lock=8", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0009", "titulo": "Praia", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "praia", "verde"], "url": "https://loremflickr.com/900/700/praia?lock=9", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0010", "titulo": "Mar", "categoria": "natureza", "keywords": ["flor", "mar", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/mar?lock=10", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0011", "titulo": "Cachoeira", "categoria": "natureza", "keywords": ["cachoeira", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/cachoeira?lock=11", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0012", "titulo": "Vale", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "vale", "verde"], "url": "https://loremflickr.com/900/700/vale?lock=12", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0013", "titulo": "Grama", "categoria": "natureza", "keywords": ["flor", "grama", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/grama?lock=13", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0014", "titulo": "Céu", "categoria": "natureza", "keywords": ["ceu", "céu", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/ceu?lock=14", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0015", "titulo": "Nuvens", "categoria": "natureza", "keywords": ["flor", "natureza", "nuvens", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/nuvens?lock=15", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0016", "titulo": "Sol", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "sol", "verde"], "url": "https://loremflickr.com/900/700/sol?lock=16", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0017", "titulo": "Lua", "categoria": "natureza", "keywords": ["flor", "lua", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/lua?lock=17", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0018", "titulo": "Estrela", "categoria": "natureza", "keywords": ["estrela", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/estrela?lock=18", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0019", "titulo": "Paisagem", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/paisagem?lock=19", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0020", "titulo": "Trilha", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "trilha", "verde"], "url": "https://loremflickr.com/900/700/trilha?lock=20", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0021", "titulo": "Pedra", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "pedra", "verde"], "url": "https://loremflickr.com/900/700/pedra?lock=21", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0022", "titulo": "Ilha", "categoria": "natureza", "keywords": ["flor", "ilha", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/ilha?lock=22", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0023", "titulo": "Deserto", "categoria": "natureza", "keywords": ["deserto", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/deserto?lock=23", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0024", "titulo": "Flor", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/flor?lock=24", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0025", "titulo": "Bambu", "categoria": "natureza", "keywords": ["bambu", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/bambu?lock=25", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0026", "titulo": "Nascer Do Sol", "categoria": "natureza", "keywords": ["flor", "nascer do sol", "nascer-do-sol", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/nascer-do-sol?lock=26", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0027", "titulo": "Pôr Do Sol", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "por-do-sol", "pôr do sol", "verde"], "url": "https://loremflickr.com/900/700/por-do-sol?lock=27", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0028", "titulo": "Orvalho", "categoria": "natureza", "keywords": ["flor", "natureza", "orvalho", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/orvalho?lock=28", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0029", "titulo": "Córrego", "categoria": "natureza", "keywords": ["corrego", "córrego", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/corrego?lock=29", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0030", "titulo": "Serra", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "serra", "verde"], "url": "https://loremflickr.com/900/700/serra?lock=30", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0031", "titulo": "Planície", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "planicie", "planície", "verde"], "url": "https://loremflickr.com/900/700/planicie?lock=31", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0032", "titulo": "Bosque", "categoria": "natureza", "keywords": ["bosque", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/bosque?lock=32", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0033", "titulo": "Costa", "categoria": "natureza", "keywords": ["costa", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/costa?lock=33", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0034", "titulo": "Morro", "categoria": "natureza", "keywords": ["flor", "morro", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/morro?lock=34", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0035", "titulo": "Rochas", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "rochas", "verde"], "url": "https://loremflickr.com/900/700/rochas?lock=35", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0036", "titulo": "Laguna", "categoria": "natureza", "keywords": ["flor", "laguna", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/laguna?lock=36", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0037", "titulo": "Cascata", "categoria": "natureza", "keywords": ["cascata", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/cascata?lock=37", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0038", "titulo": "Pântano", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "pantano", "pântano", "verde"], "url": "https://loremflickr.com/900/700/pantano?lock=38", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0039", "titulo": "Verdejante", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "verde", "verdejante"], "url": "https://loremflickr.com/900/700/verdejante?lock=39", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0040", "titulo": "Selva", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "selva", "verde"], "url": "https://loremflickr.com/900/700/selva?lock=40", "credito": "Banco próprio da Live da Cacá"}];
 
   function viagemSocialCarregarPerfis(){try{return JSON.parse(localStorage.getItem('viagem_social_perfis_v2')||'{}')}catch(e){return {}}}
@@ -10659,7 +10825,7 @@
   function viagemBancoCategorias(lista){var m={'Todos':true};lista.forEach(function(i){if(i&&i.categoria)m[i.categoria]=true;});return Object.keys(m)}
   function viagemBancoCombina(item,termo,categoria){if(categoria&&categoria!=='Todos'&&item.categoria!==categoria)return false;if(!termo)return true;var base=((item.titulo||'')+' '+(item.categoria||'')+' '+(item.keywords||[]).join(' '));base=viagemBancoNormalizar(base);return base.indexOf(viagemBancoNormalizar(termo))!==-1;}
   function viagemBancoItemHtml(item){var capId='viagemBancoLegenda_'+item.id;var botao=viagemBancoModoAvatar?'<button data-id="'+item.id+'" onclick="viagemSelecionarAvatarBanco(this.dataset.id)">Usar no perfil</button>':'<button data-id="'+item.id+'" onclick="viagemPublicarBancoImagem(this.dataset.id)">Postar</button>';return '<article class="viagem-banco-card"><img src="'+item.url+'" alt="'+viagemEsc(item.titulo||'')+'"><div class="viagem-banco-card-info"><strong>'+viagemEsc(item.titulo||'Imagem')+'</strong><small>'+viagemEsc(item.categoria||'Sem categoria')+'</small><input id="'+capId+'" maxlength="180" placeholder="Legenda para postar" value="'+viagemEsc(item.titulo||'')+'">'+botao+'</div></article>';}
-  async function viagemMostrarBancoImagens(alvoId, modoAvatar){viagemBancoAlvoAtual=alvoId||viagemBancoAlvoAtual||'viagemSocialCorpo';viagemBancoModoAvatar=!!modoAvatar;var b=document.getElementById(viagemBancoAlvoAtual);if(!b)return;var banco=await viagemCarregarBancoImagens();if(!viagemPerfilAtual&&!viagemBancoModoAvatar){b.innerHTML=viagemSocialNav('banco')+'<p class="viagem-banco-vazio">Entre com seu perfil para postar imagens do banco próprio.</p>';return;}var categorias=viagemBancoCategorias(banco);var html=(viagemBancoModoAvatar?'':viagemSocialNav('banco'))+'<div style="padding:14px 0 0"><div class="viagem-banco-toolbar"><input id="viagemBancoBusca" type="search" placeholder="Pesquisar imagens por palavra-chave" value="'+viagemEsc(viagemBancoBuscaAtual)+'" oninput="viagemBancoAtualizarBusca()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();viagemBancoBuscarAgora();}"><select id="viagemBancoCategoria" onchange="viagemBancoAtualizarBusca()">'+categorias.map(function(c){return '<option value="'+viagemEsc(c)+'"'+(c===viagemBancoCategoriaAtual?' selected':'')+'>'+viagemEsc(c)+'</option>';}).join('')+'</select><button class="viagem-banco-refresh" onclick="viagemBancoBuscarAgora()" style="border:0;border-radius:10px;padding:10px 14px;background:#40557d;color:#fff;font-weight:800;cursor:pointer">Pesquisar</button><button class="viagem-banco-refresh" onclick="viagemBancoLimparBusca()" style="border:0;border-radius:10px;padding:10px 14px;background:#8a94a8;color:#fff;font-weight:800;cursor:pointer">Limpar</button></div>';var filtrados=banco.filter(function(i){return viagemBancoCombina(i,viagemBancoBuscaAtual,viagemBancoCategoriaAtual);});if(!filtrados.length){html+='<p class="viagem-banco-vazio">Nenhuma imagem encontrada com esses filtros.</p>';}else{html+='<div class="viagem-banco-grid">';filtrados.slice(0,120).forEach(function(i){html+=viagemBancoItemHtml(i);});html+='</div>';}html+='</div>';b.innerHTML=html;}
+  async function viagemMostrarBancoImagens(alvoId, modoAvatar){viagemBancoAlvoAtual=alvoId||viagemBancoAlvoAtual||'viagemSocialCorpo';viagemBancoModoAvatar=!!modoAvatar;var b=document.getElementById(viagemBancoAlvoAtual);if(!b)return;var banco=await viagemCarregarBancoImagens();if(!viagemPerfilAtual&&!viagemBancoModoAvatar){b.innerHTML=viagemSocialNav('banco')+'<p class="viagem-banco-vazio">Entre com seu perfil para postar imagens do banco próprio.</p>';return;}var uploadHtml='';if(!viagemBancoModoAvatar){await viagemUploadSincronizar();uploadHtml=viagemUploadPermitidoPara(viagemPerfilAtual)?'<div class="viagem-banco-upload"><label class="viagem-banco-upload-btn" for="viagemUploadImagemInput">&#128228; Carregar imagem do seu aparelho</label><input type="file" id="viagemUploadImagemInput" accept="image/*" style="display:none" onchange="viagemUploadImagemPerfil(this)"><small>A imagem vai para o seu perfil e para a linha do tempo. Ela não entra no banco de imagens compartilhado.</small></div>':'<div class="viagem-banco-upload viagem-banco-upload-bloqueado"><small>&#128683; O envio de imagens do seu aparelho está desativado no momento.</small></div>';}var categorias=viagemBancoCategorias(banco);var html=(viagemBancoModoAvatar?'':(viagemSocialNav('banco')+uploadHtml))+'<div style="padding:14px 0 0"><div class="viagem-banco-toolbar"><input id="viagemBancoBusca" type="search" placeholder="Pesquisar imagens por palavra-chave" value="'+viagemEsc(viagemBancoBuscaAtual)+'" oninput="viagemBancoAtualizarBusca()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();viagemBancoBuscarAgora();}"><select id="viagemBancoCategoria" onchange="viagemBancoAtualizarBusca()">'+categorias.map(function(c){return '<option value="'+viagemEsc(c)+'"'+(c===viagemBancoCategoriaAtual?' selected':'')+'>'+viagemEsc(c)+'</option>';}).join('')+'</select><button class="viagem-banco-refresh" onclick="viagemBancoBuscarAgora()" style="border:0;border-radius:10px;padding:10px 14px;background:#40557d;color:#fff;font-weight:800;cursor:pointer">Pesquisar</button><button class="viagem-banco-refresh" onclick="viagemBancoLimparBusca()" style="border:0;border-radius:10px;padding:10px 14px;background:#8a94a8;color:#fff;font-weight:800;cursor:pointer">Limpar</button></div>';var filtrados=banco.filter(function(i){return viagemBancoCombina(i,viagemBancoBuscaAtual,viagemBancoCategoriaAtual);});if(!filtrados.length){html+='<p class="viagem-banco-vazio">Nenhuma imagem encontrada com esses filtros.</p>';}else{html+='<div class="viagem-banco-grid">';filtrados.slice(0,120).forEach(function(i){html+=viagemBancoItemHtml(i);});html+='</div>';}html+='</div>';b.innerHTML=html;}
   function viagemBancoAtualizarBusca(){var a=document.getElementById('viagemBancoBusca');var c=document.getElementById('viagemBancoCategoria');viagemBancoBuscaAtual=(a&&a.value)||'';viagemBancoCategoriaAtual=(c&&c.value)||'Todos';}
   function viagemBancoBuscarAgora(){viagemBancoAtualizarBusca();viagemMostrarBancoImagens(viagemBancoAlvoAtual, viagemBancoModoAvatar);}
   function viagemBancoLimparBusca(){viagemBancoBuscaAtual='';viagemBancoCategoriaAtual='Todos';viagemMostrarBancoImagens(viagemBancoAlvoAtual, viagemBancoModoAvatar);}
