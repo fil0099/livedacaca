@@ -958,6 +958,35 @@
       width: 100%;
       height: 100%;
     }
+    .viagem-pin-ferramenta {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      z-index: 7;
+      width: 46px;
+      height: 46px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg-card);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 27px;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .viagem-pin-ferramenta:active { cursor: grabbing; }
+    .viagem-pin-fantasma {
+      position: fixed;
+      z-index: 999999999;
+      pointer-events: none;
+      transform: translate(-50%, -88%);
+      font-size: 34px;
+      filter: drop-shadow(0 3px 3px rgba(0,0,0,.45));
+    }
     .viagem-zoom-controles {
       position: absolute;
       top: 12px;
@@ -1001,8 +1030,21 @@
       pointer-events: none;
     }
     @media (max-width: 640px) {
+      .viagem-painel-box {
+        width: 100vw;
+        max-width: 100vw;
+        padding-left: 12px;
+        padding-right: 12px;
+      }
       .viagem-mapa-wrap {
-        max-height: 58vh;
+        aspect-ratio: 1 / 1;
+        min-height: 62vh;
+        max-height: 72vh;
+      }
+      .viagem-pin-ferramenta {
+        width: 50px;
+        height: 50px;
+        font-size: 30px;
       }
       .viagem-zoom-dica {
         display: none;
@@ -2468,6 +2510,88 @@
     .gm-completar-input:disabled {
       opacity: 0.5;
     }
+  
+
+    /* ===== Viajando com a Cacá: identidade própria do mensageiro e Álbum de Viagem ===== */
+    .viagem-fone-header { background: linear-gradient(135deg,#5b3cc4,#8b5cf6); }
+    .viagem-fone-mensagens { background: linear-gradient(160deg,#f1edff,#fff8ed); }
+    .viagem-fone-msg.recebida { background:#ffffff; border:1px solid #e7ddff; }
+    .viagem-fone-msg.enviada { background:#e9ddff; border:1px solid #d5c2ff; }
+    .viagem-fone-enviar,.viagem-fone-audio-play { background:#6d45d8; }
+    .viagem-fone-contato .viagem-fone-avatar { background:#eee8ff; color:#5b3cc4; }
+    .viagem-camera-status-btn { font-size:20px; line-height:1; }
+    .viagem-foto-wrap { position:relative; }
+    .viagem-foto-estrela { position:absolute; top:8px; right:8px; z-index:3; width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,.9); background:rgba(30,20,55,.48); color:#fff; font-size:22px; line-height:30px; cursor:pointer; text-shadow:0 1px 3px rgba(0,0,0,.7); box-shadow:0 3px 10px rgba(0,0,0,.2); }
+    .viagem-foto-estrela.ativa { color:#ffd83d; background:rgba(45,31,80,.72); }
+    .viagem-social-box { max-width:760px; width:96vw; text-align:left; padding:0; overflow:hidden; }
+    .viagem-social-header { display:flex; align-items:center; gap:10px; padding:16px 52px 16px 18px; color:#fff; background:linear-gradient(135deg,#23324d,#485d86); font-weight:800; }
+    .viagem-social-corpo { padding:18px; max-height:74vh; overflow:auto; background:#f5f7fb; }
+    .viagem-social-perfis { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:12px; }
+    .viagem-social-perfil { border:1px solid #dfe5ef; background:#fff; border-radius:15px; padding:16px 10px; text-align:center; cursor:pointer; box-shadow:0 4px 14px rgba(30,50,80,.06); }
+    .viagem-social-perfil:hover { transform:translateY(-2px); border-color:#7187b4; }
+    .viagem-social-avatar { width:58px; height:58px; margin:0 auto 8px; border-radius:50%; background:#edf1f8; display:flex; align-items:center; justify-content:center; font-size:28px; overflow:hidden; }
+    .viagem-social-avatar img { width:100%;height:100%;object-fit:cover; }
+    .viagem-social-nome { font-weight:800; font-size:14px; color:#26344f; }
+    .viagem-social-qtd { font-size:11.5px; color:#78869d; margin-top:3px; }
+    .viagem-social-voltar { border:0; background:#e8edf6; color:#33415c; border-radius:9px; padding:8px 12px; cursor:pointer; font-weight:700; margin-bottom:12px; }
+    .viagem-social-grade { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+    .viagem-social-post { background:#fff; border:1px solid #dfe5ef; border-radius:14px; overflow:hidden; box-shadow:0 4px 14px rgba(30,50,80,.06); }
+    .viagem-social-post img { width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:#dce5f2; }
+    .viagem-social-post-info { padding:10px; font-size:12.5px; color:#34425b; }
+    .viagem-social-excluir { margin-top:8px; width:100%; border:1px solid #f1b6b6; color:#b52e2e; background:#fff4f4; border-radius:8px; padding:7px; cursor:pointer; font-weight:700; }
+    .viagem-social-login { max-width:380px; margin:20px auto; background:#fff; border:1px solid #dfe5ef; border-radius:16px; padding:18px; text-align:center; }
+    .viagem-social-login input { width:100%; padding:11px; border:1px solid #ccd5e3; border-radius:10px; margin:6px 0; }
+    .viagem-social-login button { width:100%; padding:10px; border:0; border-radius:10px; background:#40557d; color:#fff; font-weight:800; cursor:pointer; margin-top:6px; }
+    .viagem-avatar-box { max-width:380px; margin:14px auto 0; background:#fff; border:1px solid #dfe5ef; border-radius:16px; padding:14px; text-align:center; }
+    .viagem-avatar-preview { width:84px; height:84px; margin:0 auto 10px; border-radius:50%; background:#edf1f8; display:flex; align-items:center; justify-content:center; font-size:40px; overflow:hidden; border:1px solid #d7dfec; }
+    .viagem-avatar-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+    .viagem-avatar-row { display:flex; gap:8px; flex-wrap:wrap; }
+    .viagem-avatar-row .gm-input { margin-bottom:0; flex:1; min-width:0; }
+    .viagem-avatar-row button { flex:1; min-width:0; border:0; border-radius:10px; background:#40557d; color:#fff; font-weight:800; cursor:pointer; padding:10px 12px; }
+    .viagem-avatar-row button.secundario { background:#edf1f8; color:#33415c; }
+    .viagem-chegada-foto { width:100%; border-radius:12px; margin-top:12px; }
+
+  
+
+    /* ===== Álbum de Viagem 2: identidade do jogador, timeline e interações ===== */
+    .viagem-mapa-wrap { aspect-ratio:2 / 1 !important; min-height:0 !important; }
+    .viagem-mapa-wrap svg { width:100%; height:100%; object-fit:contain; background:#dcecf4; }
+    @media (max-width:640px){ .viagem-mapa-wrap{ aspect-ratio:2 / 1 !important; min-height:0 !important; max-height:none !important; } }
+    .viagem-social-nav{display:flex;gap:8px;padding:10px 14px;background:#e9eef7;border-bottom:1px solid #d7dfec;position:sticky;top:0;z-index:4}
+    .viagem-social-nav button{border:0;border-radius:10px;padding:9px 13px;background:#fff;color:#33415c;font-weight:800;cursor:pointer}
+    .viagem-social-nav button.ativo{background:#40557d;color:#fff}
+    .viagem-social-timeline{max-width:590px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+    .viagem-social-card{background:#fff;border:1px solid #dfe5ef;border-radius:16px;overflow:hidden;box-shadow:0 5px 18px rgba(30,50,80,.07)}
+    .viagem-social-card-top{display:flex;align-items:center;gap:10px;padding:12px 14px}
+    .viagem-social-card-top .viagem-social-avatar{width:42px;height:42px;margin:0;font-size:21px;flex:0 0 auto}
+    .viagem-social-identidade{min-width:0;flex:1}.viagem-social-identidade strong{display:block;color:#26344f}.viagem-social-identidade small{color:#78869d}
+    .viagem-social-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#dce5f2}
+    .viagem-social-acoes{display:flex;gap:8px;padding:10px 12px 4px}.viagem-social-acoes button{border:0;border-radius:9px;padding:8px 11px;background:#edf1f8;color:#33415c;font-weight:800;cursor:pointer}
+    .viagem-social-acoes button.curtido{background:#ffe4ea;color:#b4234d}
+    .viagem-social-legenda{padding:5px 14px 10px;color:#34425b;font-size:13px}.viagem-social-comentarios{padding:0 14px 10px;font-size:12.5px;color:#48566f}
+    .viagem-social-comentario{padding:5px 0;border-top:1px solid #edf0f5}.viagem-social-comentario b{color:#26344f}
+    .viagem-social-comentar{display:flex;gap:7px;padding:0 12px 12px}.viagem-social-comentar input{flex:1;border:1px solid #ccd5e3;border-radius:9px;padding:9px}.viagem-social-comentar button{border:0;border-radius:9px;background:#40557d;color:#fff;padding:8px 12px;font-weight:800;cursor:pointer}
+    .viagem-social-cabecalho-perfil{text-align:center;background:#fff;border:1px solid #dfe5ef;border-radius:16px;padding:18px;margin-bottom:14px}.viagem-social-cabecalho-perfil .viagem-social-avatar{width:76px;height:76px;font-size:34px}.viagem-social-handle{color:#718099;font-weight:700;margin-top:3px}.viagem-social-bio{color:#4a5870;margin:10px auto;max-width:480px;white-space:pre-wrap}
+    .viagem-social-editar{display:grid;gap:8px;max-width:430px;margin:12px auto}.viagem-social-editar textarea,.viagem-social-editar input{width:100%;border:1px solid #ccd5e3;border-radius:10px;padding:10px;font:inherit}.viagem-social-editar button{border:0;border-radius:10px;padding:10px;background:#40557d;color:#fff;font-weight:800;cursor:pointer}.viagem-social-editar .perigo{background:#fff1f1;color:#b52e2e;border:1px solid #efb8b8}
+    .viagem-admin-mini{border:1px solid #efb8b8!important;background:#fff1f1!important;color:#b52e2e!important}
+
+    .viagem-social-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px 0;background:#f5f7fb}
+    .viagem-social-tabs button{border:1px solid #dfe5ef;border-radius:10px;padding:9px 13px;background:#fff;color:#33415c;font-weight:800;cursor:pointer}
+    .viagem-social-tabs button.ativo{background:#40557d;color:#fff;border-color:#40557d}
+    .viagem-banco-toolbar{display:grid;grid-template-columns:1.4fr .8fr auto;gap:8px;align-items:center;margin:12px 0 14px}
+    .viagem-banco-toolbar input,.viagem-banco-toolbar select{width:100%;border:1px solid #ccd5e3;border-radius:10px;padding:10px;font:inherit;background:#fff;color:#26344f}
+    .viagem-banco-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+    .viagem-banco-card{background:#fff;border:1px solid #dfe5ef;border-radius:14px;overflow:hidden;box-shadow:0 4px 14px rgba(30,50,80,.06);display:flex;flex-direction:column}
+    .viagem-banco-card img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#dce5f2}
+    .viagem-banco-card-info{padding:10px;display:grid;gap:8px}
+    .viagem-banco-card-info strong{font-size:13px;color:#26344f}
+    .viagem-banco-card-info small{color:#718099;font-weight:700}
+    .viagem-banco-card-info input{width:100%;border:1px solid #ccd5e3;border-radius:9px;padding:9px;font:inherit}
+    .viagem-banco-card-info button{border:0;border-radius:9px;background:#40557d;color:#fff;padding:9px 11px;font-weight:800;cursor:pointer}
+    .viagem-banco-card-info button::before{content:'★ ';color:#ffd83d}
+    .viagem-banco-vazio{padding:24px 12px;text-align:center;color:#78869d}
+
+
   </style>
 </head>
 
@@ -2675,7 +2799,585 @@
         document.body.appendChild(s2);
       }
     })();
-  </script>
+  
+  /**************************************************************************
+   * Ajustes de perfil humano, imagens e robôs do Instagram
+   **************************************************************************/
+
+  var viagemRoboBancoSelecionado = '';
+  var viagemRoboEditando = null;
+  var viagemRoboTimerIniciado = false;
+
+  function viagemEhImagemPerfil(valor) {
+    return !!valor && (/^data:|^https?:/.test(valor));
+  }
+
+  function viagemAvatarHtml(p) {
+    if (!p) return '👤';
+    var av = p.avatar || p.foto || p.emoji || '👤';
+    return viagemEhImagemPerfil(av) ? '<img src="' + av + '" alt="avatar">' : viagemEsc(av);
+  }
+
+  function viagemAvatarSelecionadoAtual() {
+    var p = viagemPerfilPorId(viagemPerfilAtual);
+    return p && p.avatar ? p.avatar : '🧳';
+  }
+
+  function viagemCarregarRobosInstagram() {
+    try {
+      return JSON.parse(localStorage.getItem('viagem_social_robos_v1') || '[]') || [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function viagemSalvarRobosInstagram(v) {
+    localStorage.setItem('viagem_social_robos_v1', JSON.stringify(v || []));
+    if (typeof window.salvarViagemSocialDados === 'function') window.salvarViagemSocialDados('robos', v || []).catch(function(){});
+  }
+
+  function viagemRobosPorId(id) {
+    var lista = viagemCarregarRobosInstagram();
+    for (var i = 0; i < lista.length; i++) {
+      if (lista[i] && lista[i].id === id) return lista[i];
+    }
+    return null;
+  }
+
+  function viagemAvatarBancoAtual() {
+    return (viagemAvatarBancoSelecionado || viagemAvatarSelecionadoAtual() || '🧳');
+  }
+
+  function viagemAtualizarPreviewAvatar() {
+    var prev = document.getElementById('viagemAvatarMeuPerfilPreview');
+    if (!prev) return;
+    var p = viagemPerfilPorId(viagemPerfilAtual);
+    var em = (document.getElementById('viagemEmojiMeuPerfil') || {}).value || '';
+    var atual = viagemAvatarBancoSelecionado || (p && p.avatar) || '🧳';
+    var valor = em.trim() ? em.trim().slice(0, 2) : atual;
+    if (viagemEhImagemPerfil(valor)) prev.innerHTML = '<img src="' + valor + '" alt="foto do perfil">';
+    else prev.textContent = valor || '🧳';
+  }
+
+  function viagemLimparAvatarBanco() {
+    viagemAvatarBancoSelecionado = '';
+    viagemAtualizarPreviewAvatar();
+  }
+
+  function viagemAbrirBancoAvatar() {
+    viagemBancoModoAvatar = true;
+    viagemBancoAlvoAtual = 'viagemAvatarMeuPerfilPreview';
+    abrirViagemModal('viagemModalAvatarBanco');
+    viagemMostrarBancoImagens('viagemAvatarBancoCorpo', true);
+  }
+
+  function viagemSalvarAvatarPerfil() {
+    if (!viagemSocialLogado || !viagemPerfilAtual) return;
+    var pfs = viagemSocialCarregarPerfis();
+    var p = pfs[viagemPerfilAtual];
+    if (!p) return;
+    var em = (document.getElementById('viagemEmojiMeuPerfil') || {}).value || '';
+    var avatar = viagemAvatarBancoSelecionado || em.trim() || p.avatar || '🧳';
+    p.avatar = avatar.trim ? avatar.trim() : avatar;
+    if (viagemEhImagemPerfil(p.avatar)) viagemAvatarBancoSelecionado = p.avatar;
+    pfs[viagemPerfilAtual] = p;
+    viagemSocialSalvarPerfis(pfs);
+    viagemAbrirPerfilRede(viagemPerfilAtual);
+  }
+
+  function viagemAtualizarPreviewRoboAvatar() {
+    var prev = document.getElementById('apRoboAvatarPreview');
+    if (!prev) return;
+    var em = (document.getElementById('apRoboEmoji') || {}).value || '';
+    var atual = viagemRoboBancoSelecionado || em.trim() || '🤖';
+    if (viagemEhImagemPerfil(atual)) prev.innerHTML = '<img src="' + atual + '" alt="avatar do robô">';
+    else prev.textContent = atual.slice(0, 2) || '🤖';
+  }
+
+  function viagemLimparAvatarBancoRobo() {
+    viagemRoboBancoSelecionado = '';
+    viagemAtualizarPreviewRoboAvatar();
+  }
+
+  function viagemAbrirPainelRobosBanco() {
+    viagemBancoModoAvatar = true;
+    viagemBancoAlvoAtual = 'apRoboAvatarPreview';
+    abrirViagemModal('viagemModalAvatarBanco');
+    viagemMostrarBancoImagens('viagemAvatarBancoCorpo', true);
+  }
+
+  function viagemSelecionarAvatarBanco(id) {
+    var banco = Array.isArray(viagemBancoImagens) && viagemBancoImagens.length ? viagemBancoImagens : (window.VIAGEM_BANCO_IMAGENS_FALLBACK || []);
+    var item = null;
+    for (var i = 0; i < banco.length; i++) {
+      if (banco[i] && banco[i].id === id) { item = banco[i]; break; }
+    }
+    if (!item) return;
+    if (viagemBancoAlvoAtual === 'apRoboAvatarPreview') {
+      viagemRoboBancoSelecionado = item.url || '';
+      viagemAtualizarPreviewRoboAvatar();
+    } else {
+      viagemAvatarBancoSelecionado = item.url || '';
+      viagemAtualizarPreviewAvatar();
+    }
+    viagemBancoModoAvatar = false;
+    fecharViagemModal('viagemModalAvatarBanco');
+  }
+
+  async function entrarViagem() {
+    var nome = ((document.getElementById('viagemInputNome')||{}).value || '').trim();
+    var arroba = ((document.getElementById('viagemInputArroba')||{}).value || '').trim().toLowerCase().replace(/^@+/, '');
+    var senha = ((document.getElementById('viagemInputSenhaPerfil')||{}).value || '');
+    if (!nome || !arroba || !senha) { alert('Preencha nome, @ e senha.'); return; }
+    if (!/^[a-z0-9._-]{3,20}$/.test(arroba)) { alert('O @ deve ter de 3 a 20 caracteres e usar apenas letras, números, ponto, traço ou underline.'); return; }
+    var perfis = viagemSocialCarregarPerfis();
+    if (perfis[arroba] && perfis[arroba].senha !== senha) { alert('Esse @ já existe e a senha está incorreta.'); return; }
+    if (viagemRobosPorId(arroba)) { alert('Esse @ já está em uso por um robô. Escolha outro.'); return; }
+    var avatar = perfis[arroba] && perfis[arroba].avatar ? perfis[arroba].avatar : '🧳';
+    if (!perfis[arroba]) perfis[arroba] = { nome:nome, arroba:arroba, senha:senha, descricao:'', avatar:avatar, criadoEm:Date.now(), robo:false };
+    else { perfis[arroba].nome = nome; perfis[arroba].avatar = perfis[arroba].avatar || '🧳'; }
+    viagemSocialSalvarPerfis(perfis);
+    viagemPerfilAtual = arroba; viagemSocialLogado = true; viagemNomeJogador = nome;
+    localStorage.setItem('viagem_perfil_atual', arroba);
+    var texto = 'Oi, ' + nome + ', a Cacá ganhou 300 milhões na mega sena e te enviou uma passagem sem falar o destino, clique em continuar para encontrar ela e seus amigos em algum lugar do mundo.';
+    document.getElementById('viagemCartaTexto').textContent = texto;
+    fecharViagemModal('viagemModalNome'); abrirViagemModal('viagemModalCarta'); viagemObterIp();
+    try { if (typeof window.obterViagemJogador === 'function') { var existente = await window.obterViagemJogador(nome); if (!existente) await window.salvarViagemJogador(nome, { nome:nome, acertos:0 }); } } catch(e){ console.warn('Não foi possível salvar o jogador da viagem:',e); }
+  }
+
+  function viagemSalvarDescricao() {
+    var pfs = viagemSocialCarregarPerfis(), p = pfs[viagemPerfilAtual], t = (document.getElementById('viagemBioEditar').value || '').trim();
+    if (!p) return;
+    p.descricao = t;
+    pfs[viagemPerfilAtual] = p;
+    viagemSocialSalvarPerfis(pfs);
+    viagemAbrirPerfilRede(viagemPerfilAtual);
+  }
+
+  function viagemEditarDescricaoPost(id) {
+    var ps = viagemSocialCarregarPosts(), p = null;
+    for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].id === id) { p = ps[i]; break; }
+    if (!p) return;
+    if (!viagemMeuPost(p) && !viagemPodeModerar()) return;
+    var nv = prompt('Digite a nova descrição da imagem:', p.legenda || '');
+    if (nv === null) return;
+    p.legenda = nv.trim();
+    viagemSocialSalvarPosts(ps);
+    viagemAbrirPerfilRede(viagemPerfilAtual);
+  }
+
+  function viagemPerfilPorId(id) {
+    id = String(id || '');
+    var pfs = viagemSocialCarregarPerfis();
+    if (pfs[id] && !pfs[id].robo) return Object.assign({ id: id }, pfs[id]);
+    var robo = viagemRobosPorId(id);
+    if (robo) return Object.assign({ id: id }, robo);
+    if (id.indexOf('contato_') === 0) {
+      var n = parseInt(id.split('_').pop(), 10), c = VIAGEM_CONTATOS[n];
+      if (c && !c.removido) return { id:id, nome:c.nome, arroba:viagemContatoHandle(n), descricao:'Contato da viagem', avatar:c.foto||c.emoji||'👤', contato:n };
+    }
+    return null;
+  }
+
+  function viagemTodosPerfis() {
+    var arr = [], ps = viagemSocialCarregarPerfis();
+    Object.keys(ps).forEach(function(k){
+      var p = ps[k];
+      if (!p || p.robo) return;
+      arr.push(Object.assign({ id:k }, p));
+    });
+    arr.sort(function(a, b){ return (b.criadoEm || 0) - (a.criadoEm || 0); });
+    return arr;
+  }
+
+  function viagemMostrarPerfis() {
+    var b = document.getElementById('viagemSocialCorpo');
+    if (!b) return;
+    var h = viagemSocialNav('perfis') + '<div class="viagem-social-perfis">';
+    var perfis = viagemTodosPerfis();
+    if (!perfis.length) {
+      h += '<p style="text-align:center;color:#78869d;padding:30px;width:100%">Nenhum perfil humano criado ainda.</p>';
+    } else {
+      perfis.forEach(function(p){
+        var q = viagemSocialCarregarPosts().filter(function(x){ return x.dono === p.id; }).length;
+        h += '<button class="viagem-social-perfil" data-id="' + p.id + '" onclick="viagemAbrirPerfilRede(this.dataset.id)"><span class="viagem-social-avatar">' + viagemAvatarHtml(p) + '</span><div class="viagem-social-nome">' + viagemEsc(p.nome) + '</div><div class="viagem-social-handle">@' + viagemEsc(p.arroba) + '</div><div class="viagem-social-qtd">' + q + ' foto' + (q===1?'':'s') + '</div></button>';
+      });
+    }
+    b.innerHTML = h + '</div>';
+  }
+
+  function viagemRenderPost(post) {
+    var p = viagemPerfilPorId(post.dono) || { nome:'Perfil removido', arroba:'removido', avatar:'👤' };
+    var likes = post.curtidas || [], eu = likes.indexOf(viagemPerfilAtual) >= 0, coms = post.comentarios || [];
+    var h = '<article class="viagem-social-card"><div class="viagem-social-card-top"><span class="viagem-social-avatar">' + viagemAvatarHtml(p) + '</span><div class="viagem-social-identidade"><strong>' + viagemEsc(p.nome) + '</strong><small>@' + viagemEsc(p.arroba) + '</small></div>' + (viagemPodeModerar() || viagemMeuPost(post) ? '<button class="viagem-admin-mini" data-id="' + post.id + '" onclick="viagemExcluirPost(this.dataset.id)">Excluir</button>' : '') + '</div><img class="viagem-social-card-img" src="' + post.url + '"><div class="viagem-social-acoes"><button class="' + (eu ? 'curtido' : '') + '" data-id="' + post.id + '" onclick="viagemCurtirPost(this.dataset.id)">♥ ' + likes.length + '</button><button data-id="' + post.id + '" onclick="viagemFocarComentario(this)">Comentar</button>' + (viagemMeuPost(post) ? '<button class="viagem-admin-mini" data-id="' + post.id + '" onclick="viagemEditarDescricaoPost(this.dataset.id)">Editar descrição</button>' : '') + '</div><div class="viagem-social-legenda">' + viagemEsc(post.legenda || '') + '</div><div class="viagem-social-comentarios">';
+    coms.forEach(function(c){ h += '<div class="viagem-social-comentario"><b>@' + viagemEsc(c.autor) + '</b> ' + viagemEsc(c.texto) + (viagemPodeModerar() ? '<button class="viagem-admin-mini" data-post="' + post.id + '" data-cid="' + c.id + '" onclick="viagemExcluirComentario(this.dataset.post,this.dataset.cid)">Excluir</button>' : '') + '</div>'; });
+    h += '</div><div class="viagem-social-comentar"><input id="vc_' + post.id + '" type="text" placeholder="Escreva um comentário"><button data-id="' + post.id + '" onclick="viagemComentarPost(this.dataset.id)">Enviar</button></div></article>';
+    return h;
+  }
+
+  function viagemAbrirPerfilRede(id) {
+    id = String(id);
+    var b = document.getElementById('viagemSocialCorpo'), p = viagemPerfilPorId(id);
+    if (!b || !p) return;
+    var posts = viagemSocialCarregarPosts().filter(function(x){ return x.dono === id; }), meu = id === viagemPerfilAtual;
+    var h = viagemSocialNav(meu ? 'meu' : 'perfis') + '<div class="viagem-social-cabecalho-perfil"><span class="viagem-social-avatar" id="viagemAvatarCabecalho">' + viagemAvatarHtml(p) + '</span><h3>' + viagemEsc(p.nome) + '</h3><div class="viagem-social-handle">@' + viagemEsc(p.arroba) + '</div><div class="viagem-social-bio">' + viagemEsc(p.descricao || 'Sem descrição.') + '</div>';
+    if (meu && viagemSocialLogado) {
+      var emo = viagemEhImagemPerfil(p.avatar) ? '' : (p.avatar || '🧳');
+      h += '<div class="viagem-avatar-box"><div class="viagem-avatar-preview" id="viagemAvatarMeuPerfilPreview">' + viagemAvatarHtml(p) + '</div><div class="viagem-avatar-row" style="margin-bottom:8px;"><input id="viagemEmojiMeuPerfil" class="gm-input" type="text" maxlength="4" placeholder="Emoji da foto" value="' + viagemEsc(emo) + '" autocomplete="off" oninput="viagemAtualizarPreviewAvatar()" /></div><div class="viagem-avatar-row" style="margin-bottom:8px;"><button type="button" class="secundario" onclick="viagemAtualizarPreviewAvatar()">Atualizar emoji</button><button type="button" onclick="viagemAbrirBancoAvatar()">Escolher imagem do banco</button><button type="button" class="secundario" onclick="viagemLimparAvatarBanco()">Usar emoji</button><button type="button" onclick="viagemSalvarAvatarPerfil()">Salvar foto do perfil</button></div></div>';
+      h += '<div class="viagem-social-editar"><textarea id="viagemBioEditar" maxlength="240" placeholder="Descrição do perfil">' + viagemEsc(p.descricao || '') + '</textarea><button onclick="viagemSalvarDescricao()">Salvar descrição</button><button class="perigo" onclick="viagemExcluirMeuPerfil()">Excluir meu perfil</button></div>';
+    }
+    if (viagemPodeModerar() && !meu) h += '<div class="viagem-social-editar"><button data-id="' + id + '" onclick="viagemAdminLimparDescricao(this.dataset.id)">Excluir descrição</button><button class="perigo" data-id="' + id + '" onclick="viagemAdminExcluirPerfil(this.dataset.id)">Excluir perfil/usuário</button></div>';
+    h += '</div><div class="viagem-social-timeline">';
+    if (!posts.length) h += '<p style="text-align:center;color:#78869d;padding:30px">Nenhuma foto publicada neste perfil.</p>';
+    posts.forEach(function(x){ h += viagemRenderPost(x); });
+    b.innerHTML = h + '</div>';
+    if (meu && viagemSocialLogado) {
+      viagemAvatarBancoSelecionado = viagemEhImagemPerfil(p.avatar) ? p.avatar : '';
+      viagemAtualizarPreviewAvatar();
+      setTimeout(function(){
+        var em = document.getElementById('viagemEmojiMeuPerfil');
+        if (em) em.value = viagemEhImagemPerfil(p.avatar) ? '' : (p.avatar || '🧳');
+        viagemAtualizarPreviewAvatar();
+      }, 0);
+    }
+  }
+
+  function viagemCriarRoboIdBase(texto) {
+    return viagemBancoNormalizar(texto).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'robo';
+  }
+
+  function viagemRoboIdUnico(base, lista) {
+    base = viagemCriarRoboIdBase(base);
+    lista = lista || viagemCarregarRobosInstagram();
+    var usado = {};
+    lista.forEach(function(r){ if (r && r.id) usado[r.id] = true; });
+    var id = base, n = 2;
+    while (usado[id] || viagemSocialCarregarPerfis()[id] || viagemRobosPorId(id)) {
+      id = base + '_' + n++;
+    }
+    return id;
+  }
+
+  function viagemNormalizarTextoRobos(s) {
+    return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  }
+
+  function viagemColetarDadosRobo() {
+    var nome = (document.getElementById('apRoboNome') || {}).value || '';
+    var arroba = (document.getElementById('apRoboArroba') || {}).value || '';
+    var emoji = (document.getElementById('apRoboEmoji') || {}).value || '🤖';
+    var freq = parseInt((document.getElementById('apRoboFrequencia') || {}).value || '60', 10);
+    var desc = (document.getElementById('apRoboDescricao') || {}).value || '';
+    var avatar = viagemRoboBancoSelecionado || emoji.trim() || '🤖';
+    return {
+      nome: viagemNormalizarTextoRobos(nome) || 'Robô',
+      arroba: viagemCriarRoboIdBase(arroba || nome || 'robo'),
+      emoji: emoji.trim() || '🤖',
+      avatar: avatar,
+      descricao: desc.trim(),
+      frequencia: Math.max(1, isNaN(freq) ? 60 : freq)
+    };
+  }
+
+  /* ===== Painel Administrativo: Banco de Imagens da Live da Cacá ===== */
+  function viagemAdminGerarIdImagemBanco(titulo) {
+    var base = (typeof viagemBancoNormalizar === 'function' ? viagemBancoNormalizar(titulo || 'imagem') : (titulo || 'imagem').toLowerCase()).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'imagem';
+    return 'adm_' + base + '_' + Date.now();
+  }
+
+  function viagemAdminAdicionarImagemBanco() {
+    var elTitulo = document.getElementById('apBancoTitulo'), elCategoria = document.getElementById('apBancoCategoria'),
+        elKw = document.getElementById('apBancoKeywords'), elUrl = document.getElementById('apBancoUrl'),
+        elArquivo = document.getElementById('apBancoArquivo');
+    var titulo = ((elTitulo && elTitulo.value) || '').trim();
+    var categoria = ((elCategoria && elCategoria.value) || '').trim() || 'geral';
+    var keywords = ((elKw && elKw.value) || '').split(',').map(function(k){ return k.trim(); }).filter(Boolean);
+    var url = ((elUrl && elUrl.value) || '').trim();
+    if (!titulo) { alert('Digite um título para a imagem.'); return; }
+
+    function salvarComUrl(urlFinal) {
+      if (!urlFinal) { alert('Escolha um arquivo ou informe uma URL de imagem.'); return; }
+      var item = {
+        id: viagemAdminGerarIdImagemBanco(titulo), titulo: titulo, categoria: categoria,
+        keywords: keywords.length ? keywords : [titulo.toLowerCase()], url: urlFinal,
+        credito: 'Adicionada pelo Painel Administrativo'
+      };
+      if (typeof window.viagemBancoSalvarExtra !== 'function') { alert('Firebase indisponível no momento.'); return; }
+      window.viagemBancoSalvarExtra(item).then(function() {
+        viagemBancoImagensCarregado = false;
+        alert('Imagem adicionada ao banco!');
+        if (elTitulo) elTitulo.value = ''; if (elKw) elKw.value = ''; if (elUrl) elUrl.value = ''; if (elArquivo) elArquivo.value = '';
+        viagemAdminBuscarBanco();
+      }).catch(function() { alert('Não foi possível salvar a imagem no banco. Tente novamente.'); });
+    }
+
+    if (elArquivo && elArquivo.files && elArquivo.files[0]) {
+      var r = new FileReader();
+      r.onload = function(e) { salvarComUrl(e.target.result); };
+      r.readAsDataURL(elArquivo.files[0]);
+    } else {
+      salvarComUrl(url);
+    }
+  }
+
+  async function viagemAdminBuscarBanco() {
+    var lista = document.getElementById('apBancoResultados');
+    if (!lista) return;
+    var termo = ((document.getElementById('apBancoBusca') || {}).value || '').trim();
+    lista.innerHTML = 'Carregando...';
+    var banco = await viagemCarregarBancoImagens(true);
+    var filtrados = termo ? banco.filter(function(i){ return viagemBancoCombina(i, termo, 'Todos'); }) : banco.slice(0, 30);
+    if (!filtrados.length) { lista.innerHTML = 'Nenhuma imagem encontrada.'; return; }
+    var html = '';
+    filtrados.slice(0, 60).forEach(function(i) {
+      html += '<div style="display:flex;gap:8px;align-items:center;border-bottom:1px solid #e7ecf3;padding:6px 0">' +
+        '<img src="' + i.url + '" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex-shrink:0">' +
+        '<div style="flex:1;min-width:0;overflow:hidden">' +
+        '<strong style="font-size:12.5px">' + (i.titulo || '') + '</strong><br>' +
+        '<small style="color:#78869d">' + (i.categoria || '') + ' — ' + ((i.keywords || []).join(', ')) + '</small>' +
+        '</div>' +
+        '<button class="ap-btn-sm" data-id="' + i.id + '" onclick="viagemAdminEditarImagemBanco(this.dataset.id)">Editar</button>' +
+        '<button class="ap-btn-sm" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff" data-id="' + i.id + '" onclick="viagemAdminExcluirImagemBanco(this.dataset.id)">Excluir</button>' +
+        '</div>';
+    });
+    lista.innerHTML = html;
+  }
+
+  async function viagemAdminEditarImagemBanco(id) {
+    var banco = await viagemCarregarBancoImagens();
+    var item = null;
+    for (var i = 0; i < banco.length; i++) if (banco[i] && banco[i].id === id) { item = banco[i]; break; }
+    if (!item) return;
+    var novoTitulo = prompt('Título da imagem:', item.titulo || '');
+    if (novoTitulo === null) return;
+    var novaCategoria = prompt('Categoria:', item.categoria || 'geral');
+    if (novaCategoria === null) return;
+    var novasKw = prompt('Palavras-chave para busca (separadas por vírgula):', (item.keywords || []).join(', '));
+    if (novasKw === null) return;
+    var dados = {
+      titulo: novoTitulo.trim(), categoria: (novaCategoria.trim() || 'geral'),
+      keywords: novasKw.split(',').map(function(k){ return k.trim(); }).filter(Boolean)
+    };
+    if (typeof window.viagemBancoSalvarOverride !== 'function') { alert('Firebase indisponível no momento.'); return; }
+    window.viagemBancoSalvarOverride(id, dados).then(function() {
+      viagemBancoImagensCarregado = false;
+      alert('Imagem atualizada!');
+      viagemAdminBuscarBanco();
+    }).catch(function() { alert('Não foi possível salvar a alteração.'); });
+  }
+
+  async function viagemAdminExcluirImagemBanco(id) {
+    if (!confirm('Remover esta imagem do banco de imagens?')) return;
+    try { if (typeof window.viagemBancoMarcarRemovido === 'function') await window.viagemBancoMarcarRemovido(id); } catch (e) {}
+    try { if (typeof window.viagemBancoExcluirExtra === 'function') await window.viagemBancoExcluirExtra(id); } catch (e) {}
+    viagemBancoImagensCarregado = false;
+    alert('Imagem removida do banco.');
+    viagemAdminBuscarBanco();
+  }
+
+  function viagemAtualizarListaRobosPainel() {
+    var box = document.getElementById('apRobosLista');
+    if (!box) return;
+    var lista = viagemCarregarRobosInstagram();
+    if (!lista.length) { box.innerHTML = 'Nenhum robô criado.'; return; }
+    var html = '';
+    lista.forEach(function(r) {
+      html += '<div class="ap-section" style="margin:0 0 8px;padding:10px;border-radius:10px">' +
+        '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between">' +
+        '<div style="display:flex;align-items:center;gap:10px;min-width:0">' +
+        '<div class="viagem-avatar-preview" style="width:48px;height:48px;font-size:24px;margin:0">' + viagemAvatarHtml(r) + '</div>' +
+        '<div style="min-width:0">' +
+        '<strong style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + viagemEsc(r.nome) + '</strong>' +
+        '<span style="display:block;color:#6b7a90">@' + viagemEsc(r.arroba) + ' • ' + (r.ativo ? 'ativo' : 'parado') + ' • ' + (r.frequencia || 60) + ' min</span>' +
+        '<span style="display:block;color:#6b7a90;font-size:11px">' + viagemEsc(r.descricao || '') + '</span>' +
+        '</div></div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' +
+        '<button class="ap-btn-sm" onclick="viagemEditarRobo(\'' + r.id + '\')">Editar</button>' +
+        '<button class="ap-btn-sm" onclick="viagemAlternarRobo(\'' + r.id + '\')">' + (r.ativo ? 'Desligar' : 'Ligar') + '</button>' +
+        '<button class="ap-btn-danger" onclick="viagemExcluirRobo(\'' + r.id + '\')">Excluir</button>' +
+        '</div></div></div>';
+    });
+    box.innerHTML = html;
+  }
+
+  function viagemAbrirPainelRobosBanco() {
+    viagemBancoModoAvatar = true;
+    viagemBancoAlvoAtual = 'apRoboAvatarPreview';
+    abrirViagemModal('viagemModalAvatarBanco');
+    viagemMostrarBancoImagens('viagemAvatarBancoCorpo', true);
+  }
+
+  function viagemEditarRobo(id) {
+    var r = viagemRobosPorId(id);
+    if (!r) return;
+    viagemRoboEditando = id;
+    var nome = document.getElementById('apRoboNome'), arroba = document.getElementById('apRoboArroba'), emoji = document.getElementById('apRoboEmoji'), freq = document.getElementById('apRoboFrequencia'), desc = document.getElementById('apRoboDescricao');
+    if (nome) nome.value = r.nome || '';
+    if (arroba) arroba.value = r.arroba || '';
+    if (emoji) emoji.value = viagemEhImagemPerfil(r.avatar) ? '' : (r.avatar || r.emoji || '🤖');
+    if (freq) freq.value = r.frequencia || 60;
+    if (desc) desc.value = r.descricao || '';
+    viagemRoboBancoSelecionado = viagemEhImagemPerfil(r.avatar) ? r.avatar : '';
+    viagemAtualizarPreviewRoboAvatar();
+  }
+
+  function viagemCriarRoboIndividual() {
+    var dados = viagemColetarDadosRobo();
+    var robos = viagemCarregarRobosInstagram();
+    var id = viagemRoboEditando || viagemRoboIdUnico(dados.arroba || dados.nome, robos);
+    var existente = viagemRobosPorId(id);
+    var robo = existente || { id: id, criadoEm: Date.now(), ultimaPostagem: 0, ativo: true };
+    robo.nome = dados.nome;
+    robo.arroba = viagemCriarRoboIdBase(dados.arroba || dados.nome || 'robo');
+    robo.avatar = dados.avatar;
+    robo.emoji = dados.emoji;
+    robo.descricao = dados.descricao;
+    robo.frequencia = dados.frequencia;
+    robo.ativo = typeof robo.ativo === 'boolean' ? robo.ativo : true;
+    robo.proximaPostagem = robo.proximaPostagem || (Date.now() + robo.frequencia * 60000);
+    if (!existente) robos.push(robo);
+    else {
+      for (var i = 0; i < robos.length; i++) if (robos[i] && robos[i].id === id) { robos[i] = robo; break; }
+    }
+    viagemSalvarRobosInstagram(robos);
+    viagemRoboEditando = null;
+    viagemRoboBancoSelecionado = '';
+    viagemAtualizarListaRobosPainel();
+    alert('Robô salvo com sucesso!');
+  }
+
+  function viagemCriarRobosLote() {
+    var q = parseInt((document.getElementById('apRoboLoteQtd') || {}).value || '1', 10);
+    if (isNaN(q) || q < 1) q = 1;
+    q = Math.min(q, 50);
+    var base = viagemColetarDadosRobo();
+    var robos = viagemCarregarRobosInstagram();
+    for (var i = 1; i <= q; i++) {
+      var nome = base.nome + ' ' + i;
+      var id = viagemRoboIdUnico(base.arroba || nome, robos);
+      robos.push({
+        id: id,
+        nome: nome,
+        arroba: viagemCriarRoboIdBase((base.arroba || nome) + '_' + i),
+        avatar: base.avatar,
+        emoji: base.emoji,
+        descricao: base.descricao,
+        frequencia: base.frequencia,
+        ativo: true,
+        criadoEm: Date.now(),
+        ultimaPostagem: 0,
+        proximaPostagem: Date.now() + base.frequencia * 60000
+      });
+    }
+    viagemSalvarRobosInstagram(robos);
+    viagemAtualizarListaRobosPainel();
+    alert('Robôs em lote criados com sucesso!');
+  }
+
+  function viagemAlternarRobo(id) {
+    var robos = viagemCarregarRobosInstagram();
+    for (var i = 0; i < robos.length; i++) {
+      if (robos[i] && robos[i].id === id) {
+        robos[i].ativo = !robos[i].ativo;
+        if (robos[i].ativo && !robos[i].proximaPostagem) robos[i].proximaPostagem = Date.now() + (robos[i].frequencia || 60) * 60000;
+        break;
+      }
+    }
+    viagemSalvarRobosInstagram(robos);
+    viagemAtualizarListaRobosPainel();
+  }
+
+  function viagemExcluirRobo(id) {
+    if (!confirm('Excluir este robô?')) return;
+    var robos = viagemCarregarRobosInstagram().filter(function(r){ return r && r.id !== id; });
+    viagemSalvarRobosInstagram(robos);
+    var posts = viagemSocialCarregarPosts().filter(function(p){ return p.dono !== id; });
+    viagemSocialSalvarPosts(posts);
+    viagemAtualizarListaRobosPainel();
+    viagemMostrarTimeline();
+  }
+
+  function viagemDesligarTodosRobos() {
+    var robos = viagemCarregarRobosInstagram();
+    robos.forEach(function(r){ if (r) r.ativo = false; });
+    viagemSalvarRobosInstagram(robos);
+    viagemAtualizarListaRobosPainel();
+  }
+
+  function viagemExcluirTodosRobos() {
+    if (!confirm('Excluir todos os robôs?')) return;
+    var ids = viagemCarregarRobosInstagram().map(function(r){ return r && r.id; }).filter(Boolean);
+    viagemSalvarRobosInstagram([]);
+    var posts = viagemSocialCarregarPosts().filter(function(p){ return ids.indexOf(p.dono) < 0; });
+    viagemSocialSalvarPosts(posts);
+    viagemAtualizarListaRobosPainel();
+    viagemMostrarTimeline();
+  }
+
+  function viagemEscolherImagemBancoAleatoria() {
+    var banco = Array.isArray(viagemBancoImagens) && viagemBancoImagens.length ? viagemBancoImagens : (window.VIAGEM_BANCO_IMAGENS_FALLBACK || []);
+    if (!banco.length) return null;
+    return banco[Math.floor(Math.random() * banco.length)];
+  }
+
+  function viagemGerarPostRobo(robo) {
+    if (!robo || !robo.ativo) return false;
+    var img = viagemEscolherImagemBancoAleatoria();
+    if (!img) return false;
+    var posts = viagemSocialCarregarPosts();
+    posts.unshift({
+      id: 'robo_' + robo.id + '_' + Date.now(),
+      dono: robo.id,
+      url: img.url,
+      legenda: robo.descricao || img.titulo || '',
+      criadoEm: Date.now(),
+      curtidas: [],
+      comentarios: [],
+      robo: true
+    });
+    viagemSocialSalvarPosts(posts);
+    robo.ultimaPostagem = Date.now();
+    robo.proximaPostagem = Date.now() + (parseInt(robo.frequencia, 10) || 60) * 60000;
+    return true;
+  }
+
+  function viagemProcessarRobosAutomatizados() {
+    var robos = viagemCarregarRobosInstagram();
+    var mudou = false;
+    var agora = Date.now();
+    robos.forEach(function(r) {
+      if (!r || !r.ativo) return;
+      if (!r.proximaPostagem) r.proximaPostagem = agora + (parseInt(r.frequencia, 10) || 60) * 60000;
+      if (agora >= r.proximaPostagem) {
+        if (viagemGerarPostRobo(r)) mudou = true;
+      }
+    });
+    if (mudou) {
+      viagemSalvarRobosInstagram(robos);
+      if (document.getElementById('viagemSocialCorpo') && document.getElementById('viagemSocialCorpo').innerHTML.indexOf('viagem-social-timeline') >= 0) {
+        viagemMostrarTimeline();
+      }
+      viagemAtualizarListaRobosPainel();
+    } else {
+      viagemSalvarRobosInstagram(robos);
+    }
+  }
+
+  function viagemAgendarRobos() {
+    if (viagemRoboTimerIniciado) return;
+    viagemRoboTimerIniciado = true;
+    viagemProcessarRobosAutomatizados();
+    window.setInterval(viagemProcessarRobosAutomatizados, 60000);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+      if (typeof viagemAtualizarListaRobosPainel === 'function') viagemAtualizarListaRobosPainel();
+      if (typeof viagemAgendarRobos === 'function') viagemAgendarRobos();
+    }, 0);
+  });
+
+</script>
 
   <!-- ===== CONTADOR REGRESSIVO ===== -->
   <script>
@@ -2848,6 +3550,23 @@
         '</div>' +
 
         '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#127752;</span> Banco de Imagens (Viajando com a Cac&#225;)</p>' +
+        '<label class="ap-label">Adicionar imagem ao banco (por URL ou arquivo):</label>' +
+        '<input type="text" id="apBancoTitulo" class="ap-input" placeholder="T&#237;tulo da imagem" style="margin-bottom:8px">' +
+        '<input type="text" id="apBancoCategoria" class="ap-input" placeholder="Categoria (ex.: natureza, cidade, praia)" style="margin-bottom:8px">' +
+        '<input type="text" id="apBancoKeywords" class="ap-input" placeholder="Palavras-chave separadas por v&#237;rgula" style="margin-bottom:8px">' +
+        '<input type="text" id="apBancoUrl" class="ap-input" placeholder="URL da imagem (ou escolha um arquivo abaixo)" style="margin-bottom:8px">' +
+        '<input type="file" id="apBancoArquivo" class="ap-input" accept="image/*" style="margin-bottom:8px">' +
+        '<button class="ap-btn" onclick="viagemAdminAdicionarImagemBanco()" style="width:100%;margin-bottom:12px">&#43; Adicionar imagem ao banco</button>' +
+        '<label class="ap-label">Pesquisar / editar / excluir imagens existentes:</label>' +
+        '<div class="ap-row" style="margin-bottom:8px">' +
+        '<input type="text" id="apBancoBusca" class="ap-input" placeholder="Pesquisar por t&#237;tulo, categoria ou palavra-chave">' +
+        '<button class="ap-btn-sm" onclick="viagemAdminBuscarBanco()">Buscar</button>' +
+        '</div>' +
+        '<div id="apBancoResultados" style="max-height:260px;overflow-y:auto;background:#f4f8fc;border:1px solid #e7ecf3;border-radius:10px;padding:8px;font-size:12.5px;">Clique em "Buscar" ou digite uma palavra-chave.</div>' +
+        '</div>' +
+
+        '<div class="ap-section">' +
         '<p class="ap-section-title"><span>&#127760;</span> Imagem de fundo (logolive.png)</p>' +
         '<input type="file" id="bgInput" class="ap-input" accept="image/*" style="margin-bottom:8px">' +
         '<button class="ap-btn" onclick="aplicarImagemFundo()">Aplicar</button>' +
@@ -2992,6 +3711,38 @@
         '</div>' +
 
         '<div class="ap-section">' +
+        '<p class="ap-section-title"><span>&#129302;</span> Robôs do Instagram</p>' +
+        '<label class="ap-label">Nome do robô:</label>' +
+        '<input type="text" id="apRoboNome" class="ap-input" placeholder="Ex.: Perfil automático" maxlength="24" style="margin-bottom:8px">' +
+        '<label class="ap-label">@ do robô (opcional):</label>' +
+        '<input type="text" id="apRoboArroba" class="ap-input" placeholder="arroba_do_robo" maxlength="20" style="margin-bottom:8px">' +
+        '<label class="ap-label">Emoji do robô:</label>' +
+        '<input type="text" id="apRoboEmoji" class="ap-input" placeholder="🤖" maxlength="4" style="margin-bottom:8px" oninput="viagemAtualizarPreviewRoboAvatar()">' +
+        '<div class="viagem-avatar-box" style="margin:10px 0 8px;max-width:none">' +
+        '<div class="viagem-avatar-preview" id="apRoboAvatarPreview">🤖</div>' +
+        '<div class="viagem-avatar-row" style="margin-bottom:8px;">' +
+        '<button type="button" class="secundario" onclick="viagemAtualizarPreviewRoboAvatar()">Atualizar emoji</button>' +
+        '<button type="button" onclick="viagemAbrirPainelRobosBanco()">Escolher imagem do banco</button>' +
+        '<button type="button" class="secundario" onclick="viagemLimparAvatarBancoRobo()">Usar emoji</button>' +
+        '</div>' +
+        '</div>' +
+        '<label class="ap-label">Descrição do robô:</label>' +
+        '<input type="text" id="apRoboDescricao" class="ap-input" placeholder="Texto que aparecerá como descrição" maxlength="240" style="margin-bottom:8px">' +
+        '<div class="ap-row" style="margin-bottom:8px">' +
+        '<input type="number" id="apRoboFrequencia" class="ap-input" placeholder="Frequência (min)" min="1" value="60" style="width:140px">' +
+        '<input type="number" id="apRoboLoteQtd" class="ap-input" placeholder="Qtd. em lote" min="1" value="3" style="width:140px">' +
+        '</div>' +
+        '<div class="ap-row" style="margin-bottom:8px">' +
+        '<button class="ap-btn" onclick="viagemCriarRoboIndividual()" style="flex:1">Salvar robô</button>' +
+        '<button class="ap-btn" onclick="viagemCriarRobosLote()" style="flex:1">Criar em lote</button>' +
+        '</div>' +
+        '<div class="ap-row" style="margin-bottom:8px">' +
+        '<button class="ap-btn" onclick="viagemDesligarTodosRobos()" style="flex:1;background:linear-gradient(135deg,#7f8c8d,#5d6d7e)">Desligar todos</button>' +
+        '<button class="ap-btn" onclick="viagemExcluirTodosRobos()" style="flex:1;background:linear-gradient(135deg,#e74c3c,#c0392b)">Excluir todos</button>' +
+        '</div>' +
+        '<div id="apRobosLista" style="max-height:260px;overflow-y:auto;background:#f4f8fc;border:1px solid #e7ecf3;border-radius:10px;padding:8px;font-size:12.5px;margin-bottom:8px;">Nenhum robô criado.</div>' +
+        '</div>' +
+        '<div class="ap-section">' +
         '<p class="ap-section-title"><span>&#128273;</span> Alterar senha do Painel Administrativo</p>' +
         '<input type="password" id="apSenhaAtual" class="ap-input" placeholder="Senha atual" style="margin-bottom:8px">' +
         '<input type="password" id="apSenhaNova" class="ap-input" placeholder="Nova senha" style="margin-bottom:8px">' +
@@ -3017,8 +3768,9 @@
 
       if (typeof preencherPainelTemposDesafios === 'function') preencherPainelTemposDesafios();
       carregarConfigSalva();
-      if (typeof viagemPreencherSelectContatos === 'function') viagemPreencherSelectContatos();
+      if (typeof viagemPreencherSelectContatos === 'function') viagemPreencherSelectContatos(); if (typeof viagemAtualizarListaRobosPainel === 'function') viagemAtualizarListaRobosPainel();
       if (typeof viagemAtualizarStatusSenhaPanel === 'function') viagemAtualizarStatusSenhaPanel();
+      if (typeof viagemAdminBuscarBanco === 'function') viagemAdminBuscarBanco();
     });
 
     function fecharAdmin() {
@@ -3748,9 +4500,19 @@
       <span class="gm-close" onclick="fecharViagemModal('viagemModalNome')">&times;</span>
       <div class="gm-vitoria-cena gm-flutuar">✈️🌍</div>
       <h3>Viajando com a Cacá</h3>
-      <p>Coloque seu nome para aparecer no <strong>Ranking</strong> e descobrir sua surpresa!</p>
-      <input id="viagemInputNome" class="gm-input" type="text" maxlength="24" placeholder="Seu nome" />
+      <p>Entre no jogo e crie sua identidade no Álbum de Viagem.</p>
+      <input id="viagemInputNome" class="gm-input" type="text" maxlength="24" placeholder="Seu nome" autocomplete="name" />
+      <input id="viagemInputArroba" class="gm-input" type="text" maxlength="20" placeholder="Crie seu @ (sem espaços)" autocomplete="username" />
+      <input id="viagemInputSenhaPerfil" class="gm-input" type="password" maxlength="40" placeholder="Crie ou digite sua senha" autocomplete="current-password" />
       <button class="gm-btn" onclick="entrarViagem()">Entrar</button>
+    </div>
+  </div>
+
+  <div id="viagemModalAvatarBanco" class="gm-overlay">
+    <div class="gm-box viagem-social-box gm-anim-in">
+      <span class="gm-close" onclick="fecharViagemModal('viagemModalAvatarBanco')">&times;</span>
+      <div class="viagem-social-header"><span>🖼️</span><span>Escolher imagem para perfil</span></div>
+      <div class="viagem-social-corpo" id="viagemAvatarBancoCorpo"></div>
     </div>
   </div>
 
@@ -3779,6 +4541,7 @@
           <button class="viagem-status-btn viagem-fone-status-btn" type="button" id="viagemFoneBtn" onclick="viagemAbrirTelefone()" aria-label="Abrir telefone" title="Telefone">
             📱<span class="viagem-fone-dot" id="viagemFoneDot"></span>
           </button>
+          <button class="viagem-status-btn viagem-camera-status-btn" type="button" onclick="viagemAbrirRede()" aria-label="Abrir Álbum de Viagem" title="Álbum de Viagem">📷</button>
           <span class="viagem-tentativas" id="viagemTentativas">Erros: 0/10</span>
         </div>
       </div>
@@ -3793,7 +4556,8 @@
       <!-- Setor 3: mapa -->
       <div class="viagem-setor">
         <div class="viagem-mapa-wrap" id="viagemMapaWrap">
-          <svg id="viagemMapaSvg" viewBox="0 0 1000 500" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <button type="button" class="viagem-pin-ferramenta" id="viagemPinFerramenta" aria-label="Arraste o alfinete para o mapa" title="Arraste e solte no destino">📌</button>
+          <svg id="viagemMapaSvg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
             <rect x="0" y="0" width="1000" height="500" fill="#eaf3f8"></rect>
             <g id="viagemMapaPaises"></g>
             <g id="viagemPinGrupo"></g>
@@ -3803,9 +4567,9 @@
             <button type="button" class="viagem-zoom-btn" onclick="viagemZoomBotao(1.4286)" aria-label="Diminuir zoom" title="Diminuir zoom">➖</button>
             <button type="button" class="viagem-zoom-btn" onclick="viagemResetView()" aria-label="Redefinir visualização" title="Redefinir visualização">⟲</button>
           </div>
-          <div class="viagem-zoom-dica">🖱️ Arraste para navegar • Roda do mouse para zoom • Clique para marcar</div>
+          <div class="viagem-zoom-dica">🖱️ Arraste o mapa para navegar • Arraste o alfinete até o destino</div>
         </div>
-        <p class="viagem-mapa-status" id="viagemMapaStatus">Clique em qualquer ponto do mapa para marcar o destino com um alfinete 📌.</p>
+        <p class="viagem-mapa-status" id="viagemMapaStatus">Arraste o alfinete 📌 ao lado e solte sobre o destino. No celular, use dois dedos para aproximar ou afastar o mapa.</p>
       </div>
     </div>
   </div>
@@ -3839,7 +4603,7 @@
     </div>
   </div>
 
-  <!-- Viajando com a Cacá: Telefone (estilo WhatsApp) -->
+  <!-- Viajando com a Cacá: mensageiro próprio -->
   <div id="viagemModalTelefone" class="gm-overlay">
     <div class="gm-box viagem-fone-box gm-anim-in">
       <span class="gm-close" onclick="viagemFecharTelefone()">&times;</span>
@@ -3868,6 +4632,28 @@
           <button type="button" class="viagem-fone-enviar" onclick="viagemEnviarMensagem()" aria-label="Enviar">➤</button>
         </div>
       </div>
+    </div>
+  </div>
+
+
+
+  <!-- Viajando com a Cacá: chegada correta -->
+  <div id="viagemModalChegada" class="gm-overlay">
+    <div class="gm-box gm-anim-in">
+      <span class="gm-close" onclick="viagemFecharChegada()">&times;</span>
+      <div class="gm-vitoria-cena gm-flutuar">✈️🎉</div>
+      <h3>Parabéns!</h3>
+      <p>Finalmente você chegou. Essa viagem vai ser incrível</p>
+      <button class="gm-btn" onclick="viagemFecharChegada()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- Álbum de Viagem: rede de perfis inspirada em mural de fotos, com identidade própria -->
+  <div id="viagemModalRede" class="gm-overlay">
+    <div class="gm-box viagem-social-box gm-anim-in">
+      <span class="gm-close" onclick="fecharViagemModal('viagemModalRede')">&times;</span>
+      <div class="viagem-social-header"><span>📷</span><span>Álbum de Viagem</span></div>
+      <div class="viagem-social-corpo" id="viagemSocialCorpo"></div>
     </div>
   </div>
 
@@ -3988,6 +4774,50 @@
     };
     window.salvarMemoriaUsuarioViagem = async function(nome, dados) {
       await setDoc(doc(db, "viagemMemoriaUsuarios", nome), dados);
+    };
+
+    /* ===== MODO VIAJANDO COM A CACÁ (Álbum de Viagem: perfis, postagens e robôs compartilhados entre usuários) ===== */
+    window.salvarViagemSocialDados = async function(chave, dados) {
+      await setDoc(doc(db, "viagemSocial", chave), { dados: dados, atualizadoEm: Date.now() });
+    };
+    window.carregarViagemSocialDados = async function(chave) {
+      const snap = await getDoc(doc(db, "viagemSocial", chave));
+      return snap.exists() ? snap.data().dados : null;
+    };
+
+    /* ===== Banco de Imagens da Live da Cacá (imagens adicionadas/editadas/removidas pelo Painel Administrativo) ===== */
+    window.viagemBancoSalvarExtra = async function(item) {
+      await setDoc(doc(db, "viagemBancoExtra", item.id), item);
+    };
+    window.viagemBancoExcluirExtra = async function(id) {
+      await deleteDoc(doc(db, "viagemBancoExtra", id));
+    };
+    window.viagemBancoListarExtra = async function() {
+      const snap = await getDocs(collection(db, "viagemBancoExtra"));
+      const lista = [];
+      snap.forEach(function(d) { lista.push(d.data()); });
+      return lista;
+    };
+    window.viagemBancoMarcarRemovido = async function(id) {
+      await setDoc(doc(db, "viagemBancoRemovidos", id), { removido: true });
+    };
+    window.viagemBancoDesmarcarRemovido = async function(id) {
+      await deleteDoc(doc(db, "viagemBancoRemovidos", id));
+    };
+    window.viagemBancoListarRemovidos = async function() {
+      const snap = await getDocs(collection(db, "viagemBancoRemovidos"));
+      const ids = [];
+      snap.forEach(function(d) { ids.push(d.id); });
+      return ids;
+    };
+    window.viagemBancoSalvarOverride = async function(id, dados) {
+      await setDoc(doc(db, "viagemBancoOverrides", id), dados);
+    };
+    window.viagemBancoListarOverrides = async function() {
+      const snap = await getDocs(collection(db, "viagemBancoOverrides"));
+      const mapa = {};
+      snap.forEach(function(d) { mapa[d.id] = d.data(); });
+      return mapa;
     };
 
     (async function() {
@@ -7546,24 +8376,25 @@
     }
 
     async function entrarViagem() {
-      var input = document.getElementById('viagemInputNome');
-      var nome = (input.value || '').trim();
-      if (!nome) return;
-      var texto = 'Oi, ' + nome +
-        ', a Cacá ganhou 300 milhões na mega sena e te enviou uma passagem sem falar o destino, clique em continuar para encontrar ela e seus amigos em algum lugar do mundo.';
+      var nome = ((document.getElementById('viagemInputNome')||{}).value || '').trim();
+      var arroba = ((document.getElementById('viagemInputArroba')||{}).value || '').trim().toLowerCase().replace(/^@+/, '');
+      var senha = ((document.getElementById('viagemInputSenhaPerfil')||{}).value || '');
+      var emoji = ((document.getElementById('viagemInputEmojiPerfil')||{}).value || '').trim();
+      if (!nome || !arroba || !senha) { alert('Preencha nome, @ e senha.'); return; }
+      if (!/^[a-z0-9._-]{3,20}$/.test(arroba)) { alert('O @ deve ter de 3 a 20 caracteres e usar apenas letras, números, ponto, traço ou underline.'); return; }
+      var perfis = viagemSocialCarregarPerfis();
+      if (perfis[arroba] && perfis[arroba].senha !== senha) { alert('Esse @ já existe e a senha está incorreta.'); return; }
+      var avatar = viagemAvatarBancoSelecionado || (emoji || '🧳');
+      if (!perfis[arroba]) perfis[arroba] = { nome:nome, arroba:arroba, senha:senha, descricao:'', avatar:avatar, criadoEm:Date.now() };
+      else { perfis[arroba].nome = nome; perfis[arroba].avatar = avatar; }
+      viagemSocialSalvarPerfis(perfis);
+      viagemPerfilAtual = arroba; viagemSocialLogado = true; viagemNomeJogador = nome;
+      localStorage.setItem('viagem_perfil_atual', arroba);
+      var texto = 'Oi, ' + nome + ', a Cacá ganhou 300 milhões na mega sena e te enviou uma passagem sem falar o destino, clique em continuar para encontrar ela e seus amigos em algum lugar do mundo.';
       document.getElementById('viagemCartaTexto').textContent = texto;
-      fecharViagemModal('viagemModalNome');
-      abrirViagemModal('viagemModalCarta');
-      viagemNomeJogador = nome;
-      viagemObterIp();
-      try {
-        if (typeof window.obterViagemJogador === 'function') {
-          var existente = await window.obterViagemJogador(nome);
-          if (!existente) {
-            await window.salvarViagemJogador(nome, { nome: nome, acertos: 0 });
-          }
-        }
-      } catch (e) { console.warn('Não foi possível salvar o jogador da viagem:', e); }
+      fecharViagemModal('viagemModalNome'); abrirViagemModal('viagemModalCarta'); viagemObterIp();
+      viagemAvatarBancoSelecionado=''; viagemAtualizarPreviewAvatar();
+      try { if (typeof window.obterViagemJogador === 'function') { var existente = await window.obterViagemJogador(nome); if (!existente) await window.salvarViagemJogador(nome, { nome:nome, acertos:0 }); } } catch(e){ console.warn('Não foi possível salvar o jogador da viagem:',e); }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -7680,11 +8511,11 @@
 
     /* ===== Telefone estilo WhatsApp: contatos, mensagens, notificação e vibração ===== */
     var VIAGEM_CONTATOS = [
-      { nome: 'Homem Aranha', emoji: '🕷️', genero: 'M', foto: null, removido: false },
-      { nome: 'Fill', emoji: '🎨', genero: 'M', foto: null, removido: false },
-      { nome: 'Ragnar', emoji: '⚔️', genero: 'M', foto: null, removido: false },
-      { nome: 'Pou', emoji: '👾', genero: 'M', foto: null, removido: false },
-      { nome: 'Buche', emoji: '🐶', genero: 'M', foto: null, removido: false },
+      { nome: 'Homem Aranha', emoji: '🕷️', genero: 'M', foto: null, removido: true },
+      { nome: 'Fill', emoji: '🎨', genero: 'M', foto: null, removido: true },
+      { nome: 'Ragnar', emoji: '⚔️', genero: 'M', foto: null, removido: true },
+      { nome: 'Pou', emoji: '👾', genero: 'M', foto: null, removido: true },
+      { nome: 'Buche', emoji: '🐶', genero: 'M', foto: null, removido: true },
       { nome: 'Gustavo', emoji: '😎', genero: 'M', foto: null, removido: false },
       { nome: 'Yara', emoji: '🌸', genero: 'F', foto: null, removido: false },
       { nome: 'Gaby', emoji: '💖', genero: 'F', foto: null, removido: false },
@@ -8413,7 +9244,7 @@
       var conversa = viagemConversas[viagemContatoAtual] || [];
       var html = '';
       for (var i = 0; i < conversa.length; i++) {
-        html += viagemFormatarMensagem(conversa[i]);
+        html += viagemFormatarMensagemComIndice(conversa[i], i);
       }
       wrap.innerHTML = html || '<p style="text-align:center;color:#8a8a8a;font-size:12.5px;">Nenhuma mensagem ainda</p>';
       wrap.scrollTop = wrap.scrollHeight;
@@ -8880,6 +9711,60 @@
       }
     });
 
+
+    /* ===== Álbum de Viagem: perfis, estrelas e publicações ===== */
+    var viagemPublicacoes = {};
+    var viagemFotoSeq = 1;
+    var viagemChegadaPendente = null;
+    var viagemSocialLogado = false;
+
+    function viagemEsc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+    function viagemEhAdminAberto() { var p=document.getElementById('adminPanel'); return !!(p && getComputedStyle(p).display !== 'none'); }
+    function viagemIndiceJogador() {
+      var alvo=viagemNormalizarTexto(viagemNomeJogador||'');
+      for(var i=0;i<VIAGEM_CONTATOS.length;i++) if(VIAGEM_CONTATOS[i]&&!VIAGEM_CONTATOS[i].removido&&viagemNormalizarTexto(VIAGEM_CONTATOS[i].nome)===alvo) return i;
+      return -1;
+    }
+    function viagemSenhaChave(){ return 'viagem_album_senha_'+viagemNormalizarTexto(viagemNomeJogador||'jogador'); }
+    function viagemGerarIlustracaoPais(pais, contato, lugar) {
+      var nome=viagemEsc(pais.n), cap=viagemEsc(pais.capital||''), pessoa=viagemEsc(contato.nome), ponto=viagemEsc(lugar||pais.capital||pais.n);
+      var seed=(pais.n.length*37+contato.nome.length*19)%360;
+      var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">'+
+       '<defs><linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1"><stop stop-color="hsl('+seed+',70%,75%)"/><stop offset="1" stop-color="#fff0c9"/></linearGradient></defs>'+
+       '<rect width="800" height="600" fill="url(#ceu)"/><circle cx="680" cy="90" r="48" fill="#ffe56d"/>'+
+       '<path d="M0 370 Q150 260 300 370 T600 350 T900 360 V600 H0Z" fill="#6ea46d"/>'+
+       '<rect x="260" y="190" width="280" height="210" rx="18" fill="#f3e4c8" stroke="#7b6548" stroke-width="10"/>'+
+       '<path d="M230 205 L400 90 L570 205Z" fill="#a95f50" stroke="#70453d" stroke-width="10"/>'+
+       '<rect x="365" y="285" width="70" height="115" fill="#6c4b3c"/><rect x="290" y="245" width="48" height="55" fill="#87c8e8"/><rect x="462" y="245" width="48" height="55" fill="#87c8e8"/>'+
+       '<g stroke="#49372f" stroke-width="8" stroke-linecap="round"><circle cx="270" cy="430" r="35" fill="#f2bd91"/><path d="M270 466v85M270 490l-50 42M270 490l50 42M270 550l-35 45M270 550l35 45"/><circle cx="400" cy="420" r="35" fill="#c98762"/><path d="M400 456v95M400 485l-52 38M400 485l52 38M400 550l-35 45M400 550l35 45"/><circle cx="530" cy="430" r="35" fill="#efc5a4"/><path d="M530 466v85M530 490l-50 42M530 490l50 42M530 550l-35 45M530 550l35 45"/></g>'+
+       '<rect x="20" y="18" width="520" height="82" rx="20" fill="rgba(255,255,255,.84)"/><text x="45" y="52" font-family="Arial" font-size="25" font-weight="700" fill="#26344f">'+pessoa+' e a turma em '+nome+'</text><text x="45" y="82" font-family="Arial" font-size="19" fill="#52617a">'+ponto+' • '+cap+'</text></svg>';
+      return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+    }
+    function viagemGarantirIdFoto(m){ if(!m.fotoId) m.fotoId='vf_'+(viagemFotoSeq++); return m.fotoId; }
+    function viagemFotoPublicada(id){ for(var k in viagemPublicacoes){ if((viagemPublicacoes[k]||[]).some(function(x){return x.id===id;})) return true; } return false; }
+    function viagemAlternarEstrela(idxContato, msgIndex) {
+      var conv=viagemConversas[idxContato]||[], m=conv[msgIndex]; if(!m||m.tipo!=='imagem') return;
+      var id=viagemGarantirIdFoto(m), dono=(m.de==='eu'?viagemIndiceJogador():idxContato); if(dono<0) dono=idxContato;
+      if(!viagemPublicacoes[dono]) viagemPublicacoes[dono]=[];
+      var pos=viagemPublicacoes[dono].findIndex(function(x){return x.id===id;});
+      if(pos>=0) viagemPublicacoes[dono].splice(pos,1); else viagemPublicacoes[dono].unshift({id:id,url:m.url,legenda:m.legenda||'',dono:dono});
+      viagemRenderizarMensagens();
+    }
+    function viagemFormatarMensagemComIndice(m, idx) {
+      if (m.tipo === 'imagem') {
+        var id=viagemGarantirIdFoto(m), ativa=viagemFotoPublicada(id);
+        return '<div class="viagem-fone-msg imagem '+(m.de==='eu'?'enviada':'recebida')+'"><div class="viagem-foto-wrap">'+
+          '<img src="'+m.url+'" alt="'+viagemEsc(m.legenda||'')+'" />'+
+          '<button class="viagem-foto-estrela '+(ativa?'ativa':'')+'" onclick="viagemAlternarEstrela('+viagemContatoAtual+','+idx+')" title="'+(ativa?'Remover do Álbum':'Publicar no Álbum')+'">★</button></div>'+
+          (m.legenda?'<div class="viagem-fone-msg-legenda">'+viagemEsc(m.legenda)+'</div>':'')+'</div>';
+      }
+      return viagemFormatarMensagem(m);
+    }
+    /* viagemMostrarPerfis, viagemAbrirPerfilRede e viagemExcluirPublicacao (versão antiga, por índice de contato) foram removidas daqui:
+       o Álbum de Viagem usa a versão baseada em @/senha (mais abaixo), que tem edição de foto de perfil e de descrição por imagem. */
+    function viagemPrepararParabens(pais){viagemChegadaPendente=pais;abrirViagemModal('viagemModalChegada');}
+    function viagemFecharChegada(){fecharViagemModal('viagemModalChegada');var pais=viagemChegadaPendente;if(!pais)return;viagemChegadaPendente=null;var ativos=[];for(var i=0;i<VIAGEM_CONTATOS.length;i++)if(VIAGEM_CONTATOS[i]&&!VIAGEM_CONTATOS[i].removido&&!viagemEhContatoDoJogador(i))ativos.push(i);ativos.sort(function(){return Math.random()-.5;});var qtd=Math.min(ativos.length,3+Math.floor(Math.random()*2));for(let j=0;j<qtd;j++){let idx=ativos[j],c=VIAGEM_CONTATOS[idx],delay=350+j*800;setTimeout(function(){viagemReceberMensagem(idx,['Parabéns pela chegada! Aproveite muito essa aventura! 🎉','Você conseguiu! Que essa viagem seja inesquecível! ✈️','Finalmente chegou! Curta cada momento por aí! 🌍'][j%3]);if(j<2){setTimeout(function(){var lugares=(pais.pontos&&pais.pontos.length)?pais.pontos:[pais.capital];var lugar=lugares[j%lugares.length];var m={de:'eles',tipo:'imagem',url:viagemGerarIlustracaoPais(pais,c,lugar),legenda:'Olha nossa foto em '+lugar+'! 📷'};viagemGarantirIdFoto(m);if(!viagemConversas[idx])viagemConversas[idx]=[];viagemConversas[idx].push(m);viagemMoverContatoParaTopo(idx);viagemNaoLido[idx]=true;viagemDispararNotificacao();if(viagemFoneAberto){viagemMontarListaContatos();if(viagemContatoAtual===idx)viagemRenderizarMensagens();}},350);}},delay);}setTimeout(viagemIniciarRodada,4300);}
+
     /* ===== Ranking: quem acertou mais países ===== */
     async function viagemAbrirRanking() {
       abrirViagemModal('viagemModalRanking');
@@ -8984,7 +9869,7 @@
       viagemPaisSelecionado = null;
       viagemUltimoPinSvg = null;
       var status = document.getElementById('viagemMapaStatus');
-      if (status) status.textContent = 'Clique em qualquer ponto do mapa para marcar o destino com um alfinete 📌.';
+      if (status) status.textContent = 'Arraste o alfinete 📌 ao lado e solte sobre o destino. No celular, use dois dedos para aproximar ou afastar o mapa.';
     }
 
     /* Guarda onde o alfinete está cravado agora, pra poder animar a "viagem de avião"
@@ -9086,10 +9971,11 @@
           await window.salvarViagemJogador(viagemNomeJogador, { nome: viagemNomeJogador, acertos: acertos });
         }
       } catch (e) { console.warn('Não foi possível salvar o acerto da viagem:', e); }
+      var paisChegada = viagemRodada.pais;
       viagemLimparPin();
       viagemClueAtual = null;
       viagemAtualizarSetor2();
-      setTimeout(viagemIniciarRodada, 1300);
+      viagemPrepararParabens(paisChegada);
     }
 
     function viagemErrar(status) {
@@ -9144,33 +10030,79 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       var mapaWrap = document.getElementById('viagemMapaWrap');
+      var pinFerramenta = document.getElementById('viagemPinFerramenta');
       if (!mapaWrap) return;
 
-      var arrastando = false;
-      var moveu = false;
+      var ponteiros = new Map();
+      var arrastandoMapa = false;
+      var moveuMapa = false;
       var inicioTela = null;
       var inicioVB = null;
+      var pinch = null;
+
+      function ehControle(e) {
+        return !!(e.target && e.target.closest && e.target.closest('.viagem-zoom-controles, .viagem-pin-ferramenta'));
+      }
+      function distancia(a, b) {
+        var dx = b.x - a.x, dy = b.y - a.y;
+        return Math.sqrt(dx * dx + dy * dy);
+      }
+      function meio(a, b) {
+        return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      }
 
       mapaWrap.addEventListener('pointerdown', function(e) {
-        arrastando = true;
-        moveu = false;
-        inicioTela = { x: e.clientX, y: e.clientY };
-        inicioVB = { x: viagemVB.x, y: viagemVB.y };
-        if (mapaWrap.setPointerCapture) {
-          try { mapaWrap.setPointerCapture(e.pointerId); } catch (err) {}
+        if (ehControle(e)) return;
+        ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        try { mapaWrap.setPointerCapture(e.pointerId); } catch (err) {}
+        if (ponteiros.size === 1) {
+          arrastandoMapa = true;
+          moveuMapa = false;
+          inicioTela = { x: e.clientX, y: e.clientY };
+          inicioVB = { x: viagemVB.x, y: viagemVB.y, w: viagemVB.w, h: viagemVB.h };
+          mapaWrap.style.cursor = 'grabbing';
+        } else if (ponteiros.size === 2) {
+          var pts = Array.from(ponteiros.values());
+          var mid = meio(pts[0], pts[1]);
+          var rect = mapaWrap.getBoundingClientRect();
+          pinch = {
+            distancia: Math.max(1, distancia(pts[0], pts[1])),
+            vb: { x: viagemVB.x, y: viagemVB.y, w: viagemVB.w, h: viagemVB.h },
+            ancoraX: viagemVB.x + ((mid.x - rect.left) / rect.width) * viagemVB.w,
+            ancoraY: viagemVB.y + ((mid.y - rect.top) / rect.height) * viagemVB.h
+          };
+          arrastandoMapa = false;
+          moveuMapa = true;
         }
-        mapaWrap.style.cursor = 'grabbing';
       });
 
       mapaWrap.addEventListener('pointermove', function(e) {
-        if (!arrastando) return;
+        if (!ponteiros.has(e.pointerId)) return;
+        ponteiros.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (ponteiros.size >= 2 && pinch) {
+          var pts = Array.from(ponteiros.values()).slice(0, 2);
+          var distAtual = Math.max(1, distancia(pts[0], pts[1]));
+          var midAtual = meio(pts[0], pts[1]);
+          var rect = mapaWrap.getBoundingClientRect();
+          var novaW = pinch.vb.w * (pinch.distancia / distAtual);
+          novaW = Math.max(VIAGEM_VB_MIN_W, Math.min(VIAGEM_VB_MAX_W, novaW));
+          var novaH = novaW / 2;
+          var novaX = pinch.ancoraX - ((midAtual.x - rect.left) / rect.width) * novaW;
+          var novaY = pinch.ancoraY - ((midAtual.y - rect.top) / rect.height) * novaH;
+          novaX = Math.max(0, Math.min(1000 - novaW, novaX));
+          novaY = Math.max(0, Math.min(500 - novaH, novaY));
+          viagemVB = { x: novaX, y: novaY, w: novaW, h: novaH };
+          viagemAtualizarViewBox();
+          return;
+        }
+        if (!arrastandoMapa || !inicioTela || !inicioVB) return;
         var dxTela = e.clientX - inicioTela.x;
         var dyTela = e.clientY - inicioTela.y;
-        if (Math.abs(dxTela) > 3 || Math.abs(dyTela) > 3) moveu = true;
-        if (!moveu) return;
+        if (Math.abs(dxTela) > 3 || Math.abs(dyTela) > 3) moveuMapa = true;
+        if (!moveuMapa) return;
         var rect = mapaWrap.getBoundingClientRect();
-        var escalaX = viagemVB.w / rect.width;
-        var escalaY = viagemVB.h / rect.height;
+        var escalaX = inicioVB.w / rect.width;
+        var escalaY = inicioVB.h / rect.height;
         var novaX = inicioVB.x - dxTela * escalaX;
         var novaY = inicioVB.y - dyTela * escalaY;
         novaX = Math.max(0, Math.min(1000 - viagemVB.w, novaX));
@@ -9180,33 +10112,160 @@
         viagemAtualizarViewBox();
       });
 
-      function finalizarArraste(e) {
-        mapaWrap.style.cursor = 'crosshair';
-        if (arrastando && !moveu) {
-          viagemTratarClique(e.clientX, e.clientY);
+      function finalizarPonteiro(e) {
+        ponteiros.delete(e.pointerId);
+        if (ponteiros.size < 2) pinch = null;
+        if (ponteiros.size === 0) {
+          arrastandoMapa = false;
+          inicioTela = null;
+          inicioVB = null;
+          mapaWrap.style.cursor = 'crosshair';
         }
-        arrastando = false;
       }
-
-      mapaWrap.addEventListener('pointerup', finalizarArraste);
-      mapaWrap.addEventListener('pointercancel', function() { arrastando = false; mapaWrap.style.cursor = 'crosshair'; });
+      mapaWrap.addEventListener('pointerup', finalizarPonteiro);
+      mapaWrap.addEventListener('pointercancel', finalizarPonteiro);
 
       mapaWrap.addEventListener('wheel', function(e) {
+        if (ehControle(e)) return;
         e.preventDefault();
         var p = viagemTelaParaSvg(e.clientX, e.clientY);
         if (!p) return;
-        var fator = e.deltaY < 0 ? 0.82 : 1 / 0.82;
-        viagemAplicarZoom(fator, p.x, p.y);
+        viagemAplicarZoom(e.deltaY < 0 ? 0.82 : 1 / 0.82, p.x, p.y);
       }, { passive: false });
 
       mapaWrap.addEventListener('dblclick', function(e) {
+        if (ehControle(e)) return;
         e.preventDefault();
         var p = viagemTelaParaSvg(e.clientX, e.clientY);
-        if (!p) return;
-        viagemAplicarZoom(0.6, p.x, p.y);
+        if (p) viagemAplicarZoom(0.6, p.x, p.y);
       });
+
+      if (pinFerramenta) {
+        var pinFantasma = null;
+        var pinArrastando = false;
+        function moverFantasma(x, y) {
+          if (!pinFantasma) return;
+          pinFantasma.style.left = x + 'px';
+          pinFantasma.style.top = y + 'px';
+        }
+        pinFerramenta.addEventListener('pointerdown', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          pinArrastando = true;
+          pinFantasma = document.createElement('div');
+          pinFantasma.className = 'viagem-pin-fantasma';
+          pinFantasma.textContent = '📌';
+          document.body.appendChild(pinFantasma);
+          moverFantasma(e.clientX, e.clientY);
+          try { pinFerramenta.setPointerCapture(e.pointerId); } catch (err) {}
+        });
+        pinFerramenta.addEventListener('pointermove', function(e) {
+          if (!pinArrastando) return;
+          e.preventDefault();
+          moverFantasma(e.clientX, e.clientY);
+        });
+        function soltarPin(e) {
+          if (!pinArrastando) return;
+          pinArrastando = false;
+          if (pinFantasma) pinFantasma.remove();
+          pinFantasma = null;
+          var rect = mapaWrap.getBoundingClientRect();
+          var dentro = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+          if (dentro) viagemTratarClique(e.clientX, e.clientY);
+        }
+        pinFerramenta.addEventListener('pointerup', soltarPin);
+        pinFerramenta.addEventListener('pointercancel', function() {
+          pinArrastando = false;
+          if (pinFantasma) pinFantasma.remove();
+          pinFantasma = null;
+        });
+      }
     });
   </script>
 
+  <script>
+  
+/* ===== Álbum de Viagem 2: perfil autenticado, timeline, curtidas, comentários e moderação ===== */
+  var viagemPerfilAtual = localStorage.getItem('viagem_perfil_atual') || '';
+  var viagemBancoImagens = [];
+  var viagemBancoImagensCarregado = false;
+  var viagemBancoBuscaAtual = '';
+  var viagemBancoCategoriaAtual = 'Todos';
+  var viagemBancoAlvoAtual = 'viagemSocialCorpo';
+  var viagemBancoModoAvatar = false;
+  var viagemAvatarBancoSelecionado = '';
+  window.VIAGEM_BANCO_IMAGENS_FALLBACK = [{"id": "img_0001", "titulo": "Floresta", "categoria": "natureza", "keywords": ["flor", "floresta", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/floresta?lock=1", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0002", "titulo": "Árvore", "categoria": "natureza", "keywords": ["arvore", "flor", "natureza", "paisagem", "verde", "árvore"], "url": "https://loremflickr.com/900/700/arvore?lock=2", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0003", "titulo": "Folhas", "categoria": "natureza", "keywords": ["flor", "folhas", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/folhas?lock=3", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0004", "titulo": "Rio", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "rio", "verde"], "url": "https://loremflickr.com/900/700/rio?lock=4", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0005", "titulo": "Lago", "categoria": "natureza", "keywords": ["flor", "lago", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/lago?lock=5", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0006", "titulo": "Montanha", "categoria": "natureza", "keywords": ["flor", "montanha", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/montanha?lock=6", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0007", "titulo": "Campo", "categoria": "natureza", "keywords": ["campo", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/campo?lock=7", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0008", "titulo": "Jardim", "categoria": "natureza", "keywords": ["flor", "jardim", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/jardim?lock=8", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0009", "titulo": "Praia", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "praia", "verde"], "url": "https://loremflickr.com/900/700/praia?lock=9", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0010", "titulo": "Mar", "categoria": "natureza", "keywords": ["flor", "mar", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/mar?lock=10", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0011", "titulo": "Cachoeira", "categoria": "natureza", "keywords": ["cachoeira", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/cachoeira?lock=11", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0012", "titulo": "Vale", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "vale", "verde"], "url": "https://loremflickr.com/900/700/vale?lock=12", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0013", "titulo": "Grama", "categoria": "natureza", "keywords": ["flor", "grama", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/grama?lock=13", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0014", "titulo": "Céu", "categoria": "natureza", "keywords": ["ceu", "céu", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/ceu?lock=14", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0015", "titulo": "Nuvens", "categoria": "natureza", "keywords": ["flor", "natureza", "nuvens", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/nuvens?lock=15", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0016", "titulo": "Sol", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "sol", "verde"], "url": "https://loremflickr.com/900/700/sol?lock=16", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0017", "titulo": "Lua", "categoria": "natureza", "keywords": ["flor", "lua", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/lua?lock=17", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0018", "titulo": "Estrela", "categoria": "natureza", "keywords": ["estrela", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/estrela?lock=18", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0019", "titulo": "Paisagem", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/paisagem?lock=19", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0020", "titulo": "Trilha", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "trilha", "verde"], "url": "https://loremflickr.com/900/700/trilha?lock=20", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0021", "titulo": "Pedra", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "pedra", "verde"], "url": "https://loremflickr.com/900/700/pedra?lock=21", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0022", "titulo": "Ilha", "categoria": "natureza", "keywords": ["flor", "ilha", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/ilha?lock=22", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0023", "titulo": "Deserto", "categoria": "natureza", "keywords": ["deserto", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/deserto?lock=23", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0024", "titulo": "Flor", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/flor?lock=24", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0025", "titulo": "Bambu", "categoria": "natureza", "keywords": ["bambu", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/bambu?lock=25", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0026", "titulo": "Nascer Do Sol", "categoria": "natureza", "keywords": ["flor", "nascer do sol", "nascer-do-sol", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/nascer-do-sol?lock=26", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0027", "titulo": "Pôr Do Sol", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "por-do-sol", "pôr do sol", "verde"], "url": "https://loremflickr.com/900/700/por-do-sol?lock=27", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0028", "titulo": "Orvalho", "categoria": "natureza", "keywords": ["flor", "natureza", "orvalho", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/orvalho?lock=28", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0029", "titulo": "Córrego", "categoria": "natureza", "keywords": ["corrego", "córrego", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/corrego?lock=29", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0030", "titulo": "Serra", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "serra", "verde"], "url": "https://loremflickr.com/900/700/serra?lock=30", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0031", "titulo": "Planície", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "planicie", "planície", "verde"], "url": "https://loremflickr.com/900/700/planicie?lock=31", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0032", "titulo": "Bosque", "categoria": "natureza", "keywords": ["bosque", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/bosque?lock=32", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0033", "titulo": "Costa", "categoria": "natureza", "keywords": ["costa", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/costa?lock=33", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0034", "titulo": "Morro", "categoria": "natureza", "keywords": ["flor", "morro", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/morro?lock=34", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0035", "titulo": "Rochas", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "rochas", "verde"], "url": "https://loremflickr.com/900/700/rochas?lock=35", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0036", "titulo": "Laguna", "categoria": "natureza", "keywords": ["flor", "laguna", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/laguna?lock=36", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0037", "titulo": "Cascata", "categoria": "natureza", "keywords": ["cascata", "flor", "natureza", "paisagem", "verde"], "url": "https://loremflickr.com/900/700/cascata?lock=37", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0038", "titulo": "Pântano", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "pantano", "pântano", "verde"], "url": "https://loremflickr.com/900/700/pantano?lock=38", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0039", "titulo": "Verdejante", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "verde", "verdejante"], "url": "https://loremflickr.com/900/700/verdejante?lock=39", "credito": "Banco próprio da Live da Cacá"}, {"id": "img_0040", "titulo": "Selva", "categoria": "natureza", "keywords": ["flor", "natureza", "paisagem", "selva", "verde"], "url": "https://loremflickr.com/900/700/selva?lock=40", "credito": "Banco próprio da Live da Cacá"}];
+
+  function viagemSocialCarregarPerfis(){try{return JSON.parse(localStorage.getItem('viagem_social_perfis_v2')||'{}')}catch(e){return {}}}
+  function viagemSocialSalvarPerfis(v){localStorage.setItem('viagem_social_perfis_v2',JSON.stringify(v));if(typeof window.salvarViagemSocialDados==='function')window.salvarViagemSocialDados('perfis',v).catch(function(){});}
+  function viagemSocialCarregarPosts(){try{return JSON.parse(localStorage.getItem('viagem_social_posts_v2')||'[]')}catch(e){return []}}
+  function viagemSocialSalvarPosts(v){localStorage.setItem('viagem_social_posts_v2',JSON.stringify(v));if(typeof window.salvarViagemSocialDados==='function')window.salvarViagemSocialDados('posts',v).catch(function(){});}
+  async function viagemSincronizarSocialFirebase(){
+    if(typeof window.carregarViagemSocialDados!=='function')return;
+    try{var rp=await window.carregarViagemSocialDados('perfis');if(rp&&typeof rp==='object')localStorage.setItem('viagem_social_perfis_v2',JSON.stringify(rp));}catch(e){}
+    try{var rpo=await window.carregarViagemSocialDados('posts');if(Array.isArray(rpo))localStorage.setItem('viagem_social_posts_v2',JSON.stringify(rpo));}catch(e){}
+    try{var rr=await window.carregarViagemSocialDados('robos');if(Array.isArray(rr))localStorage.setItem('viagem_social_robos_v1',JSON.stringify(rr));}catch(e){}
+  }
+  function viagemPerfilJogador(){return viagemSocialCarregarPerfis()[viagemPerfilAtual]||null}
+  function viagemContatoHandle(i){var c=VIAGEM_CONTATOS[i];return 'contato_'+viagemNormalizarTexto((c&&c.nome)||('contato'+i)).replace(/[^a-z0-9]+/g,'_')+'_'+i}
+  /* viagemPerfilPorId, viagemAvatarHtml, viagemAtualizarPreviewAvatar, viagemLimparAvatarBanco,
+     viagemAbrirBancoAvatar e viagemSelecionarAvatarBanco usam as versões completas definidas mais acima
+     (com suporte a robôs e à troca de foto do perfil por emoji ou imagem do banco). */
+  function viagemPodeModerar(){return viagemEhAdminAberto()}
+  function viagemMeuPost(post){return !!(viagemSocialLogado&&post.dono===viagemPerfilAtual)}
+  function viagemFotoPublicada(id){return viagemSocialCarregarPosts().some(function(x){return x.id===id&&x.dono===viagemPerfilAtual})}
+  function viagemAtualizarPostagensRede(){var modal=document.getElementById('viagemModalRede');if(modal&&modal.classList.contains('ativo')){var ativo=(document.querySelector('.viagem-social-nav .ativo')||{textContent:''}).textContent; if(ativo==='Perfis') viagemMostrarPerfis(); else if(ativo==='Meu perfil') viagemAbrirPerfilRede(viagemPerfilAtual); else if(ativo==='Imagens para postar') viagemMostrarBancoImagens(); else viagemMostrarTimeline();}}
+  function viagemAlternarEstrela(idxContato,msgIndex){
+    if(!viagemPerfilAtual){alert('Entre com seu nome, @ e senha para publicar no seu perfil.');return;}
+    var conv=viagemConversas[idxContato]||[],m=conv[msgIndex];if(!m||m.tipo!=='imagem')return;
+    var id=viagemGarantirIdFoto(m),posts=viagemSocialCarregarPosts(),pos=posts.findIndex(function(x){return x.id===id&&x.dono===viagemPerfilAtual});
+    if(pos>=0)posts.splice(pos,1);else posts.unshift({id:id,dono:viagemPerfilAtual,url:m.url,legenda:m.legenda||'',criadoEm:Date.now(),curtidas:[],comentarios:[],origem:'chat'});
+    viagemSocialSalvarPosts(posts);
+    viagemRenderizarMensagens();
+    viagemAtualizarPostagensRede();
+  }
+  async function viagemAbrirRede(){abrirViagemModal('viagemModalRede');viagemMostrarTimeline();await viagemSincronizarSocialFirebase();viagemAtualizarPostagensRede();}
+  function viagemSocialNav(ativo){return '<div class="viagem-social-nav"><button class="'+(ativo==='timeline'?'ativo':'')+'" onclick="viagemMostrarTimeline()">Linha do tempo</button><button class="'+(ativo==='perfis'?'ativo':'')+'" onclick="viagemMostrarPerfis()">Perfis</button><button class="'+(ativo==='banco'?'ativo':'')+'" onclick="viagemMostrarBancoImagens()">Imagens para postar</button>'+(viagemPerfilAtual?'<button class="'+(ativo==='meu'?'ativo':'')+'" data-id="'+viagemPerfilAtual+'" onclick="viagemAbrirPerfilRede(this.dataset.id)">Meu perfil</button>':'')+'</div>'}
+  /* viagemTodosPerfis, viagemMostrarPerfis e viagemRenderPost usam as versões completas definidas mais acima
+     (sem listar perfis @contato_ dos NPCs do jogo, e com o botão "Editar descrição" em cada foto). */
+  function viagemMostrarTimeline(){var b=document.getElementById('viagemSocialCorpo');if(!b)return;var posts=viagemSocialCarregarPosts().sort(function(a,c){return(c.criadoEm||0)-(a.criadoEm||0)});var h=viagemSocialNav('timeline')+'<div class="viagem-social-timeline">';if(!posts.length)h+='<p style="text-align:center;color:#78869d;padding:30px">Ainda não há publicações. Clique na estrela de uma foto do jogo.</p>';posts.forEach(function(p){h+=viagemRenderPost(p)});b.innerHTML=h+'</div>'}
+  async function viagemCarregarBancoImagens(recarregar){
+    if(!recarregar&&viagemBancoImagensCarregado&&Array.isArray(viagemBancoImagens)&&viagemBancoImagens.length)return viagemBancoImagens;
+    viagemBancoImagensCarregado=true;
+    var base=[];
+    try{var resp=await fetch('banco_imagens_live_caca.json',{cache:'no-store'});if(resp.ok){var data=await resp.json();if(Array.isArray(data))base=data;else if(data&&Array.isArray(data.itens))base=data.itens;}}catch(e){}
+    if(!base.length)base=window.VIAGEM_BANCO_IMAGENS_FALLBACK||[];
+    var extra=[],removidos=[],overrides={};
+    try{if(typeof window.viagemBancoListarExtra==='function')extra=await window.viagemBancoListarExtra();}catch(e){}
+    try{if(typeof window.viagemBancoListarRemovidos==='function')removidos=await window.viagemBancoListarRemovidos();}catch(e){}
+    try{if(typeof window.viagemBancoListarOverrides==='function')overrides=await window.viagemBancoListarOverrides();}catch(e){}
+    var removidosSet={};(removidos||[]).forEach(function(id){removidosSet[id]=true;});
+    var combinada=base.filter(function(i){return i&&!removidosSet[i.id];}).map(function(i){return overrides[i.id]?Object.assign({},i,overrides[i.id]):i;});
+    (extra||[]).forEach(function(i){if(i&&!removidosSet[i.id])combinada.push(i);});
+    viagemBancoImagens=combinada;
+    return viagemBancoImagens;
+  }
+  function viagemBancoNormalizar(s){return (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim()}
+  function viagemBancoCategorias(lista){var m={'Todos':true};lista.forEach(function(i){if(i&&i.categoria)m[i.categoria]=true;});return Object.keys(m)}
+  function viagemBancoCombina(item,termo,categoria){if(categoria&&categoria!=='Todos'&&item.categoria!==categoria)return false;if(!termo)return true;var base=((item.titulo||'')+' '+(item.categoria||'')+' '+(item.keywords||[]).join(' '));base=viagemBancoNormalizar(base);return base.indexOf(viagemBancoNormalizar(termo))!==-1;}
+  function viagemBancoItemHtml(item){var capId='viagemBancoLegenda_'+item.id;var botao=viagemBancoModoAvatar?'<button data-id="'+item.id+'" onclick="viagemSelecionarAvatarBanco(this.dataset.id)">Usar no perfil</button>':'<button data-id="'+item.id+'" onclick="viagemPublicarBancoImagem(this.dataset.id)">Postar</button>';return '<article class="viagem-banco-card"><img src="'+item.url+'" alt="'+viagemEsc(item.titulo||'')+'"><div class="viagem-banco-card-info"><strong>'+viagemEsc(item.titulo||'Imagem')+'</strong><small>'+viagemEsc(item.categoria||'Sem categoria')+'</small><input id="'+capId+'" maxlength="180" placeholder="Legenda para postar" value="'+viagemEsc(item.titulo||'')+'">'+botao+'</div></article>';}
+  async function viagemMostrarBancoImagens(alvoId, modoAvatar){viagemBancoAlvoAtual=alvoId||viagemBancoAlvoAtual||'viagemSocialCorpo';viagemBancoModoAvatar=!!modoAvatar;var b=document.getElementById(viagemBancoAlvoAtual);if(!b)return;var banco=await viagemCarregarBancoImagens();if(!viagemPerfilAtual&&!viagemBancoModoAvatar){b.innerHTML=viagemSocialNav('banco')+'<p class="viagem-banco-vazio">Entre com seu perfil para postar imagens do banco próprio.</p>';return;}var categorias=viagemBancoCategorias(banco);var html=(viagemBancoModoAvatar?'':viagemSocialNav('banco'))+'<div style="padding:14px 0 0"><div class="viagem-banco-toolbar"><input id="viagemBancoBusca" type="search" placeholder="Pesquisar imagens por palavra-chave" value="'+viagemEsc(viagemBancoBuscaAtual)+'" oninput="viagemBancoAtualizarBusca()" onkeydown="if(event.key===\'Enter\'){event.preventDefault();viagemBancoBuscarAgora();}"><select id="viagemBancoCategoria" onchange="viagemBancoAtualizarBusca()">'+categorias.map(function(c){return '<option value="'+viagemEsc(c)+'"'+(c===viagemBancoCategoriaAtual?' selected':'')+'>'+viagemEsc(c)+'</option>';}).join('')+'</select><button class="viagem-banco-refresh" onclick="viagemBancoBuscarAgora()" style="border:0;border-radius:10px;padding:10px 14px;background:#40557d;color:#fff;font-weight:800;cursor:pointer">Pesquisar</button><button class="viagem-banco-refresh" onclick="viagemBancoLimparBusca()" style="border:0;border-radius:10px;padding:10px 14px;background:#8a94a8;color:#fff;font-weight:800;cursor:pointer">Limpar</button></div>';var filtrados=banco.filter(function(i){return viagemBancoCombina(i,viagemBancoBuscaAtual,viagemBancoCategoriaAtual);});if(!filtrados.length){html+='<p class="viagem-banco-vazio">Nenhuma imagem encontrada com esses filtros.</p>';}else{html+='<div class="viagem-banco-grid">';filtrados.slice(0,120).forEach(function(i){html+=viagemBancoItemHtml(i);});html+='</div>';}html+='</div>';b.innerHTML=html;}
+  function viagemBancoAtualizarBusca(){var a=document.getElementById('viagemBancoBusca');var c=document.getElementById('viagemBancoCategoria');viagemBancoBuscaAtual=(a&&a.value)||'';viagemBancoCategoriaAtual=(c&&c.value)||'Todos';}
+  function viagemBancoBuscarAgora(){viagemBancoAtualizarBusca();viagemMostrarBancoImagens(viagemBancoAlvoAtual, viagemBancoModoAvatar);}
+  function viagemBancoLimparBusca(){viagemBancoBuscaAtual='';viagemBancoCategoriaAtual='Todos';viagemMostrarBancoImagens(viagemBancoAlvoAtual, viagemBancoModoAvatar);}
+  function viagemPublicarBancoImagem(id){if(!viagemPerfilAtual){alert('Entre no seu perfil para postar uma imagem.');return;}var banco=Array.isArray(viagemBancoImagens)&&viagemBancoImagens.length?viagemBancoImagens:(window.VIAGEM_BANCO_IMAGENS_FALLBACK||[]);var item=null;for(var i=0;i<banco.length;i++)if(banco[i]&&banco[i].id===id){item=banco[i];break;}if(!item)return;var inp=document.getElementById('viagemBancoLegenda_'+id);var legenda=((inp&&inp.value)||item.titulo||'').trim();if(!legenda)legenda=item.titulo||'Imagem';var posts=viagemSocialCarregarPosts();posts.unshift({id:'b'+id+'_'+Date.now(),dono:viagemPerfilAtual,url:item.url,legenda:legenda,criadoEm:Date.now(),curtidas:[],comentarios:[],origem:'banco',bancoId:item.id,categoria:item.categoria,keywords:item.keywords||[]});viagemSocialSalvarPosts(posts);alert('Imagem publicada no seu perfil!');viagemMostrarTimeline();}
+  /* viagemAbrirPerfilRede e viagemSalvarDescricao usam as versões completas definidas mais acima
+     (com a caixa de troca de foto do perfil por emoji ou imagem do banco). */
+  function viagemCurtirPost(id){if(!viagemSocialLogado){alert('Entre no jogo com seu @ e senha para curtir.');return}var ps=viagemSocialCarregarPosts(),p=ps.find(function(x){return x.id===id});if(!p)return;p.curtidas=p.curtidas||[];var n=p.curtidas.indexOf(viagemPerfilAtual);if(n>=0)p.curtidas.splice(n,1);else p.curtidas.push(viagemPerfilAtual);viagemSocialSalvarPosts(ps);viagemMostrarTimeline()}
+     function viagemFocarComentario(btn){var inp=document.getElementById('vc_'+btn.dataset.id);if(inp)inp.focus()}
+function viagemComentarPost(id){if(!viagemSocialLogado){alert('Entre no jogo com seu @ e senha para comentar.');return}var inp=document.getElementById('vc_'+id),txt=(inp&&inp.value||'').trim();if(!txt)return;var ps=viagemSocialCarregarPosts(),p=ps.find(function(x){return x.id===id});if(!p)return;p.comentarios=p.comentarios||[];p.comentarios.push({id:'c'+Date.now()+Math.random().toString(16).slice(2),autor:viagemPerfilAtual,texto:txt});viagemSocialSalvarPosts(ps);viagemMostrarTimeline()}
+  function viagemExcluirComentario(pid,cid){var ps=viagemSocialCarregarPosts(),p=ps.find(function(x){return x.id===pid});if(!p)return;var c=(p.comentarios||[]).find(function(x){return x.id===cid});if(!(viagemPodeModerar()||(c&&c.autor===viagemPerfilAtual)))return;p.comentarios=(p.comentarios||[]).filter(function(x){return x.id!==cid});viagemSocialSalvarPosts(ps);viagemMostrarTimeline()}
+  function viagemExcluirPost(id){var ps=viagemSocialCarregarPosts(),p=ps.find(function(x){return x.id===id});if(!p||!(viagemPodeModerar()||viagemMeuPost(p)))return;if(!confirm('Excluir esta imagem?'))return;viagemSocialSalvarPosts(ps.filter(function(x){return x.id!==id}));viagemMostrarTimeline();if(viagemContatoAtual!==null)viagemRenderizarMensagens()}
+  function viagemExcluirMeuPerfil(){if(!confirm('Excluir definitivamente seu perfil, publicações, curtidas e comentários?'))return;viagemRemoverPerfilCompleto(viagemPerfilAtual);viagemPerfilAtual='';viagemSocialLogado=false;localStorage.removeItem('viagem_perfil_atual');fecharViagemModal('viagemModalRede');alert('Perfil excluído.')}
+  function viagemAdminLimparDescricao(id){if(!viagemPodeModerar())return;var pfs=viagemSocialCarregarPerfis();if(pfs[id]){pfs[id].descricao='';viagemSocialSalvarPerfis(pfs)}viagemAbrirPerfilRede(id)}
+  function viagemAdminExcluirPerfil(id){if(!viagemPodeModerar()||!confirm('Excluir este perfil/usuário e todo o conteúdo dele?'))return;if(id.indexOf('contato_')===0){var p=viagemPerfilPorId(id);if(p){if(typeof viagemAdminExcluirContato==='function')viagemAdminExcluirContato(p.contato);else if(VIAGEM_CONTATOS[p.contato])VIAGEM_CONTATOS[p.contato].removido=true}viagemRemoverPerfilCompleto(id)}else viagemRemoverPerfilCompleto(id);viagemMostrarPerfis()}
+  function viagemRemoverPerfilCompleto(id){var pfs=viagemSocialCarregarPerfis();delete pfs[id];viagemSocialSalvarPerfis(pfs);var ps=viagemSocialCarregarPosts().filter(function(p){return p.dono!==id});ps.forEach(function(p){p.curtidas=(p.curtidas||[]).filter(function(x){return x!==id});p.comentarios=(p.comentarios||[]).filter(function(x){return x.autor!==id})});viagemSocialSalvarPosts(ps)}
+  function viagemExcluirPublicacao(idx,id){viagemExcluirPost(id)}
+  document.addEventListener('DOMContentLoaded',function(){['viagemInputArroba','viagemInputSenhaPerfil','viagemInputNome'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('keydown',function(ev){if(ev.key==='Enter')entrarViagem()})});var svg=document.getElementById('viagemMapaSvg');if(svg)svg.setAttribute('preserveAspectRatio','xMidYMid meet')});
+</script>
 </body>
-</html>
