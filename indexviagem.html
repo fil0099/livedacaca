@@ -8497,7 +8497,7 @@
         if (!confirmarSenha) { alert('Digite a senha novamente no campo de confirmação.'); return; }
         if (senha !== confirmarSenha) { alert('As senhas não são iguais. Digite a mesma senha nos dois campos para criar o perfil.'); return; }
       }
-      var avatar = viagemAvatarBancoSelecionado || (emoji || '🧳');
+      var avatar = viagemAvatarBancoSelecionado || emoji || (perfilExistente && perfilExistente.avatar) || '🧳';
       if (!perfis[arroba]) perfis[arroba] = { nome:nome, arroba:arroba, senha:senha, descricao:'', avatar:avatar, criadoEm:Date.now() };
       else { perfis[arroba].nome = nome; perfis[arroba].avatar = avatar; }
       viagemSocialSalvarPerfis(perfis);
